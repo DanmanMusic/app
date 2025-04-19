@@ -8,11 +8,11 @@
 
 Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 
-## [x] Development
+## [ ] Development
 
 These are the major areas and tasks involved in building the application based on the functional specification in `SPECIFICATION.md`.
 
-### [x] 1. Frontend First: Mock UI & View Prototyping
+### [ ] 1. Frontend First: Mock UI & View Prototyping
 
 *   [x] Set up Mock Data: Create representative JavaScript objects/arrays to simulate the data structure for various users (including pupil instruments), sample tasks, ticket data, rewards, announcements, and the instrument list.
 *   [x] Implement Development View Selector: Create a simple, temporary mechanism visible only in development builds that allows switching between simulating different user roles and navigating to key screens.
@@ -27,6 +27,7 @@ These are the major areas and tasks involved in building the application based o
     *   [x] Replace placeholder images with actual Image components for Rewards Catalog items in Pupil, Public, and Admin views.
     *   [x] Break down large AdminView.tsx file into smaller section components for better organization and readability, including extracting the student detail view and creating shared styles for Admin components.
     *   [x] Refine mock button labels in Admin views to clarify implemented vs. placeholder actions.
+    *   [ ] **Implement Mock UI for all User Interactions:** Replace placeholder alerts (e.g., for Admin CRUD operations on Users, Task Library items, Rewards, Announcements, Instruments, or Teacher/Parent "Add Another Student" flows) with actual mock UI flows (e.g., simple forms or modal inputs) that simulate the *frontend interaction* without needing a backend.
 
 ### [ ] 2. Backend Development and Integration
 
