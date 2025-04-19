@@ -2,9 +2,9 @@
 
 ## Gemini Rules/Notes
 
-*   When requested to print out file content, provide the full content of the file while be mindful to inflate sections of code commented out during iterations.
-*   Assume developers are experts but are open to suggestions for better libraries, approaches, or solutions to technical challenges.
-*   This project is in an early development phase. Backward compatibility is not a requirement (e.g., database schema changes are acceptable).
+- When requested to print out file content, provide the full content of the file while be mindful to inflate sections of code commented out during iterations.
+- Assume developers are experts but are open to suggestions for better libraries, approaches, or solutions to technical challenges.
+- This project is in an early development phase. Backward compatibility is not a requirement (e.g., database schema changes are acceptable).
 
 Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 
@@ -14,44 +14,44 @@ These are the major areas and tasks involved in building the application based o
 
 ### [ ] 1. Frontend First: Mock UI & View Prototyping
 
-*   [x] Set up Mock Data: Create representative JavaScript objects/arrays to simulate the data structure for various users (including pupil instruments), sample tasks, ticket data, rewards, announcements, and the instrument list.
-*   [x] Implement Development View Selector: Create a simple, temporary mechanism visible only in development builds that allows switching between simulating different user roles and navigating to key screens.
-*   [x] Build Core Views (Using Mock Data): Develop the React Native screens and components for each user role's main functional areas:
-    *   [x] Public / Non-Logged-in View: Implement the public Rewards Catalog display.
-    *   [x] Pupil View: Dashboard/Home (display assigned instrument(s)), Assigned Task List, Rewards Catalog, Ticket Transaction History, Announcements/Challenge Tasks, (Optional) Wishlist/Goal setting UI.
-    *   [x] Teacher View: Student List (display student instrument(s)), Task Assignment, Pending Verification List, Task Verification screen, Access to view student details (Task List, History, Balance, Catalog, Instruments).
-    *   [x] Parent View: Family Dashboard/Student selector (display child instrument(s)), Navigation to Pupil view, "Add Another Student" UI.
-    *   [x] Admin View: Placeholder/simplified UI for key management workflows, including Instrument List management.
-*   [x] Refine UI/UX: Iterate on the visual design, layout, and user flow based on internal review or feedback.
-    *   [x] Implement multi-step task verification modal with status selection, point adjustment via slider, and re-assign option (Note: Added `@react-native-community/slider` dependency).
-    *   [x] Replace placeholder images with actual Image components for Rewards Catalog items in Pupil, Public, and Admin views.
-    *   [x] Break down large AdminView.tsx file into smaller section components for better organization and readability, including extracting the student detail view and creating shared styles for Admin components.
-    *   [x] Refine mock button labels in Admin views to clarify implemented vs. placeholder actions.
-    *   [ ] **Implement Mock UI for all User Interactions:** Replace placeholder alerts (e.g., for Admin CRUD operations on Users, Task Library items, Rewards, Announcements, Instruments, or Teacher/Parent "Add Another Student" flows) with actual mock UI flows (e.g., simple forms or modal inputs) that simulate the *frontend interaction* without needing a backend.
+- [x] Set up Mock Data: Create representative JavaScript objects/arrays to simulate the data structure for various users (including pupil instruments), sample tasks, ticket data, rewards, announcements, and the instrument list.
+- [x] Implement Development View Selector: Create a simple, temporary mechanism visible only in development builds that allows switching between simulating different user roles and navigating to key screens.
+- [x] Build Core Views (Using Mock Data): Develop the React Native screens and components for each user role's main functional areas:
+  - [x] Public / Non-Logged-in View: Implement the public Rewards Catalog display.
+  - [x] Pupil View: Dashboard/Home (display assigned instrument(s)), Assigned Task List, Rewards Catalog, Ticket Transaction History, Announcements/Challenge Tasks, (Optional) Wishlist/Goal setting UI.
+  - [x] Teacher View: Student List (display student instrument(s)), Task Assignment, Pending Verification List, Task Verification screen, Access to view student details (Task List, History, Balance, Catalog, Instruments).
+  - [x] Parent View: Family Dashboard/Student selector (display child instrument(s)), Navigation to Pupil view, "Add Another Student" UI.
+  - [x] Admin View: Placeholder/simplified UI for key management workflows, including Instrument List management.
+- [x] Refine UI/UX: Iterate on the visual design, layout, and user flow based on internal review or feedback.
+  - [x] Implement multi-step task verification modal with status selection, point adjustment via slider, and re-assign option (Note: Added `@react-native-community/slider` dependency).
+  - [x] Replace placeholder images with actual Image components for Rewards Catalog items in Pupil, Public, and Admin views.
+  - [x] Break down large AdminView.tsx file into smaller section components for better organization and readability, including extracting the student detail view and creating shared styles for Admin components.
+  - [x] Refine mock button labels in Admin views to clarify implemented vs. placeholder actions.
+  - [ ] **Implement Mock UI for all User Interactions:** Replace placeholder alerts (e.g., for Admin CRUD operations on Users, Task Library items, Rewards, Announcements, Instruments, or Teacher/Parent "Add Another Student" flows) with actual mock UI flows (e.g., simple forms or modal inputs) that simulate the _frontend interaction_ without needing a backend.
 
 ### [ ] 2. Backend Development and Integration
 
-*   [ ] Choose and set up backend technology.
-*   [ ] Design and implement the database schema, including a table/collection for Instruments and the relationship between Pupils and Instruments (1-to-many).
-*   [ ] Develop backend APIs for all functional areas (User Auth, CRUD, Linking; Task management; Ticket management; Rewards Catalog; Announcements; Instrument Management - CRUD).
-*   [ ] Update APIs to handle Pupil instrument assignments and allow filtering tasks/students by instrument.
-*   [ ] Integrate Frontend with Backend: Replace mock data in UI components with actual API calls.
-*   [ ] Implement authentication flow connecting UI to backend auth endpoints.
+- [ ] Choose and set up backend technology.
+- [ ] Design and implement the database schema, including a table/collection for Instruments and the relationship between Pupils and Instruments (1-to-many).
+- [ ] Develop backend APIs for all functional areas (User Auth, CRUD, Linking; Task management; Ticket management; Rewards Catalog; Announcements; Instrument Management - CRUD).
+- [ ] Update APIs to handle Pupil instrument assignments and allow filtering tasks/students by instrument.
+- [ ] Integrate Frontend with Backend: Replace mock data in UI components with actual API calls.
+- [ ] Implement authentication flow connecting UI to backend auth endpoints.
 
 ### [ ] 3. Implementing Core Feature Logic
 
-*   [ ] Connect UI actions (Mark Complete, Verify, Assign, Adjust, Redeem) to backend API calls.
-*   [ ] Implement real-time updates for relevant data.
-*   [ ] Implement push notification registration and handling logic.
+- [ ] Connect UI actions (Mark Complete, Verify, Assign, Adjust, Redeem) to backend API calls.
+- [ ] Implement real-time updates for relevant data.
+- [ ] Implement push notification registration and handling logic.
 
 ### [ ] 4. Supporting Features & Refinements
 
-*   [ ] Implement secure QR code generation (Admin) and scanning/verification (Mobile) logic.
-*   [ ] Implement QR code revocation/recovery mechanism.
-*   [ ] Implement robust error handling and loading states.
-*   [ ] Refine UI/UX based on testing.
-*   [ ] Implement any required offline capabilities.
-*   [ ] Add unit and integration tests.
+- [ ] Implement secure QR code generation (Admin) and scanning/verification (Mobile) logic.
+- [ ] Implement QR code revocation/recovery mechanism.
+- [ ] Implement robust error handling and loading states.
+- [ ] Refine UI/UX based on testing.
+- [ ] Implement any required offline capabilities.
+- [ ] Add unit and integration tests.
 
 ## [ ] Android Release Steps
 

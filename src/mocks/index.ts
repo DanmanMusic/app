@@ -6,4 +6,4 @@ export * from './mockAssignedTasks';
 export * from './mockTickets';
 export * from './mockRewards';
 export * from './mockAnnouncements';
-export * from './mockInstruments'
+export * from './mockInstruments';
