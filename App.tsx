@@ -13,7 +13,7 @@ import { mockTaskLibrary, TaskLibraryItem } from './src/mocks/mockTaskLibrary';
 import { mockInstruments, Instrument } from './src/mocks/mockInstruments';
 
 // Import helpers
-import { getTaskTitle, getInstrumentNames } from './src/utils/helpers'; // IMPORT HELPERS
+import { getTaskTitle, getInstrumentNames } from './src/utils/helpers';
 
 // Import your planned main views
 import { PublicView } from './src/views/PublicView';
@@ -50,9 +50,11 @@ const DevelopmentViewSelector = ({ onSelectView }: { onSelectView: (state: MockA
                   if (user.role === 'pupil') {
                       viewingStudentId = user.id;
                   } else if (user.role === 'parent' && user.linkedStudentIds && user.linkedStudentIds.length > 0) {
+                      // For parent, default viewing to the first linked student for convenience in mock
                       viewingStudentId = user.linkedStudentIds[0];
                   } else if (user.role === 'teacher' && user.linkedStudentIds && user.linkedStudentIds.length > 0) {
-                       viewingStudentId = user.linkedStudentIds[0];
+                       // For teacher, default viewing to the first linked student for convenience in mock student profile view
+                       viewingStudentId = user.linkedStudentIds[0]; // Although teacher main view is dashboard/students list
                   }
 
                   onSelectView({ role: user.role, userId: user.id, viewingStudentId });
@@ -92,6 +94,7 @@ export default function App() {
 
    // --- Mock Action Functions (Simulating Backend Updates) ---
 
+   // Pupil/Parent Action
    const simulateMarkTaskComplete = (taskId: string) => {
        setAssignedTasks(prevTasks =>
            prevTasks.map(task =>
@@ -103,10 +106,18 @@ export default function App() {
        Alert.alert("Task Marked Complete", "Waiting for teacher verification!");
    };
 
+   // Teacher/Admin Action (Called by the Verification Modal now)
    const simulateVerifyTask = (taskId: string, status: TaskVerificationStatus, actualPoints: number) => {
-        setAssignedTasks(prevTasks =>
-            prevTasks.map(task =>
-                task.id === taskId && task.isComplete && task.verificationStatus === 'pending'
+        setAssignedTasks(prevTasks => {
+            const taskToVerify = prevTasks.find(t => t.id === taskId);
+            if (!taskToVerify || !taskToVerify.isComplete || taskToVerify.verificationStatus !== 'pending') {
+                 // Task not found, not complete, or already verified/rejected
+                 console.warn("Attempted to verify task not in pending state or not found:", taskId);
+                 return prevTasks; // Return current state unchanged
+            }
+
+            const updatedTasks = prevTasks.map(task =>
+                task.id === taskId
                     ? {
                           ...task,
                           verificationStatus: status,
@@ -114,61 +125,72 @@ export default function App() {
                           actualPointsAwarded: actualPoints,
                       }
                     : task
-            )
-        );
+            );
 
-        if (status === 'verified' || status === 'partial') {
-            const task = assignedTasks.find(t => t.id === taskId);
-             if (task) {
-                 const studentId = task.studentId;
-                 const points = actualPoints;
+             if (status === 'verified' || status === 'partial') {
+                 // Award points only if verified or partial
+                  const studentId = taskToVerify.studentId;
+                  const points = actualPoints;
 
-                 setTicketBalances(prevBalances => ({
-                      ...prevBalances,
-                      [studentId]: (prevBalances[studentId] || 0) + points,
-                 }));
+                  // Update Ticket Balance (using functional update)
+                  setTicketBalances(prevBalances => ({
+                       ...prevBalances,
+                       [studentId]: (prevBalances[studentId] || 0) + points,
+                  }));
 
-                 setTicketHistory(prevHistory => [
-                     ...prevHistory,
-                      {
-                          id: `tx-${Date.now()}-${Math.random()}`,
+                  // Add Ticket History entry (using functional update)
+                  setTicketHistory(prevHistory => {
+                      const newTaskAwardTx: TicketTransaction = {
+                          id: `tx-${Date.now()}-${Math.random().toString(36).substring(7)}`, // More unique ID
                           studentId: studentId,
                           timestamp: new Date().toISOString(),
                           amount: points,
                           type: 'task_award',
                           sourceId: taskId,
-                          // Use imported helper
-                          notes: `Task: ${getTaskTitle(task.taskId, mockTaskLibrary)} (${status})`,
-                      }
-                 ]);
-             }
-        }
+                          notes: `Task: ${getTaskTitle(taskToVerify.taskId, mockTaskLibrary)} (${status})`,
+                      };
+                      return [
+                          newTaskAwardTx,
+                          ...prevHistory, // Add new transaction to the beginning
+                      ];
+                  });
 
-        Alert.alert("Task Verified", `Status: ${status}, Awarded: ${actualPoints} tickets`);
+                   // Alert is now handled in the modal or after modal closes
+                   // Alert.alert("Task Verified", `Status: ${status}, Awarded: ${actualPoints} tickets`);
+              } else {
+                   // If status is 'incomplete', perhaps add a history entry for rejection? (Optional)
+                   console.log(`Task ${taskId} marked as incomplete, no points awarded.`);
+                   // Alert is handled in the modal or after modal closes
+                   // Alert.alert("Task Marked Incomplete", `No tickets awarded for task ${taskId}.`);
+              }
 
-        // NOTE: The "Re-assign" logic is not included here, just the verification part.
+             return updatedTasks; // Return the updated task list state
+        });
    };
 
+
+    // Admin Action
     const simulateManualTicketAdjustment = (studentId: string, amount: number, notes: string) => {
         setTicketBalances(prevBalances => ({
              ...prevBalances,
              [studentId]: (prevBalances[studentId] || 0) + amount,
         }));
          setTicketHistory(prevHistory => [
-              ...prevHistory,
-              {
-                  id: `tx-${Date.now()}-${Math.random()}`,
+              { // Add new transaction to the beginning
+                  id: `tx-${Date.now()}-${Math.random().toString(36).substring(7)}`,
                   studentId: studentId,
                   timestamp: new Date().toISOString(),
                   amount: amount,
                   type: amount > 0 ? 'manual_add' : 'manual_subtract',
                   sourceId: `manual-${Date.now()}`,
                   notes: notes,
-              }
+              },
+             ...prevHistory,
          ]);
          Alert.alert("Balance Adjusted", `Adjusted ${amount} tickets for student ${studentId}.`);
     };
 
+    // Admin Action (or triggered by Admin UI)
      const simulateRedeemReward = (studentId: string, rewardId: string) => {
          const reward = mockRewardsCatalog.find(r => r.id === rewardId);
          if (!reward) {
@@ -183,9 +205,74 @@ export default function App() {
              return;
          }
 
+         // Deduct tickets via manual adjustment simulation
          simulateManualTicketAdjustment(studentId, -cost, `Redeemed: ${reward.name}`);
-         // TODO: Simulate triggering a public announcement here
-         Alert.alert("Reward Redeemed", `${reward.name} redeemed for ${studentId}! ${cost} tickets deducted.`);
+
+         // Simulate triggering a public announcement here
+         const redemptionAnnouncement: Announcement = {
+            id: `ann-redemption-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            type: 'redemption_celebration',
+            title: '🎉 Reward Redeemed! 🎉',
+            message: `${mockUsers[studentId]?.name || 'A student'} redeemed a ${reward.name}!`,
+            date: new Date().toISOString(),
+            relatedStudentId: studentId,
+         };
+         // In a real app, announcements would be managed in backend state/DB
+         // For this mock, we could add it to announcements state if announcements were mutable
+         // For now, just an alert suffices to simulate the announcement effect.
+         Alert.alert("Reward Redeemed", `${reward.name} redeemed for ${mockUsers[studentId]?.name || 'the student'}! ${cost} tickets deducted. A public announcement is simulated.`);
+     };
+
+    // Teacher/Admin Action (Simplified mock)
+    const simulateAssignTask = (taskId: string, studentId: string) => {
+        // In a real app, this would be more complex (selecting task, selecting students, setting dates, etc.)
+        // This mock assumes assigning an existing task library item to one student.
+        const taskDetails = mockTaskLibrary.find(t => t.id === taskId);
+        if (!taskDetails) {
+             Alert.alert("Error", `Task Library item with ID "${taskId}" not found.`);
+             return;
+        }
+
+        const newAssignedTask: AssignedTask = {
+             id: `assigned-${Date.now()}-${Math.random().toString(36).substring(7)}`, // Generate a unique ID
+             taskId: taskId,
+             studentId: studentId,
+             assignedById: currentUserId || 'admin-mock', // Assigning user (teacher or admin)
+             assignedDate: new Date().toISOString(),
+             isComplete: false,
+             verificationStatus: undefined,
+        };
+
+        setAssignedTasks(prevTasks => [...prevTasks, newAssignedTask]);
+        Alert.alert("Task Assigned", `${taskDetails.title} assigned to ${mockUsers[studentId]?.name || studentId}.`);
+        // In a real app, this would also trigger a push notification to the student/parent
+    };
+
+    // Teacher/Admin Action (Simplified mock reassign)
+     const simulateReassignTask = (originalTaskId: string, studentId: string) => {
+         // This mock simply re-assigns the *same* task library item to the student
+         // A real reassign might clone details from the *assigned task* or offer options.
+         // Using the original task ID here as per request.
+
+         const taskDetails = mockTaskLibrary.find(t => t.id === originalTaskId); // Assuming originalTaskId is a library ID here
+         if (!taskDetails) {
+              Alert.alert("Error", `Original Task ID "${originalTaskId}" not found in library.`);
+              return;
+         }
+
+         const newAssignedTask: AssignedTask = {
+             id: `assigned-re-${Date.now()}-${Math.random().toString(36).substring(7)}`, // Unique ID for re-assigned task
+             taskId: originalTaskId, // Use the original library task ID
+             studentId: studentId,
+             assignedById: currentUserId || 'admin-mock', // User re-assigning
+             assignedDate: new Date().toISOString(),
+             isComplete: false,
+             verificationStatus: undefined,
+         };
+
+         setAssignedTasks(prevTasks => [...prevTasks, newAssignedTask]);
+         Alert.alert("Task Re-assigned", `${taskDetails.title} re-assigned to ${mockUsers[studentId]?.name || studentId}.`);
+         // In a real app, this would also trigger a push notification
      };
 
 
@@ -252,8 +339,9 @@ export default function App() {
              rewardsCatalog: mockRewardsCatalog, // Static
               mockInstruments: mockInstruments, // Pass instruments list
              // Pass down mock action functions relevant to TeacherView
-             onVerifyTask: simulateVerifyTask,
-             onAssignTask: (taskId: string, studentId: string) => Alert.alert("Assign Task Mock", `Simulate assigning ${taskId} to ${studentId}`), // Placeholder
+             onVerifyTask: simulateVerifyTask, // Pass the updated verification function
+             onAssignTask: simulateAssignTask, // Pass the mock assign function
+             onReassignTaskMock: simulateReassignTask, // Pass the new mock reassign function
              // Pass helper to get full student mock data using STATE data
              getStudentData: getMockStudentData,
          };
@@ -313,8 +401,9 @@ export default function App() {
              // Pass down mock action functions relevant to AdminView
              onManualTicketAdjust: simulateManualTicketAdjustment,
              onRedeemReward: simulateRedeemReward,
-             onVerifyTask: simulateVerifyTask,
-             onAssignTask: (taskId: string, studentId: string) => Alert.alert("Assign Task Mock", `Simulate assigning ${taskId} to ${studentId}`), // Placeholder
+             onVerifyTask: simulateVerifyTask, // Admin can also verify tasks
+             onAssignTask: simulateAssignTask, // Admin can assign tasks
+             onReassignTaskMock: simulateReassignTask, // Admin can also reassign tasks
              // Mock functions for CRUD (User, Task Library, Rewards, Announcements, Instruments) - placeholder alerts
              onCreateUser: (userData: any) => Alert.alert("Mock Create User", JSON.stringify(userData)),
              onEditUser: (userId: string, userData: any) => Alert.alert("Mock Edit User", `${userId}: ${JSON.stringify(userData)}`),

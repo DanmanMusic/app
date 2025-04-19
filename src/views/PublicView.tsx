@@ -1,6 +1,6 @@
 // src/views/PublicView.tsx
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, FlatList } from 'react-native'; // Removed Image
+import { View, Text, StyleSheet, ScrollView, FlatList, Image } from 'react-native'; // Ensure Image is imported
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Import types for mock data
@@ -12,13 +12,16 @@ interface PublicViewProps {
     announcements: Announcement[];
 }
 
-// Render item for FlatList of Rewards (using View placeholder for image)
+// Render item for FlatList of Rewards (using Image component)
 const RewardItemPublic = ({ item }: { item: RewardItem }) => (
     <View style={styles.rewardItemContainer}>
-        {/* Reverted to placeholder View for the image */}
-         <View style={styles.rewardImagePlaceholder}>
-             <Text style={styles.rewardImagePlaceholderText}>Image</Text>
-         </View>
+         {/* Use Image component with source from item.imageUrl */}
+         {/* Error handling (onError) or loading indicator could be added in a real app */}
+         <Image
+             source={{ uri: item.imageUrl }}
+             style={styles.rewardImage} // Use a specific image style
+             resizeMode="contain" // Ensure the image fits well
+         />
         <View style={styles.rewardDetails}>
             <Text style={styles.rewardName}>{item.name}</Text>
             <Text style={styles.rewardCost}>{item.cost} Tickets</Text>
@@ -32,7 +35,7 @@ const AnnouncementItem = ({ item }: { item: Announcement }) => (
      <View style={styles.announcementItemContainer}>
         <Text style={styles.announcementTitle}>{item.title}</Text>
         <Text style={styles.announcementMessage}>{item.message}</Text>
-        <Text style={styles.announcementDate}>{new Date(item.date).toLocaleDateString()}</Text> {/* Format date */}
+        <Text style={styles.announcementDate}>{new Date(item.date).toLocaleDateString()}</Text>
     </View>
 );
 
@@ -40,33 +43,29 @@ const AnnouncementItem = ({ item }: { item: Announcement }) => (
 export const PublicView: React.FC<PublicViewProps> = ({ rewardsCatalog, announcements }) => {
     return (
         <SafeAreaView style={styles.safeArea}>
-            {/* Using ScrollView for the main container to allow scrolling of overall content */}
             <ScrollView style={styles.container}>
-                <Text style={styles.header}>Danmans Music School</Text> {/* Changed to School */}
+                <Text style={styles.header}>Danmans Music School</Text>
                 <Text style={styles.subheader}>Virtual Ticket Rewards Program</Text>
 
                 <Text style={styles.sectionTitle}>Rewards Catalog</Text>
-                {/* Using FlatList for performant scrolling of the rewards list */}
                 <FlatList
-                    data={rewardsCatalog}
+                    data={rewardsCatalog.sort((a,b) => a.cost - b.cost)} // Sort by cost
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => <RewardItemPublic item={item} />}
-                    // Optional: Add horizontal={true} and other props for a horizontal list
-                    ItemSeparatorComponent={() => <View style={{ height: 10 }} />} // Add spacing between items
+                    ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
                     ListEmptyComponent={() => <Text style={styles.emptyListText}>No rewards found.</Text>}
-                     scrollEnabled={false} // Disable inner scroll, let the parent ScrollView handle it
+                     scrollEnabled={false}
                      contentContainerStyle={styles.listContentContainer}
                 />
 
                  <Text style={styles.sectionTitle}>Announcements</Text>
-                 {/* Using FlatList for performant scrolling of the announcements list */}
                   <FlatList
-                    data={announcements}
+                    data={announcements.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())} // Sort by date
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => <AnnouncementItem item={item} />}
-                     ItemSeparatorComponent={() => <View style={{ height: 10 }} />} // Add spacing between items
+                     ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
                     ListEmptyComponent={() => <Text style={styles.emptyListText}>No announcements found.</Text>}
-                    scrollEnabled={false} // Disable inner scroll
+                    scrollEnabled={false}
                      contentContainerStyle={styles.listContentContainer}
                 />
 
@@ -80,7 +79,7 @@ export const PublicView: React.FC<PublicViewProps> = ({ rewardsCatalog, announce
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: '#f8f8f8', // A softer background color
+        backgroundColor: '#f8f8f8',
     },
     container: {
         flex: 1,
@@ -108,32 +107,25 @@ const styles = StyleSheet.create({
     },
     // Styles for Reward Items
     rewardItemContainer: {
-        flexDirection: 'row', // Arrange image and details horizontally
+        flexDirection: 'row',
         backgroundColor: '#fff',
         padding: 10,
         borderRadius: 8,
         borderWidth: 1,
         borderColor: '#ddd',
-        alignItems: 'center', // Vertically align content
+        alignItems: 'center',
     },
-     // Placeholder View styles for the image
-    rewardImagePlaceholder: {
-         width: 80,
+     rewardImage: { // New style for reward item image (copied from PupilView with minor size change if needed)
+         width: 80, // Slightly larger for public view? Or keep same? Let's keep 80x80 for public
          height: 80,
          marginRight: 15,
-         borderRadius: 4, // Slightly rounded corners for images
-         backgroundColor: '#eee', // Light grey background
-         justifyContent: 'center',
-         alignItems: 'center',
+         borderRadius: 4,
          borderWidth: 1,
          borderColor: '#ccc',
-    },
-     rewardImagePlaceholderText: {
-         fontSize: 12,
-         color: '#777',
      },
+    // Removed rewardImagePlaceholder and rewardImagePlaceholderText
     rewardDetails: {
-        flex: 1, // Allow details to take up remaining space
+        flex: 1,
         justifyContent: 'center',
     },
     rewardName: {
@@ -143,7 +135,7 @@ const styles = StyleSheet.create({
     },
     rewardCost: {
         fontSize: 15,
-        color: 'gold', // Keep gold for tickets
+        color: 'gold',
         fontWeight: '600',
         marginVertical: 3,
     },
@@ -181,12 +173,12 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     listContentContainer: {
-        paddingBottom: 5, // Add a little padding at the bottom of the lists
+        paddingBottom: 5,
     },
      footer: {
         textAlign: 'center',
         marginTop: 40,
-        marginBottom: 20, // Add padding at the very bottom of the scroll view
+        marginBottom: 20,
         fontSize: 16,
         color: '#666',
      }

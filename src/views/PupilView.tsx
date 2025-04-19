@@ -1,6 +1,6 @@
 // src/views/PupilView.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, FlatList, Button, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, FlatList, Button, Image, TouchableOpacity, Alert } from 'react-native'; // Ensure Image is imported
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Import types for mock data
@@ -13,7 +13,7 @@ import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
 import { Instrument } from '../mocks/mockInstruments';
 
 // Import helpers
-import { getTaskTitle, getInstrumentNames } from '../utils/helpers'; // IMPORT HELPERS
+import { getTaskTitle, getInstrumentNames } from '../utils/helpers';
 
 
 // Export the interface so App.tsx (and others) can import it
@@ -41,6 +41,9 @@ const AssignedTaskItem = ({ task, onMarkComplete, taskLibrary }: { task: Assigne
         {task.actualPointsAwarded !== undefined && task.verificationStatus !== 'pending' && (
              <Text style={styles.taskItemPoints}>Awarded: {task.actualPointsAwarded ?? 0} Tickets</Text>
         )}
+        {task.completedDate && <Text style={styles.taskItemDetail}>Completed: {new Date(task.completedDate).toLocaleDateString()}</Text>}
+        {task.verifiedDate && task.verificationStatus !== 'pending' && <Text style={styles.taskItemDetail}>Verified: {new Date(task.verifiedDate).toLocaleDateString()}</Text>}
+
 
         {!task.isComplete && (
              // Call the passed down onMarkComplete prop
@@ -52,25 +55,28 @@ const AssignedTaskItem = ({ task, onMarkComplete, taskLibrary }: { task: Assigne
     </View>
 );
 
-// Render item for FlatList of Rewards (updated eligibility text)
+// Render item for FlatList of Rewards (updated to use Image)
 const RewardItemPupil = ({ item, currentBalance, isGoal }: { item: RewardItem; currentBalance: number; isGoal: boolean; }) => {
     const canEarn = currentBalance >= item.cost;
     const ticketsNeeded = item.cost - currentBalance;
 
     return (
         <View style={[styles.rewardItemContainer, canEarn ? styles.rewardItemAffordable : {}, isGoal ? styles.rewardItemGoal : {}]}>
-             {/* Placeholder View for the image */}
-             <View style={styles.rewardImagePlaceholder}>
-                 <Text style={styles.rewardImagePlaceholderText}>Image</Text>
-             </View>
+             {/* Use Image component with source from item.imageUrl */}
+             {/* Error handling (onError) or loading indicator could be added in a real app */}
+             <Image
+                 source={{ uri: item.imageUrl }}
+                 style={styles.rewardImage} // Use a specific image style
+                 resizeMode="contain" // Ensure the image fits well
+             />
             <View style={styles.rewardDetails}>
                 <Text style={styles.rewardName}>{item.name}</Text>
                 <Text style={styles.rewardCost}>{item.cost} Tickets</Text>
                  {item.description && <Text style={styles.rewardDescription}>{item.description}</Text>}
                 {canEarn ? (
-                    <Text style={styles.rewardEligibilityAvailable}>Available Now!</Text> // Updated text
+                    <Text style={styles.rewardEligibilityAvailable}>Available Now!</Text>
                 ) : (
-                    <Text style={styles.rewardEligibilityNeeded}>Need {ticketsNeeded} more tickets</Text> // Updated text
+                    <Text style={styles.rewardEligibilityNeeded}>Need {ticketsNeeded} more tickets</Text>
                 )}
             </View>
         </View>
@@ -104,7 +110,7 @@ export const AnnouncementItemPupil = ({ item }: { item: Announcement }) => (
 );
 
 
-export const PupilView: React.FC<PupilViewProps> = ({ user, balance, assignedTasks, history, rewardsCatalog, announcements, taskLibrary, mockInstruments, onMarkTaskComplete }) => { // Destructure onMarkTaskComplete and mockInstruments
+export const PupilView: React.FC<PupilViewProps> = ({ user, balance, assignedTasks, history, rewardsCatalog, announcements, taskLibrary, mockInstruments, onMarkTaskComplete }) => {
 
      // State for the selected goal item ID (mock)
      const [goalRewardId, setGoalRewardId] = useState<string | null>(null);
@@ -142,14 +148,26 @@ export const PupilView: React.FC<PupilViewProps> = ({ user, balance, assignedTas
         <SafeAreaView style={styles.safeArea}>
             <ScrollView style={styles.container}>
                 <Text style={styles.header}>Welcome, {user.name}!</Text>
-                <Text style={styles.instrumentText}>Instrument(s): {getInstrumentNames(user.instrumentIds, mockInstruments)}</Text> {/* Use imported helper */}
+                <Text style={styles.instrumentText}>Instrument(s): {getInstrumentNames(user.instrumentIds, mockInstruments)}</Text>
                 <Text style={styles.balance}>Current Tickets: {balance}</Text>
 
                 {/* My Goal Section */}
                 <Text style={styles.sectionTitle}>My Goal</Text>
                  {goalReward ? (
                      <View style={styles.goalContainer}>
-                         <Text style={styles.goalText}>Saving for: {goalReward.name} ({goalReward.cost} Tickets)</Text>
+                         {/* Use Image for goal item if available */}
+                         <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 10}}>
+                              <Image
+                                  source={{ uri: goalReward.imageUrl }}
+                                   style={styles.goalImage} // Specific style for goal image
+                                   resizeMode="contain"
+                              />
+                             <View style={{flex: 1, marginLeft: 10}}>
+                                 <Text style={styles.goalText}>Saving for: {goalReward.name}</Text>
+                                 <Text style={{fontSize: 14, color: '#555'}}>{goalReward.cost} Tickets</Text>
+                             </View>
+                         </View>
+
                          <Text style={styles.progressText}>Progress: {balance} / {goalReward.cost} ({progressTowardGoal.toFixed(1)}%)</Text>
                          <View style={styles.progressBarBackground}>
                             <View style={[styles.progressBarFill, { width: `${Math.min(progressTowardGoal, 100)}%` }]} />
@@ -318,10 +336,17 @@ const styles = StyleSheet.create({
         borderColor: '#007bff',
         marginBottom: 20,
     },
+     goalImage: { // New style for goal image
+         width: 50,
+         height: 50,
+         borderRadius: 4,
+         borderWidth: 1,
+         borderColor: '#ddd',
+     },
      goalText: {
          fontSize: 16,
          fontWeight: '600',
-         marginBottom: 8,
+         // Adjusted margin below if using flex row
      },
      progressText: {
          fontSize: 14,
@@ -365,6 +390,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: 'green',
     },
+     taskItemDetail: { // Added style for dates etc.
+         fontSize: 12,
+         color: '#666',
+         marginBottom: 2,
+     },
      pendingNote: {
          fontSize: 13,
          color: 'orange',
@@ -389,21 +419,16 @@ const styles = StyleSheet.create({
          borderWidth: 2,
          backgroundColor: '#eef7ff',
       },
-     rewardImagePlaceholder: {
-         width: 60,
-         height: 60,
+     rewardImage: { // New style for reward item image
+         width: 60, // Match previous placeholder size
+         height: 60, // Match previous placeholder size
          marginRight: 15,
          borderRadius: 4,
-         backgroundColor: '#eee',
-         justifyContent: 'center',
-         alignItems: 'center',
+         // backgroundColor: '#eee', // Background isn't needed if image loads
          borderWidth: 1,
          borderColor: '#ccc',
-    },
-     rewardImagePlaceholderText: {
-         fontSize: 10,
-         color: '#777',
      },
+    // Removed rewardImagePlaceholder and rewardImagePlaceholderText
     rewardDetails: {
         flex: 1,
         justifyContent: 'center',

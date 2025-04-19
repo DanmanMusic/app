@@ -16,13 +16,17 @@ These are the major areas and tasks involved in building the application based o
 
 *   [x] Set up Mock Data: Create representative JavaScript objects/arrays to simulate the data structure for various users (including pupil instruments), sample tasks, ticket data, rewards, announcements, and the instrument list.
 *   [x] Implement Development View Selector: Create a simple, temporary mechanism visible only in development builds that allows switching between simulating different user roles and navigating to key screens.
-*   [ ] Build Core Views (Using Mock Data): Develop the React Native screens and components for each user role's main functional areas:
+*   [x] Build Core Views (Using Mock Data): Develop the React Native screens and components for each user role's main functional areas:
     *   [x] Public / Non-Logged-in View: Implement the public Rewards Catalog display.
     *   [x] Pupil View: Dashboard/Home (display assigned instrument(s)), Assigned Task List, Rewards Catalog, Ticket Transaction History, Announcements/Challenge Tasks, (Optional) Wishlist/Goal setting UI.
-    *   [ ] Teacher View: Student List (display student instrument(s)), Task Assignment, Pending Verification List, Task Verification screen, Access to view student details (Task List, History, Balance, Catalog, Instruments).
-    *   [ ] Parent View: Family Dashboard/Student selector (display child instrument(s)), Navigation to Pupil view, "Add Another Student" UI.
-    *   [ ] Admin View: Placeholder/simplified UI for key management workflows, including Instrument List management.
-*   [ ] Refine UI/UX: Iterate on the visual design, layout, and user flow based on internal review or feedback.
+    *   [x] Teacher View: Student List (display student instrument(s)), Task Assignment, Pending Verification List, Task Verification screen, Access to view student details (Task List, History, Balance, Catalog, Instruments).
+    *   [x] Parent View: Family Dashboard/Student selector (display child instrument(s)), Navigation to Pupil view, "Add Another Student" UI.
+    *   [x] Admin View: Placeholder/simplified UI for key management workflows, including Instrument List management.
+*   [x] Refine UI/UX: Iterate on the visual design, layout, and user flow based on internal review or feedback.
+    *   [x] Implement multi-step task verification modal with status selection, point adjustment via slider, and re-assign option (Note: Added `@react-native-community/slider` dependency).
+    *   [x] Replace placeholder images with actual Image components for Rewards Catalog items in Pupil, Public, and Admin views.
+    *   [x] Break down large AdminView.tsx file into smaller section components for better organization and readability, including extracting the student detail view and creating shared styles for Admin components.
+    *   [x] Refine mock button labels in Admin views to clarify implemented vs. placeholder actions.
 
 ### [ ] 2. Backend Development and Integration
 
