@@ -2,26 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput, Platform, ScrollView } from 'react-native';
 
-// Import NEW user type
 import { UserRole, User } from '../../types/userTypes';
-// No longer need Instrument or SimplifiedStudent imports here
 
 import { colors } from '../../styles/colors';
 import { appSharedStyles } from '../../styles/appSharedStyles';
-// import { adminSharedStyles } from './adminSharedStyles'; // Not strictly needed here
 
-// Import NEW helper
 import { getUserDisplayName } from '../../utils/helpers';
-
 
 interface EditUserModalProps {
   visible: boolean;
   userToEdit: User | null; // Expect full User object
   onClose: () => void;
-  // Use specific signatures matching App.tsx's simulation functions
   onEditUser: (userId: string, userData: Partial<Omit<User, 'id'>>) => void;
   onDeleteUser: (userId: string) => void;
-  allPupils: User[]; // Expect full User objects for lookup
+  // allPupils prop removed
 }
 
 const EditUserModal: React.FC<EditUserModalProps> = ({
@@ -30,85 +24,74 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   onClose,
   onEditUser,
   onDeleteUser,
-  allPupils, // Receive full pupil list for display lookup
 }) => {
-  // State for editable fields based on the new User structure
+  // State only for editable fields
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [nickname, setNickname] = useState('');
-  const [linkedStudentIds, setLinkedStudentIds] = useState<string[]>([]); // For Teacher/Parent roles
+  // Nickname state removed
+  // LinkedStudentIds state removed
 
   // Update state when userToEdit changes or modal becomes visible
   useEffect(() => {
-    if (visible && userToEdit) {
-      // Populate state from the user object passed in
+    // Only populate if user is Admin, Teacher, or Pupil (exclude Parent editing here)
+    if (visible && userToEdit && userToEdit.role !== 'parent') {
       setFirstName(userToEdit.firstName);
       setLastName(userToEdit.lastName);
-      setNickname(userToEdit.nickname || ''); // Handle optional nickname (default to empty string)
-      setLinkedStudentIds(userToEdit.linkedStudentIds || []); // Handle optional linked IDs
+      // Nickname update removed
+      // Linking update removed
     } else if (!visible) {
-      // Reset state when modal is hidden to prevent showing old data briefly
+      // Reset state when modal is hidden
       setFirstName('');
       setLastName('');
-      setNickname('');
-      setLinkedStudentIds([]);
+      // Nickname reset removed
+      // Linking reset removed
     }
-  }, [visible, userToEdit]); // Dependencies are correct
+  }, [visible, userToEdit]);
 
   // Handler for saving changes
   const handleSaveChanges = () => {
-    // Basic validation
-    if (!userToEdit || !firstName || !lastName) {
-       alert('Error - First Name and Last Name cannot be empty.');
+    // Ensure user exists and is not a parent
+    if (!userToEdit || userToEdit.role === 'parent') {
+      alert('Error - Cannot edit this user type or user not found.');
+      return;
+    }
+    if (!firstName || !lastName) {
+      alert('Error - First Name and Last Name cannot be empty.');
       return;
     }
 
-    // Construct the partial update object with new fields
+    // Construct the partial update object - only names
     const updatedUserData: Partial<Omit<User, 'id'>> = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      // Only include nickname if it has a value (trimmed), otherwise ensure it's potentially removed if cleared
-      nickname: nickname.trim() ? nickname.trim() : undefined,
+      // Nickname update removed
+      // Linking update removed
     };
 
-    // Include linked students if applicable to the role
-    if (userToEdit.role === 'teacher' || userToEdit.role === 'parent') {
-       updatedUserData.linkedStudentIds = linkedStudentIds;
-    }
-
-    // Call the prop passed from AdminView (which calls the one from App.tsx)
     onEditUser(userToEdit.id, updatedUserData);
-    // Note: Closing the modal is handled by the wrapper function in AdminView now
   };
 
   // Handler for deleting the user
   const handleDelete = () => {
     if (!userToEdit) return;
-    // Call the prop passed from AdminView (which calls the one from App.tsx)
-    // This prop in App.tsx currently shows a simple browser alert.
-    // A confirmation modal *could* be triggered here instead if preferred,
-    // but for now, we rely on the simple alert from App.tsx.
+    // Deletion might still apply to Parents even if editing doesn't
+    // We can keep this simple for now and allow delete for any role passed in
     onDeleteUser(userToEdit.id);
-     // Note: Closing the modal is handled by the wrapper function in AdminView now
   };
 
-   // Mock handler for linking students (using simple alert for now)
-   const handleAddLinkedStudent = () => {
-      alert('Mock Link Student ID');
-    // Could use Alert.prompt or a selection modal later
-   };
+  // Student linking/unlinking handlers removed
 
-   // Handler for unlinking a student
-    const handleRemoveLinkedStudent = (idToRemove: string) => {
-       setLinkedStudentIds(prev => prev.filter(id => id !== idToRemove));
-    };
-
-  // Don't render if no user to edit
-  if (!userToEdit) {
+  // Don't render if no user or if user is a parent
+  if (!userToEdit || userToEdit.role === 'parent') {
+    // Silently don't show modal for parents, or could show a message
+    // If visible is true but userToEdit is parent, onClose might be needed
+    // useEffect handles the case where userToEdit becomes parent while modal is open
+    // For simplicity, if the intent is just *not to open* for parents, AdminView handles that.
+    // If it could be opened then switched, we might need an explicit return or message here.
+    // Let's assume AdminView prevents opening for Parent role.
     return null;
   }
 
-  // Get display name for the title using the helper
   const currentUserDisplayName = getUserDisplayName(userToEdit);
 
   return (
@@ -116,16 +99,15 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
       animationType="slide"
       transparent={true}
       visible={visible}
-      onRequestClose={onClose} // Allow closing via system back/escape
+      onRequestClose={onClose}
     >
       <View style={modalStyles.centeredView}>
         <View style={modalStyles.modalView}>
-           {/* Use display name in title */}
           <Text style={modalStyles.modalTitle}>Edit User: {currentUserDisplayName}</Text>
           <Text style={modalStyles.subTitle}>Role: {userToEdit.role.toUpperCase()} (ID: {userToEdit.id})</Text>
 
           <ScrollView style={modalStyles.scrollView}>
-             {/* Inputs for the new name structure */}
+            {/* Inputs for names */}
             <Text style={modalStyles.label}>First Name:</Text>
             <TextInput
               style={modalStyles.input}
@@ -144,47 +126,16 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
               placeholderTextColor={colors.textLight}
             />
 
-            <Text style={modalStyles.label}>Nickname (Optional):</Text>
-            <TextInput
-              style={modalStyles.input}
-              value={nickname}
-              onChangeText={setNickname}
-              placeholder="Enter Nickname"
-              placeholderTextColor={colors.textLight}
-            />
+            {/* Nickname Input Removed */}
 
-
-            {/* Section for managing linked students (for Teacher/Parent roles) */}
-            {(userToEdit.role === 'teacher' || userToEdit.role === 'parent') && (
-              <View style={modalStyles.linkedSection}>
-                <Text style={modalStyles.label}>Linked Students:</Text>
-                {linkedStudentIds.length > 0 ? (
-                  linkedStudentIds.map(id => {
-                    // Find the full pupil object from the list passed in
-                    const student = allPupils.find(p => p.id === id);
-                    return (
-                      <View key={id} style={modalStyles.linkedItemRow}>
-                         {/* Use helper to display the linked student's name */}
-                        <Text style={modalStyles.linkedItemText}>{student ? getUserDisplayName(student) : id}</Text>
-                        <Button title="Unlink (Mock)" onPress={() => handleRemoveLinkedStudent(id)} color={colors.warning} />
-                      </View>
-                    );
-                  })
-                ) : (
-                  <Text style={appSharedStyles.emptyListText}>No students linked.</Text>
-                )}
-                <View style={{ marginTop: 10 }}>
-                   <Button title="Link Another Student (Mock)" onPress={handleAddLinkedStudent} />
-                </View>
-              </View>
-            )}
+            {/* Section for managing linked students Removed */}
 
           </ScrollView>
 
           {/* Action Buttons */}
           <View style={modalStyles.buttonContainer}>
-            <Button title="Save Changes (Mock)" onPress={handleSaveChanges} />
-            <Button title="Delete User (Mock)" onPress={handleDelete} color={colors.danger} />
+            <Button title="Save Changes" onPress={handleSaveChanges} />
+            <Button title="Delete User" onPress={handleDelete} color={colors.danger} />
           </View>
           <View style={modalStyles.footerButton}>
             <Button title="Cancel" onPress={onClose} color={colors.secondary} />
@@ -195,7 +146,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   );
 };
 
-// Modal styles (can be reused or refined)
+// Styles (Keep existing, ensure they work for simplified layout)
 const modalStyles = StyleSheet.create({
   centeredView: {
     flex: 1,
@@ -246,7 +197,7 @@ const modalStyles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: 'bold',
-    marginTop: 10, // Adjusted margin
+    marginTop: 10,
     marginBottom: 5,
     color: colors.textPrimary,
     alignSelf: 'flex-start',
@@ -260,16 +211,16 @@ const modalStyles = StyleSheet.create({
     fontSize: 16,
     color: colors.textPrimary,
     backgroundColor: colors.backgroundPrimary,
-    marginBottom: 5, // Adjusted margin
+    marginBottom: 5,
   },
-  linkedSection: {
+  linkedSection: { // Keep style definition in case it's needed later elsewhere
     marginTop: 15,
     paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: colors.borderSecondary,
     width: '100%',
   },
-  linkedItemRow: {
+  linkedItemRow: { // Keep style definition
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -280,7 +231,7 @@ const modalStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderSecondary,
   },
-  linkedItemText: {
+  linkedItemText: { // Keep style definition
     flex: 1,
     marginRight: 10,
     fontSize: 15,
@@ -297,5 +248,6 @@ const modalStyles = StyleSheet.create({
     marginTop: 10,
   },
 });
+
 
 export default EditUserModal;

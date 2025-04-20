@@ -3,7 +3,7 @@
 ## Gemini Rules/Notes
 
 - When requested to print out file content, provide the full content of the file while be mindful to inflate sections of code commented out during iterations.
-- During development and absolute hard rule of no comments in any code.  If code has comments please remove -- we'll address comments as we get closer to release.
+- Absolute hard rule of no comments in any code.  If code has comments please remove!
 - Assume developers are experts but are open to suggestions for better libraries, approaches, or solutions to technical challenges.
 - This project is in an early development phase. Backward compatibility is not a requirement (e.g., database schema changes are acceptable).
 

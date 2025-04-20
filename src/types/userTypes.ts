@@ -1,7 +1,7 @@
 // src/types/userTypes.ts
 
 // Define the possible roles
-export type UserRole = 'admin' | 'teacher' | 'pupil' | 'parent';
+export type UserRole = 'admin' | 'teacher' | 'pupil' | 'parent'; // Keep parent role definition
 
 // Define the detailed User interface
 export interface User {
@@ -9,10 +9,13 @@ export interface User {
   role: UserRole;
   firstName: string;
   lastName: string;
-  nickname?: string; // Optional nickname
+  nickname?: string; // Optional nickname (Can still exist, just not created in modal)
 
   // Role-specific optional fields
   instrumentIds?: string[]; // For Pupil (Refers to Instrument.id)
-  linkedStudentIds?: string[]; // For Teacher and Parent
-  parentLinkQrData?: string; // For Pupil (mock data placeholder)
+  // linkedStudentIds?: string[]; // For Teacher and Parent (REMOVED - Link managed on Pupil or implicitly for Parent)
+  linkedTeacherIds?: string[]; // For Pupil (Refers to User.id where role='teacher')
+  // parentLinkQrData?: string; // REMOVED - Tied to implicit parent link mechanism
+  // --- Add field for Parent role if needed ---
+  linkedStudentIds?: string[]; // For Parent ONLY (implicitly linked, not set via modal)
 }
