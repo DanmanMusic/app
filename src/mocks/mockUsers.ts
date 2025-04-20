@@ -27,7 +27,7 @@ export const mockUsers: Record<string, User> = {
   } as User,
   'student-1': {
     id: 'student-1',
-    role: 'pupil',
+    role: 'student',
     firstName: 'Alice',
     lastName: 'Wonder',
     instrumentIds: ['inst-1', 'inst-5'],
@@ -36,7 +36,7 @@ export const mockUsers: Record<string, User> = {
   } as User,
   'student-2': {
     id: 'student-2',
-    role: 'pupil',
+    role: 'student',
     firstName: 'Bob',
     lastName: 'Builder',
     nickname: 'Bobbie',
@@ -46,7 +46,7 @@ export const mockUsers: Record<string, User> = {
   } as User,
   'student-3': {
     id: 'student-3',
-    role: 'pupil',
+    role: 'student',
     firstName: 'Charlie',
     lastName: 'Builder',
     instrumentIds: ['inst-3'],

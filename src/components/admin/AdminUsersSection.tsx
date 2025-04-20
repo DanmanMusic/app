@@ -22,7 +22,7 @@ interface AdminUsersSectionProps {
   mockInstruments: Instrument[];
   onCreateUser: (userData: Omit<User, 'id'>) => void;
   onViewManageUser: (userId: string, role: UserRole) => void;
-  onAssignTask: (taskId: string, studentId: string) => void; // Assuming this is still needed for pupil item
+  onAssignTask: (taskId: string, studentId: string) => void; // Assuming this is still needed for student item
   taskLibrary: TaskLibraryItem[];
   isCreateUserModalVisible: boolean;
   setIsCreateUserModalVisible: (visible: boolean) => void;
@@ -49,27 +49,27 @@ const AdminUserItem = ({
 // ***** DEFINITION RESTORED *****
 // Renders Pupils using the SimplifiedStudent structure (name = display name)
 const AdminPupilItem = ({
-  pupil,
+  student,
   mockInstruments,
   onViewManage,
   onAssignTask, // Keep prop if needed for the button
 }: {
-  pupil: SimplifiedStudent;
+  student: SimplifiedStudent;
   mockInstruments: Instrument[];
   onViewManage: (pupilId: string, role: UserRole) => void;
   onAssignTask: (studentId: string) => void; // Define prop type
 }) => (
   <View style={appSharedStyles.itemContainer}>
-    <Text style={appSharedStyles.itemTitle}>{pupil.name}</Text>
+    <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
     <Text style={appSharedStyles.itemDetailText}>
-      Instrument(s): {getInstrumentNames(pupil.instrumentIds, mockInstruments)}
+      Instrument(s): {getInstrumentNames(student.instrumentIds, mockInstruments)}
     </Text>
     <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
-      Balance: {pupil.balance} Tickets
+      Balance: {student.balance} Tickets
     </Text>
     <View style={adminSharedStyles.itemActions}>
-      <Button title="View Details" onPress={() => onViewManage(pupil.id, 'pupil')} />
-      <Button title="Assign Task (Mock)" onPress={() => onAssignTask(pupil.id)} />
+      <Button title="View Details" onPress={() => onViewManage(student.id, 'student')} />
+      <Button title="Assign Task (Mock)" onPress={() => onAssignTask(student.id)} />
     </View>
   </View>
 );
@@ -115,7 +115,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
         renderItem={({ item }) => (
           // ***** USAGE RESTORED *****
           <AdminPupilItem
-            pupil={item}
+            student={item}
             mockInstruments={mockInstruments}
             onViewManage={onViewManageUser}
             onAssignTask={handleAssignTaskToStudent} // Pass the handler to the item

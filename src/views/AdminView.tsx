@@ -20,7 +20,7 @@ import { TicketTransaction } from '../mocks/mockTickets';
 import { Announcement } from '../mocks/mockAnnouncements';
 import { Instrument } from '../mocks/mockInstruments';
 import { getTaskTitle, getInstrumentNames, getUserDisplayName } from '../utils/helpers';
-import { PupilViewProps, TicketHistoryItem } from './PupilView';
+import { PupilViewProps, TicketHistoryItem } from './StudentView';
 import { AdminDashboardSection } from '../components/admin/AdminDashboardSection';
 import { AdminUsersSection } from '../components/admin/AdminUsersSection';
 import { AdminTasksSection } from '../components/admin/AdminTasksSection';
@@ -83,7 +83,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
   // --- Handlers ---
   const handleViewManageUser = (userId: string, role: UserRole) => {
     // console.log('[AdminView] handleViewManageUser called for user:', userId, 'role:', role); // Keep logs if needed
-    if (role === 'pupil') {
+    if (role === 'student') {
       setViewingStudentId(userId);
     } else if (role === 'teacher' || role === 'admin') {
       const selectedUser = allUsers.find(u => u.id === userId);
@@ -172,7 +172,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
                    data={pendingVerifications.sort((a, b) => new Date(a.completedDate || a.assignedDate).getTime() - new Date(b.completedDate || b.assignedDate).getTime())}
                    keyExtractor={item => item.id}
                    renderItem={({ item }) => {
-                     const student = allUsers.find(s => s.id === item.studentId && s.role === 'pupil');
+                     const student = allUsers.find(s => s.id === item.studentId && s.role === 'student');
                      const taskDetail = taskLibrary.find(t => t.id === item.taskId);
                      const baseTickets = taskDetail?.baseTickets ?? 0;
                      const completedDateTime = item.completedDate ? new Date(item.completedDate).toLocaleString() : 'N/A';

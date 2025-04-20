@@ -19,7 +19,7 @@ export const adminSharedStyles = StyleSheet.create({
   },
   // sectionTitle moved to appSharedStyles
   sectionSubTitle: {
-    // Used for sub-sections like Pupil/Teacher lists in Users
+    // Used for sub-sections like Student/Teacher lists in Users
     fontSize: 16,
     fontWeight: 'bold',
     marginTop: 15,

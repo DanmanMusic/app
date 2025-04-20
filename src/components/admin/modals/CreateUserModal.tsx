@@ -11,7 +11,7 @@ import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { getUserDisplayName } from '../../../utils/helpers'; // Import getUserDisplayName
 
 // Define creatable roles
-const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'pupil'];
+const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'student'];
 
 interface CreateUserModalProps {
   visible: boolean;
@@ -34,9 +34,9 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const [lastName, setLastName] = useState('');
   // Nickname state removed
   const [role, setRole] = useState<UserRole | ''>('');
-  const [instrumentIds, setInstrumentIds] = useState<string[]>([]); // For Pupil role
+  const [instrumentIds, setInstrumentIds] = useState<string[]>([]); // For Student role
   // Renamed state: linkedTeacherIds
-  const [linkedTeacherIds, setLinkedTeacherIds] = useState<string[]>([]); // For Pupil role
+  const [linkedTeacherIds, setLinkedTeacherIds] = useState<string[]>([]); // For Student role
 
   // Effect to reset form state
   useEffect(() => {
@@ -64,7 +64,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
       lastName: lastName.trim(),
       // Nickname removed
       // Conditionally add role-specific properties
-      ...(role === 'pupil' && {
+      ...(role === 'student' && {
         instrumentIds: instrumentIds,
         linkedTeacherIds: linkedTeacherIds, // Add linked teacher IDs for pupils
       }),
@@ -141,9 +141,9 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             </View>
 
             {/* Conditional sections based on selected role */}
-            {role === 'pupil' && (
+            {role === 'student' && (
               <View style={modalStyles.roleSpecificSection}>
-                <Text style={modalStyles.roleSectionTitle}>Pupil Details</Text>
+                <Text style={modalStyles.roleSectionTitle}>Student Details</Text>
 
                 {/* Instruments Section */}
                 <Text style={modalStyles.label}>Instrument IDs:</Text>

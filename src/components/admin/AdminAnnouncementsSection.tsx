@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Button, FlatList } from 'react-native';
 
 import { Announcement } from '../../mocks/mockAnnouncements';
-import { AnnouncementItemPupil } from '../../views/PupilView'; // Reusing Pupil view for display
+import { AnnouncementItemPupil } from '../../views/StudentView'; // Reusing Student view for display
 
 import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
@@ -90,7 +90,7 @@ export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps>
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <View style={appSharedStyles.itemContainer}>
-            {/* Reusing Pupil view item for display is fine for mock */}
+            {/* Reusing Student view item for display is fine for mock */}
             <AnnouncementItemPupil item={item} />
             <View style={adminSharedStyles.itemActions}>
               {/* Wire up Edit/Delete buttons */}

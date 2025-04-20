@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 
 // --- Imports ---
-import { PupilViewProps, TicketHistoryItem } from '../../views/PupilView';
+import { PupilViewProps, TicketHistoryItem } from '../../views/StudentView';
 import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
 import { Instrument } from '../../mocks/mockInstruments';
 import { User } from '../../types/userTypes';

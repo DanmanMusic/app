@@ -16,7 +16,7 @@ import { Instrument } from '../mocks/mockInstruments';
 import { getTaskTitle, getInstrumentNames, getUserDisplayName } from '../utils/helpers';
 
 // PupilViewProps uses the new User type indirectly
-import { PupilViewProps } from './PupilView';
+import { PupilViewProps } from './StudentView';
 
 // Shared styles and colors
 import { appSharedStyles } from '../styles/appSharedStyles';

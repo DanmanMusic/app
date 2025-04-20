@@ -51,12 +51,12 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
       setNickname(userToEdit.nickname || '');
       setOriginalHadNickname(!!userToEdit.nickname);
 
-      // Set pupil-specific fields if applicable
-      if (userToEdit.role === 'pupil') {
+      // Set student-specific fields if applicable
+      if (userToEdit.role === 'student') {
         setInstrumentIds(userToEdit.instrumentIds || []);
         setLinkedTeacherIds(userToEdit.linkedTeacherIds || []);
       } else {
-        // Reset pupil fields if editing a non-pupil
+        // Reset student fields if editing a non-student
         setInstrumentIds([]);
         setLinkedTeacherIds([]);
       }
@@ -81,8 +81,8 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
       nickname: nickname.trim() ? nickname.trim() : undefined,
     };
 
-    // *** ADD PUPIL-SPECIFIC FIELDS if role is pupil ***
-    if (userToEdit.role === 'pupil') {
+    // *** ADD PUPIL-SPECIFIC FIELDS if role is student ***
+    if (userToEdit.role === 'student') {
       updatedUserData.instrumentIds = instrumentIds;
       updatedUserData.linkedTeacherIds = linkedTeacherIds;
     }
@@ -92,7 +92,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
     // Closing is handled by the parent
   };
 
-  // Mock handlers for adding/removing pupil links
+  // Mock handlers for adding/removing student links
   const handleAddInstrument = () => { alert('Mock Add Instrument'); };
   const handleRemoveInstrument = (idToRemove: string) => { setInstrumentIds(prev => prev.filter(id => id !== idToRemove)); };
   const handleAddTeacher = () => { alert('Mock Link Teacher'); };
@@ -119,8 +119,8 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
             <TextInput style={modalStyles.input} value={lastName} onChangeText={setLastName} placeholder="Enter Last Name" placeholderTextColor={colors.textLight}/>
             {originalHadNickname && ( <> <Text style={modalStyles.label}>Nickname:</Text> <TextInput style={modalStyles.input} value={nickname} onChangeText={setNickname} placeholderTextColor={colors.textLight}/> </> )}
 
-            {/* --- Pupil Specific Sections --- */}
-            {userToEdit.role === 'pupil' && (
+            {/* --- Student Specific Sections --- */}
+            {userToEdit.role === 'student' && (
               <>
                 {/* Instruments Section */}
                 <View style={modalStyles.roleSpecificSection}>
@@ -150,7 +150,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
                 </View>
               </>
             )}
-            {/* --- End Pupil Specific Sections --- */}
+            {/* --- End Student Specific Sections --- */}
 
           </ScrollView>
 

@@ -15,24 +15,24 @@ These are the major areas and tasks involved in building the application based o
 
 ### [x] 1. Frontend First: Mock UI & View Prototyping
 
-- [x] Refine User Data Model: Split `name` into `firstName`, `lastName`, `nickname` (optional). Define structure in `src/types/userTypes.ts`. Update mocks, helpers (`getUserDisplayName`), and all views/components using user names. Update Create/Edit User modals. Add `linkedTeacherIds` to Pupil.
-- [x] Set up Mock Data: Create representative JavaScript objects/arrays to simulate the data structure for various users (including pupil instruments), sample tasks, ticket data, rewards, announcements, and the instrument list.
+- [x] Refine User Data Model: Split `name` into `firstName`, `lastName`, `nickname` (optional). Define structure in `src/types/userTypes.ts`. Update mocks, helpers (`getUserDisplayName`), and all views/components using user names. Update Create/Edit User modals. Add `linkedTeacherIds` to Student.
+- [x] Set up Mock Data: Create representative JavaScript objects/arrays to simulate the data structure for various users (including student instruments), sample tasks, ticket data, rewards, announcements, and the instrument list.
 - [x] Implement Development View Selector: Create a simple, temporary mechanism visible only in development builds that allows switching between simulating different user roles and navigating to key screens.
 - [x] Build Core Views (Using Mock Data): Develop the React Native screens and components for each user role's main functional areas:
   - [x] Public / Non-Logged-in View: Implement the public Rewards Catalog display.
-  - [x] Pupil View: Dashboard/Home (display assigned instrument(s)), Assigned Task List, Rewards Catalog, Ticket Transaction History, Announcements/Challenge Tasks, (Optional) Wishlist/Goal setting UI.
+  - [x] Student View: Dashboard/Home (display assigned instrument(s)), Assigned Task List, Rewards Catalog, Ticket Transaction History, Announcements/Challenge Tasks, (Optional) Wishlist/Goal setting UI.
   - [x] Teacher View: Student List (display student instrument(s)), Task Assignment, Pending Verification List, Task Verification screen, Access to view student details (Task List, History, Balance, Catalog, Instruments).
-  - [x] Parent View: Family Dashboard/Student selector (display child instrument(s)), Navigation to Pupil view, "Add Another Student" UI.
+  - [x] Parent View: Family Dashboard/Student selector (display child instrument(s)), Navigation to Student view, "Add Another Student" UI.
   - [x] Admin View: Placeholder/simplified UI for key management workflows, including Instrument List management.
 - [x] Refine UI/UX: Iterate on the visual design, layout, and user flow based on internal review or feedback.
   - [x] Implement multi-step task verification modal with status selection, point adjustment via slider, and re-assign option (Note: Added `@react-native-community/slider` dependency).
-  - [x] Replace placeholder images with actual Image components for Rewards Catalog items in Pupil, Public, and Admin views.
+  - [x] Replace placeholder images with actual Image components for Rewards Catalog items in Student, Public, and Admin views.
   - [x] Break down large AdminView.tsx file into smaller section components for better organization and readability, including extracting the student detail view and creating shared styles for Admin components.
   - [x] Refine mock button labels in Admin views to clarify implemented vs. placeholder actions.
   - [x] Consolidate color palette and common styles into `src/styles/colors.ts` and `src/styles/appSharedStyles.ts`.
   - [x] Refactor views (`App.tsx`, `PupilView.tsx`, `TeacherView.tsx`, `ParentView.tsx`, `PublicView.tsx`) and key components (`TaskVerificationModal.tsx`, `src/components/admin/*`) to use shared styles and colors.
-  - [x] Implement Mock UI for "Create User" via a modal in the Admin Users section (Excluding Parent role, moved Teacher linking to Pupil).
-  - [x] Implement mock UI flow for Editing/Deleting Users: Refined Edit User Modal (conditional nickname, pupil fields, removed delete), moved state/rendering to `AdminStudentDetailView` to fix launch timing. Delete confirmed via detail view.
+  - [x] Implement Mock UI for "Create User" via a modal in the Admin Users section (Excluding Parent role, moved Teacher linking to Student).
+  - [x] Implement mock UI flow for Editing/Deleting Users: Refined Edit User Modal (conditional nickname, student fields, removed delete), moved state/rendering to `AdminStudentDetailView` to fix launch timing. Delete confirmed via detail view.
   - [ ] Implement Mock UI for other User Interactions: Replace placeholder alerts for Admin CRUD operations on other entities (Task Library items, Rewards, Announcements, Instruments) and other flows (e.g., Teacher/Parent "Add Another Student" flows) with actual mock UI flows.
     - [ ] **Admin View:**
       - [ ] Implement mock UI flow for Creating/Editing/Deleting Task Library Items.
@@ -52,7 +52,7 @@ These are the major areas and tasks involved in building the application based o
     - [ ] **Parent View:**
       - [ ] Implement mock UI flow for "Add Another Student" (simulating QR scan input).
       - [ ] Implement mock screen/list for "View Full History" (from student profile view).
-    - [ ] **Pupil View:**
+    - [ ] **Student View:**
       - [ ] Implement mock UI flow for "Set/Change Goal" (selecting a reward).
       - [ ] Implement mock screen/list for "View Full History".
       - [ ] Implement mock screen/list for "View All Announcements".
@@ -61,10 +61,10 @@ These are the major areas and tasks involved in building the application based o
 ### [ ] 2. Backend Development and Integration
 
 - [ ] Choose and set up backend technology.
-- [ ] Design and implement the database schema, including a table/collection for Instruments and the relationship between Pupils and Instruments (1-to-many), and Pupils and Teachers (many-to-many via `linkedTeacherIds` on Pupil).
+- [ ] Design and implement the database schema, including a table/collection for Instruments and the relationship between Pupils and Instruments (1-to-many), and Pupils and Teachers (many-to-many via `linkedTeacherIds` on Student).
 - [ ] Develop backend APIs for all functional areas (User Auth, CRUD, Linking; Task management; Ticket management; Rewards Catalog; Announcements; Instrument Management - CRUD).
-    - [ ] **Data Integrity:** Ensure deleting a **Teacher** removes references from the `linkedTeacherIds` array on all associated **Pupil** records.
-- [ ] Update APIs to handle Pupil instrument assignments and allow filtering tasks/students by instrument.
+    - [ ] **Data Integrity:** Ensure deleting a **Teacher** removes references from the `linkedTeacherIds` array on all associated **Student** records.
+- [ ] Update APIs to handle Student instrument assignments and allow filtering tasks/students by instrument.
 - [ ] Integrate Frontend with Backend: Replace mock data in UI components with actual API calls.
 - [ ] Implement authentication flow connecting UI to backend auth endpoints.
 

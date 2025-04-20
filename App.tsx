@@ -33,7 +33,7 @@ import { mockInstruments, Instrument } from './src/mocks/mockInstruments';
 import { getTaskTitle, getInstrumentNames, getUserDisplayName, getInstrumentIconSource } from './src/utils/helpers';
 
 import { PublicView } from './src/views/PublicView';
-import { PupilView, PupilViewProps } from './src/views/PupilView';
+import { PupilView, PupilViewProps } from './src/views/StudentView';
 import { TeacherView } from './src/views/TeacherView';
 import { ParentView } from './src/views/ParentView';
 import { AdminView } from './src/views/AdminView';
@@ -72,7 +72,7 @@ const DevelopmentViewSelector = ({
           title={`Login as ${getUserDisplayName(user)} (${user.role})`}
           onPress={() => {
             let viewingStudentId: string | undefined;
-            if (user.role === 'pupil') {
+            if (user.role === 'student') {
               viewingStudentId = user.id;
             } else if (
               user.role === 'parent' &&
@@ -437,7 +437,7 @@ export default function App() {
 
   const getMockStudentData = (studentId: string): PupilViewProps | undefined => {
     const studentUser = currentMockUsers[studentId]; // Use state
-    if (!studentUser || studentUser.role !== 'pupil') return undefined;
+    if (!studentUser || studentUser.role !== 'student') return undefined;
 
     return {
       user: studentUser,
@@ -461,11 +461,11 @@ export default function App() {
       case 'public':
         return <PublicView rewardsCatalog={mockRewardsCatalog} announcements={announcements} />; // Use state
 
-      case 'pupil':
-        if (!currentUserId) return <Text>Error: Pupil ID not set in mock state.</Text>;
+      case 'student':
+        if (!currentUserId) return <Text>Error: Student ID not set in mock state.</Text>;
         const pupilData = getMockStudentData(currentUserId);
         if (!pupilData)
-          return <Text>Error: Mock data not found for pupil ID: {currentUserId}</Text>;
+          return <Text>Error: Mock data not found for student ID: {currentUserId}</Text>;
         return <PupilView {...pupilData} />;
 
       case 'teacher':
@@ -473,7 +473,7 @@ export default function App() {
         const teacherUser = currentMockUsers[currentUserId];
         if (!teacherUser) return <Text>Error: Teacher user data not found.</Text>;
 
-        const allPupilUsers = usersFromState.filter(u => u.role === 'pupil');
+        const allPupilUsers = usersFromState.filter(u => u.role === 'student');
 
         const teacherMockData = {
           user: teacherUser,
@@ -485,7 +485,7 @@ export default function App() {
             balance: ticketBalances[student.id] || 0,
           })),
           studentsLinkedToTeacher: allPupilUsers
-            .filter(u => u.linkedTeacherIds?.includes(teacherUser.id)) // Check pupil's linkedTeacherIds
+            .filter(u => u.linkedTeacherIds?.includes(teacherUser.id)) // Check student's linkedTeacherIds
             .map(student => ({
               id: student.id,
               // Use helper for display name
@@ -496,7 +496,7 @@ export default function App() {
           pendingVerifications: assignedTasks.filter(
             task => task.isComplete && task.verificationStatus === 'pending' &&
                    (teacherUser.linkedStudentIds?.includes(task.studentId) || // Legacy check (REMOVE LATER)
-                    usersFromState.find(u => u.id === task.studentId && u.role === 'pupil')?.linkedTeacherIds?.includes(teacherUser.id)) // New Check
+                    usersFromState.find(u => u.id === task.studentId && u.role === 'student')?.linkedTeacherIds?.includes(teacherUser.id)) // New Check
           ),
           taskLibrary: mockTaskLibrary,
           allAssignedTasks: assignedTasks,
@@ -516,7 +516,7 @@ export default function App() {
          if (!parentUser) return <Text>Error: Parent user data not found.</Text>;
 
         const linkedStudents = usersFromState.filter(
-          u => parentUser.linkedStudentIds?.includes(u.id) && u.role === 'pupil'
+          u => parentUser.linkedStudentIds?.includes(u.id) && u.role === 'student'
         );
 
         const parentMockData = {
@@ -544,7 +544,7 @@ export default function App() {
         const adminUser = currentMockUsers[currentUserId];
         if (!adminUser) return <Text>Error: Admin user data not found.</Text>;
 
-        const allPupilUsersAdmin = usersFromState.filter(u => u.role === 'pupil');
+        const allPupilUsersAdmin = usersFromState.filter(u => u.role === 'student');
         const allTeachers = usersFromState.filter(u => u.role === 'teacher');
         const allParents = usersFromState.filter(u => u.role === 'parent');
 

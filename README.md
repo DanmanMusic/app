@@ -12,8 +12,8 @@ The application supports multiple user roles with distinct capabilities:
 
 - **Admin (Store Manager):** Full control over user management, rewards catalog, task library, and ticket adjustments/redemptions.
 - **Teacher (Danmans Employee):** Assigns tasks to students, verifies task completion, and awards tickets. Can view student progress.
-- **Pupil (Music Student):** Views assigned tasks, marks tasks as complete, tracks virtual ticket balance, and browses the rewards catalog.
-- **Parent (of Pupil):** Can link to one or more children's profiles, monitor their progress, mark tasks complete on their behalf, and view their ticket balance and history.
+- **Student (Music Student):** Views assigned tasks, marks tasks as complete, tracks virtual ticket balance, and browses the rewards catalog.
+- **Parent (of Student):** Can link to one or more children's profiles, monitor their progress, mark tasks complete on their behalf, and view their ticket balance and history.
 
 Core functionalities include:
 

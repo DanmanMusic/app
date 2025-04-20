@@ -211,7 +211,7 @@ export const PupilView: React.FC<PupilViewProps> = ({
         new Date(a.verifiedDate || a.completedDate || '').getTime()
     );
 
-  // Generate pupil's display name
+  // Generate student's display name
   const pupilDisplayName = getUserDisplayName(user);
 
   // --- Render All Announcements View ---
@@ -243,7 +243,7 @@ export const PupilView: React.FC<PupilViewProps> = ({
     );
   }
 
-  // --- Render Main Pupil View ---
+  // --- Render Main Student View ---
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
       <ScrollView style={appSharedStyles.container}>
