@@ -1,40 +1,35 @@
 // src/views/TeacherView.tsx
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Button, Alert, FlatList } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Button, Alert, FlatList, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Import types for mock data
 import { User } from '../mocks/mockUsers';
 import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
 import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
 import { RewardItem } from '../mocks/mockRewards';
 import { Instrument } from '../mocks/mockInstruments';
 
-// Import helpers
 import { getTaskTitle, getInstrumentNames } from '../utils/helpers';
 
-// Import PupilViewProps if reusing PupilView for viewing student profile,
-// or define necessary interfaces if rendering simplified data directly.
-import { PupilViewProps } from './PupilView'; // Assuming PupilView is in the same directory
+import { PupilViewProps } from './PupilView';
 
-// Import the new verification modal component
-import TaskVerificationModal from '../components/TaskVerificationModal';
+import { appSharedStyles } from '../styles/appSharedStyles';
+import { colors } from '../styles/colors';
+import { adminSharedStyles } from '../components/admin/adminSharedStyles';
 
-// Simplified student data for lists in Teacher/Parent/Admin views
+
 interface SimplifiedStudent {
   id: string;
   name: string;
-  instrumentIds?: string[]; // Include instrument IDs
+  instrumentIds?: string[];
   balance: number;
 }
 
-// Define a simplified structure for Assigned Tasks when listing for Teacher/Admin
-// Keeping this interface but it's not strictly used for rendering in the list itself
 interface AssignedTaskSimplified {
   id: string;
   taskId: string;
   studentId: string;
-  studentName?: string; // Added for easier display
+  studentName?: string;
   assignedDate: string;
   isComplete: boolean;
   completedDate?: string;
@@ -44,43 +39,51 @@ interface AssignedTaskSimplified {
 
 interface TeacherViewProps {
   user: User;
-  allStudents: SimplifiedStudent[]; // Simplified list of all students (for assignment/reference)
-  studentsLinkedToTeacher: SimplifiedStudent[]; // Simplified list of students linked to THIS teacher (for quick access)
-  pendingVerifications: AssignedTask[]; // Tasks needing verification
+  allStudents: SimplifiedStudent[];
+  studentsLinkedToTeacher: SimplifiedStudent[];
+  pendingVerifications: AssignedTask[];
   taskLibrary: TaskLibraryItem[];
-  allAssignedTasks: AssignedTask[]; // Full list of assigned tasks (potentially for 'View All' screen)
-  rewardsCatalog: RewardItem[]; // Needed if teacher can view catalog? (SPEC says yes)
-  mockInstruments: Instrument[]; // Pass instruments list
-  // Mock functions for actions
+  allAssignedTasks: AssignedTask[];
+  rewardsCatalog: RewardItem[];
+  mockInstruments: Instrument[];
   onVerifyTask: (taskId: string, status: TaskVerificationStatus, points: number) => void;
-  onAssignTask: (taskId: string, studentId: string) => void; // Simplified mock assign
-  onReassignTaskMock: (taskId: string, studentId: string) => void; // Mock reassign action, passed to modal
-  // Assuming Admin/Teacher can also delete/edit assigned tasks? (SPEC is unclear, add mock placeholders)
-  onEditAssignedTask?: (assignedTaskId: string, updates: any) => void; // Mock placeholder
-  onDeleteAssignedTask?: (assignedTaskId: string) => void; // Mock placeholder
-  getStudentData: (studentId: string) => PupilViewProps | undefined; // Helper to get full student mock data for drill-down
+  onAssignTask: (taskId: string, studentId: string) => void;
+  onReassignTaskMock: (taskId: string, studentId: string) => void;
+  onInitiateVerificationModal: (task: AssignedTask) => void;
+
+  onEditAssignedTask?: (assignedTaskId: string, updates: any) => void;
+  onDeleteAssignedTask?: (assignedTaskId: string) => void;
+  getStudentData: (studentId: string) => PupilViewProps | undefined;
 }
 
-// Render item for FlatList of Pending Verifications - Modified to open modal
 const PendingVerificationItem = ({
   task,
   studentName,
   taskTitle,
+  taskLibrary,
   onInitiateVerification,
 }: {
   task: AssignedTask;
   studentName: string;
   taskTitle: string;
-  onInitiateVerification: (task: AssignedTask) => void; // New prop to trigger modal
+  taskLibrary: TaskLibraryItem[];
+  onInitiateVerification: (task: AssignedTask) => void;
 }) => {
+   const taskDetail = taskLibrary.find(t => t.id === task.taskId);
+   const baseTickets = taskDetail?.baseTickets ?? 0;
+    const completedDateTime = task.completedDate
+        ? new Date(task.completedDate).toLocaleString()
+        : 'N/A';
+
   return (
-    <View style={styles.verificationItem}>
-      <Text style={styles.verificationTitle}>Task: {taskTitle}</Text>
-      <Text>Student: {studentName}</Text>
-      <Text>
-        Completed: {task.completedDate ? new Date(task.completedDate).toLocaleDateString() : 'N/A'}
+    <View style={adminSharedStyles.pendingItem}>
+      <Text style={adminSharedStyles.pendingTitle}>Task: {taskTitle}</Text>
+      <Text style={adminSharedStyles.pendingDetail}>Student: {studentName}</Text>
+      <Text style={adminSharedStyles.pendingDetail}>
+        Potential Tickets: {baseTickets}
       </Text>
-      {/* Button to open the verification modal */}
+      <Text style={adminSharedStyles.pendingDetail}>Completed: {completedDateTime}</Text>
+
       <View style={{ marginTop: 10 }}>
         <Button title="Verify Task" onPress={() => onInitiateVerification(task)} />
       </View>
@@ -88,7 +91,6 @@ const PendingVerificationItem = ({
   );
 };
 
-// Render item for FlatList of Students (My Students / All Students)
 const StudentListItem = ({
   student,
   mockInstruments,
@@ -98,26 +100,24 @@ const StudentListItem = ({
   student: SimplifiedStudent;
   mockInstruments: Instrument[];
   onViewProfile: (studentId: string) => void;
-  onAssignTask: (studentId: string) => void; // Simplified handler for assigning to THIS student
+  onAssignTask: (studentId: string) => void;
 }) => (
-  <View style={styles.studentItem}>
-    <Text style={styles.studentName}>{student.name}</Text>
-    <Text>Instrument(s): {getInstrumentNames(student.instrumentIds, mockInstruments)}</Text>
-    <Text>Balance: {student.balance} Tickets</Text>
+  <View style={appSharedStyles.itemContainer}>
+    <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
+    <Text style={appSharedStyles.itemDetailText}>Instrument(s): {getInstrumentNames(student.instrumentIds, mockInstruments)}</Text>
+    <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>Balance: {student.balance} Tickets</Text>
     <View style={styles.studentActions}>
       <Button title="View Profile (Mock)" onPress={() => onViewProfile(student.id)} />
-      <Button title="Assign Task (Mock)" onPress={() => onAssignTask(student.id)} />{' '}
-      {/* Trigger assign flow for this student */}
+      <Button title="Assign Task (Mock)" onPress={() => onAssignTask(student.id)} />
     </View>
   </View>
 );
 
-// Render item for FlatList of Task Library Items
 const TaskLibraryItemTeacher = ({ item }: { item: TaskLibraryItem }) => (
-  <View style={styles.taskLibraryItem}>
-    <Text style={styles.taskLibraryItemTitle}>{item.title}</Text>
-    <Text>{item.description}</Text>
-    <Text style={styles.taskLibraryItemPoints}>{item.basePoints} Base Points</Text>
+  <View style={appSharedStyles.itemContainer}>
+    <Text style={appSharedStyles.itemTitle}>{item.title}</Text>
+    <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
+    <Text style={[appSharedStyles.itemDetailText, styles.taskLibraryItemTickets]}>{item.baseTickets} Base Tickets</Text>
   </View>
 );
 
@@ -127,41 +127,22 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
   studentsLinkedToTeacher,
   pendingVerifications,
   taskLibrary,
-  allAssignedTasks, // Not currently used in this basic view, but available
+  allAssignedTasks,
   rewardsCatalog,
   mockInstruments,
   onVerifyTask,
   onAssignTask,
-  onReassignTaskMock, // Destructure the new prop
+  onReassignTaskMock,
+  onInitiateVerificationModal,
   getStudentData,
 }) => {
-  // State for managing sections within Teacher View
   const [viewingSection, setViewingSection] = React.useState<
     'dashboard' | 'students' | 'tasks' | 'catalog' | 'studentProfile'
   >('dashboard');
-  // State for drilling down to a specific student's full view
   const [viewingStudentId, setViewingStudentId] = React.useState<string | null>(null);
   const viewingStudentData = viewingStudentId ? getStudentData(viewingStudentId) : null;
 
-  // State for the verification modal
-  const [isVerificationModalVisible, setIsVerificationModalVisible] = React.useState(false);
-  const [taskToVerify, setTaskToVerify] = React.useState<AssignedTask | null>(null);
 
-  // --- Mock Handlers for UI actions ---
-
-  // Handler to open the verification modal
-  const handleInitiateVerification = (task: AssignedTask) => {
-    setTaskToVerify(task);
-    setIsVerificationModalVisible(true);
-  };
-
-  // Handler to close the verification modal
-  const handleCloseVerificationModal = () => {
-    setIsVerificationModalVisible(false);
-    setTaskToVerify(null); // Clear the task being verified
-  };
-
-  // Handler for the "Assign Task" button next to a student
   const handleAssignTaskToStudent = (studentId: string) => {
     Alert.prompt(
       'Mock Assign Task',
@@ -184,22 +165,18 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
     );
   };
 
-  // Handler for initiating a generic "Assign Task" flow (not specific to a student yet)
   const handleInitiateAssignTask = () => {
     Alert.alert(
       'Mock Assign Task Flow',
       'Simulate initiating assignment: First select student(s), then select a task.'
     );
-    // setViewingSection('students'); // Option: navigate to student list for selection
   };
 
-  // --- Render Logic ---
 
-  // If we are viewing a specific student's profile (mock drill-down)
   if (viewingStudentId && viewingStudentData) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.headerContainer}>
+      <SafeAreaView style={appSharedStyles.safeArea}>
+        <View style={appSharedStyles.headerContainer}>
           <Button
             title="← Back to Teacher"
             onPress={() => {
@@ -207,17 +184,17 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
               setViewingSection('students');
             }}
           />
-          <Text style={styles.header}>{viewingStudentData.user.name}'s Profile</Text>
-          <View style={{ width: 50 }} /> {/* Spacer */}
+          <Text style={appSharedStyles.header}>{viewingStudentData.user.name}'s Profile</Text>
+          <View style={{ width: 50 }} />
         </View>
-        <ScrollView style={styles.container}>
-          <Text style={styles.sectionTitle}>Student Details</Text>
-          <Text>Name: {viewingStudentData.user.name}</Text>
-          <Text>
+        <ScrollView style={appSharedStyles.container}>
+          <Text style={appSharedStyles.sectionTitle}>Student Details</Text>
+          <Text style={appSharedStyles.itemDetailText}>Name: {viewingStudentData.user.name}</Text>
+          <Text style={appSharedStyles.itemDetailText}>
             Instrument(s):{' '}
             {getInstrumentNames(viewingStudentData.user.instrumentIds, mockInstruments)}
           </Text>
-          <Text>Balance: {viewingStudentData.balance} Tickets</Text>
+          <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>Balance: {viewingStudentData.balance} Tickets</Text>
 
           <View style={{ marginTop: 20, marginBottom: 20, alignItems: 'flex-start' }}>
             <Button
@@ -226,7 +203,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
             />
           </View>
 
-          <Text style={styles.sectionTitle}>
+          <Text style={appSharedStyles.sectionTitle}>
             Assigned Tasks ({viewingStudentData.assignedTasks.length})
           </Text>
           {viewingStudentData.assignedTasks.length > 0 ? (
@@ -236,9 +213,9 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
               )}
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
-                <View style={styles.taskItem}>
-                  <Text style={styles.taskItemTitle}>{getTaskTitle(item.taskId, taskLibrary)}</Text>
-                  <Text style={styles.taskItemStatus}>
+                <View style={adminSharedStyles.taskItem}>
+                  <Text style={adminSharedStyles.taskItemTitle}>{getTaskTitle(item.taskId, taskLibrary)}</Text>
+                  <Text style={adminSharedStyles.taskItemStatus}>
                     Status:{' '}
                     {item.isComplete
                       ? item.verificationStatus === 'pending'
@@ -247,47 +224,54 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
                       : 'Assigned'}
                   </Text>
                   {item.completedDate && (
-                    <Text style={styles.taskItemDetail}>
+                    <Text style={appSharedStyles.itemDetailText}>
                       Completed: {new Date(item.completedDate).toLocaleDateString()}
                     </Text>
                   )}
-                  {item.verifiedDate && (
-                    <Text style={styles.taskItemDetail}>
+                  {item.verifiedDate && item.verificationStatus !== 'pending' && (
+                    <Text style={appSharedStyles.itemDetailText}>
                       Verified: {new Date(item.verifiedDate).toLocaleDateString()}
                     </Text>
                   )}
                   {item.actualPointsAwarded !== undefined &&
                     item.verificationStatus !== 'pending' && (
-                      <Text style={styles.taskItemDetail}>
-                        Awarded: {item.actualPointsAwarded ?? 0} points
+                      <Text style={adminSharedStyles.taskItemTickets}>
+                        Awarded: {item.actualPointsAwarded ?? 0} Tickets
                       </Text>
                     )}
                   {item.isComplete && item.verificationStatus === 'pending' && (
-                    <Text style={styles.pendingNote}>Awaiting verification...</Text>
+                    <Text style={adminSharedStyles.pendingNote}>Awaiting verification...</Text>
                   )}
-                  <View style={styles.assignedTaskActions}>
-                    <Button
-                      title="Delete (Mock)"
-                      onPress={() =>
-                        Alert.alert(
-                          'Mock Delete Task',
-                          `Simulate deleting assigned task ${item.id}`
-                        )
-                      }
-                      color="red"
-                    />
-                  </View>
+                   <View style={adminSharedStyles.assignedTaskActions}>
+                      {item.isComplete && item.verificationStatus === 'pending' && (
+                          <Button
+                              title="Verify (Mock)"
+                              onPress={() => onInitiateVerificationModal(item)}
+                          />
+                      )}
+                       <Button
+                           title="Delete (Mock)"
+                           onPress={() =>
+                               Alert.alert(
+                                   'Mock Delete Task',
+                                   `Simulate deleting assigned task ${item.id}`
+                               )
+                           }
+                           color={colors.danger}
+                       />
+                   </View>
                 </View>
               )}
               scrollEnabled={false}
               ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
               ListEmptyComponent={() => (
-                <Text style={styles.emptyListText}>No tasks assigned.</Text>
+                <Text style={appSharedStyles.emptyListText}>No tasks assigned.</Text>
               )}
             />
           ) : (
-            <Text style={styles.emptyListText}>No tasks assigned.</Text>
+            <Text style={appSharedStyles.emptyListText}>No tasks assigned.</Text>
           )}
+
 
           <View
             style={{
@@ -321,36 +305,33 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
     );
   }
 
-  // Default Teacher Dashboard View
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.header}>Teacher Dashboard: {user.name}</Text>
+    <SafeAreaView style={appSharedStyles.safeArea}>
+      <View style={appSharedStyles.headerContainer}>
+        <Text style={appSharedStyles.header}>Teacher Dashboard: {user.name}</Text>
       </View>
-      <ScrollView style={styles.container}>
-        {/* Simple Navigation between Teacher sections */}
+      <ScrollView style={appSharedStyles.container}>
         <View style={styles.teacherNav}>
           <Button
             title="Dashboard"
             onPress={() => setViewingSection('dashboard')}
-            color={viewingSection === 'dashboard' ? 'blue' : 'gray'}
+            color={viewingSection === 'dashboard' ? colors.primary : colors.secondary}
           />
           <Button
             title="My Students"
             onPress={() => setViewingSection('students')}
-            color={viewingSection === 'students' ? 'blue' : 'gray'}
+            color={viewingSection === 'students' ? colors.primary : colors.secondary}
           />
           <Button
             title="Tasks"
             onPress={() => setViewingSection('tasks')}
-            color={viewingSection === 'tasks' ? 'blue' : 'gray'}
+            color={viewingSection === 'tasks' ? colors.primary : colors.secondary}
           />
         </View>
 
-        {/* Render content based on selected section */}
         {viewingSection === 'dashboard' && (
           <View>
-            <Text style={styles.sectionTitle}>
+            <Text style={appSharedStyles.sectionTitle}>
               Pending Verifications ({pendingVerifications.length})
             </Text>
             {pendingVerifications.length > 0 ? (
@@ -369,27 +350,26 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
                       task={item}
                       studentName={student?.name || 'Unknown Student'}
                       taskTitle={getTaskTitle(item.taskId, taskLibrary)}
-                      onInitiateVerification={handleInitiateVerification} // Pass the handler to open modal
+                      taskLibrary={taskLibrary}
+                      onInitiateVerification={onInitiateVerificationModal}
                     />
                   );
                 }}
                 scrollEnabled={false}
                 ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
                 ListEmptyComponent={() => (
-                  <Text style={styles.emptyListText}>No tasks pending verification.</Text>
+                  <Text style={appSharedStyles.emptyListText}>No tasks pending verification.</Text>
                 )}
               />
             ) : (
-              <Text style={styles.emptyListText}>No tasks pending verification.</Text>
+              <Text style={appSharedStyles.emptyListText}>No tasks pending verification.</Text>
             )}
-
-            {/* Add other dashboard elements like recent activity, stats etc. */}
           </View>
         )}
 
         {viewingSection === 'students' && (
           <View>
-            <Text style={styles.sectionTitle}>My Students ({studentsLinkedToTeacher.length})</Text>
+            <Text style={appSharedStyles.sectionTitle}>My Students ({studentsLinkedToTeacher.length})</Text>
             {studentsLinkedToTeacher.length > 0 ? (
               <FlatList
                 data={studentsLinkedToTeacher.sort((a, b) => a.name.localeCompare(b.name))}
@@ -405,11 +385,11 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
                 scrollEnabled={false}
                 ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
                 ListEmptyComponent={() => (
-                  <Text style={styles.emptyListText}>No students linked to you.</Text>
+                  <Text style={appSharedStyles.emptyListText}>No students linked to you.</Text>
                 )}
               />
             ) : (
-              <Text style={styles.emptyListText}>
+              <Text style={appSharedStyles.emptyListText}>
                 No students linked to you. Ask an Admin to link your students.
               </Text>
             )}
@@ -430,13 +410,13 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
 
         {viewingSection === 'tasks' && (
           <View>
-            <Text style={styles.sectionTitle}>Task Management</Text>
+            <Text style={appSharedStyles.sectionTitle}>Task Management</Text>
 
             <View style={{ alignItems: 'flex-start', marginBottom: 20 }}>
               <Button title="Assign Task (Mock Flow)" onPress={handleInitiateAssignTask} />
             </View>
 
-            <Text style={styles.sectionSubTitle}>Task Library ({taskLibrary.length})</Text>
+            <Text style={adminSharedStyles.sectionSubTitle}>Task Library ({taskLibrary.length})</Text>
             {taskLibrary.length > 0 ? (
               <FlatList
                 data={taskLibrary.sort((a, b) => a.title.localeCompare(b.title))}
@@ -445,74 +425,20 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
                 scrollEnabled={false}
                 ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
                 ListEmptyComponent={() => (
-                  <Text style={styles.emptyListText}>No task library items found.</Text>
+                  <Text style={appSharedStyles.emptyListText}>No task library items found.</Text>
                 )}
               />
             ) : (
-              <Text style={styles.emptyListText}>Task library is empty.</Text>
+              <Text style={appSharedStyles.emptyListText}>Task library is empty.</Text>
             )}
           </View>
         )}
       </ScrollView>
-
-      {/* Render the verification modal */}
-      <TaskVerificationModal
-        visible={isVerificationModalVisible}
-        task={taskToVerify}
-        taskLibrary={taskLibrary}
-        onClose={handleCloseVerificationModal}
-        onVerifyTask={onVerifyTask} // Pass the prop from App.tsx
-        onReassignTaskMock={onReassignTaskMock} // Pass the new prop from App.tsx
-      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
-  },
-  container: {
-    flex: 1,
-    padding: 15,
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingTop: 10,
-    paddingBottom: 5,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  header: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    flexShrink: 1,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    paddingBottom: 5,
-  },
-  sectionSubTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 15,
-    marginBottom: 10,
-    color: '#555',
-  },
-  emptyListText: {
-    textAlign: 'center',
-    color: '#777',
-    marginTop: 5,
-  },
   teacherNav: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -520,100 +446,16 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     gap: 8,
   },
-  // Verification Item Styles - Simplified as action is now in modal
-  verificationItem: {
-    backgroundColor: '#fff',
-    padding: 12,
-    marginBottom: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'orange',
-  },
-  verificationTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  // verificationActions removed as buttons are in modal
-  // Student List Item Styles (Teacher View)
-  studentItem: {
-    backgroundColor: '#fff',
-    padding: 12,
-    marginBottom: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  studentName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
   studentActions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 10,
     gap: 5,
   },
-  // Task Library Item Styles (Teacher View)
-  taskLibraryItem: {
-    backgroundColor: '#fff',
-    padding: 12,
-    marginBottom: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  taskLibraryItemTitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginBottom: 3,
-  },
-  taskLibraryItemPoints: {
+  taskLibraryItemTickets: {
     fontSize: 13,
-    color: '#555',
+    color: colors.textSecondary,
     marginTop: 5,
     fontStyle: 'italic',
-  },
-  // Assigned Task Styles (reused when viewing student profile from Teacher)
-  taskItem: {
-    backgroundColor: '#fff',
-    padding: 10,
-    marginBottom: 8,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  taskItemTitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginBottom: 3,
-  },
-  taskItemStatus: {
-    fontSize: 13,
-    color: '#555',
-    marginBottom: 3,
-  },
-  taskItemDetail: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 2,
-  },
-  taskItemPoints: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: 'green',
-  },
-  pendingNote: {
-    fontSize: 12,
-    color: 'orange',
-    fontStyle: 'italic',
-    marginTop: 5,
-  },
-  assignedTaskActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 8,
-    gap: 5,
   },
 });

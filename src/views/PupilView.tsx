@@ -10,10 +10,9 @@ import {
   Image,
   TouchableOpacity,
   Alert,
-} from 'react-native'; // Ensure Image is imported
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Import types for mock data
 import { User } from '../mocks/mockUsers';
 import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
 import { TicketTransaction } from '../mocks/mockTickets';
@@ -22,10 +21,11 @@ import { Announcement } from '../mocks/mockAnnouncements';
 import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
 import { Instrument } from '../mocks/mockInstruments';
 
-// Import helpers
 import { getTaskTitle, getInstrumentNames } from '../utils/helpers';
 
-// Export the interface so App.tsx (and others) can import it
+import { appSharedStyles } from '../styles/appSharedStyles';
+import { colors } from '../styles/colors';
+
 export interface PupilViewProps {
   user: User;
   balance: number;
@@ -34,13 +34,10 @@ export interface PupilViewProps {
   rewardsCatalog: RewardItem[];
   announcements: Announcement[];
   taskLibrary: TaskLibraryItem[];
-  mockInstruments: Instrument[]; // Pass instruments list
-  // Mock function for marking task complete, passed down from App.tsx
+  mockInstruments: Instrument[];
   onMarkTaskComplete: (taskId: string) => void;
-  // Add other mock action functions relevant to PupilView later
 }
 
-// Render item for FlatList of Assigned Tasks (uses onMarkComplete prop)
 const AssignedTaskItem = ({
   task,
   onMarkComplete,
@@ -50,8 +47,8 @@ const AssignedTaskItem = ({
   onMarkComplete: (taskId: string) => void;
   taskLibrary: TaskLibraryItem[];
 }) => (
-  <View style={styles.taskItemContainer}>
-    <Text style={styles.taskItemTitle}>{getTaskTitle(task.taskId, taskLibrary)}</Text>
+  <View style={appSharedStyles.itemContainer}>
+    <Text style={appSharedStyles.itemTitle}>{getTaskTitle(task.taskId, taskLibrary)}</Text>
     <Text style={styles.taskItemStatus}>
       Status:{' '}
       {task.isComplete
@@ -61,21 +58,20 @@ const AssignedTaskItem = ({
         : 'Assigned'}
     </Text>
     {task.actualPointsAwarded !== undefined && task.verificationStatus !== 'pending' && (
-      <Text style={styles.taskItemPoints}>Awarded: {task.actualPointsAwarded ?? 0} Tickets</Text>
+      <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textSuccess]}>Awarded: {task.actualPointsAwarded ?? 0} Tickets</Text>
     )}
     {task.completedDate && (
-      <Text style={styles.taskItemDetail}>
+      <Text style={appSharedStyles.itemDetailText}>
         Completed: {new Date(task.completedDate).toLocaleDateString()}
       </Text>
     )}
     {task.verifiedDate && task.verificationStatus !== 'pending' && (
-      <Text style={styles.taskItemDetail}>
+      <Text style={appSharedStyles.itemDetailText}>
         Verified: {new Date(task.verifiedDate).toLocaleDateString()}
       </Text>
     )}
 
     {!task.isComplete && (
-      // Call the passed down onMarkComplete prop
       <Button title="Mark Complete" onPress={() => onMarkComplete(task.id)} />
     )}
     {task.isComplete && task.verificationStatus === 'pending' && (
@@ -84,7 +80,6 @@ const AssignedTaskItem = ({
   </View>
 );
 
-// Render item for FlatList of Rewards (updated to use Image)
 const RewardItemPupil = ({
   item,
   currentBalance,
@@ -100,33 +95,32 @@ const RewardItemPupil = ({
   return (
     <View
       style={[
-        styles.rewardItemContainer,
+        appSharedStyles.itemContainer,
         canEarn ? styles.rewardItemAffordable : {},
         isGoal ? styles.rewardItemGoal : {},
       ]}
     >
-      {/* Use Image component with source from item.imageUrl */}
-      {/* Error handling (onError) or loading indicator could be added in a real app */}
-      <Image
-        source={{ uri: item.imageUrl }}
-        style={styles.rewardImage} // Use a specific image style
-        resizeMode="contain" // Ensure the image fits well
-      />
-      <View style={styles.rewardDetails}>
-        <Text style={styles.rewardName}>{item.name}</Text>
-        <Text style={styles.rewardCost}>{item.cost} Tickets</Text>
-        {item.description && <Text style={styles.rewardDescription}>{item.description}</Text>}
-        {canEarn ? (
-          <Text style={styles.rewardEligibilityAvailable}>Available Now!</Text>
-        ) : (
-          <Text style={styles.rewardEligibilityNeeded}>Need {ticketsNeeded} more tickets</Text>
-        )}
+      <View style={styles.rewardItemContent}>
+        <Image
+          source={{ uri: item.imageUrl }}
+          style={styles.rewardImage}
+          resizeMode="contain"
+        />
+        <View style={styles.rewardDetails}>
+          <Text style={styles.rewardName}>{item.name}</Text>
+          <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>{item.cost} Tickets</Text>
+          {item.description && <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>}
+          {canEarn ? (
+            <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textSuccess]}>Available Now!</Text>
+          ) : (
+            <Text style={[appSharedStyles.itemDetailText, { color: colors.textPrimary }]}>Need {ticketsNeeded} more tickets</Text>
+          )}
+        </View>
       </View>
     </View>
   );
 };
 
-// Render item for FlatList of Ticket History
 export const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
   <View style={styles.historyItemContainer}>
     <Text style={styles.historyItemTimestamp}>{new Date(item.timestamp).toLocaleString()}</Text>
@@ -144,7 +138,7 @@ export const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
       <Text
         style={[
           styles.historyItemAmount,
-          item.amount > 0 ? styles.historyItemAmountPositive : styles.historyItemAmountNegative,
+          item.amount > 0 ? { color: colors.success } : { color: colors.danger },
         ]}
       >
         {item.amount > 0 ? `+${item.amount}` : item.amount} Tickets
@@ -154,11 +148,10 @@ export const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
   </View>
 );
 
-// Render item for FlatList of Announcements
 export const AnnouncementItemPupil = ({ item }: { item: Announcement }) => (
-  <View style={styles.announcementItemContainer}>
+  <View style={appSharedStyles.itemContainer}>
     <Text style={styles.announcementTitle}>{item.title}</Text>
-    <Text style={styles.announcementMessage}>{item.message}</Text>
+    <Text style={appSharedStyles.itemDetailText}>{item.message}</Text>
     <Text style={styles.announcementDate}>{new Date(item.date).toLocaleDateString()}</Text>
   </View>
 );
@@ -174,37 +167,30 @@ export const PupilView: React.FC<PupilViewProps> = ({
   mockInstruments,
   onMarkTaskComplete,
 }) => {
-  // State for the selected goal item ID (mock)
   const [goalRewardId, setGoalRewardId] = useState<string | null>(null);
   const goalReward = rewardsCatalog.find(reward => reward.id === goalRewardId);
   const progressTowardGoal = goalReward ? (balance / goalReward.cost) * 100 : 0;
 
-  // Mock function for setting a goal (placeholder)
   const handleSetGoal = () => {
-    // In a real app, this would show a modal or navigate to the catalog
-    // to let the user pick a reward item to set as their goal.
-    // For now, simulate setting the Fender Strat (reward-6) as a goal if not set, or clear if set.
-    const mockGoalId = 'reward-6'; // Fender Strat
+    const mockGoalId = 'reward-6';
     const mockGoalItem = rewardsCatalog.find(r => r.id === mockGoalId);
 
     if (goalRewardId === mockGoalId) {
-      setGoalRewardId(null); // Clear goal if already set to this
+      setGoalRewardId(null);
       Alert.alert(
         'Goal Cleared',
         `You are no longer saving for the ${mockGoalItem?.name || 'item'}.`
       );
     } else {
-      setGoalRewardId(mockGoalId); // Set this as the goal
+      setGoalRewardId(mockGoalId);
       Alert.alert('Goal Set!', `You are now saving for the ${mockGoalItem?.name || 'item'}!`);
     }
   };
 
-  // Filter tasks for display
   const activeTasks = assignedTasks.filter(task => !task.isComplete);
   const pendingVerificationTasks = assignedTasks.filter(
     task => task.isComplete && task.verificationStatus === 'pending'
   );
-  // Show recently completed/verified tasks that are NOT pending
   const recentlyCompletedTasks = assignedTasks
     .filter(task => task.isComplete && task.verificationStatus !== 'pending')
     .sort(
@@ -214,28 +200,26 @@ export const PupilView: React.FC<PupilViewProps> = ({
     );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container}>
-        <Text style={styles.header}>Welcome, {user.name}!</Text>
+    <SafeAreaView style={appSharedStyles.safeArea}>
+      <ScrollView style={appSharedStyles.container}>
+        <Text style={appSharedStyles.header}>Welcome, {user.name}!</Text>
         <Text style={styles.instrumentText}>
           Instrument(s): {getInstrumentNames(user.instrumentIds, mockInstruments)}
         </Text>
-        <Text style={styles.balance}>Current Tickets: {balance}</Text>
+        <Text style={[styles.balance, appSharedStyles.textGold]}>Current Tickets: {balance}</Text>
 
-        {/* My Goal Section */}
-        <Text style={styles.sectionTitle}>My Goal</Text>
+        <Text style={appSharedStyles.sectionTitle}>My Goal</Text>
         {goalReward ? (
           <View style={styles.goalContainer}>
-            {/* Use Image for goal item if available */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
               <Image
                 source={{ uri: goalReward.imageUrl }}
-                style={styles.goalImage} // Specific style for goal image
+                style={styles.goalImage}
                 resizeMode="contain"
               />
               <View style={{ flex: 1, marginLeft: 10 }}>
                 <Text style={styles.goalText}>Saving for: {goalReward.name}</Text>
-                <Text style={{ fontSize: 14, color: '#555' }}>{goalReward.cost} Tickets</Text>
+                <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>{goalReward.cost} Tickets</Text>
               </View>
             </View>
 
@@ -256,8 +240,7 @@ export const PupilView: React.FC<PupilViewProps> = ({
           </View>
         )}
 
-        {/* Rewards Catalog Section (showing all items) */}
-        <Text style={styles.sectionTitle}>Rewards Catalog</Text>
+        <Text style={appSharedStyles.sectionTitle}>Rewards Catalog</Text>
         <FlatList
           data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
           keyExtractor={item => item.id}
@@ -269,12 +252,12 @@ export const PupilView: React.FC<PupilViewProps> = ({
             />
           )}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          ListEmptyComponent={() => <Text style={styles.emptyListText}>No rewards found.</Text>}
+          ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>No rewards found.</Text>}
           scrollEnabled={false}
           contentContainerStyle={styles.listContentContainer}
         />
 
-        <Text style={styles.sectionTitle}>Assigned Tasks ({activeTasks.length})</Text>
+        <Text style={appSharedStyles.sectionTitle}>Assigned Tasks ({activeTasks.length})</Text>
         <FlatList
           data={activeTasks}
           keyExtractor={item => item.id}
@@ -287,7 +270,7 @@ export const PupilView: React.FC<PupilViewProps> = ({
           )}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
           ListEmptyComponent={() => (
-            <Text style={styles.emptyListText}>No active tasks assigned.</Text>
+            <Text style={appSharedStyles.emptyListText}>No active tasks assigned.</Text>
           )}
           scrollEnabled={false}
           contentContainerStyle={styles.listContentContainer}
@@ -295,7 +278,7 @@ export const PupilView: React.FC<PupilViewProps> = ({
 
         {pendingVerificationTasks.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>
+            <Text style={appSharedStyles.sectionTitle}>
               Pending Verification ({pendingVerificationTasks.length})
             </Text>
             <FlatList
@@ -309,7 +292,7 @@ export const PupilView: React.FC<PupilViewProps> = ({
                 />
               )}
               ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-              ListEmptyComponent={() => <Text style={styles.emptyListText}>None</Text>}
+              ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>None</Text>}
               scrollEnabled={false}
               contentContainerStyle={styles.listContentContainer}
             />
@@ -318,7 +301,7 @@ export const PupilView: React.FC<PupilViewProps> = ({
 
         {recentlyCompletedTasks.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>
+            <Text style={appSharedStyles.sectionTitle}>
               Recently Completed Tasks ({recentlyCompletedTasks.length})
             </Text>
             <FlatList
@@ -332,20 +315,22 @@ export const PupilView: React.FC<PupilViewProps> = ({
                 />
               )}
               ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-              ListEmptyComponent={() => <Text style={styles.emptyListText}>None</Text>}
+              ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>None</Text>}
               scrollEnabled={false}
               contentContainerStyle={styles.listContentContainer}
             />
           </>
         )}
 
-        <Text style={styles.sectionTitle}>Recent History</Text>
+        <Text style={appSharedStyles.sectionTitle}>Recent History</Text>
         <FlatList
           data={history.slice(0, 5)}
           keyExtractor={item => item.id}
           renderItem={({ item }) => <TicketHistoryItem item={item} />}
           ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
-          ListEmptyComponent={() => <Text style={styles.emptyListText}>No history yet.</Text>}
+          ListEmptyComponent={() => (
+            <Text style={appSharedStyles.emptyListText}>No history yet.</Text>
+          )}
           scrollEnabled={false}
           contentContainerStyle={styles.listContentContainer}
         />
@@ -358,13 +343,13 @@ export const PupilView: React.FC<PupilViewProps> = ({
           </View>
         )}
 
-        <Text style={styles.sectionTitle}>Announcements</Text>
+        <Text style={appSharedStyles.sectionTitle}>Announcements</Text>
         <FlatList
           data={announcements.slice(0, 3)}
           keyExtractor={item => item.id}
           renderItem={({ item }) => <AnnouncementItemPupil item={item} />}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          ListEmptyComponent={() => <Text style={styles.emptyListText}>No announcements.</Text>}
+          ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>No announcements.</Text>}
           scrollEnabled={false}
           contentContainerStyle={styles.listContentContainer}
         />
@@ -377,7 +362,6 @@ export const PupilView: React.FC<PupilViewProps> = ({
           </View>
         )}
 
-        {/* Add navigation buttons if needed */}
         <View style={{ marginTop: 20, marginBottom: 40 }}></View>
       </ScrollView>
     </SafeAreaView>
@@ -385,74 +369,42 @@ export const PupilView: React.FC<PupilViewProps> = ({
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
-  },
-  container: {
-    flex: 1,
-    padding: 15,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#333',
-  },
   instrumentText: {
     fontSize: 16,
-    color: '#555',
+    color: colors.textSecondary,
     marginBottom: 10,
   },
   balance: {
     fontSize: 28,
-    color: 'gold',
     fontWeight: 'bold',
     marginBottom: 25,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 15,
-    color: '#444',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    paddingBottom: 5,
   },
   listContentContainer: {
     // Added for FlatLists when scrollEnabled={false}
   },
-  emptyListText: {
-    textAlign: 'center',
-    color: '#777',
-    marginTop: 5,
-  },
-  // My Goal Styles
   goalContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.backgroundPrimary,
     padding: 15,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#007bff',
+    borderColor: colors.borderHighlight,
     marginBottom: 20,
   },
   goalImage: {
-    // New style for goal image
     width: 50,
     height: 50,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.borderSecondary,
   },
   goalText: {
     fontSize: 16,
     fontWeight: '600',
-    // Adjusted margin below if using flex row
+    color: colors.textPrimary,
   },
   progressText: {
     fontSize: 14,
-    color: '#555',
+    color: colors.textSecondary,
     marginBottom: 5,
   },
   progressBarBackground: {
@@ -464,75 +416,40 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: 'gold',
+    backgroundColor: colors.gold,
     borderRadius: 5,
-  },
-  // Task Item Styles
-  taskItemContainer: {
-    backgroundColor: '#fff',
-    padding: 12,
-    marginBottom: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  taskItemTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 5,
   },
   taskItemStatus: {
     fontSize: 14,
-    color: '#555',
+    color: colors.textSecondary,
     marginBottom: 8,
-  },
-  taskItemPoints: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: 'green',
-  },
-  taskItemDetail: {
-    // Added style for dates etc.
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 2,
   },
   pendingNote: {
     fontSize: 13,
-    color: 'orange',
+    color: colors.warning,
     fontStyle: 'italic',
   },
-  // Reward Item Styles
-  rewardItemContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    alignItems: 'center',
-  },
   rewardItemAffordable: {
-    borderColor: 'green',
+    borderColor: colors.success,
     borderWidth: 2,
   },
   rewardItemGoal: {
-    borderColor: '#007bff',
+    borderColor: colors.primary,
     borderWidth: 2,
-    backgroundColor: '#eef7ff',
+    backgroundColor: colors.backgroundHighlight,
+  },
+  rewardItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   rewardImage: {
-    // New style for reward item image
-    width: 60, // Match previous placeholder size
-    height: 60, // Match previous placeholder size
+    width: 60,
+    height: 60,
     marginRight: 15,
     borderRadius: 4,
-    // backgroundColor: '#eee', // Background isn't needed if image loads
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: colors.borderPrimary,
   },
-  // Removed rewardImagePlaceholder and rewardImagePlaceholderText
   rewardDetails: {
     flex: 1,
     justifyContent: 'center',
@@ -540,82 +457,43 @@ const styles = StyleSheet.create({
   rewardName: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
   },
-  rewardCost: {
-    fontSize: 14,
-    color: 'gold',
-    fontWeight: '600',
-    marginVertical: 2,
-  },
-  rewardDescription: {
-    fontSize: 13,
-    color: '#666',
-  },
-  rewardEligibilityAvailable: {
-    fontSize: 13,
-    fontStyle: 'italic',
-    color: 'green',
-  },
-  rewardEligibilityNeeded: {
-    fontSize: 13,
-    fontStyle: 'italic',
-    color: '#007bff',
-  },
-  // History Item Styles
   historyItemContainer: {
-    backgroundColor: '#e9e9e9',
-    padding: 10,
-    marginBottom: 5,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#ddd',
+    ...appSharedStyles.itemContainer, // Compose with base item container
+    backgroundColor: colors.backgroundGrey, // Override background
+    padding: 10, // Override padding
+    marginBottom: 5, // Override margin
+    borderRadius: 6, // Override border radius
+    // borderWidth and borderColor inherited from appSharedStyles.itemContainer
   },
   historyItemTimestamp: {
     fontSize: 12,
-    color: '#888',
+    color: colors.textVeryLight,
     marginBottom: 4,
   },
   historyItemDetails: {
     fontSize: 14,
-    color: '#555',
+    color: colors.textSecondary,
   },
   historyItemAmount: {
     fontWeight: 'bold',
   },
-  historyItemAmountPositive: {
-    color: 'green',
-  },
-  historyItemAmountNegative: {
-    color: 'red',
-  },
   historyItemNotes: {
     fontSize: 13,
-    color: '#666',
+    color: colors.textLight,
     marginTop: 4,
     fontStyle: 'italic',
-  },
-  // Announcement Item Styles
-  announcementItemContainer: {
-    backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
   },
   announcementTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 4,
-  },
-  announcementMessage: {
-    fontSize: 14,
-    color: '#555',
   },
   announcementDate: {
     fontSize: 12,
-    color: '#888',
+    color: colors.textVeryLight,
     marginTop: 8,
     textAlign: 'right',
   },

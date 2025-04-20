@@ -3,16 +3,17 @@
 ## Gemini Rules/Notes
 
 - When requested to print out file content, provide the full content of the file while be mindful to inflate sections of code commented out during iterations.
+- During development and absolute hard rule of no comments in any code.  If code has comments please remove -- we'll address comments as we get closer to release.
 - Assume developers are experts but are open to suggestions for better libraries, approaches, or solutions to technical challenges.
 - This project is in an early development phase. Backward compatibility is not a requirement (e.g., database schema changes are acceptable).
 
 Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 
-## [ ] Development
+## [x] Development
 
 These are the major areas and tasks involved in building the application based on the functional specification in `SPECIFICATION.md`.
 
-### [ ] 1. Frontend First: Mock UI & View Prototyping
+### [x] 1. Frontend First: Mock UI & View Prototyping
 
 - [x] Set up Mock Data: Create representative JavaScript objects/arrays to simulate the data structure for various users (including pupil instruments), sample tasks, ticket data, rewards, announcements, and the instrument list.
 - [x] Implement Development View Selector: Create a simple, temporary mechanism visible only in development builds that allows switching between simulating different user roles and navigating to key screens.
@@ -27,7 +28,33 @@ These are the major areas and tasks involved in building the application based o
   - [x] Replace placeholder images with actual Image components for Rewards Catalog items in Pupil, Public, and Admin views.
   - [x] Break down large AdminView.tsx file into smaller section components for better organization and readability, including extracting the student detail view and creating shared styles for Admin components.
   - [x] Refine mock button labels in Admin views to clarify implemented vs. placeholder actions.
-  - [ ] **Implement Mock UI for all User Interactions:** Replace placeholder alerts (e.g., for Admin CRUD operations on Users, Task Library items, Rewards, Announcements, Instruments, or Teacher/Parent "Add Another Student" flows) with actual mock UI flows (e.g., simple forms or modal inputs) that simulate the _frontend interaction_ without needing a backend.
+  - [x] Consolidate color palette and common styles into `src/styles/colors.ts` and `src/styles/appSharedStyles.ts`.
+  - [x] Refactor views (`App.tsx`, `PupilView.tsx`, `TeacherView.tsx`, `ParentView.tsx`, `PublicView.tsx`) and key components (`TaskVerificationModal.tsx`, `src/components/admin/*`) to use shared styles and colors.
+  - [x] Implement Mock UI for "Create User" via a modal in the Admin Users section.
+  - [ ] Implement Mock UI for other User Interactions: Replace placeholder alerts for Admin CRUD operations on other entities (Task Library items, Rewards, Announcements, Instruments) and other flows (e.g., Teacher/Parent "Add Another Student" flows) with actual mock UI flows.
+    - [ ] **Admin View:**
+      - [ ] Implement mock UI flow for Editing/Deleting Users.
+      - [ ] Implement mock UI flow for Creating/Editing/Deleting Task Library Items.
+      - [ ] Implement mock UI flow for Creating/Editing/Deleting Rewards Catalog Items.
+      - [ ] Implement mock UI flow for Creating/Editing/Deleting Announcements.
+      - [ ] Implement mock UI flow for Creating/Editing/Deleting Instruments.
+      - [ ] Implement mock UI flow for Manual Ticket Adjustments (including input for amount and notes).
+      - [ ] Implement mock UI flow for Redeeming Rewards (selecting reward and student).
+      - [ ] Implement mock UI flow for Assigning Tasks (selecting tasks and students).
+      - [ ] Implement mock screen/list for "View All Assigned Tasks".
+      - [ ] Implement mock screen/list for "View Full History" (from student detail).
+    - [ ] **Teacher View:**
+      - [ ] Implement mock UI flow for Assigning Tasks (selecting tasks and students).
+      - [ ] Implement mock screen/list for "View All Students".
+      - [ ] Implement mock UI flow for Deleting Assigned Tasks (from student profile view).
+    - [ ] **Parent View:**
+      - [ ] Implement mock UI flow for "Add Another Student" (simulating QR scan input).
+      - [ ] Implement mock screen/list for "View Full History" (from student profile view).
+    - [ ] **Pupil View:**
+      - [ ] Implement mock UI flow for "Set/Change Goal" (selecting a reward).
+      - [ ] Implement mock screen/list for "View Full History".
+      - [ ] Implement mock screen/list for "View All Announcements".
+
 
 ### [ ] 2. Backend Development and Integration
 

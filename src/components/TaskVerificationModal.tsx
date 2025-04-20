@@ -1,16 +1,21 @@
 // src/components/TaskVerificationModal.tsx
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, Alert, TextInput, Platform } from 'react-native';
-import Slider from '@react-native-community/slider'; // Import Slider
+import Slider from '@react-native-community/slider';
 
 import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
 import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
+import { User } from '../mocks/mockUsers';
 import { getTaskTitle } from '../utils/helpers';
+
+import { colors } from '../styles/colors';
+
 
 interface TaskVerificationModalProps {
   visible: boolean;
   task: AssignedTask | null;
   taskLibrary: TaskLibraryItem[];
+  allUsers: User[];
   onClose: () => void;
   onVerifyTask: (taskId: string, status: TaskVerificationStatus, points: number) => void;
   onReassignTaskMock: (taskId: string, studentId: string) => void;
@@ -20,32 +25,30 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   visible,
   task,
   taskLibrary,
+  allUsers,
   onClose,
   onVerifyTask,
   onReassignTaskMock,
 }) => {
-  const [currentStep, setCurrentStep] = useState(1); // 1: Status, 2: Points, 3: Reassign/Done
+  const [currentStep, setCurrentStep] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<TaskVerificationStatus>(undefined);
   const [awardedPoints, setAwardedPoints] = useState<number>(0);
-  const [basePoints, setBasePoints] = useState<number>(0);
+  const [baseTickets, setbaseTickets] = useState<number>(0);
 
-  // Reset state and set initial points based on default status
   useEffect(() => {
     if (visible && task) {
       setCurrentStep(1);
-      setSelectedStatus(undefined); // Reset status initially
+      setSelectedStatus(undefined);
       const libraryTask = taskLibrary.find(item => item.id === task.taskId);
-      const taskBasePoints = libraryTask ? libraryTask.basePoints : 0;
-      setBasePoints(taskBasePoints);
+      const taskbaseTickets = libraryTask ? libraryTask.baseTickets : 0;
+      setbaseTickets(taskbaseTickets);
 
-      // Points are set in Step 1 handlers based on the button pressed
-      setAwardedPoints(0); // Reset points on modal open
+      setAwardedPoints(0);
     } else if (!visible) {
-      // Reset fully when closing
       setCurrentStep(1);
       setSelectedStatus(undefined);
       setAwardedPoints(0);
-      setBasePoints(0);
+      setbaseTickets(0);
     }
   }, [visible, task, taskLibrary]);
 
@@ -54,28 +57,31 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   }
 
   const taskTitle = getTaskTitle(task.taskId, taskLibrary);
-  const studentName = task.studentId; // Placeholder - replace with actual student name if available
+  const studentName = allUsers.find(user => user.id === task.studentId)?.name || task.studentId;
 
-  // --- Handle point initialization and step transition in Step 1 buttons ---
+   const completedDateTime = task.completedDate
+     ? new Date(task.completedDate).toLocaleString()
+     : 'N/A';
+
+
   const handleStatusSelect = (status: TaskVerificationStatus) => {
     let initialPoints = 0;
     switch (status) {
       case 'verified':
-        initialPoints = basePoints; // Default 100%
+        initialPoints = baseTickets;
         break;
       case 'partial':
-        initialPoints = Math.round(basePoints * 0.5); // Default 50%
+        initialPoints = Math.round(baseTickets * 0.5);
         break;
       case 'incomplete':
-        initialPoints = 0; // Default 0%
+        initialPoints = 0;
         break;
     }
     setSelectedStatus(status);
     setAwardedPoints(initialPoints);
-    setCurrentStep(2); // Move to Step 2 (Points)
+    setCurrentStep(2);
   };
 
-  // --- Step 1: Select Status ---
   if (currentStep === 1) {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -84,30 +90,29 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             <Text style={modalStyles.modalTitle}>Verify Task</Text>
             <Text style={modalStyles.taskTitle}>{taskTitle}</Text>
             <Text>Student: {studentName}</Text>
+            <Text>Potential Tickets: {baseTickets}</Text>
             <Text style={{ marginBottom: 20 }}>
-              Completed:{' '}
-              {task.completedDate ? new Date(task.completedDate).toLocaleDateString() : 'N/A'}
+              Completed: {completedDateTime}
             </Text>
 
             <Text style={modalStyles.stepTitle}>Step 1: Select Status</Text>
 
             <View style={modalStyles.buttonContainer}>
-              {/* Call new handler */}
               <Button title="Verified" onPress={() => handleStatusSelect('verified')} />
               <Button
                 title="Partial"
                 onPress={() => handleStatusSelect('partial')}
-                color="orange"
+                color={colors.warning}
               />
               <Button
                 title="Incomplete"
                 onPress={() => handleStatusSelect('incomplete')}
-                color="red"
+                color={colors.danger}
               />
             </View>
 
             <View style={modalStyles.footerButton}>
-              <Button title="Cancel" onPress={onClose} color="gray" />
+              <Button title="Cancel" onPress={onClose} color={colors.secondary} />
             </View>
           </View>
         </View>
@@ -115,13 +120,10 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     );
   }
 
-  // --- Step 2: Adjust Points ---
   if (currentStep === 2 && selectedStatus) {
-    // Determine slider max value (ensure it's at least the base points if basePoints > 0, or 1 if basePoints is 0)
-    // NOTE: Standard sliders inherently bind to min/max. The request "can give more than base and less than zero" contradicts a slider [0, basePoints].
-    // Implementing slider with range [0, basePoints] as the most standard interpretation for task awards.
-    // If arbitrary values are *required*, the input method needs reconsideration.
-    const sliderMaxValue = basePoints >= 0 ? basePoints : 0; // Ensure max is not negative
+     const sliderMaxValue = baseTickets >= 0 ? baseTickets : 0;
+     const effectiveSliderMaxValue = sliderMaxValue === 0 ? 1 : sliderMaxValue;
+
 
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -129,6 +131,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
           <View style={modalStyles.modalView}>
             <Text style={modalStyles.modalTitle}>Verify Task</Text>
             <Text style={modalStyles.taskTitle}>{taskTitle}</Text>
+             <Text>Student: {studentName}</Text>
             <Text style={{ marginBottom: 20 }}>
               Status Selected:{' '}
               <Text
@@ -136,10 +139,10 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
                   fontWeight: 'bold',
                   color:
                     selectedStatus === 'verified'
-                      ? 'green'
+                      ? colors.success
                       : selectedStatus === 'partial'
-                        ? 'orange'
-                        : 'red',
+                        ? colors.warning
+                        : colors.danger,
                 }}
               >
                 {selectedStatus?.toUpperCase()}
@@ -147,52 +150,45 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             </Text>
 
             <Text style={modalStyles.stepTitle}>Step 2: Award Tickets</Text>
-            <Text>Base Points: {basePoints}</Text>
 
             <View style={modalStyles.pointsInputContainer}>
               <Text style={{ fontSize: 16 }}>Tickets Awarded:</Text>
               <Text style={modalStyles.awardedPointsText}>{awardedPoints}</Text>
             </View>
 
-            {/* Slider for adjusting points */}
             <Slider
               style={modalStyles.slider}
               minimumValue={0}
-              maximumValue={sliderMaxValue > 0 ? sliderMaxValue : 1} // Ensure max is >= min (>=0), at least 1 if base is 0 for interaction
-              step={1} // Whole numbers for tickets
-              value={awardedPoints}
-              onValueChange={value => setAwardedPoints(Math.round(value))} // Round to nearest integer
-              minimumTrackTintColor="gold" // Color of the track to the left of the thumb
-              maximumTrackTintColor="#ccc" // Color of the track to the right of the thumb
-              thumbTintColor="blue" // Color of the slider thumb
+              maximumValue={effectiveSliderMaxValue}
+              step={1}
+              value={awardedPoints > effectiveSliderMaxValue ? effectiveSliderMaxValue : (awardedPoints < 0 ? 0 : awardedPoints)}
+              onValueChange={value => setAwardedPoints(Math.round(value))}
+              minimumTrackTintColor={colors.gold}
+              maximumTrackTintColor={colors.borderPrimary}
+              thumbTintColor={colors.primary}
             />
-            {/* Display range */}
             <View style={modalStyles.rangeText}>
               <Text>0</Text>
-              <Text>{basePoints}</Text>
+              <Text>Max: {baseTickets}</Text>
             </View>
 
             <View style={modalStyles.buttonContainer}>
               <Button
-                title="Confirm Points"
+                title="Confirm Tickets"
                 onPress={() => {
                   if (selectedStatus) {
-                    // Clamp points between 0 and basePoints before sending to App.tsx
-                    // This enforces the range even if the slider/input allowed temporary out-of-range values (though slider prevents it)
-                    const finalPoints = Math.max(0, awardedPoints); // Ensure not negative
-                    // No upper clamp needed if slider max is basePoints
-                    // const finalPoints = Math.min(basePoints, Math.max(0, awardedPoints)); // Clamp between 0 and basePoints if needed
+                     const finalPoints = Math.min(baseTickets, Math.max(0, awardedPoints));
 
                     onVerifyTask(task.id, selectedStatus, finalPoints);
-                    setCurrentStep(3); // Move to reassign step
+                    setCurrentStep(3);
                   }
                 }}
               />
-              <Button title="Back to Status" onPress={() => setCurrentStep(1)} color="gray" />
+              <Button title="Back to Status" onPress={() => setCurrentStep(1)} color={colors.secondary} />
             </View>
 
             <View style={modalStyles.footerButton}>
-              <Button title="Cancel Verification" onPress={onClose} color="gray" />
+              <Button title="Cancel Verification" onPress={onClose} color={colors.secondary} />
             </View>
           </View>
         </View>
@@ -200,7 +196,6 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     );
   }
 
-  // --- Step 3: Reassign Option ---
   if (currentStep === 3) {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -208,15 +203,16 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
           <View style={modalStyles.modalView}>
             <Text style={modalStyles.modalTitle}>Verification Complete!</Text>
             <Text style={modalStyles.taskTitle}>{taskTitle}</Text>
-            <Text>
-              Status: <Text style={{ fontWeight: 'bold' }}>{selectedStatus?.toUpperCase()}</Text>
-            </Text>
+             <Text>Student: {studentName}</Text>
             <Text style={{ marginBottom: 20 }}>
+              Status: <Text style={{ fontWeight: 'bold' }}>{selectedStatus?.toUpperCase()}</Text>
+              {' - '}
               Tickets Awarded:{' '}
-              <Text style={{ fontWeight: 'bold', color: awardedPoints > 0 ? 'green' : 'red' }}>
+              <Text style={{ fontWeight: 'bold', color: awardedPoints > 0 ? colors.success : colors.danger }}>
                 {awardedPoints}
               </Text>
             </Text>
+
 
             <Text style={modalStyles.stepTitle}>Step 3: Re-assign?</Text>
 
@@ -224,11 +220,8 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               <Button
                 title="Re-assign Task (Mock)"
                 onPress={() => {
-                  // In the mock, we're re-assigning the original task *library* item
-                  // A real implementation might clone the assigned task details.
-                  // Using original task.taskId here as per previous mock logic.
                   onReassignTaskMock(task.taskId, task.studentId);
-                  onClose(); // Close modal after action
+                  onClose();
                 }}
               />
             </View>
@@ -241,10 +234,9 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     );
   }
 
-  return null; // Should not reach here
+  return null;
 };
 
-// --- Modal Styles ---
 const modalStyles = StyleSheet.create({
   centeredView: {
     flex: 1,
@@ -254,7 +246,7 @@ const modalStyles = StyleSheet.create({
   },
   modalView: {
     margin: 20,
-    backgroundColor: 'white',
+    backgroundColor: colors.backgroundPrimary,
     borderRadius: 20,
     padding: 35,
     alignItems: 'center',
@@ -274,12 +266,14 @@ const modalStyles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 15,
     textAlign: 'center',
+    color: colors.textPrimary,
   },
   taskTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
+    color: colors.textPrimary,
   },
   stepTitle: {
     fontSize: 16,
@@ -287,10 +281,11 @@ const modalStyles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.borderPrimary,
     paddingBottom: 5,
     width: '100%',
     textAlign: 'center',
+    color: colors.textPrimary,
   },
   buttonContainer: {
     flexDirection: 'column',
@@ -305,29 +300,29 @@ const modalStyles = StyleSheet.create({
   pointsInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center', // Center the points display
+    justifyContent: 'center',
     marginBottom: 10,
     gap: 10,
   },
   awardedPointsText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: 'gold',
+    color: colors.gold,
   },
   slider: {
     width: '100%',
-    height: 40, // Standard height for slider touch target
+    height: 40,
     marginTop: 10,
   },
   rangeText: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%', // Match slider width
-    paddingHorizontal: 5, // Add padding to align text with slider ends
-    marginTop: -5, // Pull up closer to slider
+    width: '100%',
+    paddingHorizontal: 5,
+    marginTop: -5,
     marginBottom: 10,
     fontSize: 12,
-    color: '#555',
+    color: colors.textSecondary,
   },
 });
 

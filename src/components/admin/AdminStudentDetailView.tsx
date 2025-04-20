@@ -11,19 +11,17 @@ import {
   SafeAreaView,
 } from 'react-native';
 
-// Import types
 import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
 import { Instrument } from '../../mocks/mockInstruments';
 import { PupilViewProps, TicketHistoryItem } from '../../views/PupilView';
 
-// Import helpers
 import { getTaskTitle, getInstrumentNames } from '../../utils/helpers';
 
-
-// Import shared styles
 import { adminSharedStyles } from './adminSharedStyles';
+import { appSharedStyles } from '../../styles/appSharedStyles';
+import { colors } from '../../styles/colors';
 
-// Props interface for the Admin Student Detail View component
+
 interface AdminStudentDetailViewProps {
   studentData: PupilViewProps;
   taskLibrary: TaskLibraryItem[];
@@ -33,8 +31,6 @@ interface AdminStudentDetailViewProps {
   onManualTicketAdjust: (studentId: string, amount: number, notes: string) => void;
   onRedeemReward: (studentId: string, rewardId: string) => void;
   onAssignTask: (taskId: string, studentId: string) => void;
-  // onVerifyTask and onReassignTaskMock could also be passed if admin uses the same modal as teacher, but keeping simple for mock
-  // onDeleteAssignedTask?: (assignedTaskId: string) => void; // Mock delete assigned task
 
   onBack: () => void;
 }
@@ -73,42 +69,37 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   };
 
   return (
-    <SafeAreaView style={adminSharedStyles.safeArea}>
-      <View style={adminSharedStyles.headerContainer}>
+    <SafeAreaView style={appSharedStyles.safeArea}>
+      <View style={appSharedStyles.headerContainer}>
         <Button title="← Back to Admin" onPress={onBack} />
-        <Text style={adminSharedStyles.header}>Admin: {adminUserName}</Text>
+        <Text style={appSharedStyles.header}>Admin: {adminUserName}</Text>
         <View style={{ width: 50 }} />
       </View>
-      <ScrollView style={adminSharedStyles.container}>
-        <Text style={adminSharedStyles.sectionTitle}>Viewing Student: {user.name}</Text>
-        <Text style={adminSharedStyles.detailText}>ID: {user.id}</Text>
-        <Text style={adminSharedStyles.detailText}>
+      <ScrollView style={appSharedStyles.container}>
+        <Text style={appSharedStyles.sectionTitle}>Viewing Student: {user.name}</Text>
+        <Text style={appSharedStyles.itemDetailText}>ID: {user.id}</Text>
+        <Text style={appSharedStyles.itemDetailText}>
           Instrument(s): {getInstrumentNames(user.instrumentIds, mockInstruments)}
         </Text>
-        <Text style={[adminSharedStyles.detailText, { fontWeight: 'bold' }]}>
+        <Text style={[appSharedStyles.itemDetailText, { fontWeight: 'bold' }]}>
           Balance: {balance} Tickets
         </Text>
 
-        {/* Add buttons for Admin actions on this student */}
         <View style={adminSharedStyles.adminStudentActions}>
-          {/* Re-added (Mock) as it lacks input UI */}
           <Button
             title="Adjust Tickets (Mock)"
             onPress={() =>
               onManualTicketAdjust(user.id, 100, `Admin adjustment by ${adminUserName}`)
             }
           />
-          {/* Re-added (Mock) as it lacks selection UI */}
           <Button
             title="Redeem Reward (Mock)"
             onPress={() => onRedeemReward(user.id, 'reward-6')}
           />
-          {/* Kept (Mock) as it triggers assign prompt */}
           <Button title="Assign Task (Mock)" onPress={handleAssignTaskToStudent} />
         </View>
 
-        {/* Show student's assigned tasks - reusing item styles*/}
-        <Text style={adminSharedStyles.sectionTitle}>Assigned Tasks ({assignedTasks.length})</Text>
+        <Text style={appSharedStyles.sectionTitle}>Assigned Tasks ({assignedTasks.length})</Text>
         {assignedTasks.length > 0 ? (
           <FlatList
             data={assignedTasks.sort(
@@ -129,19 +120,19 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
                     : 'Assigned'}
                 </Text>
                 {item.completedDate && (
-                  <Text style={adminSharedStyles.taskItemDetail}>
+                  <Text style={appSharedStyles.itemDetailText}>
                     Completed: {new Date(item.completedDate).toLocaleDateString()}
                   </Text>
                 )}
                 {item.verifiedDate && item.verificationStatus !== 'pending' && (
-                  <Text style={adminSharedStyles.taskItemDetail}>
+                  <Text style={appSharedStyles.itemDetailText}>
                     Verified: {new Date(item.verifiedDate).toLocaleDateString()}
                   </Text>
                 )}
                 {item.actualPointsAwarded !== undefined &&
                   item.verificationStatus !== 'pending' && (
-                    <Text style={adminSharedStyles.taskItemDetail}>
-                      Awarded: {item.actualPointsAwarded ?? 0} points
+                    <Text style={adminSharedStyles.taskItemTickets}>
+                      Awarded: {item.actualPointsAwarded ?? 0} Tickets
                     </Text>
                   )}
                 {item.isComplete && item.verificationStatus === 'pending' && (
@@ -149,7 +140,6 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
                 )}
 
                 <View style={adminSharedStyles.assignedTaskActions}>
-                  {/* Keep (Mock) as it only alerts currently */}
                   {item.isComplete && item.verificationStatus === 'pending' && (
                     <Button
                       title="Verify (Mock)"
@@ -161,7 +151,6 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
                       }
                     />
                   )}
-                  {/* Keep (Mock) as it only alerts */}
                   <Button
                     title="Delete (Mock)"
                     onPress={() =>
@@ -170,7 +159,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
                         `Simulate admin deleting assigned task ${item.id}`
                       )
                     }
-                    color="red"
+                    color={colors.danger}
                   />
                 </View>
               </View>
@@ -178,14 +167,14 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
             scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
             ListEmptyComponent={() => (
-              <Text style={adminSharedStyles.emptyListText}>No tasks assigned.</Text>
+              <Text style={appSharedStyles.emptyListText}>No tasks assigned.</Text>
             )}
           />
         ) : (
-          <Text style={adminSharedStyles.emptyListText}>No tasks assigned.</Text>
+          <Text style={appSharedStyles.emptyListText}>No tasks assigned.</Text>
         )}
 
-        <Text style={adminSharedStyles.sectionTitle}>History ({history.length})</Text>
+        <Text style={appSharedStyles.sectionTitle}>History ({history.length})</Text>
         <FlatList
           data={history.slice(0, 5)}
           keyExtractor={item => item.id}
@@ -193,12 +182,11 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
           scrollEnabled={false}
           ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
           ListEmptyComponent={() => (
-            <Text style={adminSharedStyles.emptyListText}>No history yet.</Text>
+            <Text style={appSharedStyles.emptyListText}>No history yet.</Text>
           )}
         />
         {history.length > 5 && (
           <View style={{ alignItems: 'flex-start', marginTop: 10 }}>
-            {/* Keep (Mock) as it only alerts */}
             <Button
               title="View Full History (Mock)"
               onPress={() => alert('Navigate to full history screen')}

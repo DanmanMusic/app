@@ -3,7 +3,6 @@ import { StyleSheet, Text, View, Button, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-// Import mock data and types
 import { mockUsers, UserRole, User } from './src/mocks/mockUsers';
 import {
   mockTicketBalances as initialMockTicketBalances,
@@ -21,24 +20,26 @@ import { mockAnnouncements, Announcement } from './src/mocks/mockAnnouncements';
 import { mockTaskLibrary, TaskLibraryItem } from './src/mocks/mockTaskLibrary';
 import { mockInstruments, Instrument } from './src/mocks/mockInstruments';
 
-// Import helpers
 import { getTaskTitle, getInstrumentNames } from './src/utils/helpers';
 
-// Import your planned main views
 import { PublicView } from './src/views/PublicView';
 import { PupilView, PupilViewProps } from './src/views/PupilView';
 import { TeacherView } from './src/views/TeacherView';
 import { ParentView } from './src/views/ParentView';
 import { AdminView } from './src/views/AdminView';
 
-// Define the possible simulation states
+import TaskVerificationModal from './src/components/TaskVerificationModal';
+
+import { appSharedStyles } from './src/styles/appSharedStyles';
+import { colors } from './src/styles/colors';
+
+
 type MockAuthState = {
   role: UserRole | 'public';
   userId?: string;
   viewingStudentId?: string;
 };
 
-// --- Temporary Development View Selector Component ---
 const DevelopmentViewSelector = ({
   onSelectView,
 }: {
@@ -51,7 +52,7 @@ const DevelopmentViewSelector = ({
       <Button
         title="View as Public (Not Logged In)"
         onPress={() => onSelectView({ role: 'public' })}
-        color="#ccc"
+        color={colors.secondary}
       />
 
       {Object.values(mockUsers).map(user => (
@@ -67,27 +68,25 @@ const DevelopmentViewSelector = ({
               user.linkedStudentIds &&
               user.linkedStudentIds.length > 0
             ) {
-              // For parent, default viewing to the first linked student for convenience in mock
               viewingStudentId = user.linkedStudentIds[0];
             } else if (
               user.role === 'teacher' &&
               user.linkedStudentIds &&
               user.linkedStudentIds.length > 0
             ) {
-              // For teacher, default viewing to the first linked student for convenience in mock student profile view
-              viewingStudentId = user.linkedStudentIds[0]; // Although teacher main view is dashboard/students list
+              viewingStudentId = user.linkedStudentIds[0];
             }
 
             onSelectView({ role: user.role, userId: user.id, viewingStudentId });
           }}
           color={
             user.role === 'admin'
-              ? 'red'
+              ? colors.danger
               : user.role === 'teacher'
-                ? 'blue'
+                ? colors.primary
                 : user.role === 'parent'
-                  ? 'green'
-                  : 'purple'
+                  ? colors.success
+                  : colors.gold
           }
         />
       ))}
@@ -95,18 +94,17 @@ const DevelopmentViewSelector = ({
   );
 };
 
-// --- Main App Component ---
 export default function App() {
-  // State to hold the simulated auth state in DEV mode
   const [mockAuthState, setMockAuthState] = useState<MockAuthState | null>(null);
 
-  // State to hold mutable copies of mock data that can change
   const [assignedTasks, setAssignedTasks] = useState<AssignedTask[]>([]);
   const [ticketBalances, setTicketBalances] = useState<Record<string, number>>({});
   const [ticketHistory, setTicketHistory] = useState<TicketTransaction[]>([]);
-  // Add state for other mutable data like announcements, rewards catalog if Admin can change them on mobile mock
 
-  // Initialize state with mock data on first render
+  const [isVerificationModalVisible, setIsVerificationModalVisible] = useState(false);
+  const [taskToVerify, setTaskToVerify] = useState<AssignedTask | null>(null);
+
+
   useEffect(() => {
     setAssignedTasks(initialMockAllAssignedTasks);
     setTicketBalances(initialMockTicketBalances);
@@ -118,9 +116,17 @@ export default function App() {
   const currentUserId: string | undefined = mockAuthState?.userId;
   const currentViewingStudentId: string | undefined = mockAuthState?.viewingStudentId;
 
-  // --- Mock Action Functions (Simulating Backend Updates) ---
+  const handleInitiateVerificationModal = (task: AssignedTask) => {
+    setTaskToVerify(task);
+    setIsVerificationModalVisible(true);
+  };
 
-  // Pupil/Parent Action
+  const handleCloseVerificationModal = () => {
+    setIsVerificationModalVisible(false);
+    setTaskToVerify(null);
+  };
+
+
   const simulateMarkTaskComplete = (taskId: string) => {
     setAssignedTasks(prevTasks =>
       prevTasks.map(task =>
@@ -137,11 +143,10 @@ export default function App() {
     Alert.alert('Task Marked Complete', 'Waiting for teacher verification!');
   };
 
-  // Teacher/Admin Action (Called by the Verification Modal now)
   const simulateVerifyTask = (
     taskId: string,
     status: TaskVerificationStatus,
-    actualPoints: number
+    actualTickets: number
   ) => {
     setAssignedTasks(prevTasks => {
       const taskToVerify = prevTasks.find(t => t.id === taskId);
@@ -150,9 +155,11 @@ export default function App() {
         !taskToVerify.isComplete ||
         taskToVerify.verificationStatus !== 'pending'
       ) {
-        // Task not found, not complete, or already verified/rejected
         console.warn('Attempted to verify task not in pending state or not found:', taskId);
-        return prevTasks; // Return current state unchanged
+        Alert.alert("Verification Failed", "Task not found or not pending.");
+        setIsVerificationModalVisible(false);
+        setTaskToVerify(null);
+        return prevTasks;
       }
 
       const updatedTasks = prevTasks.map(task =>
@@ -161,53 +168,50 @@ export default function App() {
               ...task,
               verificationStatus: status,
               verifiedDate: new Date().toISOString(),
-              actualPointsAwarded: actualPoints,
+              actualPointsAwarded: (status === 'verified' || status === 'partial') ? actualTickets : undefined,
             }
           : task
       );
 
       if (status === 'verified' || status === 'partial') {
-        // Award points only if verified or partial
         const studentId = taskToVerify.studentId;
-        const points = actualPoints;
+        const tickets = actualTickets;
 
-        // Update Ticket Balance (using functional update)
         setTicketBalances(prevBalances => ({
           ...prevBalances,
-          [studentId]: (prevBalances[studentId] || 0) + points,
+          [studentId]: (prevBalances[studentId] || 0) + tickets,
         }));
 
-        // Add Ticket History entry (using functional update)
         setTicketHistory(prevHistory => {
           const newTaskAwardTx: TicketTransaction = {
-            id: `tx-${Date.now()}-${Math.random().toString(36).substring(7)}`, // More unique ID
+            id: `tx-${Date.now()}-${Math.random().toString(36).substring(7)}`,
             studentId: studentId,
             timestamp: new Date().toISOString(),
-            amount: points,
+            amount: tickets,
             type: 'task_award',
             sourceId: taskId,
             notes: `Task: ${getTaskTitle(taskToVerify.taskId, mockTaskLibrary)} (${status})`,
           };
           return [
             newTaskAwardTx,
-            ...prevHistory, // Add new transaction to the beginning
+            ...prevHistory,
           ];
         });
 
-        // Alert is now handled in the modal or after modal closes
-        // Alert.alert("Task Verified", `Status: ${status}, Awarded: ${actualPoints} tickets`);
+         Alert.alert("Task Verified", `Status: ${status}, Awarded: ${actualTickets} tickets`);
+
       } else {
-        // If status is 'incomplete', perhaps add a history entry for rejection? (Optional)
-        console.log(`Task ${taskId} marked as incomplete, no points awarded.`);
-        // Alert is handled in the modal or after modal closes
-        // Alert.alert("Task Marked Incomplete", `No tickets awarded for task ${taskId}.`);
+         Alert.alert("Task Marked Incomplete", `No tickets awarded for task ${taskId}.`);
       }
 
-      return updatedTasks; // Return the updated task list state
+       setIsVerificationModalVisible(false);
+       setTaskToVerify(null);
+
+
+      return updatedTasks;
     });
   };
 
-  // Admin Action
   const simulateManualTicketAdjustment = (studentId: string, amount: number, notes: string) => {
     setTicketBalances(prevBalances => ({
       ...prevBalances,
@@ -215,7 +219,6 @@ export default function App() {
     }));
     setTicketHistory(prevHistory => [
       {
-        // Add new transaction to the beginning
         id: `tx-${Date.now()}-${Math.random().toString(36).substring(7)}`,
         studentId: studentId,
         timestamp: new Date().toISOString(),
@@ -226,10 +229,10 @@ export default function App() {
       },
       ...prevHistory,
     ]);
-    Alert.alert('Balance Adjusted', `Adjusted ${amount} tickets for student ${studentId}.`);
+    const studentName = mockUsers[studentId]?.name || studentId;
+    Alert.alert('Balance Adjusted', `Adjusted ${amount} tickets for student ${studentName}.`);
   };
 
-  // Admin Action (or triggered by Admin UI)
   const simulateRedeemReward = (studentId: string, rewardId: string) => {
     const reward = mockRewardsCatalog.find(r => r.id === rewardId);
     if (!reward) {
@@ -238,51 +241,62 @@ export default function App() {
     }
     const cost = reward.cost;
     const currentBalance = ticketBalances[studentId] || 0;
+    const redeemedStudentName = mockUsers[studentId]?.name || studentId;
+
 
     if (currentBalance < cost) {
       Alert.alert(
         'Cannot Redeem',
-        `Student ${studentId} needs ${cost - currentBalance} more tickets for ${reward.name}.`
+        `Student ${redeemedStudentName} needs ${cost - currentBalance} more tickets for ${reward.name}.`
       );
       return;
     }
 
-    // Deduct tickets via manual adjustment simulation
-    simulateManualTicketAdjustment(studentId, -cost, `Redeemed: ${reward.name}`);
+    setTicketBalances(prevBalances => ({
+        ...prevBalances,
+        [studentId]: prevBalances[studentId] - cost,
+      }));
 
-    // Simulate triggering a public announcement here
+     setTicketHistory(prevHistory => [
+        {
+          id: `tx-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          studentId: studentId,
+          timestamp: new Date().toISOString(),
+          amount: -cost,
+          type: 'redemption',
+          sourceId: rewardId,
+          notes: `Redeemed: ${reward.name}`,
+        },
+        ...prevHistory,
+      ]);
+
     const redemptionAnnouncement: Announcement = {
       id: `ann-redemption-${Date.now()}-${Math.random().toString(36).substring(7)}`,
       type: 'redemption_celebration',
       title: '🎉 Reward Redeemed! 🎉',
-      message: `${mockUsers[studentId]?.name || 'A student'} redeemed a ${reward.name}!`,
+      message: `${redeemedStudentName} redeemed a ${reward.name}!`,
       date: new Date().toISOString(),
       relatedStudentId: studentId,
     };
-    // In a real app, announcements would be managed in backend state/DB
-    // For this mock, we could add it to announcements state if announcements were mutable
-    // For now, just an alert suffices to simulate the announcement effect.
     Alert.alert(
       'Reward Redeemed',
-      `${reward.name} redeemed for ${mockUsers[studentId]?.name || 'the student'}! ${cost} tickets deducted. A public announcement is simulated.`
+      `${reward.name} redeemed for ${redeemedStudentName}! ${cost} tickets deducted. A public announcement is simulated.`
     );
   };
 
-  // Teacher/Admin Action (Simplified mock)
   const simulateAssignTask = (taskId: string, studentId: string) => {
-    // In a real app, this would be more complex (selecting task, selecting students, setting dates, etc.)
-    // This mock assumes assigning an existing task library item to one student.
     const taskDetails = mockTaskLibrary.find(t => t.id === taskId);
     if (!taskDetails) {
       Alert.alert('Error', `Task Library item with ID "${taskId}" not found.`);
       return;
     }
+    const studentName = mockUsers[studentId]?.name || studentId;
 
     const newAssignedTask: AssignedTask = {
-      id: `assigned-${Date.now()}-${Math.random().toString(36).substring(7)}`, // Generate a unique ID
+      id: `assigned-${Date.now()}-${Math.random().toString(36).substring(7)}`,
       taskId: taskId,
       studentId: studentId,
-      assignedById: currentUserId || 'admin-mock', // Assigning user (teacher or admin)
+      assignedById: currentUserId || 'admin-mock',
       assignedDate: new Date().toISOString(),
       isComplete: false,
       verificationStatus: undefined,
@@ -291,28 +305,24 @@ export default function App() {
     setAssignedTasks(prevTasks => [...prevTasks, newAssignedTask]);
     Alert.alert(
       'Task Assigned',
-      `${taskDetails.title} assigned to ${mockUsers[studentId]?.name || studentId}.`
+      `${taskDetails.title} assigned to ${studentName}.`
     );
-    // In a real app, this would also trigger a push notification to the student/parent
   };
 
-  // Teacher/Admin Action (Simplified mock reassign)
   const simulateReassignTask = (originalTaskId: string, studentId: string) => {
-    // This mock simply re-assigns the *same* task library item to the student
-    // A real reassign might clone details from the *assigned task* or offer options.
-    // Using the original task ID here as per request.
-
-    const taskDetails = mockTaskLibrary.find(t => t.id === originalTaskId); // Assuming originalTaskId is a library ID here
+    const taskDetails = mockTaskLibrary.find(t => t.id === originalTaskId);
     if (!taskDetails) {
       Alert.alert('Error', `Original Task ID "${originalTaskId}" not found in library.`);
       return;
     }
+    const studentName = mockUsers[studentId]?.name || studentId;
+
 
     const newAssignedTask: AssignedTask = {
-      id: `assigned-re-${Date.now()}-${Math.random().toString(36).substring(7)}`, // Unique ID for re-assigned task
-      taskId: originalTaskId, // Use the original library task ID
+      id: `assigned-re-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+      taskId: originalTaskId,
       studentId: studentId,
-      assignedById: currentUserId || 'admin-mock', // User re-assigning
+      assignedById: currentUserId || 'admin-mock',
       assignedDate: new Date().toISOString(),
       isComplete: false,
       verificationStatus: undefined,
@@ -321,34 +331,29 @@ export default function App() {
     setAssignedTasks(prevTasks => [...prevTasks, newAssignedTask]);
     Alert.alert(
       'Task Re-assigned',
-      `${taskDetails.title} re-assigned to ${mockUsers[studentId]?.name || studentId}.`
+      `${taskDetails.title} re-assigned to ${studentName}.`
     );
-    // In a real app, this would also trigger a push notification
   };
 
-  // Helper to get data for a specific student ID for mock views, using STATE DATA
   const getMockStudentData = (studentId: string): PupilViewProps | undefined => {
     const studentUser = mockUsers[studentId];
     if (!studentUser || studentUser.role !== 'pupil') return undefined;
 
     return {
       user: studentUser,
-      balance: ticketBalances[studentId] || 0, // Use STATE balance
-      assignedTasks: assignedTasks.filter(task => task.studentId === studentId), // Use STATE assignedTasks
+      balance: ticketBalances[studentId] || 0,
+      assignedTasks: assignedTasks.filter(task => task.studentId === studentId),
       history: ticketHistory
         .filter(tx => tx.studentId === studentId)
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), // Use STATE history, sort by date
-      rewardsCatalog: mockRewardsCatalog, // Static
-      announcements: mockAnnouncements, // Static
-      taskLibrary: mockTaskLibrary, // Static
-      mockInstruments: mockInstruments, // Pass instruments list
-      // Pass down mock action functions relevant to PupilView
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+      rewardsCatalog: mockRewardsCatalog,
+      announcements: mockAnnouncements,
+      taskLibrary: mockTaskLibrary,
+      mockInstruments: mockInstruments,
       onMarkTaskComplete: simulateMarkTaskComplete,
-      // Other Pupil-specific actions like onSetGoal will be added later
     };
   };
 
-  // Select which main view to render based on role
   const renderMainView = () => {
     switch (currentUserRole) {
       case 'public':
@@ -369,14 +374,12 @@ export default function App() {
 
         const teacherMockData = {
           user: teacherUser,
-          // Pass simplified student data for lists, using STATE balance and instrumentIds
           allStudents: allPupilUsers.map(student => ({
             id: student.id,
             name: student.name,
             instrumentIds: student.instrumentIds,
             balance: ticketBalances[student.id] || 0,
           })),
-          // Pass simplified linked student data for lists, using STATE balance and instrumentIds
           studentsLinkedToTeacher: allPupilUsers
             .filter(u => teacherUser.linkedStudentIds?.includes(u.id))
             .map(student => ({
@@ -385,19 +388,17 @@ export default function App() {
               instrumentIds: student.instrumentIds,
               balance: ticketBalances[student.id] || 0,
             })),
-          // Use STATE assignedTasks for pending verifications
           pendingVerifications: assignedTasks.filter(
             task => task.isComplete && task.verificationStatus === 'pending'
           ),
-          taskLibrary: mockTaskLibrary, // Static
-          allAssignedTasks: assignedTasks, // Use STATE assignedTasks
-          rewardsCatalog: mockRewardsCatalog, // Static
-          mockInstruments: mockInstruments, // Pass instruments list
-          // Pass down mock action functions relevant to TeacherView
-          onVerifyTask: simulateVerifyTask, // Pass the updated verification function
-          onAssignTask: simulateAssignTask, // Pass the mock assign function
-          onReassignTaskMock: simulateReassignTask, // Pass the new mock reassign function
-          // Pass helper to get full student mock data using STATE data
+          taskLibrary: mockTaskLibrary,
+          allAssignedTasks: assignedTasks,
+          rewardsCatalog: mockRewardsCatalog,
+          mockInstruments: mockInstruments,
+          onVerifyTask: simulateVerifyTask,
+          onAssignTask: simulateAssignTask,
+          onReassignTaskMock: simulateReassignTask,
+          onInitiateVerificationModal: handleInitiateVerificationModal,
           getStudentData: getMockStudentData,
         };
         return <TeacherView {...teacherMockData} />;
@@ -411,7 +412,6 @@ export default function App() {
 
         const parentMockData = {
           user: parentUser,
-          // Pass simplified linked student data for lists, using STATE balance and instrumentIds
           linkedStudents: linkedStudents.map(student => ({
             id: student.id,
             name: student.name,
@@ -419,16 +419,13 @@ export default function App() {
             balance: ticketBalances[student.id] || 0,
           })),
           currentViewingStudentId: currentViewingStudentId,
-          // Pass data for the currently selected student, similar to PupilView, using STATE data
           currentViewingStudentData: currentViewingStudentId
             ? getMockStudentData(currentViewingStudentId)
             : undefined,
-          // Pass the function to update the currently viewed student ID in App's state
           setViewingStudentId: (studentId: string) =>
             setMockAuthState(prev => (prev ? { ...prev, viewingStudentId: studentId } : null)),
-          // Pass down mock action functions relevant to ParentView (same as Pupil)
           onMarkTaskComplete: simulateMarkTaskComplete,
-          mockInstruments: mockInstruments, // Pass instruments list
+          mockInstruments: mockInstruments,
         };
         return <ParentView {...parentMockData} />;
 
@@ -442,29 +439,28 @@ export default function App() {
         const adminMockData = {
           user: adminUser,
           allUsers: Object.values(mockUsers),
-          // Pass simplified pupil data for lists, using STATE balance and instrumentIds
           allPupils: allPupilUsersAdmin.map(student => ({
             id: student.id,
             name: student.name,
             instrumentIds: student.instrumentIds,
             balance: ticketBalances[student.id] || 0,
           })),
-          allTeachers: allTeachers, // Full user objects for now
-          allParents: allParents, // Full user objects for now
-          allAssignedTasks: assignedTasks, // Use STATE assignedTasks
-          taskLibrary: mockTaskLibrary, // Static
-          rewardsCatalog: mockRewardsCatalog, // Static
-          allTicketHistory: ticketHistory, // Use STATE history
-          announcements: mockAnnouncements, // Static
-          mockInstruments: mockInstruments, // Pass instruments list
+          allTeachers: allTeachers,
+          allParents: allParents,
+          allAssignedTasks: assignedTasks,
+          taskLibrary: mockTaskLibrary,
+          rewardsCatalog: mockRewardsCatalog,
+          allTicketHistory: ticketHistory,
+          announcements: mockAnnouncements,
+          mockInstruments: mockInstruments,
 
-          // Pass down mock action functions relevant to AdminView
           onManualTicketAdjust: simulateManualTicketAdjustment,
           onRedeemReward: simulateRedeemReward,
-          onVerifyTask: simulateVerifyTask, // Admin can also verify tasks
-          onAssignTask: simulateAssignTask, // Admin can assign tasks
-          onReassignTaskMock: simulateReassignTask, // Admin can also reassign tasks
-          // Mock functions for CRUD (User, Task Library, Rewards, Announcements, Instruments) - placeholder alerts
+          onVerifyTask: simulateVerifyTask,
+          onAssignTask: simulateAssignTask,
+          onReassignTaskMock: simulateReassignTask,
+          onInitiateVerificationModal: handleInitiateVerificationModal,
+
           onCreateUser: (userData: any) =>
             Alert.alert('Mock Create User', JSON.stringify(userData)),
           onEditUser: (userId: string, userData: any) =>
@@ -498,13 +494,11 @@ export default function App() {
             ),
           onDeleteInstrument: (instrumentId: string) =>
             Alert.alert('Mock Delete Instrument', instrumentId),
-          // Pass helper to get full student mock data using STATE data
           getStudentData: getMockStudentData,
         };
         return <AdminView {...adminMockData} />;
 
       default:
-        // Fallback
         return <Text>Loading or Authentication Required.</Text>;
     }
   };
@@ -514,15 +508,23 @@ export default function App() {
       <View style={styles.container}>
         <StatusBar style="auto" />
 
-        {/* Render selector in DEV ONLY if no mock user is selected */}
         {__DEV__ && !mockAuthState ? (
           <DevelopmentViewSelector onSelectView={setMockAuthState} />
         ) : (
-          // Render the main app views
           renderMainView()
         )}
 
-        {/* Button to reset mock auth state back to selector in DEV ONLY */}
+        <TaskVerificationModal
+           visible={isVerificationModalVisible}
+           task={taskToVerify}
+           taskLibrary={mockTaskLibrary}
+           allUsers={Object.values(mockUsers)}
+           onClose={handleCloseVerificationModal}
+           onVerifyTask={simulateVerifyTask}
+           onReassignTaskMock={simulateReassignTask}
+         />
+
+
         {__DEV__ && mockAuthState && (
           <View style={styles.resetButtonContainer}>
             <Button title="Reset Mock View" onPress={() => setMockAuthState(null)} />
@@ -536,19 +538,21 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.backgroundPrimary,
   },
   selectorContainer: {
     flex: 1,
     padding: 20,
     justifyContent: 'center',
-    gap: 10, // Space between buttons
+    gap: 10,
+    backgroundColor: colors.backgroundPrimary,
   },
   selectorTitle: {
     fontSize: 18,
     marginBottom: 20,
     textAlign: 'center',
     fontWeight: 'bold',
+    color: colors.textPrimary,
   },
   resetButtonContainer: {
     position: 'absolute',

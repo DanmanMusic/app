@@ -2,11 +2,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, Button, Alert, FlatList, Image } from 'react-native';
 
-// Import types
 import { RewardItem } from '../../mocks/mockRewards';
 
-// Import shared styles
 import { adminSharedStyles } from './adminSharedStyles';
+import { appSharedStyles } from '../../styles/appSharedStyles';
+import { colors } from '../../styles/colors';
+
 
 interface AdminRewardsSectionProps {
   rewardsCatalog: RewardItem[];
@@ -15,8 +16,6 @@ interface AdminRewardsSectionProps {
   onDeleteReward: (rewardId: string) => void;
 }
 
-// Render item for Reward Catalog list in Admin view - Use shared styles
-// Keep (Mock) for Edit/Delete
 const AdminRewardItem = ({
   item,
   onEditDelete,
@@ -24,26 +23,24 @@ const AdminRewardItem = ({
   item: RewardItem;
   onEditDelete: (rewardId: string, action: 'edit' | 'delete') => void;
 }) => (
-  <View style={adminSharedStyles.item}>
-    <View style={adminSharedStyles.rewardItemContent}>
+  <View style={appSharedStyles.itemContainer}>
+    <View style={styles.rewardItemContent}>
       <Image
         source={{ uri: item.imageUrl }}
-        style={adminSharedStyles.rewardImage}
+        style={styles.rewardImage}
         resizeMode="contain"
       />
-      <View style={adminSharedStyles.rewardDetails}>
-        <Text style={adminSharedStyles.itemTitle}>{item.name}</Text>
-        <Text>{item.cost} tickets</Text>
+      <View style={styles.rewardDetails}>
+        <Text style={appSharedStyles.itemTitle}>{item.name}</Text>
+        <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>{item.cost} Tickets</Text>
         {item.description && (
-          <Text style={{ fontSize: 13, color: '#666' }}>{item.description}</Text>
+          <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
         )}
       </View>
     </View>
     <View style={adminSharedStyles.itemActions}>
-      {/* Keep (Mock) as it only alerts */}
       <Button title="Edit (Mock)" onPress={() => onEditDelete(item.id, 'edit')} />
-      {/* Keep (Mock) as it only alerts */}
-      <Button title="Delete (Mock)" onPress={() => onEditDelete(item.id, 'delete')} color="red" />
+      <Button title="Delete (Mock)" onPress={() => onEditDelete(item.id, 'delete')} color={colors.danger} />
     </View>
   </View>
 );
@@ -61,9 +58,8 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
 
   return (
     <View>
-      <Text style={adminSharedStyles.sectionTitle}>Rewards Catalog</Text>
+      <Text style={appSharedStyles.sectionTitle}>Rewards Catalog</Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
-        {/* Keep (Mock) as it only alerts */}
         <Button title="Add New Reward (Mock)" onPress={() => onCreateReward({})} />
       </View>
       <FlatList
@@ -75,9 +71,29 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
         scrollEnabled={false}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
         ListEmptyComponent={() => (
-          <Text style={adminSharedStyles.emptyListText}>No rewards found.</Text>
+          <Text style={appSharedStyles.emptyListText}>No rewards found.</Text>
         )}
       />
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  // These styles were kept local from the original file as they define specific layouts or elements unique to rewards
+   rewardItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  rewardImage: {
+    width: 60,
+    height: 60,
+    marginRight: 15,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.borderPrimary,
+  },
+  rewardDetails: {
+    flex: 1,
+  },
+});

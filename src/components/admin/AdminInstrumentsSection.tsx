@@ -2,11 +2,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, Button, Alert, FlatList } from 'react-native';
 
-// Import types
 import { Instrument } from '../../mocks/mockInstruments';
 
-// Import shared styles
 import { adminSharedStyles } from './adminSharedStyles';
+import { appSharedStyles } from '../../styles/appSharedStyles';
+import { colors } from '../../styles/colors';
+
 
 interface AdminInstrumentsSectionProps {
   mockInstruments: Instrument[];
@@ -15,8 +16,6 @@ interface AdminInstrumentsSectionProps {
   onDeleteInstrument: (instrumentId: string) => void;
 }
 
-// Render item for Instrument list in Admin view - Use shared styles
-// Keep (Mock) for Edit/Delete
 const AdminInstrumentItem = ({
   item,
   onEditDelete,
@@ -24,13 +23,11 @@ const AdminInstrumentItem = ({
   item: Instrument;
   onEditDelete: (instrumentId: string, action: 'edit' | 'delete') => void;
 }) => (
-  <View style={adminSharedStyles.item}>
-    <Text style={adminSharedStyles.itemTitle}>{item.name}</Text>
+  <View style={appSharedStyles.itemContainer}>
+    <Text style={appSharedStyles.itemTitle}>{item.name}</Text>
     <View style={adminSharedStyles.itemActions}>
-      {/* Keep (Mock) as it only alerts */}
       <Button title="Edit (Mock)" onPress={() => onEditDelete(item.id, 'edit')} />
-      {/* Keep (Mock) as it only alerts */}
-      <Button title="Delete (Mock)" onPress={() => onEditDelete(item.id, 'delete')} color="red" />
+      <Button title="Delete (Mock)" onPress={() => onEditDelete(item.id, 'delete')} color={colors.danger} />
     </View>
   </View>
 );
@@ -48,9 +45,8 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
 
   return (
     <View>
-      <Text style={adminSharedStyles.sectionTitle}>Instruments ({mockInstruments.length})</Text>
+      <Text style={appSharedStyles.sectionTitle}>Instruments ({mockInstruments.length})</Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
-        {/* Keep (Mock) as it only alerts */}
         <Button title="Add New Instrument (Mock)" onPress={() => onCreateInstrument({})} />
       </View>
       <FlatList
@@ -62,7 +58,7 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
         scrollEnabled={false}
         ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
         ListEmptyComponent={() => (
-          <Text style={adminSharedStyles.emptyListText}>No instruments found.</Text>
+          <Text style={appSharedStyles.emptyListText}>No instruments found.</Text>
         )}
       />
     </View>

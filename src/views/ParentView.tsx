@@ -8,12 +8,18 @@ import { Instrument } from '../mocks/mockInstruments';
 import { User } from '../mocks/mockUsers';
 
 // Import helpers
-import { getInstrumentNames } from '../utils/helpers'; // IMPORT HELPER (getTaskTitle not needed here)
+import { getInstrumentNames } from '../utils/helpers';
 
 // Import the PupilView component to render the child's data
 import { PupilView, PupilViewProps } from './PupilView';
 
+// Import shared styles and colors
+import { appSharedStyles } from '../styles/appSharedStyles';
+import { colors } from '../styles/colors';
+
+
 // Re-define SimplifiedStudent here or import if put in a shared file
+// (Already defined in AdminView, could move to a common types file later)
 interface SimplifiedStudent {
   id: string;
   name: string;
@@ -47,33 +53,43 @@ export const ParentView: React.FC<ParentViewProps> = ({
   // If no student is selected or data is missing for the selected student, show the family selector
   if (!currentViewingStudentId || !currentViewingStudentData) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          <Text style={styles.header}>Welcome, {user.name}!</Text>
-          <Text style={styles.sectionTitle}>Your Children</Text>
+      // Use safeArea from appSharedStyles
+      <SafeAreaView style={appSharedStyles.safeArea}>
+         // Use container from appSharedStyles
+        <View style={appSharedStyles.container}>
+           // Use header from appSharedStyles
+          <Text style={appSharedStyles.header}>Welcome, {user.name}!</Text>
+           // Use sectionTitle from appSharedStyles
+          <Text style={appSharedStyles.sectionTitle}>Your Children</Text>
 
           {linkedStudents.length > 0 ? (
             linkedStudents.map(student => (
-              <View key={student.id} style={styles.studentItem}>
-                <Text style={styles.studentName}>{student.name}</Text>
-                <Text>
+              // Use itemContainer from appSharedStyles
+              <View key={student.id} style={appSharedStyles.itemContainer}>
+                 // Use itemTitle from appSharedStyles
+                <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
+                 // Use itemDetailText from appSharedStyles
+                <Text style={appSharedStyles.itemDetailText}>
                   Instrument(s): {getInstrumentNames(student.instrumentIds, mockInstruments)}
-                </Text>{' '}
-                {/* Use helper */}
-                <Text>Balance: {student.balance} Tickets</Text>
-                <Button
-                  title={`View ${student.name}'s Profile`}
-                  onPress={() => setViewingStudentId(student.id)}
-                />
+                </Text>
+                 // Use itemDetailText and textGold
+                <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>Balance: {student.balance} Tickets</Text>
+                <View style={styles.studentActions}> // Keep specific action container style
+                   <Button
+                     title={`View ${student.name}'s Profile`}
+                     onPress={() => setViewingStudentId(student.id)}
+                   />
+                </View>
               </View>
             ))
           ) : (
-            <Text style={styles.emptyListText}>
+            // Use emptyListText from appSharedStyles
+            <Text style={appSharedStyles.emptyListText}>
               No students linked yet. Ask the school admin to link your child.
             </Text>
           )}
 
-          {/* Placeholder for "Add Another Student" */}
+          // Placeholder for "Add Another Student"
           <View style={{ marginTop: 30, alignItems: 'flex-start' }}>
             <Button
               title="Add Another Student (Mock QR Scan)"
@@ -89,15 +105,17 @@ export const ParentView: React.FC<ParentViewProps> = ({
   // We pass the currentViewingStudentData which matches the PupilViewProps structure
   // We also pass down the action props
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Add a button/header here to go back to the family selector */}
-      <View style={styles.headerContainer}>
+    // Use safeArea from appSharedStyles
+    <SafeAreaView style={appSharedStyles.safeArea}>
+      // Use headerContainer from appSharedStyles
+      <View style={appSharedStyles.headerContainer}>
         <Button title="← Back to Children" onPress={() => setViewingStudentId('')} />
-        <Text style={styles.header}>{currentViewingStudentData.user.name}'s Profile</Text>
-        <View style={{ width: 50 }} /> {/* Spacer to balance button */}
+         // Use header from appSharedStyles
+        <Text style={appSharedStyles.header}>{currentViewingStudentData.user.name}'s Profile</Text>
+        <View style={{ width: 50 }} /> // Spacer to balance button
       </View>
 
-      {/* Render the PupilView component for the selected child, passing needed props */}
+      // Render the PupilView component for the selected child, passing needed props
       <PupilView
         {...currentViewingStudentData}
         onMarkTaskComplete={onMarkTaskComplete} // Pass down the action prop
@@ -109,54 +127,15 @@ export const ParentView: React.FC<ParentViewProps> = ({
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
-  },
-  container: {
-    flex: 1,
-    padding: 15,
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingTop: 10,
-    paddingBottom: 5,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  header: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    flexShrink: 1,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    paddingBottom: 5,
-  },
-  studentItem: {
-    backgroundColor: '#fff',
-    padding: 12,
-    marginBottom: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  studentName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  emptyListText: {
-    textAlign: 'center',
-    color: '#777',
-    marginTop: 10,
-  },
+  // safeArea, container, headerContainer, header, sectionTitle, emptyListText
+  // styles moved to appSharedStyles
+
+  // studentItem style removed, using appSharedStyles.itemContainer
+  // studentName style removed, using appSharedStyles.itemTitle
+   studentActions: { // Keep specific style
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      marginTop: 10,
+      gap: 5,
+   },
 });
