@@ -6,29 +6,14 @@ import { Instrument } from '../../mocks/mockInstruments'; // Type
 import { adminSharedStyles } from './adminSharedStyles'; // Shared admin styles
 import { appSharedStyles } from '../../styles/appSharedStyles'; // App-wide shared styles
 import { colors } from '../../styles/colors'; // Color palette
+import { getInstrumentIconSource } from '../../utils/helpers'; // Import the helper
 
 // Import Modals
 import CreateInstrumentModal from './modals/CreateInstrumentModal';
 import EditInstrumentModal from './modals/EditInstrumentModal';
 import ConfirmationModal from '../common/ConfirmationModal'; // Reusable confirmation modal
 
-// Icon loading helper (same as EditInstrumentModal)
-const getInstrumentIconSource = (instrumentName: string | undefined) => {
-  if (!instrumentName) return require('../../../assets/instruments/icon.jpg');
-  const imageName = instrumentName.toLowerCase();
-  try {
-    switch (imageName) {
-      case 'piano': return require('../../../assets/instruments/piano.jpg');
-      case 'guitar': return require('../../../assets/instruments/guitar.jpg');
-      case 'drums': return require('../../../assets/instruments/drums.jpg');
-      case 'violin': return require('../../../assets/instruments/violin.jpg');
-      case 'voice': return require('../../../assets/instruments/voice.jpg');
-      case 'flute': return require('../../../assets/instruments/flute.jpg');
-      case 'bass': case 'bass guitar': return require('../../../assets/instruments/bass.jpg');
-      default: console.warn(`Icon not found for instrument: ${imageName}.jpg`); return require('../../../assets/instruments/icon.jpg');
-    }
-  } catch (error) { console.warn(`Error loading icon for instrument: ${imageName}.jpg`, error); return require('../../../assets/instruments/icon.jpg'); }
-};
+// Icon loading helper REMOVED from here
 
 interface AdminInstrumentsSectionProps {
   mockInstruments: Instrument[];
@@ -50,9 +35,9 @@ const AdminInstrumentItem = ({
   <View style={appSharedStyles.itemContainer}>
     <View style={styles.itemContent}>
       <Image
-        source={getInstrumentIconSource(item.name)}
+        source={getInstrumentIconSource(item.name)} // Uses imported helper
         style={styles.instrumentIcon}
-        resizeMode="contain"        
+        resizeMode="contain"
       />
       <Text style={[appSharedStyles.itemTitle, styles.itemTitleText]}>{item.name}</Text>
     </View>

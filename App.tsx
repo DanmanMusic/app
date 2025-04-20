@@ -20,12 +20,17 @@ import {
   TaskVerificationStatus,
 } from './src/mocks/mockAssignedTasks';
 import { mockRewardsCatalog, RewardItem } from './src/mocks/mockRewards';
-import { mockAnnouncements, Announcement } from './src/mocks/mockAnnouncements';
+// Import initial mock data AND types for announcements
+import {
+  mockAnnouncements as initialMockAnnouncements,
+  Announcement,
+  AnnouncementType,
+} from './src/mocks/mockAnnouncements';
 import { mockTaskLibrary, TaskLibraryItem } from './src/mocks/mockTaskLibrary';
 import { mockInstruments, Instrument } from './src/mocks/mockInstruments';
 
 // Import NEW helper
-import { getTaskTitle, getInstrumentNames, getUserDisplayName } from './src/utils/helpers';
+import { getTaskTitle, getInstrumentNames, getUserDisplayName, getInstrumentIconSource } from './src/utils/helpers';
 
 import { PublicView } from './src/views/PublicView';
 import { PupilView, PupilViewProps } from './src/views/PupilView';
@@ -108,6 +113,8 @@ export default function App() {
   const [assignedTasks, setAssignedTasks] = useState<AssignedTask[]>(initialMockAllAssignedTasks);
   const [ticketBalances, setTicketBalances] = useState<Record<string, number>>(initialMockTicketBalances);
   const [ticketHistory, setTicketHistory] = useState<TicketTransaction[]>(initialMockTicketHistory);
+  // Add state for announcements
+  const [announcements, setAnnouncements] = useState<Announcement[]>(initialMockAnnouncements);
   // Add state for other mock data if they become mutable (e.g., tasks, rewards)
 
   const [isVerificationModalVisible, setIsVerificationModalVisible] = useState(false);
@@ -120,6 +127,7 @@ export default function App() {
     // setTicketBalances(initialMockTicketBalances);
     // setTicketHistory(initialMockTicketHistory);
     // setCurrentMockUsers(mockUsers); // Initialize user state
+    // setAnnouncements(initialMockAnnouncements); // Initialize announcement state
   }, []);
 
   const isAuthenticated = !!mockAuthState;
@@ -280,6 +288,7 @@ export default function App() {
         ...prevHistory,
       ]);
 
+    // Create announcement for redemption
     const redemptionAnnouncement: Announcement = {
       id: `ann-redemption-${Date.now()}-${Math.random().toString(36).substring(7)}`,
       type: 'redemption_celebration',
@@ -288,8 +297,9 @@ export default function App() {
       date: new Date().toISOString(),
       relatedStudentId: studentId,
     };
-    // TODO: Add announcement to state
-    alert(`Reward Redeemed - ${reward.name} redeemed for ${redeemedStudentName}! ${cost} tickets deducted. A public announcement is simulated.`);
+    // Add the announcement to the state
+    setAnnouncements(prev => [redemptionAnnouncement, ...prev]);
+    alert(`Reward Redeemed - ${reward.name} redeemed for ${redeemedStudentName}! ${cost} tickets deducted. A public announcement was created.`);
   };
 
   const simulateAssignTask = (taskId: string, studentId: string) => {
@@ -381,6 +391,49 @@ export default function App() {
      // Note: Need to handle cascading deletes or updates (e.g., unlinking from teachers/parents) in a real app
   };
 
+  // --- MOCK ANNOUNCEMENT CRUD OPERATIONS ---
+  const simulateCreateAnnouncement = (announcementData: Omit<Announcement, 'id' | 'date'>) => {
+    const newId = `ann-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    const newAnnouncement: Announcement = {
+      ...announcementData,
+      id: newId,
+      date: new Date().toISOString(), // Set current date/time
+      // Ensure type is set, default if necessary
+      type: announcementData.type || 'announcement',
+    };
+    setAnnouncements(prev => [newAnnouncement, ...prev]);
+    alert(`Mock Create Announcement SUCCESS: "${newAnnouncement.title}" (${newId})`);
+  };
+
+  const simulateEditAnnouncement = (
+    announcementId: string,
+    announcementData: Partial<Omit<Announcement, 'id' | 'date'>>
+  ) => {
+    setAnnouncements(prev =>
+      prev.map(ann => {
+        if (ann.id === announcementId) {
+          return { ...ann, ...announcementData };
+        }
+        return ann;
+      })
+    );
+    const editedAnn = announcements.find(a => a.id === announcementId); // Find the original for title
+    alert(`Mock Edit Announcement SUCCESS: "${editedAnn?.title || announcementId}"`);
+  };
+
+  const simulateDeleteAnnouncement = (announcementId: string) => {
+    const annToDelete = announcements.find(a => a.id === announcementId);
+     if (!annToDelete) {
+        alert(`Mock Delete Announcement FAILED: ID ${announcementId} not found.`);
+        return;
+     }
+     const annTitle = annToDelete.title;
+     setAnnouncements(prev => prev.filter(ann => ann.id !== announcementId));
+     alert(`Mock Delete Announcement SUCCESS: "${annTitle}" (${announcementId})`);
+  };
+
+  // --- END MOCK ANNOUNCEMENT CRUD ---
+
 
   const getMockStudentData = (studentId: string): PupilViewProps | undefined => {
     const studentUser = currentMockUsers[studentId]; // Use state
@@ -394,7 +447,7 @@ export default function App() {
         .filter(tx => tx.studentId === studentId)
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
       rewardsCatalog: mockRewardsCatalog,
-      announcements: mockAnnouncements, // Assuming announcements are static for now
+      announcements: announcements, // Use announcements from state
       taskLibrary: mockTaskLibrary, // Assuming task library is static for now
       mockInstruments: mockInstruments, // Assuming instruments are static for now
       onMarkTaskComplete: simulateMarkTaskComplete,
@@ -406,7 +459,7 @@ export default function App() {
 
     switch (currentUserRole) {
       case 'public':
-        return <PublicView rewardsCatalog={mockRewardsCatalog} announcements={mockAnnouncements} />;
+        return <PublicView rewardsCatalog={mockRewardsCatalog} announcements={announcements} />; // Use state
 
       case 'pupil':
         if (!currentUserId) return <Text>Error: Pupil ID not set in mock state.</Text>;
@@ -432,7 +485,7 @@ export default function App() {
             balance: ticketBalances[student.id] || 0,
           })),
           studentsLinkedToTeacher: allPupilUsers
-            .filter(u => teacherUser.linkedStudentIds?.includes(u.id))
+            .filter(u => u.linkedTeacherIds?.includes(teacherUser.id)) // Check pupil's linkedTeacherIds
             .map(student => ({
               id: student.id,
               // Use helper for display name
@@ -441,7 +494,9 @@ export default function App() {
               balance: ticketBalances[student.id] || 0,
             })),
           pendingVerifications: assignedTasks.filter(
-            task => task.isComplete && task.verificationStatus === 'pending'
+            task => task.isComplete && task.verificationStatus === 'pending' &&
+                   (teacherUser.linkedStudentIds?.includes(task.studentId) || // Legacy check (REMOVE LATER)
+                    usersFromState.find(u => u.id === task.studentId && u.role === 'pupil')?.linkedTeacherIds?.includes(teacherUser.id)) // New Check
           ),
           taskLibrary: mockTaskLibrary,
           allAssignedTasks: assignedTasks,
@@ -510,7 +565,7 @@ export default function App() {
           taskLibrary: mockTaskLibrary,
           rewardsCatalog: mockRewardsCatalog,
           allTicketHistory: ticketHistory,
-          announcements: mockAnnouncements,
+          announcements: announcements, // Use state
           mockInstruments: mockInstruments,
 
           onManualTicketAdjust: simulateManualTicketAdjustment,
@@ -525,6 +580,11 @@ export default function App() {
           onEditUser: simulateEditUser,
           onDeleteUser: simulateDeleteUser,
 
+          // Announcements CRUD
+          onCreateAnnouncement: simulateCreateAnnouncement,
+          onEditAnnouncement: simulateEditAnnouncement,
+          onDeleteAnnouncement: simulateDeleteAnnouncement,
+
           // Keep other mocks simple for now
           onCreateTaskLibraryItem: (taskData: any) =>
             alert(`Mock Create Task Lib: ${JSON.stringify(taskData)}`),
@@ -538,12 +598,12 @@ export default function App() {
             alert(`Mock Edit Reward: ${rewardId}: ${JSON.stringify(rewardData)}`),
           onDeleteReward: (rewardId: string) =>
             alert(`Mock Delete Reward: ${rewardId}`),
-          onCreateAnnouncement: (announcementData: any) =>
-            alert(`Mock Create Announcement: ${JSON.stringify(announcementData)}`),
-          onEditAnnouncement: (announcementId: string, announcementData: any) =>
-            alert(`Mock Edit Announcement: ${announcementId}: ${JSON.stringify(announcementData)}`),
-          onDeleteAnnouncement: (announcementId: string) =>
-            alert(`Mock Delete Announcement: ${announcementId}`),
+          // onCreateAnnouncement: (announcementData: any) => // Replaced by simulation
+          //   alert(`Mock Create Announcement: ${JSON.stringify(announcementData)}`),
+          // onEditAnnouncement: (announcementId: string, announcementData: any) => // Replaced by simulation
+          //   alert(`Mock Edit Announcement: ${announcementId}: ${JSON.stringify(announcementData)}`),
+          // onDeleteAnnouncement: (announcementId: string) => // Replaced by simulation
+          //   alert(`Mock Delete Announcement: ${announcementId}`),
           onCreateInstrument: (instrumentData: any) =>
             alert(`Mock Create Instrument: ${JSON.stringify(instrumentData)}`),
           onEditInstrument: (instrumentId: string, instrumentData: any) =>

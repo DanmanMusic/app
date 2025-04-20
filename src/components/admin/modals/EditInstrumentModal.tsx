@@ -1,29 +1,13 @@
-// src/components/admin/EditInstrumentModal.tsx
+// src/components/admin/modals/EditInstrumentModal.tsx
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput, Image } from 'react-native'; // Added Image
 
 import { Instrument } from '../../../mocks/mockInstruments';
 import { colors } from '../../../styles/colors';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
+import { getInstrumentIconSource } from '../../../utils/helpers'; // Import the helper
 
-// Function to get icon source (same as used in AdminInstrumentsSection)
-// In a real app, this might be a shared helper
-const getInstrumentIconSource = (instrumentName: string | undefined) => {
-  if (!instrumentName) return require('../../../../assets/instruments/icon.jpg');
-  const imageName = instrumentName.toLowerCase();
-  try {
-    switch (imageName) {
-      case 'piano': return require('../../../../assets/instruments/piano.jpg');
-      case 'guitar': return require('../../../../assets/instruments/guitar.jpg');
-      case 'drums': return require('../../../../assets/instruments/drums.jpg');
-      case 'violin': return require('../../../../assets/instruments/violin.jpg');
-      case 'voice': return require('../../../../assets/instruments/voice.jpg');
-      case 'flute': return require('../../../../assets/instruments/flute.jpg');
-      case 'bass': case 'bass guitar': return require('../../../../assets/instruments/bass.jpg');
-      default: return require('../../../../assets/instruments/icon.jpg');
-    }
-  } catch (error) { return require('../../../../assets/instruments/icon.jpg'); }
-};
+// Function to get icon source REMOVED from here
 
 
 // Reusing modal styles
@@ -106,7 +90,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
           <View style={modalStyles.iconPreviewContainer}>
               <Text style={modalStyles.label}>Current Icon (Mock):</Text>
               <Image
-                  source={getInstrumentIconSource(instrumentToEdit.name)}
+                  source={getInstrumentIconSource(instrumentToEdit.name)} // Uses imported helper
                   style={modalStyles.iconPreview}
                   resizeMode="contain"
                />

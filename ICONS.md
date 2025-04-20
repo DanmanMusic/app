@@ -2,7 +2,7 @@
 
 **Project:** Music School App
 
-**Format:** PNG (Portable Network Graphics) with Transparency
+**Format:** JPEG (Joint Photographic Experts Group)
 
 **Style:** Flat design icon style
 
@@ -16,17 +16,14 @@
 
 **Aspect Ratio:** Square
 
-**Background:** **Transparent** (Essential for PNG icons)
+**Background:** Opaque (JPEG format does not support transparency)
 
 **Effects:** No shadows, no gradients (or very subtle flat-style gradients if necessary for differentiation)
 
-**Target Resolutions & File Naming:**
-Generate icons suitable for the following resolutions, adhering to React Native's naming convention:
-*   **Base Logical Size:** Aim for a clear representation at roughly 40x40 points.
-*   **@1x:** `[instrument_name].png` - **40x40 pixels** (Optional but recommended)
-*   **@2x:** `[instrument_name]@2x.png` - **80x80 pixels**
-*   **@3x:** `[instrument_name]@3x.png` - **120x120 pixels**
-    *(Note: It might be easiest to generate the highest resolution (120x120) first and then downscale accurately using an image editor to create the @2x and @1x sizes.)*
+**Target Resolution & File Naming:**
+Generate a single JPEG image for each instrument. Aim for a resolution suitable for clear display in the app's UI elements (e.g., list items, modal previews). A size of **~120x120 pixels** is recommended as a source, allowing for decent downscaling by the app where needed.
+
+*   **Naming Convention:** `[instrument_name].jpg` (e.g., `piano.jpg`, `guitar.jpg`)
 
 **Coloring:** Based on the "original" or typical color of the implied instrument, using flat color fills:
 
@@ -69,4 +66,3 @@ Generate icons suitable for the following resolutions, adhering to React Native'
 
 *   Maintain visual consistency across all icons in terms of style, line thickness (if applicable), and overall simplicity.
 *   Focus on clear and recognizable silhouettes for each instrument, especially when viewed at smaller sizes.
-*   Ensure crisp edges and avoid blurriness, particularly after resizing.
