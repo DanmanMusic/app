@@ -1,23 +1,26 @@
 // src/components/admin/CreateUserModal.tsx
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, Button, Alert, TextInput, Platform, ScrollView } from 'react-native';
+import { Modal, View, Text, StyleSheet, Button, TextInput, Platform, ScrollView } from 'react-native';
 
-// Import types
-import { UserRole, User } from '../../mocks/mockUsers'; // Import UserRole including 'parent'
+// Import NEW user type
+import { UserRole, User } from '../../types/userTypes';
 import { Instrument } from '../../mocks/mockInstruments';
-import { SimplifiedStudent } from '../../views/AdminView';
+// No longer need SimplifiedStudent here
 
-// Import shared styles and colors
 import { colors } from '../../styles/colors';
 import { appSharedStyles } from '../../styles/appSharedStyles';
-import { adminSharedStyles } from './adminSharedStyles';
+// import { adminSharedStyles } from './adminSharedStyles'; // Not strictly needed here
+
+// Import NEW helper
+import { getUserDisplayName } from '../../utils/helpers'; // Import getUserDisplayName
 
 
 interface CreateUserModalProps {
   visible: boolean;
   onClose: () => void;
+  // Use specific signature for the prop, matching the new User structure
   onCreateUser: (userData: Omit<User, 'id'>) => void;
-  allPupils: SimplifiedStudent[];
+  allPupils: User[]; // Expect full User objects for lookup if needed for linking validation/display
   mockInstruments: Instrument[];
 }
 
@@ -25,99 +28,75 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   visible,
   onClose,
   onCreateUser,
-  allPupils,
+  allPupils, // Receives full User objects
   mockInstruments,
 }) => {
-  // State type should now include 'parent' again
-  const [name, setName] = useState('');
-  const [role, setRole] = useState<UserRole | ''>(''); // Role state includes 'parent'
-  const [instrumentIds, setInstrumentIds] = useState<string[]>([]);
-  const [linkedStudentIds, setLinkedStudentIds] = useState<string[]>([]);
+  // State for the new name fields and other user properties
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [nickname, setNickname] = useState(''); // Optional nickname state
+  const [role, setRole] = useState<UserRole | ''>(''); // Role selection state
+  const [instrumentIds, setInstrumentIds] = useState<string[]>([]); // For Pupil role
+  const [linkedStudentIds, setLinkedStudentIds] = useState<string[]>([]); // For Teacher/Parent roles
 
+  // Effect to reset form state when modal visibility changes
   useEffect(() => {
     if (visible) {
-      setName('');
+      // Reset all fields when modal opens
+      setFirstName('');
+      setLastName('');
+      setNickname('');
       setRole('');
       setInstrumentIds([]);
       setLinkedStudentIds([]);
     }
-  }, [visible]);
+    // No action needed when modal closes from here
+  }, [visible]); // Dependency array is correct
 
+  // Handler for the "Create User" button press
   const handleCreatePress = () => {
-    if (!name || !role) {
-      Alert.alert('Missing Information', 'Please enter a name and select a role.');
+    // Basic validation for required fields
+    if (!firstName || !lastName || !role) {
+       alert('Missing Information - Please enter First Name, Last Name, and select a Role.');
       return;
     }
 
+    // Construct the new user data object based on the new structure
     const newUserPartial: Omit<User, 'id'> = {
       role: role,
-      name: name.trim(),
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      // Only include nickname if it's not empty (after trimming)
+      ...(nickname.trim() && { nickname: nickname.trim() }),
+      // Conditionally add role-specific properties
+      ...(role === 'pupil' && { instrumentIds: instrumentIds }),
+      ...((role === 'teacher' || role === 'parent') && { linkedStudentIds: linkedStudentIds }),
     };
 
-    if (role === 'pupil') {
-      newUserPartial.instrumentIds = instrumentIds;
-    } else if (role === 'teacher' || role === 'parent') { // Linking applies to teacher AND parent
-      newUserPartial.linkedStudentIds = linkedStudentIds;
-    }
-
+    // Call the onCreateUser prop passed from AdminView (which calls the one from App.tsx)
     onCreateUser(newUserPartial);
-
-    onClose();
+    // Note: Closing the modal is handled by the wrapper function in AdminView
   };
 
+  // Mock handler for adding instruments (using simple alert for now)
   const handleAddInstrument = () => {
-     Alert.prompt(
-       'Add Instrument ID (Mock)',
-       'Enter instrument ID (e.g., inst-1):',
-       [
-         { text: 'Cancel', style: 'cancel' },
-         {
-           text: 'Add',
-           onPress: id => {
-             if (id && mockInstruments.some(inst => inst.id === id) && !instrumentIds.includes(id)) {
-                setInstrumentIds(prev => [...prev, id]);
-             } else if (id && instrumentIds.includes(id)) {
-                Alert.alert('Already Added', 'This instrument ID is already in the list.');
-             }
-             else {
-               Alert.alert('Invalid ID', 'Please enter a valid instrument ID from the mock list.');
-             }
-           }
-         }
-       ],
-       Platform.OS === 'ios' ? 'default' : 'plain-text'
-     );
+     alert('Mock Add Instrument ID');
+    // Could use Alert.prompt or a selection modal later
   };
 
+  // Handler for removing an instrument ID
   const handleRemoveInstrument = (idToRemove: string) => {
       setInstrumentIds(prev => prev.filter(id => id !== idToRemove));
   };
 
 
+  // Mock handler for linking students (using simple alert for now)
    const handleAddLinkedStudent = () => {
-     Alert.prompt(
-       'Link Student ID (Mock)',
-       'Enter student ID (e.g., student-1):',
-       [
-         { text: 'Cancel', style: 'cancel' },
-         {
-           text: 'Link',
-           onPress: id => {
-             if (id && allPupils.some(pupil => pupil.id === id) && !linkedStudentIds.includes(id)) {
-                setLinkedStudentIds(prev => [...prev, id]);
-             } else if (id && linkedStudentIds.includes(id)) {
-                 Alert.alert('Already Linked', 'This student ID is already linked.');
-             }
-             else {
-               Alert.alert('Invalid ID', 'Please enter a valid student ID from the mock list.');
-             }
-           }
-         }
-       ],
-        Platform.OS === 'ios' ? 'default' : 'plain-text'
-     );
+      alert('Mock Link Student ID');
+    // Could use Alert.prompt or a selection modal later
    };
 
+   // Handler for removing a linked student ID
     const handleRemoveLinkedStudent = (idToRemove: string) => {
        setLinkedStudentIds(prev => prev.filter(id => id !== idToRemove));
     };
@@ -128,42 +107,64 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
       animationType="slide"
       transparent={true}
       visible={visible}
-      onRequestClose={onClose}
+      onRequestClose={onClose} // Allow closing via system back/escape
     >
       <View style={modalStyles.centeredView}>
         <View style={modalStyles.modalView}>
           <Text style={modalStyles.modalTitle}>Create New User (Mock)</Text>
 
           <ScrollView style={modalStyles.scrollView}>
-            <Text style={modalStyles.label}>Name:</Text>
+            {/* Input fields for the new name structure */}
+            <Text style={modalStyles.label}>First Name:</Text>
             <TextInput
               style={modalStyles.input}
-              value={name}
-              onChangeText={setName}
-              placeholder="Enter Name"
+              value={firstName}
+              onChangeText={setFirstName}
+              placeholder="Enter First Name"
               placeholderTextColor={colors.textLight}
             />
 
+            <Text style={modalStyles.label}>Last Name:</Text>
+            <TextInput
+              style={modalStyles.input}
+              value={lastName}
+              onChangeText={setLastName}
+              placeholder="Enter Last Name"
+              placeholderTextColor={colors.textLight}
+            />
+
+            <Text style={modalStyles.label}>Nickname (Optional):</Text>
+            <TextInput
+              style={modalStyles.input}
+              value={nickname}
+              onChangeText={setNickname}
+              placeholder="Enter Nickname"
+              placeholderTextColor={colors.textLight}
+            />
+
+
+            {/* Role Selection */}
             <Text style={modalStyles.label}>Role:</Text>
             <View style={modalStyles.roleButtons}>
-              {/* REMOVE 'parent' from this map, but keep UserRole as potential state value */}
-              {(['admin', 'teacher', 'pupil'] as UserRole[]).map((r) => (
+              {/* Render buttons for all roles, including 'parent' */}
+              {(['admin', 'teacher', 'pupil', 'parent'] as UserRole[]).map((r) => (
                 <Button
                   key={r}
                   title={r.charAt(0).toUpperCase() + r.slice(1)}
-                  onPress={() => setRole(r)} // Set role including 'parent' if button existed
+                  onPress={() => setRole(r)}
                   color={role === r ? colors.primary : colors.secondary}
                 />
               ))}
             </View>
 
-            {/* Role-Specific Fields */}
+            {/* Conditional sections based on selected role */}
             {role === 'pupil' && (
               <View style={modalStyles.roleSpecificSection}>
                  <Text style={modalStyles.roleSectionTitle}>Pupil Details</Text>
                  <Text style={modalStyles.label}>Instrument IDs:</Text>
                  {instrumentIds.map(id => (
                     <View key={id} style={modalStyles.linkedItemRow}>
+                       {/* Display instrument name */}
                        <Text style={modalStyles.linkedItemText}>{mockInstruments.find(inst => inst.id === id)?.name || id}</Text>
                        <Button title="Remove" onPress={() => handleRemoveInstrument(id)} color={colors.danger} />
                     </View>
@@ -172,15 +173,17 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
               </View>
             )}
 
-            {(role === 'teacher' || role === 'parent') && ( // Linking applies to teacher OR parent
+            {(role === 'teacher' || role === 'parent') && ( // Applies to both Teacher and Parent
                <View style={modalStyles.roleSpecificSection}>
                   <Text style={modalStyles.roleSectionTitle}>{role === 'teacher' ? 'Teacher' : 'Parent'} Links</Text>
                   <Text style={modalStyles.label}>Linked Student IDs:</Text>
                   {linkedStudentIds.map(id => {
+                     // Find the full pupil object to display their name
                      const student = allPupils.find(p => p.id === id);
                      return (
                         <View key={id} style={modalStyles.linkedItemRow}>
-                           <Text style={modalStyles.linkedItemText}>{student?.name || id}</Text>
+                           {/* Use helper to display linked student's name */}
+                           <Text style={modalStyles.linkedItemText}>{student ? getUserDisplayName(student) : id}</Text>
                            <Button title="Remove" onPress={() => handleRemoveLinkedStudent(id)} color={colors.danger} />
                         </View>
                      );
@@ -191,7 +194,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
           </ScrollView>
 
-
+          {/* Action Buttons */}
           <View style={modalStyles.buttonContainer}>
             <Button title="Create User (Mock)" onPress={handleCreatePress} />
           </View>
@@ -204,6 +207,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   );
 };
 
+// Modal styles (mostly reusable)
 const modalStyles = StyleSheet.create({
   centeredView: {
     flex: 1,
@@ -247,25 +251,28 @@ const modalStyles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: 'bold',
-    marginTop: 15,
+    marginTop: 10,
     marginBottom: 5,
     color: colors.textPrimary,
+    alignSelf: 'flex-start',
   },
   input: {
     width: '100%',
     borderWidth: 1,
-    borderColor: colors.borderPrimary, // Keep the darker border color fix
+    borderColor: colors.borderPrimary,
     borderRadius: 5,
     padding: 10,
     fontSize: 16,
     color: colors.textPrimary,
-    backgroundColor: colors.backgroundPrimary, // Keep the background color fix
+    backgroundColor: colors.backgroundPrimary,
+    marginBottom: 5,
   },
   roleButtons: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: 8,
+    marginTop: 10,
     marginBottom: 15,
   },
    roleSpecificSection: {

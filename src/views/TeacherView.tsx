@@ -1,64 +1,60 @@
 // src/views/TeacherView.tsx
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Button, Alert, FlatList, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Button, FlatList, Platform } from 'react-native'; // Removed Alert as simple alert() is used
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { User } from '../mocks/mockUsers';
+// Import NEW user type
+import { User } from '../types/userTypes';
+
+// Other required types
 import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
 import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
-import { RewardItem } from '../mocks/mockRewards';
+// import { RewardItem } from '../mocks/mockRewards'; // Not directly used in TeacherView UI
 import { Instrument } from '../mocks/mockInstruments';
 
-import { getTaskTitle, getInstrumentNames } from '../utils/helpers';
+// Import NEW helper for display names
+import { getTaskTitle, getInstrumentNames, getUserDisplayName } from '../utils/helpers';
 
+// PupilViewProps uses the new User type indirectly
 import { PupilViewProps } from './PupilView';
 
+// Shared styles and colors
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
+// Import admin styles for task item consistency
 import { adminSharedStyles } from '../components/admin/adminSharedStyles';
 
 
+// SimplifiedStudent type uses display name implicitly
+// (Assumes App.tsx provides 'name' as the formatted display name)
 interface SimplifiedStudent {
   id: string;
-  name: string;
+  name: string; // Display name
   instrumentIds?: string[];
   balance: number;
 }
 
-interface AssignedTaskSimplified {
-  id: string;
-  taskId: string;
-  studentId: string;
-  studentName?: string;
-  assignedDate: string;
-  isComplete: boolean;
-  completedDate?: string;
-  verificationStatus?: TaskVerificationStatus;
-  actualPointsAwarded?: number;
-}
-
+// Props interface uses the new User type and updated SimplifiedStudent
 interface TeacherViewProps {
-  user: User;
-  allStudents: SimplifiedStudent[];
-  studentsLinkedToTeacher: SimplifiedStudent[];
+  user: User; // Use new User type
+  allStudents: SimplifiedStudent[]; // Uses display name
+  studentsLinkedToTeacher: SimplifiedStudent[]; // Uses display name
   pendingVerifications: AssignedTask[];
   taskLibrary: TaskLibraryItem[];
-  allAssignedTasks: AssignedTask[];
-  rewardsCatalog: RewardItem[];
+  allAssignedTasks: AssignedTask[]; // Full list needed for potential lookups if student view logic changes
+  // rewardsCatalog: RewardItem[]; // Not directly used here
   mockInstruments: Instrument[];
   onVerifyTask: (taskId: string, status: TaskVerificationStatus, points: number) => void;
   onAssignTask: (taskId: string, studentId: string) => void;
   onReassignTaskMock: (taskId: string, studentId: string) => void;
-  onInitiateVerificationModal: (task: AssignedTask) => void;
-
-  onEditAssignedTask?: (assignedTaskId: string, updates: any) => void;
-  onDeleteAssignedTask?: (assignedTaskId: string) => void;
-  getStudentData: (studentId: string) => PupilViewProps | undefined;
+  onInitiateVerificationModal: (task: AssignedTask) => void; // To open the modal (rendered in App.tsx)
+  getStudentData: (studentId: string) => PupilViewProps | undefined; // Returns type with new User structure
 }
 
+// Component to render pending verification items
 const PendingVerificationItem = ({
   task,
-  studentName,
+  studentName, // Expects pre-formatted display name
   taskTitle,
   taskLibrary,
   onInitiateVerification,
@@ -76,8 +72,10 @@ const PendingVerificationItem = ({
         : 'N/A';
 
   return (
+    // Using styles consistent with Admin pending items
     <View style={adminSharedStyles.pendingItem}>
       <Text style={adminSharedStyles.pendingTitle}>Task: {taskTitle}</Text>
+       {/* Display name is passed in */}
       <Text style={adminSharedStyles.pendingDetail}>Student: {studentName}</Text>
       <Text style={adminSharedStyles.pendingDetail}>
         Potential Tickets: {baseTickets}
@@ -91,8 +89,9 @@ const PendingVerificationItem = ({
   );
 };
 
+// Component to render student items in the list
 const StudentListItem = ({
-  student,
+  student, // Expects SimplifiedStudent with display name
   mockInstruments,
   onViewProfile,
   onAssignTask,
@@ -103,16 +102,19 @@ const StudentListItem = ({
   onAssignTask: (studentId: string) => void;
 }) => (
   <View style={appSharedStyles.itemContainer}>
+    {/* Display name is already in student.name */}
     <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
     <Text style={appSharedStyles.itemDetailText}>Instrument(s): {getInstrumentNames(student.instrumentIds, mockInstruments)}</Text>
     <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>Balance: {student.balance} Tickets</Text>
     <View style={styles.studentActions}>
+      {/* Button text reflects action */}
       <Button title="View Profile (Mock)" onPress={() => onViewProfile(student.id)} />
       <Button title="Assign Task (Mock)" onPress={() => onAssignTask(student.id)} />
     </View>
   </View>
 );
 
+// Component to render task library items
 const TaskLibraryItemTeacher = ({ item }: { item: TaskLibraryItem }) => (
   <View style={appSharedStyles.itemContainer}>
     <Text style={appSharedStyles.itemTitle}>{item.title}</Text>
@@ -121,14 +123,15 @@ const TaskLibraryItemTeacher = ({ item }: { item: TaskLibraryItem }) => (
   </View>
 );
 
+// Main TeacherView component
 export const TeacherView: React.FC<TeacherViewProps> = ({
-  user,
-  allStudents,
-  studentsLinkedToTeacher,
+  user, // Full user object for the logged-in teacher
+  allStudents, // Simplified list with display names
+  studentsLinkedToTeacher, // Simplified list with display names
   pendingVerifications,
   taskLibrary,
-  allAssignedTasks,
-  rewardsCatalog,
+  allAssignedTasks, // Keep full list if needed for filtering in student profile view
+  // rewardsCatalog, // Removed as not used
   mockInstruments,
   onVerifyTask,
   onAssignTask,
@@ -136,76 +139,74 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
   onInitiateVerificationModal,
   getStudentData,
 }) => {
+  // State for managing the current view section and selected student
   const [viewingSection, setViewingSection] = React.useState<
-    'dashboard' | 'students' | 'tasks' | 'catalog' | 'studentProfile'
+    'dashboard' | 'students' | 'tasks' | 'studentProfile' // Removed 'catalog'
   >('dashboard');
   const [viewingStudentId, setViewingStudentId] = React.useState<string | null>(null);
+  // getStudentData returns PupilViewProps which contains the full User object
   const viewingStudentData = viewingStudentId ? getStudentData(viewingStudentId) : null;
 
-
+  // Handler to assign a task (mock implementation)
   const handleAssignTaskToStudent = (studentId: string) => {
-    Alert.prompt(
-      'Mock Assign Task',
-      `Assign which task (ID) from library to student ${studentId}? (e.g., tasklib-1)`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Assign',
-          onPress: taskId => {
-            if (taskId && taskLibrary.some(t => t.id === taskId)) {
-              onAssignTask(taskId, studentId);
-              Alert.alert('Mock Assign', `Task ${taskId} assigned to student ${studentId}`);
-            } else {
-              Alert.alert('Invalid Task ID', 'Please enter a valid task library ID.');
-            }
-          },
-        },
-      ],
-      Platform.OS === 'ios' ? 'default' : 'plain-text'
-    );
+    // Find the simplified student to get the display name for the alert
+    const studentInfo = studentsLinkedToTeacher.find(s => s.id === studentId) ?? allStudents.find(s => s.id === studentId);
+    const studentDisplayName = studentInfo ? studentInfo.name : studentId;
+
+    // Use simple alert for web mock
+    alert(`Mock Assign Task to ${studentDisplayName}`);
+    // Could use Alert.prompt or modal later
   };
 
+  // Handler for the general "Assign Task" flow button
   const handleInitiateAssignTask = () => {
-    Alert.alert(
-      'Mock Assign Task Flow',
-      'Simulate initiating assignment: First select student(s), then select a task.'
-    );
+    alert('Mock Assign Task Flow - Select student(s), then select a task.');
   };
 
-
+  // Render the student profile view if a student is selected
   if (viewingStudentId && viewingStudentData) {
+    // Get display name for the viewed student
+    const studentDisplayName = getUserDisplayName(viewingStudentData.user);
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
+        {/* Header for Student Profile */}
         <View style={appSharedStyles.headerContainer}>
           <Button
             title="← Back to Teacher"
             onPress={() => {
               setViewingStudentId(null);
-              setViewingSection('students');
+              setViewingSection('students'); // Go back to the student list
             }}
           />
-          <Text style={appSharedStyles.header}>{viewingStudentData.user.name}'s Profile</Text>
-          <View style={{ width: 50 }} />
+           {/* Use display name in header */}
+          <Text style={appSharedStyles.header}>{studentDisplayName}'s Profile</Text>
+          <View style={{ width: 50 }} /> {/* Spacer */}
         </View>
+        {/* Scrollable content for Student Profile */}
         <ScrollView style={appSharedStyles.container}>
           <Text style={appSharedStyles.sectionTitle}>Student Details</Text>
-          <Text style={appSharedStyles.itemDetailText}>Name: {viewingStudentData.user.name}</Text>
+           {/* Use display name */}
+          <Text style={appSharedStyles.itemDetailText}>Name: {studentDisplayName}</Text>
           <Text style={appSharedStyles.itemDetailText}>
             Instrument(s):{' '}
             {getInstrumentNames(viewingStudentData.user.instrumentIds, mockInstruments)}
           </Text>
           <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>Balance: {viewingStudentData.balance} Tickets</Text>
 
+          {/* Assign Task Button specific to this student */}
           <View style={{ marginTop: 20, marginBottom: 20, alignItems: 'flex-start' }}>
             <Button
-              title={`Assign Task to ${viewingStudentData.user.name} (Mock)`}
+               // Use display name
+              title={`Assign Task to ${studentDisplayName} (Mock)`}
               onPress={() => handleAssignTaskToStudent(viewingStudentData.user.id)}
             />
           </View>
 
+          {/* Assigned Tasks List for this student */}
           <Text style={appSharedStyles.sectionTitle}>
             Assigned Tasks ({viewingStudentData.assignedTasks.length})
           </Text>
+          {/* Rendering logic uses helpers, no direct name display here */}
           {viewingStudentData.assignedTasks.length > 0 ? (
             <FlatList
               data={viewingStudentData.assignedTasks.sort(
@@ -213,6 +214,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
               )}
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
+                // Using adminSharedStyles for consistency in task item rendering
                 <View style={adminSharedStyles.taskItem}>
                   <Text style={adminSharedStyles.taskItemTitle}>{getTaskTitle(item.taskId, taskLibrary)}</Text>
                   <Text style={adminSharedStyles.taskItemStatus}>
@@ -245,17 +247,14 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
                    <View style={adminSharedStyles.assignedTaskActions}>
                       {item.isComplete && item.verificationStatus === 'pending' && (
                           <Button
-                              title="Verify (Mock)"
-                              onPress={() => onInitiateVerificationModal(item)}
+                              title="Verify Task" // Changed text
+                              onPress={() => onInitiateVerificationModal(item)} // Call prop to open modal
                           />
                       )}
                        <Button
                            title="Delete (Mock)"
                            onPress={() =>
-                               Alert.alert(
-                                   'Mock Delete Task',
-                                   `Simulate deleting assigned task ${item.id}`
-                               )
+                               alert(`Mock Delete Task ${item.id}`) // Simple alert
                            }
                            color={colors.danger}
                        />
@@ -272,7 +271,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
             <Text style={appSharedStyles.emptyListText}>No tasks assigned.</Text>
           )}
 
-
+          {/* Mock Buttons for other student actions */}
           <View
             style={{
               marginTop: 20,
@@ -284,19 +283,15 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
             <Button
               title="View History (Mock)"
               onPress={() =>
-                Alert.alert(
-                  'Mock View History',
-                  `Simulate viewing full history for ${viewingStudentData.user.name}`
-                )
+                // Use display name
+                alert(`Mock View History for ${studentDisplayName}`)
               }
             />
             <Button
               title="View Catalog (Mock)"
               onPress={() =>
-                Alert.alert(
-                  'Mock View Catalog',
-                  `Simulate viewing rewards catalog in ${viewingStudentData.user.name}'s context`
-                )
+                // Use display name
+                alert(`Mock View Catalog in ${studentDisplayName}'s context`)
               }
             />
           </View>
@@ -305,12 +300,18 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
     );
   }
 
+  // Render the main Teacher dashboard/section view
+  const teacherDisplayName = getUserDisplayName(user);
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
+      {/* Main Teacher Header */}
       <View style={appSharedStyles.headerContainer}>
-        <Text style={appSharedStyles.header}>Teacher Dashboard: {user.name}</Text>
+         {/* Use display name */}
+        <Text style={appSharedStyles.header}>Teacher Dashboard: {teacherDisplayName}</Text>
       </View>
+      {/* Scrollable Content */}
       <ScrollView style={appSharedStyles.container}>
+        {/* Navigation Buttons */}
         <View style={styles.teacherNav}>
           <Button
             title="Dashboard"
@@ -329,6 +330,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
           />
         </View>
 
+        {/* Dashboard Section */}
         {viewingSection === 'dashboard' && (
           <View>
             <Text style={appSharedStyles.sectionTitle}>
@@ -343,15 +345,16 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
                 )}
                 keyExtractor={item => item.id}
                 renderItem={({ item }) => {
-                  const student = allStudents.find(s => s.id === item.studentId);
-                  const taskDetail = taskLibrary.find(t => t.id === item.taskId);
+                  // Find the simplified student to get the display name
+                  const studentInfo = allStudents.find(s => s.id === item.studentId);
                   return (
                     <PendingVerificationItem
                       task={item}
-                      studentName={student?.name || 'Unknown Student'}
+                      // Pass the pre-formatted display name
+                      studentName={studentInfo?.name || 'Unknown Student'}
                       taskTitle={getTaskTitle(item.taskId, taskLibrary)}
                       taskLibrary={taskLibrary}
-                      onInitiateVerification={onInitiateVerificationModal}
+                      onInitiateVerification={onInitiateVerificationModal} // Prop to open modal
                     />
                   );
                 }}
@@ -367,19 +370,21 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
           </View>
         )}
 
+        {/* My Students Section */}
         {viewingSection === 'students' && (
           <View>
             <Text style={appSharedStyles.sectionTitle}>My Students ({studentsLinkedToTeacher.length})</Text>
             {studentsLinkedToTeacher.length > 0 ? (
               <FlatList
+                // Use the simplified list which already has display names
                 data={studentsLinkedToTeacher.sort((a, b) => a.name.localeCompare(b.name))}
                 keyExtractor={item => item.id}
                 renderItem={({ item }) => (
                   <StudentListItem
-                    student={item}
+                    student={item} // Pass the simplified student object
                     mockInstruments={mockInstruments}
-                    onViewProfile={setViewingStudentId}
-                    onAssignTask={handleAssignTaskToStudent}
+                    onViewProfile={setViewingStudentId} // Set state to navigate
+                    onAssignTask={handleAssignTaskToStudent} // Call handler
                   />
                 )}
                 scrollEnabled={false}
@@ -394,20 +399,19 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
               </Text>
             )}
 
+            {/* Mock Button to view all students */}
             <View style={{ marginTop: 20, alignItems: 'flex-start' }}>
               <Button
                 title="View All Students (Mock)"
                 onPress={() =>
-                  Alert.alert(
-                    'View All Students',
-                    'Simulate viewing a list of all students (requires permission).'
-                  )
+                  alert('View All Students - Simulate viewing a list of all students.')
                 }
               />
             </View>
           </View>
         )}
 
+        {/* Tasks Section */}
         {viewingSection === 'tasks' && (
           <View>
             <Text style={appSharedStyles.sectionTitle}>Task Management</Text>
@@ -434,10 +438,12 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
           </View>
         )}
       </ScrollView>
+      {/* Note: TaskVerificationModal is rendered in App.tsx */}
     </SafeAreaView>
   );
 };
 
+// Local styles for TeacherView
 const styles = StyleSheet.create({
   teacherNav: {
     flexDirection: 'row',
@@ -448,13 +454,13 @@ const styles = StyleSheet.create({
   },
   studentActions: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-around', // Or 'flex-end' depending on desired layout
     marginTop: 10,
-    gap: 5,
+    gap: 5, // Spacing between buttons
   },
   taskLibraryItemTickets: {
     fontSize: 13,
-    color: colors.textSecondary,
+    color: colors.textSecondary, // Keep specific style for ticket display
     marginTop: 5,
     fontStyle: 'italic',
   },

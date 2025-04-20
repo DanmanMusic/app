@@ -15,6 +15,7 @@ These are the major areas and tasks involved in building the application based o
 
 ### [x] 1. Frontend First: Mock UI & View Prototyping
 
+- [x] Refine User Data Model: Split `name` into `firstName`, `lastName`, `nickname` (optional). Define structure in `src/types/userTypes.ts`. Update mocks, helpers (`getUserDisplayName`), and all views/components using user names. Update Create/Edit User modals.
 - [x] Set up Mock Data: Create representative JavaScript objects/arrays to simulate the data structure for various users (including pupil instruments), sample tasks, ticket data, rewards, announcements, and the instrument list.
 - [x] Implement Development View Selector: Create a simple, temporary mechanism visible only in development builds that allows switching between simulating different user roles and navigating to key screens.
 - [x] Build Core Views (Using Mock Data): Develop the React Native screens and components for each user role's main functional areas:
@@ -31,9 +32,9 @@ These are the major areas and tasks involved in building the application based o
   - [x] Consolidate color palette and common styles into `src/styles/colors.ts` and `src/styles/appSharedStyles.ts`.
   - [x] Refactor views (`App.tsx`, `PupilView.tsx`, `TeacherView.tsx`, `ParentView.tsx`, `PublicView.tsx`) and key components (`TaskVerificationModal.tsx`, `src/components/admin/*`) to use shared styles and colors.
   - [x] Implement Mock UI for "Create User" via a modal in the Admin Users section.
+  - [x] Implement mock UI flow for Editing/Deleting Users (Modal for Admin/Teacher/Parent, buttons/confirmation modal in detail view for Pupil). Use simple browser `alert()` for mock action feedback on web.
   - [ ] Implement Mock UI for other User Interactions: Replace placeholder alerts for Admin CRUD operations on other entities (Task Library items, Rewards, Announcements, Instruments) and other flows (e.g., Teacher/Parent "Add Another Student" flows) with actual mock UI flows.
     - [ ] **Admin View:**
-      - [ ] Implement mock UI flow for Editing/Deleting Users.
       - [ ] Implement mock UI flow for Creating/Editing/Deleting Task Library Items.
       - [ ] Implement mock UI flow for Creating/Editing/Deleting Rewards Catalog Items.
       - [ ] Implement mock UI flow for Creating/Editing/Deleting Announcements.

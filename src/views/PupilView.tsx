@@ -8,12 +8,15 @@ import {
   FlatList,
   Button,
   Image,
-  TouchableOpacity,
-  Alert,
+  // TouchableOpacity, // Not used currently
+  // Alert, // Not used currently (using simple alert() now)
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { User } from '../mocks/mockUsers';
+// Import NEW user type
+import { User } from '../types/userTypes';
+
+// Other required types
 import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
 import { TicketTransaction } from '../mocks/mockTickets';
 import { RewardItem } from '../mocks/mockRewards';
@@ -21,13 +24,16 @@ import { Announcement } from '../mocks/mockAnnouncements';
 import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
 import { Instrument } from '../mocks/mockInstruments';
 
-import { getTaskTitle, getInstrumentNames } from '../utils/helpers';
+// Import NEW helper for display names
+import { getTaskTitle, getInstrumentNames, getUserDisplayName } from '../utils/helpers';
 
+// Shared styles and colors
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 
+// Props interface uses the new User type
 export interface PupilViewProps {
-  user: User;
+  user: User; // Use new User type
   balance: number;
   assignedTasks: AssignedTask[];
   history: TicketTransaction[];
@@ -38,6 +44,7 @@ export interface PupilViewProps {
   onMarkTaskComplete: (taskId: string) => void;
 }
 
+// Component to render an assigned task item
 const AssignedTaskItem = ({
   task,
   onMarkComplete,
@@ -80,6 +87,7 @@ const AssignedTaskItem = ({
   </View>
 );
 
+// Component to render a reward item in the catalog
 const RewardItemPupil = ({
   item,
   currentBalance,
@@ -121,6 +129,7 @@ const RewardItemPupil = ({
   );
 };
 
+// Component to render a ticket history item
 export const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
   <View style={styles.historyItemContainer}>
     <Text style={styles.historyItemTimestamp}>{new Date(item.timestamp).toLocaleString()}</Text>
@@ -148,6 +157,7 @@ export const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
   </View>
 );
 
+// Component to render an announcement item
 export const AnnouncementItemPupil = ({ item }: { item: Announcement }) => (
   <View style={appSharedStyles.itemContainer}>
     <Text style={styles.announcementTitle}>{item.title}</Text>
@@ -156,8 +166,9 @@ export const AnnouncementItemPupil = ({ item }: { item: Announcement }) => (
   </View>
 );
 
+// Main PupilView component
 export const PupilView: React.FC<PupilViewProps> = ({
-  user,
+  user, // user prop now contains the new structure
   balance,
   assignedTasks,
   history,
@@ -167,26 +178,26 @@ export const PupilView: React.FC<PupilViewProps> = ({
   mockInstruments,
   onMarkTaskComplete,
 }) => {
+  // State for goal setting
   const [goalRewardId, setGoalRewardId] = useState<string | null>(null);
   const goalReward = rewardsCatalog.find(reward => reward.id === goalRewardId);
   const progressTowardGoal = goalReward ? (balance / goalReward.cost) * 100 : 0;
 
+  // Handler for setting/clearing the goal (mock implementation)
   const handleSetGoal = () => {
-    const mockGoalId = 'reward-6';
+    const mockGoalId = 'reward-6'; // Example goal ID
     const mockGoalItem = rewardsCatalog.find(r => r.id === mockGoalId);
 
     if (goalRewardId === mockGoalId) {
       setGoalRewardId(null);
-      Alert.alert(
-        'Goal Cleared',
-        `You are no longer saving for the ${mockGoalItem?.name || 'item'}.`
-      );
+      alert(`Goal Cleared - You are no longer saving for the ${mockGoalItem?.name || 'item'}.`);
     } else {
       setGoalRewardId(mockGoalId);
-      Alert.alert('Goal Set!', `You are now saving for the ${mockGoalItem?.name || 'item'}!`);
+      alert(`Goal Set! - You are now saving for the ${mockGoalItem?.name || 'item'}!`);
     }
   };
 
+  // Filter tasks for display
   const activeTasks = assignedTasks.filter(task => !task.isComplete);
   const pendingVerificationTasks = assignedTasks.filter(
     task => task.isComplete && task.verificationStatus === 'pending'
@@ -199,15 +210,20 @@ export const PupilView: React.FC<PupilViewProps> = ({
         new Date(a.verifiedDate || a.completedDate || '').getTime()
     );
 
+  // Generate pupil's display name
+  const pupilDisplayName = getUserDisplayName(user);
+
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
       <ScrollView style={appSharedStyles.container}>
-        <Text style={appSharedStyles.header}>Welcome, {user.name}!</Text>
+        {/* Use display name in welcome message */}
+        <Text style={appSharedStyles.header}>Welcome, {pupilDisplayName}!</Text>
         <Text style={styles.instrumentText}>
           Instrument(s): {getInstrumentNames(user.instrumentIds, mockInstruments)}
         </Text>
         <Text style={[styles.balance, appSharedStyles.textGold]}>Current Tickets: {balance}</Text>
 
+        {/* My Goal Section */}
         <Text style={appSharedStyles.sectionTitle}>My Goal</Text>
         {goalReward ? (
           <View style={styles.goalContainer}>
@@ -222,7 +238,6 @@ export const PupilView: React.FC<PupilViewProps> = ({
                 <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>{goalReward.cost} Tickets</Text>
               </View>
             </View>
-
             <Text style={styles.progressText}>
               Progress: {balance} / {goalReward.cost} ({progressTowardGoal.toFixed(1)}%)
             </Text>
@@ -240,6 +255,7 @@ export const PupilView: React.FC<PupilViewProps> = ({
           </View>
         )}
 
+        {/* Rewards Catalog Section */}
         <Text style={appSharedStyles.sectionTitle}>Rewards Catalog</Text>
         <FlatList
           data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
@@ -253,10 +269,11 @@ export const PupilView: React.FC<PupilViewProps> = ({
           )}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
           ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>No rewards found.</Text>}
-          scrollEnabled={false}
+          scrollEnabled={false} // Important for FlatList inside ScrollView
           contentContainerStyle={styles.listContentContainer}
         />
 
+        {/* Assigned Tasks Section */}
         <Text style={appSharedStyles.sectionTitle}>Assigned Tasks ({activeTasks.length})</Text>
         <FlatList
           data={activeTasks}
@@ -276,6 +293,7 @@ export const PupilView: React.FC<PupilViewProps> = ({
           contentContainerStyle={styles.listContentContainer}
         />
 
+        {/* Pending Verification Section (Conditional) */}
         {pendingVerificationTasks.length > 0 && (
           <>
             <Text style={appSharedStyles.sectionTitle}>
@@ -287,18 +305,19 @@ export const PupilView: React.FC<PupilViewProps> = ({
               renderItem={({ item }) => (
                 <AssignedTaskItem
                   task={item}
-                  onMarkComplete={onMarkTaskComplete}
+                  onMarkComplete={onMarkTaskComplete} // Prop might not be needed here, but passed for consistency
                   taskLibrary={taskLibrary}
                 />
               )}
               ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-              ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>None</Text>}
+              ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>None</Text>} // Should not happen if length > 0
               scrollEnabled={false}
               contentContainerStyle={styles.listContentContainer}
             />
           </>
         )}
 
+        {/* Recently Completed Section (Conditional) */}
         {recentlyCompletedTasks.length > 0 && (
           <>
             <Text style={appSharedStyles.sectionTitle}>
@@ -310,21 +329,22 @@ export const PupilView: React.FC<PupilViewProps> = ({
               renderItem={({ item }) => (
                 <AssignedTaskItem
                   task={item}
-                  onMarkComplete={onMarkTaskComplete}
+                  onMarkComplete={onMarkTaskComplete} // Prop might not be needed here
                   taskLibrary={taskLibrary}
                 />
               )}
               ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-              ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>None</Text>}
+              ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>None</Text>} // Should not happen
               scrollEnabled={false}
               contentContainerStyle={styles.listContentContainer}
             />
           </>
         )}
 
+        {/* Recent History Section */}
         <Text style={appSharedStyles.sectionTitle}>Recent History</Text>
         <FlatList
-          data={history.slice(0, 5)}
+          data={history.slice(0, 5)} // Show only the first 5 items
           keyExtractor={item => item.id}
           renderItem={({ item }) => <TicketHistoryItem item={item} />}
           ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
@@ -334,7 +354,7 @@ export const PupilView: React.FC<PupilViewProps> = ({
           scrollEnabled={false}
           contentContainerStyle={styles.listContentContainer}
         />
-        {history.length > 5 && (
+        {history.length > 5 && ( // Show "View Full History" button if more exist
           <View style={{ alignItems: 'flex-start', marginTop: 10 }}>
             <Button
               title="View Full History (Mock)"
@@ -343,9 +363,10 @@ export const PupilView: React.FC<PupilViewProps> = ({
           </View>
         )}
 
+        {/* Announcements Section */}
         <Text style={appSharedStyles.sectionTitle}>Announcements</Text>
         <FlatList
-          data={announcements.slice(0, 3)}
+          data={announcements.slice(0, 3)} // Show only the first 3 announcements
           keyExtractor={item => item.id}
           renderItem={({ item }) => <AnnouncementItemPupil item={item} />}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
@@ -353,7 +374,7 @@ export const PupilView: React.FC<PupilViewProps> = ({
           scrollEnabled={false}
           contentContainerStyle={styles.listContentContainer}
         />
-        {announcements.length > 3 && (
+        {announcements.length > 3 && ( // Show "View All" button if more exist
           <View style={{ alignItems: 'flex-start', marginTop: 10 }}>
             <Button
               title="View All Announcements (Mock)"
@@ -362,12 +383,14 @@ export const PupilView: React.FC<PupilViewProps> = ({
           </View>
         )}
 
+        {/* Bottom Spacer */}
         <View style={{ marginTop: 20, marginBottom: 40 }}></View>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
+// Styles (mostly unchanged, ensure they look good with potentially longer names)
 const styles = StyleSheet.create({
   instrumentText: {
     fontSize: 16,
@@ -380,14 +403,15 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   listContentContainer: {
-    // Added for FlatLists when scrollEnabled={false}
+    // For FlatLists inside ScrollView with scrollEnabled=false
+    // No specific style needed usually, but good to have the definition
   },
   goalContainer: {
     backgroundColor: colors.backgroundPrimary,
     padding: 15,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.borderHighlight,
+    borderColor: colors.borderHighlight, // Use highlight color for goal border
     marginBottom: 20,
   },
   goalImage: {
@@ -409,14 +433,14 @@ const styles = StyleSheet.create({
   },
   progressBarBackground: {
     height: 10,
-    backgroundColor: '#eee',
+    backgroundColor: '#eee', // Light grey background
     borderRadius: 5,
     overflow: 'hidden',
     marginBottom: 10,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: colors.gold,
+    backgroundColor: colors.gold, // Gold fill for progress
     borderRadius: 5,
   },
   taskItemStatus: {
@@ -426,17 +450,18 @@ const styles = StyleSheet.create({
   },
   pendingNote: {
     fontSize: 13,
-    color: colors.warning,
+    color: colors.warning, // Use warning color
     fontStyle: 'italic',
+    marginTop: 5, // Add space above note
   },
   rewardItemAffordable: {
-    borderColor: colors.success,
+    borderColor: colors.success, // Green border for affordable items
     borderWidth: 2,
   },
   rewardItemGoal: {
-    borderColor: colors.primary,
+    borderColor: colors.primary, // Primary color border for the goal item
     borderWidth: 2,
-    backgroundColor: colors.backgroundHighlight,
+    backgroundColor: colors.backgroundHighlight, // Subtle highlight background for goal
   },
   rewardItemContent: {
     flexDirection: 'row',
@@ -460,12 +485,11 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   historyItemContainer: {
-    ...appSharedStyles.itemContainer, // Compose with base item container
-    backgroundColor: colors.backgroundGrey, // Override background
-    padding: 10, // Override padding
-    marginBottom: 5, // Override margin
-    borderRadius: 6, // Override border radius
-    // borderWidth and borderColor inherited from appSharedStyles.itemContainer
+    ...appSharedStyles.itemContainer, // Inherit base styles
+    backgroundColor: colors.backgroundGrey, // Specific background for history
+    padding: 10,
+    marginBottom: 5,
+    borderRadius: 6,
   },
   historyItemTimestamp: {
     fontSize: 12,
@@ -477,7 +501,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   historyItemAmount: {
-    fontWeight: 'bold',
+    fontWeight: 'bold', // Make amount stand out
   },
   historyItemNotes: {
     fontSize: 13,

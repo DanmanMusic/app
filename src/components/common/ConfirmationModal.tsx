@@ -1,0 +1,99 @@
+// src/components/common/ConfirmationModal.tsx
+import React from 'react';
+import { Modal, View, Text, StyleSheet, Button } from 'react-native';
+
+import { colors } from '../../styles/colors';
+import { appSharedStyles } from '../../styles/appSharedStyles'; // Can use shared styles
+
+interface ConfirmationModalProps {
+  visible: boolean;
+  title: string;
+  message: string;
+  confirmText?: string; // Optional custom text for confirm button
+  cancelText?: string; // Optional custom text for cancel button
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
+  visible,
+  title,
+  message,
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  onConfirm,
+  onCancel,
+}) => {
+  return (
+    <Modal
+      animationType="fade" // Fade looks nice for confirmations
+      transparent={true}
+      visible={visible}
+      onRequestClose={onCancel} // Allow closing via back button/escape key
+    >
+      <View style={modalStyles.centeredView}>
+        <View style={modalStyles.modalView}>
+          <Text style={modalStyles.modalTitle}>{title}</Text>
+          <Text style={modalStyles.modalMessage}>{message}</Text>
+
+          <View style={modalStyles.buttonContainer}>
+            {/* Confirm Button (placed first visually often) */}
+            <Button title={confirmText} onPress={onConfirm} color={colors.danger} />
+            {/* Cancel Button */}
+            <Button title={cancelText} onPress={onCancel} color={colors.secondary} />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// Using styles similar to other modals, but maybe slightly adjusted
+const modalStyles = StyleSheet.create({
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)', // Slightly darker overlay
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: colors.backgroundPrimary,
+    borderRadius: 10,
+    padding: 25, // Adjust padding
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: '90%',
+    maxWidth: 400, // Limit width
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+    color: colors.textPrimary,
+  },
+  modalMessage: {
+    marginBottom: 25, // More space before buttons
+    textAlign: 'center',
+    fontSize: 15,
+    color: colors.textSecondary,
+    lineHeight: 21, // Improve readability
+  },
+  buttonContainer: {
+    flexDirection: 'row', // Buttons side-by-side
+    justifyContent: 'space-around', // Spread buttons out
+    width: '100%',
+    marginTop: 10,
+    gap: 15, // Add gap between buttons
+  },
+});
+
+export default ConfirmationModal;
