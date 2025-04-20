@@ -13,7 +13,7 @@ import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 
-import CreateUserModal from './CreateUserModal';
+import CreateUserModal from './modals/CreateUserModal';
 
 interface AdminUsersSectionProps {
   allPupils: SimplifiedStudent[];

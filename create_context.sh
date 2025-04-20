@@ -10,7 +10,7 @@ REQUIRED_FILES=(
     "App.tsx"
 )
 
-EXCLUDED_FILES=("$SCRIPT_NAME" "$OUTPUT_FILE" "package-lock.json")
+EXCLUDED_FILES=("$SCRIPT_NAME" "$OUTPUT_FILE" "package-lock.json" "create_icons_zip.sh")
 
 TREE_EXCLUDE_PATTERN='node_modules|android/build|ios/build|ios/Pods|.git|'"$OUTPUT_FILE"
 

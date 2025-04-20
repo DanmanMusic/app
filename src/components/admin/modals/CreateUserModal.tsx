@@ -2,13 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput, Platform, ScrollView } from 'react-native';
 
-import { UserRole, User } from '../../types/userTypes';
-import { Instrument } from '../../mocks/mockInstruments';
+import { UserRole, User } from '../../../types/userTypes';
+import { Instrument } from '../../../mocks/mockInstruments';
 
-import { colors } from '../../styles/colors';
-import { appSharedStyles } from '../../styles/appSharedStyles';
+import { colors } from '../../../styles/colors';
+import { appSharedStyles } from '../../../styles/appSharedStyles';
 
-import { getUserDisplayName } from '../../utils/helpers'; // Import getUserDisplayName
+import { getUserDisplayName } from '../../../utils/helpers'; // Import getUserDisplayName
 
 // Define creatable roles
 const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'pupil'];

@@ -13,6 +13,6 @@ export const mockInstruments: Instrument[] = [
   { id: 'inst-4', name: 'Violin' },
   { id: 'inst-5', name: 'Voice' },
   { id: 'inst-6', name: 'Flute' },
-  { id: 'inst-7', name: 'Bass Guitar' }, // Added based on a reward item
+  { id: 'inst-7', name: 'Bass' }, // Added based on a reward item
   // Add more instruments as needed
 ];
