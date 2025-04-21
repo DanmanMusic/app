@@ -1,4 +1,4 @@
-// src/components/admin/modals/CreateRewardModal.tsx
+
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput, ScrollView } from 'react-native';
 
@@ -6,7 +6,7 @@ import { RewardItem } from '../../../mocks/mockRewards';
 import { colors } from '../../../styles/colors';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 
-// Reusing modal styles
+
 const modalStyles = StyleSheet.create({
     centeredView:{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.7)' },
     modalView:{ margin:20, backgroundColor:colors.backgroundPrimary, borderRadius:10, padding:20, alignItems:'center', shadowColor:'#000', shadowOffset:{ width:0, height:2 }, shadowOpacity:0.25, shadowRadius:4, elevation:5, width:'95%', maxWidth:450, maxHeight: '85%' },
@@ -31,7 +31,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({
   onCreateConfirm,
 }) => {
   const [name, setName] = useState('');
-  const [cost, setCost] = useState<number | ''>(''); // Handle numeric input
+  const [cost, setCost] = useState<number | ''>(''); 
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
 
@@ -55,14 +55,14 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({
          return;
      }
     if (!imageUrl.trim()) {
-        alert('Please enter an image URL (mock).'); // Simple validation for mock
+        alert('Please enter an image URL (mock).'); 
         return;
     }
 
     onCreateConfirm({
       name: name.trim(),
       cost: numericCost,
-      description: description.trim() || undefined, // Make empty string undefined
+      description: description.trim() || undefined, 
       imageUrl: imageUrl.trim(),
     });
   };
@@ -91,8 +91,8 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({
             <Text style={modalStyles.label}>Ticket Cost:</Text>
             <TextInput
               style={modalStyles.input}
-              value={String(cost)} // Display state value as string
-              onChangeText={text => setCost(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)} // Allow empty or parse int
+              value={String(cost)} 
+              onChangeText={text => setCost(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)} 
               placeholder="e.g., 10000"
               placeholderTextColor={colors.textLight}
               keyboardType="numeric"

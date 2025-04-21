@@ -1,4 +1,4 @@
-// src/views/TeacherView.tsx
+
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Button, FlatList, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';

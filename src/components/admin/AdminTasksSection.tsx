@@ -1,4 +1,4 @@
-// src/components/admin/AdminTasksSection.tsx
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Button, Alert, FlatList, Platform } from 'react-native';
 

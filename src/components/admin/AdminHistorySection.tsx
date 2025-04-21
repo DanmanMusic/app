@@ -1,4 +1,4 @@
-// src/components/admin/AdminHistorySection.tsx
+
 import React from 'react';
 import { View, Text, StyleSheet, Button, Alert, FlatList } from 'react-native';
 

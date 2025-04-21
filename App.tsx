@@ -637,7 +637,7 @@ export default function App() {
           onEditInstrument: (instrumentId: string, instrumentData: any) => alert(`Mock Edit Instrument: ${instrumentId}: ${JSON.stringify(instrumentData)}`),
           onDeleteInstrument: (instrumentId: string) => alert(`Mock Delete Instrument: ${instrumentId}`),
           getStudentData: getMockStudentData,
-          onDeleteAssignment: simulateDeleteAssignedTask, // Pass down delete assignment mock
+          onDeleteAssignment: simulateDeleteAssignedTask,
         };
         return <AdminView {...adminMockData} />;
 
@@ -645,7 +645,6 @@ export default function App() {
         return <Text>Loading or Authentication Required.</Text>;
     }
   };
-
 
   return (
     <SafeAreaProvider>

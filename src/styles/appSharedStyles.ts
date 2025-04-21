@@ -1,39 +1,39 @@
-// src/styles/appSharedStyles.ts
+
 import { StyleSheet } from 'react-native';
-import { colors } from './colors'; // Import the color palette
+import { colors } from './colors'; 
 
 export const appSharedStyles = StyleSheet.create({
-  // --- General Layout ---
+  
   safeArea: {
     flex: 1,
-    backgroundColor: colors.backgroundSecondary, // Use backgroundSecondary as screen background
+    backgroundColor: colors.backgroundSecondary, 
   },
   container: {
     flex: 1,
     padding: 15,
-    backgroundColor: colors.backgroundSecondary, // Apply background here too for consistency
+    backgroundColor: colors.backgroundSecondary, 
   },
   headerContainer: {
-    // Style for headers that span the top of a view (e.g., with a back button)
+    
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 15,
-    paddingTop: 10, // Adjust based on SafeArea
+    paddingTop: 10, 
     paddingBottom: 5,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderPrimary,
-    backgroundColor: colors.backgroundPrimary, // Header background
+    backgroundColor: colors.backgroundPrimary, 
   },
   header: {
-    // Style for main screen titles
-    fontSize: 22, // Standard size
+    
+    fontSize: 22, 
     fontWeight: 'bold',
     color: colors.textPrimary,
-    flexShrink: 1, // Allow text to shrink
+    flexShrink: 1, 
   },
   sectionTitle: {
-    // Style for titles within a scrollable view
+    
     fontSize: 18,
     fontWeight: 'bold',
     marginTop: 20,
@@ -50,38 +50,38 @@ export const appSharedStyles = StyleSheet.create({
     fontStyle: 'italic',
   },
 
-  // --- List Items (General) ---
+  
   itemContainer: {
-    // Base style for most list items (tasks, rewards, users, instruments etc.)
-    backgroundColor: colors.backgroundPrimary, // White card background
+    
+    backgroundColor: colors.backgroundPrimary, 
     padding: 12,
-    marginBottom: 10, // Standard spacing between items
-    borderRadius: 8, // Standard rounded corners
-    borderWidth: 1, // Standard border
-    borderColor: colors.borderSecondary, // Light gray border
+    marginBottom: 10, 
+    borderRadius: 8, 
+    borderWidth: 1, 
+    borderColor: colors.borderSecondary, 
   },
   itemTitle: {
-    // Base style for titles within list items
+    
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.textPrimary,
     marginBottom: 5,
   },
    itemDetailText: {
-     // Generic style for detail lines in list items (dates, small info)
+     
      fontSize: 13,
      color: colors.textSecondary,
      marginBottom: 2,
    },
 
 
-  // --- Specific/Reused Item Variations ---
-  // Styles like rewardImage, rewardDetails, taskItemStatus, historyItemContainer etc.
-  // might live here if reused across roles, or stay in role-specific files if unique.
-  // For now, let's keep them in role/component specific files and use colors from here.
-  // We can migrate more later if patterns fully emerge across roles.
+  
+  
+  
+  
+  
 
-   // --- Text Colors (Helpers if needed, but using colors.textPrimary/Secondary directly is cleaner) ---
+   
    textGold: { color: colors.gold },
    textSuccess: { color: colors.success },
    textDanger: { color: colors.danger },

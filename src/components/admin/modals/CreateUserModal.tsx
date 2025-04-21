@@ -1,4 +1,4 @@
-// src/components/admin/CreateUserModal.tsx
+
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput, Platform, ScrollView } from 'react-native';
 
@@ -8,17 +8,17 @@ import { Instrument } from '../../../mocks/mockInstruments';
 import { colors } from '../../../styles/colors';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 
-import { getUserDisplayName } from '../../../utils/helpers'; // Import getUserDisplayName
+import { getUserDisplayName } from '../../../utils/helpers'; 
 
-// Define creatable roles
+
 const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'student'];
 
 interface CreateUserModalProps {
   visible: boolean;
   onClose: () => void;
   onCreateUser: (userData: Omit<User, 'id'>) => void;
-  // Changed prop: Pass allTeachers instead of allStudents
-  allTeachers: User[]; // Expect full User objects for teachers
+  
+  allTeachers: User[]; 
   mockInstruments: Instrument[];
 }
 
@@ -26,55 +26,55 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   visible,
   onClose,
   onCreateUser,
-  allTeachers, // Use the list of teachers
+  allTeachers, 
   mockInstruments,
 }) => {
-  // State fields
+  
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  // Nickname state removed
+  
   const [role, setRole] = useState<UserRole | ''>('');
-  const [instrumentIds, setInstrumentIds] = useState<string[]>([]); // For Student role
-  // Renamed state: linkedTeacherIds
-  const [linkedTeacherIds, setLinkedTeacherIds] = useState<string[]>([]); // For Student role
+  const [instrumentIds, setInstrumentIds] = useState<string[]>([]); 
+  
+  const [linkedTeacherIds, setLinkedTeacherIds] = useState<string[]>([]); 
 
-  // Effect to reset form state
+  
   useEffect(() => {
     if (visible) {
       setFirstName('');
       setLastName('');
-      // Nickname reset removed
+      
       setRole('');
       setInstrumentIds([]);
-      setLinkedTeacherIds([]); // Reset teacher IDs
+      setLinkedTeacherIds([]); 
     }
   }, [visible]);
 
-  // Handler for "Create User" button
+  
   const handleCreatePress = () => {
     if (!firstName || !lastName || !role) {
       alert('Missing Information - Please enter First Name, Last Name, and select a Role.');
       return;
     }
 
-    // Construct the new user data object
+    
     const newUserPartial: Omit<User, 'id'> = {
       role: role,
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      // Nickname removed
-      // Conditionally add role-specific properties
+      
+      
       ...(role === 'student' && {
         instrumentIds: instrumentIds,
-        linkedTeacherIds: linkedTeacherIds, // Add linked teacher IDs for studentss
+        linkedTeacherIds: linkedTeacherIds, 
       }),
-      // Removed teacher/parent specific linking (linkedStudentIds)
+      
     };
 
     onCreateUser(newUserPartial);
   };
 
-  // Mock handler for adding instruments
+  
   const handleAddInstrument = () => {
     alert('Mock Add Instrument ID');
   };
@@ -83,12 +83,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
     setInstrumentIds(prev => prev.filter(id => id !== idToRemove));
   };
 
-  // Mock handler for linking TEACHERS to a PUPIL
+  
   const handleAddLinkedTeacher = () => {
     alert('Mock Link Teacher ID');
   };
 
-  // Handler for removing a linked TEACHER ID from a PUPIL
+  
   const handleRemoveLinkedTeacher = (idToRemove: string) => {
     setLinkedTeacherIds(prev => prev.filter(id => id !== idToRemove));
   };
@@ -105,7 +105,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
           <Text style={modalStyles.modalTitle}>Create New User</Text>
 
           <ScrollView style={modalStyles.scrollView}>
-            {/* Input fields */}
+            {}
             <Text style={modalStyles.label}>First Name:</Text>
             <TextInput
               style={modalStyles.input}
@@ -124,12 +124,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
               placeholderTextColor={colors.textLight}
             />
 
-            {/* Nickname Input Removed */}
+            {}
 
-            {/* Role Selection */}
+            {}
             <Text style={modalStyles.label}>Role:</Text>
             <View style={modalStyles.roleButtons}>
-              {/* Map over only CREATABLE_ROLES */}
+              {}
               {CREATABLE_ROLES.map(r => (
                 <Button
                   key={r}
@@ -140,12 +140,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
               ))}
             </View>
 
-            {/* Conditional sections based on selected role */}
+            {}
             {role === 'student' && (
               <View style={modalStyles.roleSpecificSection}>
                 <Text style={modalStyles.roleSectionTitle}>Student Details</Text>
 
-                {/* Instruments Section */}
+                {}
                 <Text style={modalStyles.label}>Instrument IDs:</Text>
                 {instrumentIds.length > 0 ? instrumentIds.map(id => (
                   <View key={id} style={modalStyles.linkedItemRow}>
@@ -157,10 +157,10 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 )) : <Text style={appSharedStyles.emptyListText}>No instruments selected.</Text>}
                 <Button title="Add Instrument (Mock)" onPress={handleAddInstrument} />
 
-                {/* Linked Teachers Section (NEW) */}
+                {}
                 <Text style={[modalStyles.label, { marginTop: 15 }]}>Linked Teacher IDs:</Text>
                 {linkedTeacherIds.length > 0 ? linkedTeacherIds.map(id => {
-                  // Find the full teacher object to display their name
+                  
                   const teacher = allTeachers.find(t => t.id === id);
                   return (
                     <View key={id} style={modalStyles.linkedItemRow}>
@@ -175,11 +175,11 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
               </View>
             )}
 
-            {/* Section for Teacher/Parent linking Removed */}
+            {}
 
           </ScrollView>
 
-          {/* Action Buttons */}
+          {}
           <View style={modalStyles.buttonContainer}>
             <Button title="Create User" onPress={handleCreatePress} />
           </View>
@@ -192,7 +192,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   );
 };
 
-// Styles (Keep existing, ensure they work for new layout)
+
 const modalStyles = StyleSheet.create({
   centeredView: {
     flex: 1,

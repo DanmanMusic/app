@@ -1,12 +1,12 @@
-// src/components/admin/modals/EditAnnouncementModal.tsx
+
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput } from 'react-native';
 
-import { Announcement, AnnouncementType } from '../../../mocks/mockAnnouncements'; // Import type
+import { Announcement, AnnouncementType } from '../../../mocks/mockAnnouncements'; 
 import { colors } from '../../../styles/colors';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 
-// Reusing modal styles from CreateAnnouncementModal
+
 const modalStyles = StyleSheet.create({
     centeredView:{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.7)' },
     modalView:{ margin:20, backgroundColor:colors.backgroundPrimary, borderRadius:10, padding:20, alignItems:'center', shadowColor:'#000', shadowOffset:{ width:0, height:2 }, shadowOpacity:0.25, shadowRadius:4, elevation:5, width:'95%', maxWidth:400 },
@@ -40,9 +40,9 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
     if (visible && announcementToEdit) {
       setTitle(announcementToEdit.title);
       setMessage(announcementToEdit.message);
-      setType(announcementToEdit.type); // Load existing type
+      setType(announcementToEdit.type); 
     } else if (!visible) {
-      // Reset state when hidden
+      
       setTitle('');
       setMessage('');
       setType('announcement');
@@ -58,12 +58,12 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
     onEditConfirm(announcementToEdit.id, {
         title: title.trim(),
         message: message.trim(),
-        type: type, // Include potentially edited type
-        // Cannot edit relatedStudentId via this mock UI
+        type: type, 
+        
     });
   };
 
-  if (!announcementToEdit) return null; // Don't render without data
+  if (!announcementToEdit) return null; 
 
   return (
     <Modal
@@ -77,7 +77,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
           <Text style={modalStyles.modalTitle}>Edit Announcement</Text>
           <Text style={modalStyles.subTitle}>ID: {announcementToEdit.id}</Text>
 
-          {/* Type selection could be added here later */}
+          {}
 
           <Text style={modalStyles.label}>Title:</Text>
           <TextInput

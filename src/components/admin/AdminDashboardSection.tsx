@@ -1,4 +1,4 @@
-// src/components/admin/AdminDashboardSection.tsx
+
 import React from 'react';
 import { View, Text, StyleSheet, Button, Alert } from 'react-native';
 

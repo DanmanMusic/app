@@ -1,4 +1,4 @@
-// src/mocks/mockTaskLibrary.ts
+
 
 export interface TaskLibraryItem {
   id: string;
@@ -7,7 +7,7 @@ export interface TaskLibraryItem {
   baseTickets: number;
 }
 
-// Ensure this export exists for initial state
+
 export const initialMockTaskLibrary: TaskLibraryItem[] = [
   {
     id: 'tasklib-1',
@@ -35,5 +35,5 @@ export const initialMockTaskLibrary: TaskLibraryItem[] = [
   },
 ];
 
-// Rename existing export if needed
+
 export const mockTaskLibrary = initialMockTaskLibrary;

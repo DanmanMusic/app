@@ -1,4 +1,4 @@
-// src/components/admin/modals/EditRewardModal.tsx
+
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput, ScrollView } from 'react-native';
 
@@ -6,7 +6,7 @@ import { RewardItem } from '../../../mocks/mockRewards';
 import { colors } from '../../../styles/colors';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 
-// Reusing modal styles
+
 const modalStyles = StyleSheet.create({
     centeredView:{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.7)' },
     modalView:{ margin:20, backgroundColor:colors.backgroundPrimary, borderRadius:10, padding:20, alignItems:'center', shadowColor:'#000', shadowOffset:{ width:0, height:2 }, shadowOpacity:0.25, shadowRadius:4, elevation:5, width:'95%', maxWidth:450, maxHeight: '85%' },
@@ -46,8 +46,8 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({
       setDescription(rewardToEdit.description || '');
       setImageUrl(rewardToEdit.imageUrl);
     } else if (!visible) {
-      // Optionally reset when hidden, though effect covers visibility change
-      // setName(''); setCost(''); setDescription(''); setImageUrl('');
+      
+      
     }
   }, [visible, rewardToEdit]);
 

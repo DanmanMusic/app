@@ -1,4 +1,4 @@
-// src/components/admin/AdminStudentDetailView.tsx
+
 import React, { useState, useMemo } from 'react';
 import {
   View,
@@ -35,7 +35,7 @@ interface AdminStudentDetailViewProps {
   onEditUser: (userId: string, userData: Partial<Omit<User, 'id'>>) => void;
   onDeleteUser: (userId: string) => void;
   onBack: () => void;
-  // Add optional delete assignment prop if needed
+  
   onDeleteAssignment?: (assignmentId: string) => void;
 }
 
@@ -52,7 +52,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   onEditUser,
   onDeleteUser,
   onBack,
-  onDeleteAssignment, // Destructure if passed
+  onDeleteAssignment, 
 }) => {
 
   const { user, balance, assignedTasks, history } = studentData;
@@ -82,12 +82,12 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
       closeEditModal();
   };
 
-  // Handler for the remove button on a task
+  
   const handleRemoveAssignedTask = (assignmentId: string) => {
     if (onDeleteAssignment) {
         onDeleteAssignment(assignmentId);
     } else {
-        // Fallback alert if the prop wasn't passed down
+        
         alert(`Mock Remove Assigned Task ${assignmentId}`);
     }
   };
@@ -137,7 +137,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
                         {item.isComplete && item.verificationStatus === 'pending' && ( <Text style={adminSharedStyles.pendingNote}>Awaiting verification...</Text> )}
                         <View style={adminSharedStyles.assignedTaskActions}>
                             {item.isComplete && item.verificationStatus === 'pending' && ( <Button title="Verify (Mock)" onPress={() => alert(`Mock Verify Task ${item.id}`)} /> )}
-                            {/* Conditionally render Remove button */}
+                            {}
                             {allowDelete && (
                                 <Button title="Remove (Mock)" onPress={() => handleRemoveAssignedTask(item.id)} color={colors.danger} />
                             )}

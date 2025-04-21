@@ -1,13 +1,13 @@
-// src/views/PublicView.tsx
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Import types for mock data
+
 import { RewardItem } from '../mocks/mockRewards';
 import { Announcement } from '../mocks/mockAnnouncements';
 
-// Import shared styles and colors
+
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 
@@ -16,7 +16,7 @@ interface PublicViewProps {
   announcements: Announcement[];
 }
 
-// Sub-components (RewardItemPublic, AnnouncementListItem) remain the same
+
 const RewardItemPublic = ({ item }: { item: RewardItem }) => (
   <View style={appSharedStyles.itemContainer}>
     <View style={styles.rewardItemContent}>
@@ -42,23 +42,23 @@ const AnnouncementListItem = ({ item }: { item: Announcement }) => (
   </View>
 );
 
-// Define the possible tabs - Add 'welcome'
+
 type PublicTab = 'welcome' | 'rewards' | 'announcements';
 
 export const PublicView: React.FC<PublicViewProps> = ({ rewardsCatalog, announcements }) => {
-  // State to track the active tab - Default to 'welcome'
+  
   const [activeTab, setActiveTab] = useState<PublicTab>('welcome');
 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      {/* Use a standard View container; FlatList will handle scrolling */}
+      {}
       <View style={appSharedStyles.container}>
         <Text style={[appSharedStyles.header, styles.publicHeader]}>Danmans Music School</Text>
         <Text style={styles.subheader}>Virtual Ticket Rewards Program</Text>
 
-        {/* Tab Header Buttons */}
+        {}
         <View style={styles.tabContainer}>
-          {/* Add Welcome Tab Button */}
+          {}
           <Button
             title="Welcome"
             onPress={() => setActiveTab('welcome')}
@@ -76,13 +76,13 @@ export const PublicView: React.FC<PublicViewProps> = ({ rewardsCatalog, announce
           />
         </View>
 
-        {/* Conditional Content Area */}
+        {}
         <View style={styles.contentArea}>
-          {/* Add Welcome Tab Content Area (Blank for now) */}
+          {}
           {activeTab === 'welcome' && (
             <View style={styles.tabContentPlaceholder}>
-              {/* Intentionally blank - add welcome content later */}
-              {/* <Text>Welcome Content Goes Here...</Text> */}
+              {}
+              {}
             </View>
           )}
 
@@ -115,7 +115,7 @@ export const PublicView: React.FC<PublicViewProps> = ({ rewardsCatalog, announce
           )}
         </View>
 
-        {/* Footer text could remain outside the conditional area */}
+        {}
         <Text style={styles.footer}>Login to track your progress and earn tickets!</Text>
       </View>
     </SafeAreaView>
@@ -146,12 +146,12 @@ const styles = StyleSheet.create({
   contentArea: {
     flex: 1,
   },
-  // Placeholder style for the blank tab content area
+  
   tabContentPlaceholder: {
     flex: 1,
-    // You could add padding or a background color for visual indication
-    // padding: 20,
-    // backgroundColor: colors.backgroundGrey,
+    
+    
+    
   },
   rewardItemContent: {
     flexDirection: 'row',

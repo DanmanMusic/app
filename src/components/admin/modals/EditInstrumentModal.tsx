@@ -1,16 +1,16 @@
-// src/components/admin/modals/EditInstrumentModal.tsx
+
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, Button, TextInput, Image } from 'react-native'; // Added Image
+import { Modal, View, Text, StyleSheet, Button, TextInput, Image } from 'react-native'; 
 
 import { Instrument } from '../../../mocks/mockInstruments';
 import { colors } from '../../../styles/colors';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
-import { getInstrumentIconSource } from '../../../utils/helpers'; // Import the helper
-
-// Function to get icon source REMOVED from here
+import { getInstrumentIconSource } from '../../../utils/helpers'; 
 
 
-// Reusing modal styles
+
+
+
 const modalStyles = StyleSheet.create({
     centeredView:{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.7)' },
     modalView:{ margin:20, backgroundColor:colors.backgroundPrimary, borderRadius:10, padding:20, alignItems:'center', shadowColor:'#000', shadowOffset:{ width:0, height:2 }, shadowOpacity:0.25, shadowRadius:4, elevation:5, width:'95%', maxWidth:400 },
@@ -20,7 +20,7 @@ const modalStyles = StyleSheet.create({
     input:{ width:'100%', borderWidth:1, borderColor:colors.borderPrimary, borderRadius:5, padding:10, fontSize:16, color:colors.textPrimary, backgroundColor:colors.backgroundPrimary, marginBottom:15 },
     buttonContainer:{ flexDirection:'column', width:'100%', marginTop:10, gap:10 },
     footerButton:{ width:'100%', marginTop:10 },
-    // Styles for icon display in modal
+    
     iconPreviewContainer: {
         alignItems: 'center',
         marginBottom: 15,
@@ -30,12 +30,12 @@ const modalStyles = StyleSheet.create({
         width: '100%',
     },
     iconPreview: {
-        width: 60, // Slightly larger preview
+        width: 60, 
         height: 60,
         marginBottom: 5,
-        // Add border if helpful to see JPEG bounds
-        // borderWidth: 1,
-        // borderColor: colors.borderLight,
+        
+        
+        
     },
 });
 
@@ -72,7 +72,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
     onEditConfirm(instrumentToEdit.id, { name: name.trim() });
   };
 
-  if (!instrumentToEdit) return null; // Don't render without data
+  if (!instrumentToEdit) return null; 
 
   return (
     <Modal
@@ -86,15 +86,15 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
           <Text style={modalStyles.modalTitle}>Edit Instrument</Text>
           <Text style={modalStyles.subTitle}>ID: {instrumentToEdit.id}</Text>
 
-          {/* Icon Preview */}
+          {}
           <View style={modalStyles.iconPreviewContainer}>
               <Text style={modalStyles.label}>Current Icon (Mock):</Text>
               <Image
-                  source={getInstrumentIconSource(instrumentToEdit.name)} // Uses imported helper
+                  source={getInstrumentIconSource(instrumentToEdit.name)} 
                   style={modalStyles.iconPreview}
                   resizeMode="contain"
                />
-               {/* "Edit Icon" button is removed as per request */}
+               {}
           </View>
 
 

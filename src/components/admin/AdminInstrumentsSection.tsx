@@ -1,19 +1,19 @@
-// src/components/admin/AdminInstrumentsSection.tsx
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Button, FlatList, Image } from 'react-native';
 
-import { Instrument } from '../../mocks/mockInstruments'; // Type
-import { adminSharedStyles } from './adminSharedStyles'; // Shared admin styles
-import { appSharedStyles } from '../../styles/appSharedStyles'; // App-wide shared styles
-import { colors } from '../../styles/colors'; // Color palette
-import { getInstrumentIconSource } from '../../utils/helpers'; // Import the helper
+import { Instrument } from '../../mocks/mockInstruments'; 
+import { adminSharedStyles } from './adminSharedStyles'; 
+import { appSharedStyles } from '../../styles/appSharedStyles'; 
+import { colors } from '../../styles/colors'; 
+import { getInstrumentIconSource } from '../../utils/helpers'; 
 
-// Import Modals
+
 import CreateInstrumentModal from './modals/CreateInstrumentModal';
 import EditInstrumentModal from './modals/EditInstrumentModal';
-import ConfirmationModal from '../common/ConfirmationModal'; // Reusable confirmation modal
+import ConfirmationModal from '../common/ConfirmationModal'; 
 
-// Icon loading helper REMOVED from here
+
 
 interface AdminInstrumentsSectionProps {
   mockInstruments: Instrument[];
@@ -22,7 +22,7 @@ interface AdminInstrumentsSectionProps {
   onDeleteInstrument: (instrumentId: string) => void;
 }
 
-// Item component
+
 const AdminInstrumentItem = ({
   item,
   onEdit,
@@ -35,7 +35,7 @@ const AdminInstrumentItem = ({
   <View style={appSharedStyles.itemContainer}>
     <View style={styles.itemContent}>
       <Image
-        source={getInstrumentIconSource(item.name)} // Uses imported helper
+        source={getInstrumentIconSource(item.name)} 
         style={styles.instrumentIcon}
         resizeMode="contain"
       />
@@ -48,31 +48,31 @@ const AdminInstrumentItem = ({
   </View>
 );
 
-// Main Section Component
+
 export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = ({
   mockInstruments,
   onCreateInstrument,
   onEditInstrument,
   onDeleteInstrument,
 }) => {
-  // State for modals
+  
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [instrumentToEdit, setInstrumentToEdit] = useState<Instrument | null>(null);
   const [instrumentToDelete, setInstrumentToDelete] = useState<Instrument | null>(null);
 
-  // --- Modal Open Handlers ---
+  
   const handleAddPress = () => { setIsCreateModalVisible(true); };
   const handleEditPress = (instrument: Instrument) => { setInstrumentToEdit(instrument); setIsEditModalVisible(true); };
   const handleDeletePress = (instrument: Instrument) => { setInstrumentToDelete(instrument); setIsDeleteModalVisible(true); };
 
-  // --- Modal Close Handlers ---
+  
   const closeCreateModal = () => setIsCreateModalVisible(false);
   const closeEditModal = () => { setIsEditModalVisible(false); setInstrumentToEdit(null); };
   const closeDeleteModal = () => { setIsDeleteModalVisible(false); setInstrumentToDelete(null); };
 
-  // --- Modal Confirmation Handlers ---
+  
   const handleCreateConfirm = (instrumentData: Omit<Instrument, 'id'>) => { onCreateInstrument(instrumentData); closeCreateModal(); };
   const handleEditConfirm = (instrumentId: string, instrumentData: Partial<Omit<Instrument, 'id'>>) => { onEditInstrument(instrumentId, instrumentData); closeEditModal(); };
   const handleDeleteConfirm = () => { if (instrumentToDelete) { onDeleteInstrument(instrumentToDelete.id); } closeDeleteModal(); };
@@ -98,7 +98,7 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
         ListEmptyComponent={() => ( <Text style={appSharedStyles.emptyListText}>No instruments found.</Text> )}
       />
 
-      {/* Render Modals */}
+      {}
       <CreateInstrumentModal
         visible={isCreateModalVisible}
         onClose={closeCreateModal}
@@ -122,7 +122,7 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
   );
 };
 
-// Local styles
+
 const styles = StyleSheet.create({
   itemContent: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, },
   instrumentIcon: { width: 40, height: 40, marginRight: 15, },

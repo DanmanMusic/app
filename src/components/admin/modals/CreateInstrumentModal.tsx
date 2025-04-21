@@ -1,12 +1,12 @@
-// src/components/admin/CreateInstrumentModal.tsx
+
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput } from 'react-native';
 
-import { Instrument } from '../../../mocks/mockInstruments'; // Import type definition
+import { Instrument } from '../../../mocks/mockInstruments'; 
 import { colors } from '../../../styles/colors';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 
-// Reusing modal styles from other admin modals
+
 const modalStyles = StyleSheet.create({
     centeredView:{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.7)' },
     modalView:{ margin:20, backgroundColor:colors.backgroundPrimary, borderRadius:10, padding:20, alignItems:'center', shadowColor:'#000', shadowOffset:{ width:0, height:2 }, shadowOpacity:0.25, shadowRadius:4, elevation:5, width:'95%', maxWidth:400 },
@@ -21,7 +21,7 @@ const modalStyles = StyleSheet.create({
 interface CreateInstrumentModalProps {
   visible: boolean;
   onClose: () => void;
-  // Expects function taking just the name part
+  
   onCreateConfirm: (instrumentData: Omit<Instrument, 'id'>) => void;
 }
 
@@ -32,7 +32,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({
 }) => {
   const [name, setName] = useState('');
 
-  // Reset name when modal becomes visible
+  
   useEffect(() => {
     if (visible) {
       setName('');
@@ -67,7 +67,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({
             placeholderTextColor={colors.textLight}
             autoCapitalize="words"
           />
-          {/* Icon upload/selection field removed for mock */}
+          {}
 
           <View style={modalStyles.buttonContainer}>
             <Button title="Create Instrument" onPress={handleCreate} />

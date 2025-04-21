@@ -1,19 +1,19 @@
-// src/components/admin/modals/AssignTaskModal.tsx
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 
 import { TaskLibraryItem } from '../../../mocks/mockTaskLibrary';
-import { SimplifiedStudent } from '../../../views/AdminView'; // Use simplified type
-import { getTaskTitle, getUserDisplayName } from '../../../utils/helpers'; // Need getUserDisplayName if showing full user later
+import { SimplifiedStudent } from '../../../views/AdminView'; 
+import { getTaskTitle, getUserDisplayName } from '../../../utils/helpers'; 
 import { colors } from '../../../styles/colors';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
-import { User } from '../../../types/userTypes'; // Import User if using allUsers prop
+import { User } from '../../../types/userTypes'; 
 
-// Reusing modal styles, adjust as needed
+
 const modalStyles = StyleSheet.create({
     centeredView:{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.7)' },
     modalView:{ margin:10, backgroundColor:colors.backgroundPrimary, borderRadius:10, padding:15, alignItems:'center', shadowColor:'#000', shadowOffset:{ width:0, height:2 }, shadowOpacity:0.25, shadowRadius:4, elevation:5, width:'95%', maxHeight:'90%' },
-    scrollView:{ width:'100%', marginBottom: 15, maxHeight: '70%' }, // Limit height
+    scrollView:{ width:'100%', marginBottom: 15, maxHeight: '70%' }, 
     modalTitle:{ fontSize:20, fontWeight:'bold', marginBottom:15, textAlign:'center', color:colors.textPrimary, width:'100%', borderBottomWidth:1, borderBottomColor:colors.borderPrimary, paddingBottom:10 },
     stepTitle: { fontSize: 16, fontWeight: '600', marginTop: 10, marginBottom: 10, color: colors.textSecondary },
     listItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: colors.borderSecondary },
@@ -23,13 +23,13 @@ const modalStyles = StyleSheet.create({
     taskDescription: { fontSize: 12, color: colors.textLight, marginTop: 3 },
     confirmationText: { fontSize: 16, marginVertical: 15, textAlign: 'center', lineHeight: 22 },
     buttonContainer:{ flexDirection:'row', justifyContent: 'space-around', width:'100%', marginTop:15, borderTopWidth: 1, borderTopColor: colors.borderPrimary, paddingTop: 15 },
-    footerButton:{ width:'100%', marginTop:10 }, // For single cancel button
+    footerButton:{ width:'100%', marginTop:10 }, 
 });
 
 interface AssignTaskModalProps {
   visible: boolean;
   onClose: () => void;
-  // Use SimplifiedStudent for the selection list
+  
   allStudents: SimplifiedStudent[];
   taskLibrary: TaskLibraryItem[];
   onAssignTask: (taskId: string, studentId: string) => void;
@@ -42,15 +42,15 @@ const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   taskLibrary,
   onAssignTask,
 }) => {
-  const [step, setStep] = useState(1); // 1: Select Student, 2: Select Task, 3: Confirm
+  const [step, setStep] = useState(1); 
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
-  // Memoize sorted lists
+  
   const sortedStudents = useMemo(() => [...allStudents].sort((a, b) => a.name.localeCompare(b.name)), [allStudents]);
   const sortedTasks = useMemo(() => [...taskLibrary].sort((a, b) => a.title.localeCompare(b.title)), [taskLibrary]);
 
-  // Reset state on close
+  
   useEffect(() => {
     if (!visible) {
       setStep(1);
@@ -72,9 +72,9 @@ const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   const handleConfirm = () => {
     if (selectedTaskId && selectedStudentId) {
       onAssignTask(selectedTaskId, selectedStudentId);
-      onClose(); // Close after assigning
+      onClose(); 
     } else {
-      alert('Error: Student or Task not selected.'); // Should not happen
+      alert('Error: Student or Task not selected.'); 
     }
   };
 
@@ -85,7 +85,7 @@ const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
 
   const renderStepContent = () => {
     switch (step) {
-      case 1: // Select Student
+      case 1: 
         return (
           <>
             <Text style={modalStyles.stepTitle}>Step 1: Select Student</Text>
@@ -104,7 +104,7 @@ const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             />
           </>
         );
-      case 2: // Select Task
+      case 2: 
         return (
            <>
             <Text style={modalStyles.stepTitle}>Step 2: Select Task from Library</Text>
@@ -124,7 +124,7 @@ const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
              />
           </>
         );
-      case 3: // Confirm
+      case 3: 
         const student = allStudents.find(s => s.id === selectedStudentId);
         const task = taskLibrary.find(t => t.id === selectedTaskId);
         return (
@@ -155,7 +155,7 @@ const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           <View style={modalStyles.buttonContainer}>
             {step > 1 && <Button title="Back" onPress={goBack} color={colors.secondary} />}
             {step === 3 && <Button title="Confirm & Assign" onPress={handleConfirm} />}
-            {/* Show Cancel only on step 1, otherwise rely on Back */}
+            {}
             {step === 1 && <Button title="Cancel" onPress={onClose} color={colors.secondary} />}
           </View>
         </View>

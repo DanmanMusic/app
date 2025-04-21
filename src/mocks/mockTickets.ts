@@ -1,26 +1,26 @@
-// src/mocks/mockTickets.ts
-// Note: Timestamps are strings here for simplicity in mock data.
+
+
 
 export type TransactionType = 'task_award' | 'manual_add' | 'manual_subtract' | 'redemption';
 
 export interface TicketTransaction {
   id: string;
-  studentId: string; // Refers to User.id
-  timestamp: string; // ISO string or similar
-  amount: number; // Positive for gain, negative for loss/redemption
+  studentId: string; 
+  timestamp: string; 
+  amount: number; 
   type: TransactionType;
-  sourceId: string; // Refers to AssignedTask.id, ManualAdjustment.id, or Redemption.id (mock IDs here)
-  notes?: string; // Optional reason for manual adjustments/redemptions
+  sourceId: string; 
+  notes?: string; 
 }
 
-// Current balances for each student (Student ID -> Balance)
+
 export const mockTicketBalances: Record<string, number> = {
   'student-1': 5200,
   'student-2': 150,
   'student-3': 7500,
 };
 
-// Transaction history for all students with updated timestamps
+
 export const mockTicketHistory: TicketTransaction[] = [
   {
     id: 'tx-1',

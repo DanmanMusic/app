@@ -1,4 +1,4 @@
-// src/components/admin/AdminUsersSection.tsx
+
 import React from 'react';
 import { View, Text, StyleSheet, Button, Alert, FlatList, Platform } from 'react-native';
 
@@ -22,15 +22,15 @@ interface AdminUsersSectionProps {
   mockInstruments: Instrument[];
   onCreateUser: (userData: Omit<User, 'id'>) => void;
   onViewManageUser: (userId: string, role: UserRole) => void;
-  onAssignTask: (taskId: string, studentId: string) => void; // Assuming this is still needed for student item
+  onAssignTask: (taskId: string, studentId: string) => void; 
   taskLibrary: TaskLibraryItem[];
   isCreateUserModalVisible: boolean;
   setIsCreateUserModalVisible: (visible: boolean) => void;
   allUsers: User[];
 }
 
-// ***** DEFINITION RESTORED *****
-// Renders Teachers and Parents using the SimplifiedUser structure (name = display name)
+
+
 const AdminUserItem = ({
   user,
   onViewManage,
@@ -46,18 +46,18 @@ const AdminUserItem = ({
   </View>
 );
 
-// ***** DEFINITION RESTORED *****
-// Renders Students using the SimplifiedStudent structure (name = display name)
+
+
 const AdminStudentItem = ({
   student,
   mockInstruments,
   onViewManage,
-  onAssignTask, // Keep prop if needed for the button
+  onAssignTask, 
 }: {
   student: SimplifiedStudent;
   mockInstruments: Instrument[];
   onViewManage: (studentId: string, role: UserRole) => void;
-  onAssignTask: (studentId: string) => void; // Define prop type
+  onAssignTask: (studentId: string) => void; 
 }) => (
   <View style={appSharedStyles.itemContainer}>
     <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
@@ -81,7 +81,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   mockInstruments,
   onCreateUser,
   onViewManageUser,
-  onAssignTask, // Ensure this prop is received if AdminStudentItem uses it
+  onAssignTask, 
   taskLibrary,
   isCreateUserModalVisible,
   setIsCreateUserModalVisible,
@@ -91,34 +91,34 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     const studentInfo = allStudents.find(p => p.id === studentId);
     const studentDisplayName = studentInfo ? studentInfo.name : studentId;
     alert(`Mock Assign Task to ${studentDisplayName}`);
-    // In a real scenario, you might call the onAssignTask prop here or trigger another modal.
-    // For now, AdminStudentItem calls the mock directly, but the prop could be used.
+    
+    
   };
 
-  // Filter the full user list to get just teachers for the modal
+  
   const teachersList = allUsers.filter(u => u.role === 'teacher');
 
   return (
     <View>
-      {/* Section Title */}
+      {}
       <Text style={appSharedStyles.sectionTitle}>Users</Text>
-      {/* Create User Button */}
+      {}
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button title="Create New User" onPress={() => setIsCreateUserModalVisible(true)} />
       </View>
 
-      {/* Students List */}
+      {}
       <Text style={adminSharedStyles.sectionSubTitle}>Students ({allStudents.length})</Text>
       <FlatList
         data={allStudents.sort((a, b) => a.name.localeCompare(b.name))}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          // ***** USAGE RESTORED *****
+          
           <AdminStudentItem
             student={item}
             mockInstruments={mockInstruments}
             onViewManage={onViewManageUser}
-            onAssignTask={handleAssignTaskToStudent} // Pass the handler to the item
+            onAssignTask={handleAssignTaskToStudent} 
           />
         )}
         scrollEnabled={false}
@@ -128,7 +128,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
         )}
       />
 
-      {/* Teachers List */}
+      {}
       <Text style={adminSharedStyles.sectionSubTitle}>Teachers ({allTeachers.length})</Text>
       <FlatList
         data={allTeachers.sort((a, b) => a.name.localeCompare(b.name))}
@@ -141,7 +141,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
         )}
       />
 
-      {/* Parents List */}
+      {}
       <Text style={adminSharedStyles.sectionSubTitle}>Parents ({allParents.length})</Text>
       <FlatList
         data={allParents.sort((a, b) => a.name.localeCompare(b.name))}
@@ -154,7 +154,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
         )}
       />
 
-      {/* Create User Modal */}
+      {}
       <CreateUserModal
         visible={isCreateUserModalVisible}
         onClose={() => setIsCreateUserModalVisible(false)}
@@ -162,7 +162,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
         allTeachers={teachersList}
         mockInstruments={mockInstruments}
       />
-      {/* EditUserModal is rendered in the parent AdminView component */}
+      {}
     </View>
   );
 };

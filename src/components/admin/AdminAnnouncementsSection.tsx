@@ -1,23 +1,23 @@
-// src/components/admin/AdminAnnouncementsSection.tsx
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Button, FlatList } from 'react-native';
 
 import { Announcement } from '../../mocks/mockAnnouncements';
-import { AnnouncementListItemStudent } from '../../views/StudentView'; // Reusing Student view for display
+import { AnnouncementListItemStudent } from '../../views/StudentView'; 
 
 import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 
-// Import Modals
+
 import CreateAnnouncementModal from './modals/CreateAnnouncementModal';
 import EditAnnouncementModal from './modals/EditAnnouncementModal';
-import ConfirmationModal from '../common/ConfirmationModal'; // Reusable confirmation
+import ConfirmationModal from '../common/ConfirmationModal'; 
 
 
 interface AdminAnnouncementsSectionProps {
   announcements: Announcement[];
-  // Use specific types for functions passed down
+  
   onCreateAnnouncement: (announcementData: Omit<Announcement, 'id' | 'date'>) => void;
   onEditAnnouncement: (announcementId: string, announcementData: Partial<Omit<Announcement, 'id' | 'date'>>) => void;
   onDeleteAnnouncement: (announcementId: string) => void;
@@ -29,14 +29,14 @@ export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps>
   onEditAnnouncement,
   onDeleteAnnouncement,
 }) => {
-  // State for modals
+  
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [announcementToEdit, setAnnouncementToEdit] = useState<Announcement | null>(null);
   const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null);
 
-  // --- Modal Open Handlers ---
+  
   const handleAddPress = () => setIsCreateModalVisible(true);
 
   const handleEditPress = (announcement: Announcement) => {
@@ -49,12 +49,12 @@ export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps>
     setIsDeleteModalVisible(true);
   };
 
-  // --- Modal Close Handlers ---
+  
   const closeCreateModal = () => setIsCreateModalVisible(false);
   const closeEditModal = () => { setIsEditModalVisible(false); setAnnouncementToEdit(null); };
   const closeDeleteModal = () => { setIsDeleteModalVisible(false); setAnnouncementToDelete(null); };
 
-  // --- Modal Confirmation Handlers ---
+  
   const handleCreateConfirm = (announcementData: Omit<Announcement, 'id' | 'date'>) => {
     onCreateAnnouncement(announcementData);
     closeCreateModal();
@@ -85,15 +85,15 @@ export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps>
         <Button title="Create New Announcement" onPress={handleAddPress} />
       </View>
       <FlatList
-        // Use announcements passed down from App state
+        
         data={announcements.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <View style={appSharedStyles.itemContainer}>
-            {/* Reusing Student view item for display is fine for mock */}
+            {}
             <AnnouncementListItemStudent item={item} />
             <View style={adminSharedStyles.itemActions}>
-              {/* Wire up Edit/Delete buttons */}
+              {}
               <Button title="Edit" onPress={() => handleEditPress(item)} />
               <Button
                 title="Delete"
@@ -110,7 +110,7 @@ export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps>
         )}
       />
 
-      {/* Render Modals */}
+      {}
       <CreateAnnouncementModal
         visible={isCreateModalVisible}
         onClose={closeCreateModal}

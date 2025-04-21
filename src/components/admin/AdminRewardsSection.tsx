@@ -1,6 +1,6 @@
-// src/components/admin/AdminRewardsSection.tsx
-import React, { useState } from 'react'; // Added useState
-import { View, Text, StyleSheet, Button, FlatList, Image } from 'react-native'; // Removed Alert
+
+import React, { useState } from 'react'; 
+import { View, Text, StyleSheet, Button, FlatList, Image } from 'react-native'; 
 
 import { RewardItem } from '../../mocks/mockRewards';
 
@@ -8,32 +8,32 @@ import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 
-// --- Import Modals ---
+
 import CreateRewardModal from './modals/CreateRewardModal';
 import EditRewardModal from './modals/EditRewardModal';
-import ConfirmationModal from '../common/ConfirmationModal'; // Reusable confirmation
+import ConfirmationModal from '../common/ConfirmationModal'; 
 
 interface AdminRewardsSectionProps {
   rewardsCatalog: RewardItem[];
-  // --- Update prop types for specific functions ---
+  
   onCreateReward: (rewardData: Omit<RewardItem, 'id'>) => void;
   onEditReward: (rewardId: string, rewardData: Partial<Omit<RewardItem, 'id'>>) => void;
   onDeleteReward: (rewardId: string) => void;
-  // --- End update prop types ---
+  
 }
 
 const AdminRewardItem = ({
   item,
-  // --- Pass specific handlers ---
+  
   onEdit,
   onDelete,
-  // --- End specific handlers ---
+  
 }: {
   item: RewardItem;
-  // --- Update handler prop types ---
+  
   onEdit: (reward: RewardItem) => void;
   onDelete: (reward: RewardItem) => void;
-  // --- End update handler prop types ---
+  
 }) => (
   <View style={appSharedStyles.itemContainer}>
     <View style={styles.rewardItemContent}>
@@ -51,10 +51,10 @@ const AdminRewardItem = ({
       </View>
     </View>
     <View style={adminSharedStyles.itemActions}>
-      {/* --- Call specific handlers --- */}
+      {}
       <Button title="Edit" onPress={() => onEdit(item)} />
       <Button title="Delete" onPress={() => onDelete(item)} color={colors.danger} />
-      {/* --- End call specific handlers --- */}
+      {}
     </View>
   </View>
 );
@@ -65,14 +65,14 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
   onEditReward,
   onDeleteReward,
 }) => {
-  // --- State for modals ---
+  
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [rewardToEdit, setRewardToEdit] = useState<RewardItem | null>(null);
   const [rewardToDelete, setRewardToDelete] = useState<RewardItem | null>(null);
 
-  // --- Modal Open Handlers ---
+  
   const handleAddPress = () => setIsCreateModalVisible(true);
 
   const handleEditPress = (reward: RewardItem) => {
@@ -85,12 +85,12 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
     setIsDeleteModalVisible(true);
   };
 
-  // --- Modal Close Handlers ---
+  
   const closeCreateModal = () => setIsCreateModalVisible(false);
   const closeEditModal = () => { setIsEditModalVisible(false); setRewardToEdit(null); };
   const closeDeleteModal = () => { setIsDeleteModalVisible(false); setRewardToDelete(null); };
 
-  // --- Modal Confirmation Handlers ---
+  
   const handleCreateConfirm = (rewardData: Omit<RewardItem, 'id'>) => {
     onCreateReward(rewardData);
     closeCreateModal();
@@ -111,20 +111,20 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
     closeDeleteModal();
   };
 
-  // Removed handleEditDeleteRewardItem
+  
 
   return (
     <View>
       <Text style={appSharedStyles.sectionTitle}>Rewards Catalog ({rewardsCatalog.length})</Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
-        {/* --- Call modal opener --- */}
+        {}
         <Button title="Add New Reward" onPress={handleAddPress} />
       </View>
       <FlatList
-        data={rewardsCatalog} // Already sorted by App.tsx state updates
+        data={rewardsCatalog} 
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          // --- Pass modal openers to item ---
+          
           <AdminRewardItem
              item={item}
              onEdit={handleEditPress}
@@ -138,7 +138,7 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
         )}
       />
 
-      {/* --- Render Modals --- */}
+      {}
       <CreateRewardModal
         visible={isCreateModalVisible}
         onClose={closeCreateModal}
@@ -158,7 +158,7 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
         onConfirm={handleDeleteConfirm}
         onCancel={closeDeleteModal}
       />
-      {/* --- End Render Modals --- */}
+      {}
     </View>
   );
 };

@@ -1,4 +1,4 @@
-// src/components/student/modals/SetGoalModal.tsx
+
 import React from 'react';
 import {
   Modal,
@@ -15,17 +15,17 @@ import { RewardItem } from '../../../mocks/mockRewards';
 import { colors } from '../../../styles/colors';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 
-// Props for the modal
+
 interface SetGoalModalProps {
   visible: boolean;
   onClose: () => void;
   rewardsCatalog: RewardItem[];
   currentBalance: number;
   currentGoalId: string | null;
-  onSetGoal: (goalId: string | null) => void; // Pass null to clear goal
+  onSetGoal: (goalId: string | null) => void; 
 }
 
-// Component to render each reward item within the modal list
+
 const RewardGoalItem = ({
   item,
   isCurrentGoal,
@@ -42,7 +42,7 @@ const RewardGoalItem = ({
       style={[
         appSharedStyles.itemContainer,
         styles.goalSelectItem,
-        isCurrentGoal ? styles.currentGoalItem : {}, // Highlight current goal
+        isCurrentGoal ? styles.currentGoalItem : {}, 
       ]}
     >
       <View style={styles.goalSelectItemContent}>
@@ -56,19 +56,19 @@ const RewardGoalItem = ({
           <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
             {item.cost} Tickets
           </Text>
-          {/* Affordability indicator (optional) */}
+          {}
           {!canAfford && (
              <Text style={styles.cannotAffordText}>(Need more tickets)</Text>
           )}
         </View>
-         {/* Simple checkmark indicator for current goal */}
+         {}
          {isCurrentGoal && <Text style={styles.checkmark}>✓</Text>}
       </View>
     </View>
   </TouchableOpacity>
 );
 
-// Main Modal Component
+
 const SetGoalModal: React.FC<SetGoalModalProps> = ({
   visible,
   onClose,
@@ -79,11 +79,11 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
 }) => {
 
   const handleSelectGoal = (id: string) => {
-    onSetGoal(id); // Call the callback passed from StudentView
+    onSetGoal(id); 
   };
 
   const handleClearGoal = () => {
-    onSetGoal(null); // Call the callback with null to clear
+    onSetGoal(null); 
   };
 
   return (
@@ -101,7 +101,7 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
 
           <FlatList
             style={styles.listContainer}
-            data={rewardsCatalog.sort((a, b) => a.cost - b.cost)} // Sort by cost
+            data={rewardsCatalog.sort((a, b) => a.cost - b.cost)} 
             keyExtractor={item => item.id}
             renderItem={({ item }) => (
               <RewardGoalItem
@@ -115,12 +115,12 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
             ListEmptyComponent={
               <Text style={appSharedStyles.emptyListText}>No rewards available.</Text>
             }
-            // Add some padding at the bottom inside the list
+            
             ListFooterComponent={<View style={{ height: 10 }} />}
           />
 
           <View style={styles.buttonContainer}>
-            {/* Add Clear Goal button only if a goal is currently set */}
+            {}
             {currentGoalId && (
                <Button
                   title="Clear Current Goal"
@@ -128,7 +128,7 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
                   color={colors.warning}
                />
             )}
-             <View style={{ height: 10 }} /> {/* Spacer */}
+             <View style={{ height: 10 }} /> {}
             <Button title="Cancel" onPress={onClose} color={colors.secondary} />
           </View>
         </View>
@@ -137,7 +137,7 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
   );
 };
 
-// Styles for the modal
+
 const styles = StyleSheet.create({
   centeredView: {
     flex: 1,
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
     width: '90%',
-    maxHeight: '85%', // Limit height
+    maxHeight: '85%', 
   },
   modalTitle: {
     fontSize: 20,
@@ -171,23 +171,23 @@ const styles = StyleSheet.create({
       marginBottom: 15,
   },
   goalSelectItem: {
-     // Use itemContainer base, add specific padding/margin if needed
-     paddingVertical: 8, // Adjust vertical padding
+     
+     paddingVertical: 8, 
      paddingHorizontal: 10,
-     // Remove default marginBottom from appSharedStyles if needed
+     
      marginBottom: 0,
   },
   currentGoalItem: {
-    borderColor: colors.primary, // Highlight border
+    borderColor: colors.primary, 
     borderWidth: 2,
-    backgroundColor: colors.backgroundHighlight, // Highlight background
+    backgroundColor: colors.backgroundHighlight, 
   },
   goalSelectItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   goalSelectImage: {
-    width: 45, // Slightly smaller image for list
+    width: 45, 
     height: 45,
     marginRight: 12,
     borderRadius: 4,
@@ -199,8 +199,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   goalSelectName: {
-    fontSize: 15, // Adjust font size
-    fontWeight: '600', // Medium weight
+    fontSize: 15, 
+    fontWeight: '600', 
     color: colors.textPrimary,
     marginBottom: 2,
   },
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   checkmark: {
       fontSize: 24,
       color: colors.primary,
-      marginLeft: 10, // Space before checkmark
+      marginLeft: 10, 
   },
   buttonContainer: {
     width: '100%',
