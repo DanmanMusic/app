@@ -21,7 +21,9 @@ export const getInstrumentNames = (
     .join(', ');
 };
 
-export const getUserDisplayName = (user: Pick<User, 'firstName' | 'lastName' | 'nickname'> | undefined | null): string => {
+export const getUserDisplayName = (
+  user: Pick<User, 'firstName' | 'lastName' | 'nickname'> | undefined | null
+): string => {
   if (!user) {
     return 'Unknown User';
   }
@@ -32,7 +34,9 @@ export const getUserDisplayName = (user: Pick<User, 'firstName' | 'lastName' | '
   return baseName || 'Unnamed User';
 };
 
-export const getInstrumentIconSource = (instrumentName: string | undefined): ImageSourcePropType => {
+export const getInstrumentIconSource = (
+  instrumentName: string | undefined
+): ImageSourcePropType => {
   const defaultIcon = require('../../assets/instruments/icon.jpg');
   if (!instrumentName) {
     return defaultIcon;
@@ -40,20 +44,25 @@ export const getInstrumentIconSource = (instrumentName: string | undefined): Ima
   const imageName = instrumentName.toLowerCase().trim();
   try {
     switch (imageName) {
-      case 'piano': return require('../../assets/instruments/piano.jpg');
-      case 'guitar': return require('../../assets/instruments/guitar.jpg');
-      case 'drums': return require('../../assets/instruments/drums.jpg');
-      case 'violin': return require('../../assets/instruments/violin.jpg');
-      case 'voice': return require('../../assets/instruments/voice.jpg');
-      case 'flute': return require('../../assets/instruments/flute.jpg');
+      case 'piano':
+        return require('../../assets/instruments/piano.jpg');
+      case 'guitar':
+        return require('../../assets/instruments/guitar.jpg');
+      case 'drums':
+        return require('../../assets/instruments/drums.jpg');
+      case 'violin':
+        return require('../../assets/instruments/violin.jpg');
+      case 'voice':
+        return require('../../assets/instruments/voice.jpg');
+      case 'flute':
+        return require('../../assets/instruments/flute.jpg');
       case 'bass':
-      case 'bass guitar': return require('../../assets/instruments/bass.jpg');
+      case 'bass guitar':
+        return require('../../assets/instruments/bass.jpg');
       default:
-
         return defaultIcon;
     }
   } catch (error) {
-
     return defaultIcon;
   }
 };

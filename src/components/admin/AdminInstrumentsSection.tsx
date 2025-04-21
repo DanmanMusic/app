@@ -1,14 +1,13 @@
-
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Button, FlatList, Image } from 'react-native';
-import { Instrument } from '../../mocks/mockInstruments'; 
-import { adminSharedStyles } from './adminSharedStyles'; 
-import { appSharedStyles } from '../../styles/appSharedStyles'; 
-import { colors } from '../../styles/colors'; 
-import { getInstrumentIconSource } from '../../utils/helpers'; 
+import { Instrument } from '../../mocks/mockInstruments';
+import { adminSharedStyles } from './adminSharedStyles';
+import { appSharedStyles } from '../../styles/appSharedStyles';
+import { colors } from '../../styles/colors';
+import { getInstrumentIconSource } from '../../utils/helpers';
 import CreateInstrumentModal from './modals/CreateInstrumentModal';
 import EditInstrumentModal from './modals/EditInstrumentModal';
-import ConfirmationModal from '../common/ConfirmationModal'; 
+import ConfirmationModal from '../common/ConfirmationModal';
 
 interface AdminInstrumentsSectionProps {
   mockInstruments: Instrument[];
@@ -29,7 +28,7 @@ const AdminInstrumentItem = ({
   <View style={appSharedStyles.itemContainer}>
     <View style={styles.itemContent}>
       <Image
-        source={getInstrumentIconSource(item.name)} 
+        source={getInstrumentIconSource(item.name)}
         style={styles.instrumentIcon}
         resizeMode="contain"
       />
@@ -42,27 +41,54 @@ const AdminInstrumentItem = ({
   </View>
 );
 
-
 export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = ({
   mockInstruments,
   onCreateInstrument,
   onEditInstrument,
   onDeleteInstrument,
-}) => {  
+}) => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [instrumentToEdit, setInstrumentToEdit] = useState<Instrument | null>(null);
   const [instrumentToDelete, setInstrumentToDelete] = useState<Instrument | null>(null);
-  const handleAddPress = () => { setIsCreateModalVisible(true); };
-  const handleEditPress = (instrument: Instrument) => { setInstrumentToEdit(instrument); setIsEditModalVisible(true); };
-  const handleDeletePress = (instrument: Instrument) => { setInstrumentToDelete(instrument); setIsDeleteModalVisible(true); };
+  const handleAddPress = () => {
+    setIsCreateModalVisible(true);
+  };
+  const handleEditPress = (instrument: Instrument) => {
+    setInstrumentToEdit(instrument);
+    setIsEditModalVisible(true);
+  };
+  const handleDeletePress = (instrument: Instrument) => {
+    setInstrumentToDelete(instrument);
+    setIsDeleteModalVisible(true);
+  };
   const closeCreateModal = () => setIsCreateModalVisible(false);
-  const closeEditModal = () => { setIsEditModalVisible(false); setInstrumentToEdit(null); };
-  const closeDeleteModal = () => { setIsDeleteModalVisible(false); setInstrumentToDelete(null); };
-  const handleCreateConfirm = (instrumentData: Omit<Instrument, 'id'>) => { onCreateInstrument(instrumentData); closeCreateModal(); };
-  const handleEditConfirm = (instrumentId: string, instrumentData: Partial<Omit<Instrument, 'id'>>) => { onEditInstrument(instrumentId, instrumentData); closeEditModal(); };
-  const handleDeleteConfirm = () => { if (instrumentToDelete) { onDeleteInstrument(instrumentToDelete.id); } closeDeleteModal(); };
+  const closeEditModal = () => {
+    setIsEditModalVisible(false);
+    setInstrumentToEdit(null);
+  };
+  const closeDeleteModal = () => {
+    setIsDeleteModalVisible(false);
+    setInstrumentToDelete(null);
+  };
+  const handleCreateConfirm = (instrumentData: Omit<Instrument, 'id'>) => {
+    onCreateInstrument(instrumentData);
+    closeCreateModal();
+  };
+  const handleEditConfirm = (
+    instrumentId: string,
+    instrumentData: Partial<Omit<Instrument, 'id'>>
+  ) => {
+    onEditInstrument(instrumentId, instrumentData);
+    closeEditModal();
+  };
+  const handleDeleteConfirm = () => {
+    if (instrumentToDelete) {
+      onDeleteInstrument(instrumentToDelete.id);
+    }
+    closeDeleteModal();
+  };
 
   return (
     <View>
@@ -74,15 +100,13 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
         data={mockInstruments.sort((a, b) => a.name.localeCompare(b.name))}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <AdminInstrumentItem
-            item={item}
-            onEdit={handleEditPress}
-            onDelete={handleDeletePress}
-          />
+          <AdminInstrumentItem item={item} onEdit={handleEditPress} onDelete={handleDeletePress} />
         )}
         scrollEnabled={false}
         ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
-        ListEmptyComponent={() => ( <Text style={appSharedStyles.emptyListText}>No instruments found.</Text> )}
+        ListEmptyComponent={() => (
+          <Text style={appSharedStyles.emptyListText}>No instruments found.</Text>
+        )}
       />
 
       {}
@@ -109,9 +133,8 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
   );
 };
 
-
 const styles = StyleSheet.create({
-  itemContent: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, },
-  instrumentIcon: { width: 40, height: 40, marginRight: 15, },
-  itemTitleText: { flexShrink: 1, marginBottom: 0, },
+  itemContent: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  instrumentIcon: { width: 40, height: 40, marginRight: 15 },
+  itemTitleText: { flexShrink: 1, marginBottom: 0 },
 });

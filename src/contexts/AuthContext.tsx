@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useMemo, ReactNode } from 'react';
 import { UserRole } from '../types/userTypes';
 
@@ -25,14 +24,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const currentUserRole: UserRole | 'public' = mockAuthState?.role || 'public';
   const currentUserId: string | undefined = mockAuthState?.userId;
   const currentViewingStudentId: string | undefined = mockAuthState?.viewingStudentId;
-  const value = useMemo(() => ({
-    mockAuthState,
-    setMockAuthState,
-    isAuthenticated,
-    currentUserRole,
-    currentUserId,
-    currentViewingStudentId,
-  }), [mockAuthState]);
+  const value = useMemo(
+    () => ({
+      mockAuthState,
+      setMockAuthState,
+      isAuthenticated,
+      currentUserRole,
+      currentUserId,
+      currentViewingStudentId,
+    }),
+    [mockAuthState]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

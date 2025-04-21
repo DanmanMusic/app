@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,14 +12,12 @@ interface PublicViewProps {}
 const RewardItemPublic = ({ item }: { item: RewardItem }) => (
   <View style={appSharedStyles.itemContainer}>
     <View style={styles.rewardItemContent}>
-      <Image
-        source={{ uri: item.imageUrl }}
-        style={styles.rewardImage}
-        resizeMode="contain"
-      />
+      <Image source={{ uri: item.imageUrl }} style={styles.rewardImage} resizeMode="contain" />
       <View style={styles.rewardDetails}>
         <Text style={styles.rewardName}>{item.name}</Text>
-        <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>{item.cost} Tickets</Text>
+        <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
+          {item.cost} Tickets
+        </Text>
         {item.description && <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>}
       </View>
     </View>
@@ -37,7 +34,7 @@ const AnnouncementListItem = ({ item }: { item: Announcement }) => (
 
 type PublicTab = 'welcome' | 'rewards' | 'announcements';
 
-export const PublicView: React.FC<PublicViewProps> = () => {  
+export const PublicView: React.FC<PublicViewProps> = () => {
   const { rewardsCatalog, announcements } = useData();
   const [activeTab, setActiveTab] = useState<PublicTab>('welcome');
   return (
@@ -67,27 +64,24 @@ export const PublicView: React.FC<PublicViewProps> = () => {
 
         {}
         <View style={styles.contentArea}>
-          {activeTab === 'welcome' && (
-            <View style={styles.tabContentPlaceholder}>
-              {}
-            </View>
-          )}
+          {activeTab === 'welcome' && <View style={styles.tabContentPlaceholder}>{}</View>}
 
           {activeTab === 'rewards' && (
             <FlatList
-              
               data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
               keyExtractor={item => `reward-${item.id}`}
               renderItem={({ item }) => <RewardItemPublic item={item} />}
               ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-              ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>No rewards found.</Text>}
+              ListEmptyComponent={() => (
+                <Text style={appSharedStyles.emptyListText}>No rewards found.</Text>
+              )}
               contentContainerStyle={styles.listContentContainer}
-              ListFooterComponent={<View style={{ height: 20 }}/>}
+              ListFooterComponent={<View style={{ height: 20 }} />}
             />
           )}
 
           {activeTab === 'announcements' && (
-            <FlatList              
+            <FlatList
               data={announcements.sort(
                 (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
               )}
@@ -98,7 +92,7 @@ export const PublicView: React.FC<PublicViewProps> = () => {
                 <Text style={appSharedStyles.emptyListText}>No announcements found.</Text>
               )}
               contentContainerStyle={styles.listContentContainer}
-              ListFooterComponent={<View style={{ height: 20 }}/>}
+              ListFooterComponent={<View style={{ height: 20 }} />}
             />
           )}
         </View>
@@ -108,7 +102,6 @@ export const PublicView: React.FC<PublicViewProps> = () => {
     </SafeAreaView>
   );
 };
-
 
 const styles = StyleSheet.create({
   publicHeader: {

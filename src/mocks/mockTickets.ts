@@ -1,25 +1,20 @@
-
-
-
 export type TransactionType = 'task_award' | 'manual_add' | 'manual_subtract' | 'redemption';
 
 export interface TicketTransaction {
   id: string;
-  studentId: string; 
-  timestamp: string; 
-  amount: number; 
+  studentId: string;
+  timestamp: string;
+  amount: number;
   type: TransactionType;
-  sourceId: string; 
-  notes?: string; 
+  sourceId: string;
+  notes?: string;
 }
-
 
 export const mockTicketBalances: Record<string, number> = {
   'student-1': 5200,
   'student-2': 150,
   'student-3': 7500,
 };
-
 
 export const mockTicketHistory: TicketTransaction[] = [
   {

@@ -1,19 +1,77 @@
-
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput, ScrollView } from 'react-native';
 import { RewardItem } from '../../../mocks/mockRewards';
 import { colors } from '../../../styles/colors';
 
 const modalStyles = StyleSheet.create({
-    centeredView:{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.7)' },
-    modalView:{ margin:20, backgroundColor:colors.backgroundPrimary, borderRadius:10, padding:20, alignItems:'center', shadowColor:'#000', shadowOffset:{ width:0, height:2 }, shadowOpacity:0.25, shadowRadius:4, elevation:5, width:'95%', maxWidth:450, maxHeight: '85%' },
-    scrollView:{ width:'100%', marginBottom: 15 },
-    modalTitle:{ fontSize:20, fontWeight:'bold', marginBottom:15, textAlign:'center', color:colors.textPrimary, width:'100%', borderBottomWidth:1, borderBottomColor:colors.borderPrimary, paddingBottom:10 },
-    label:{ fontSize:14, fontWeight:'bold', marginTop:10, marginBottom:5, color:colors.textPrimary, alignSelf:'flex-start', width: '100%' },
-    input:{ width:'100%', borderWidth:1, borderColor:colors.borderPrimary, borderRadius:5, padding:10, fontSize:16, color:colors.textPrimary, backgroundColor:colors.backgroundPrimary, marginBottom:10 },
-    textArea:{ width:'100%', borderWidth:1, borderColor:colors.borderPrimary, borderRadius:5, padding:10, fontSize:16, color:colors.textPrimary, backgroundColor:colors.backgroundPrimary, marginBottom:10, minHeight: 80, textAlignVertical: 'top' },
-    buttonContainer:{ flexDirection:'column', width:'100%', marginTop:10, gap:10 },
-    footerButton:{ width:'100%', marginTop:10 },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: colors.backgroundPrimary,
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: '95%',
+    maxWidth: 450,
+    maxHeight: '85%',
+  },
+  scrollView: { width: '100%', marginBottom: 15 },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+    color: colors.textPrimary,
+    width: '100%',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderPrimary,
+    paddingBottom: 10,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 10,
+    marginBottom: 5,
+    color: colors.textPrimary,
+    alignSelf: 'flex-start',
+    width: '100%',
+  },
+  input: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: colors.borderPrimary,
+    borderRadius: 5,
+    padding: 10,
+    fontSize: 16,
+    color: colors.textPrimary,
+    backgroundColor: colors.backgroundPrimary,
+    marginBottom: 10,
+  },
+  textArea: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: colors.borderPrimary,
+    borderRadius: 5,
+    padding: 10,
+    fontSize: 16,
+    color: colors.textPrimary,
+    backgroundColor: colors.backgroundPrimary,
+    marginBottom: 10,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  buttonContainer: { flexDirection: 'column', width: '100%', marginTop: 10, gap: 10 },
+  footerButton: { width: '100%', marginTop: 10 },
 });
 
 interface CreateRewardModalProps {
@@ -28,7 +86,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({
   onCreateConfirm,
 }) => {
   const [name, setName] = useState('');
-  const [cost, setCost] = useState<number | ''>(''); 
+  const [cost, setCost] = useState<number | ''>('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
 
@@ -47,30 +105,25 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({
       alert('Please enter a reward name.');
       return;
     }
-     if (isNaN(numericCost) || numericCost < 0) {
-         alert('Please enter a valid, non-negative ticket cost.');
-         return;
-     }
+    if (isNaN(numericCost) || numericCost < 0) {
+      alert('Please enter a valid, non-negative ticket cost.');
+      return;
+    }
     if (!imageUrl.trim()) {
-        alert('Please enter an image URL (mock).'); 
-        return;
+      alert('Please enter an image URL (mock).');
+      return;
     }
 
     onCreateConfirm({
       name: name.trim(),
       cost: numericCost,
-      description: description.trim() || undefined, 
+      description: description.trim() || undefined,
       imageUrl: imageUrl.trim(),
     });
   };
 
   return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
-    >
+    <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
       <View style={modalStyles.centeredView}>
         <View style={modalStyles.modalView}>
           <Text style={modalStyles.modalTitle}>Create New Reward</Text>
@@ -88,8 +141,10 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({
             <Text style={modalStyles.label}>Ticket Cost:</Text>
             <TextInput
               style={modalStyles.input}
-              value={String(cost)} 
-              onChangeText={text => setCost(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)} 
+              value={String(cost)}
+              onChangeText={text =>
+                setCost(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)
+              }
               placeholder="e.g., 10000"
               placeholderTextColor={colors.textLight}
               keyboardType="numeric"

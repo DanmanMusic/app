@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { View, Text, Button, FlatList } from 'react-native';
 import { SimplifiedUser } from '../../views/AdminView';
-import { SimplifiedStudent } from '../../types/dataTypes'
+import { SimplifiedStudent } from '../../types/dataTypes';
 import { UserRole, User } from '../../types/userTypes';
 import { Instrument } from '../../mocks/mockInstruments';
 import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
@@ -19,7 +18,7 @@ interface AdminUsersSectionProps {
   mockInstruments: Instrument[];
   onCreateUser: (userData: Omit<User, 'id'>) => void;
   onViewManageUser: (userId: string, role: UserRole) => void;
-  onAssignTask: (taskId: string, studentId: string) => void; 
+  onAssignTask: (taskId: string, studentId: string) => void;
   taskLibrary: TaskLibraryItem[];
   isCreateUserModalVisible: boolean;
   setIsCreateUserModalVisible: (visible: boolean) => void;
@@ -45,12 +44,12 @@ const AdminStudentItem = ({
   student,
   mockInstruments,
   onViewManage,
-  onAssignTask, 
+  onAssignTask,
 }: {
   student: SimplifiedStudent;
   mockInstruments: Instrument[];
   onViewManage: (studentId: string, role: UserRole) => void;
-  onAssignTask: (studentId: string) => void; 
+  onAssignTask: (studentId: string) => void;
 }) => (
   <View style={appSharedStyles.itemContainer}>
     <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
@@ -74,7 +73,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   mockInstruments,
   onCreateUser,
   onViewManageUser,
-  onAssignTask, 
+  onAssignTask,
   taskLibrary,
   isCreateUserModalVisible,
   setIsCreateUserModalVisible,
@@ -103,12 +102,11 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
         data={allStudents.sort((a, b) => a.name.localeCompare(b.name))}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          
           <AdminStudentItem
             student={item}
             mockInstruments={mockInstruments}
             onViewManage={onViewManageUser}
-            onAssignTask={handleAssignTaskToStudent} 
+            onAssignTask={handleAssignTaskToStudent}
           />
         )}
         scrollEnabled={false}

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { View, Text, Button, Alert, FlatList, Platform } from 'react-native';
 import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
@@ -15,7 +14,6 @@ import ViewAllAssignedTasksModal from './modals/ViewAllAssignedTasksModal';
 import { AssignedTask } from '../../mocks/mockAssignedTasks';
 import { User } from '../../types/userTypes';
 
-
 interface AdminTasksSectionProps {
   taskLibrary: TaskLibraryItem[];
   allStudents: SimplifiedStudent[];
@@ -30,29 +28,28 @@ interface AdminTasksSectionProps {
 }
 
 const AdminTaskLibraryItem = ({
-    item,
-    onEdit,
-    onDelete,
-    onTriggerAssignFlow,
+  item,
+  onEdit,
+  onDelete,
+  onTriggerAssignFlow,
 }: {
-    item: TaskLibraryItem;
-    onEdit: (task: TaskLibraryItem) => void;
-    onDelete: (task: TaskLibraryItem) => void;
-    onTriggerAssignFlow: (taskId: string) => void;
+  item: TaskLibraryItem;
+  onEdit: (task: TaskLibraryItem) => void;
+  onDelete: (task: TaskLibraryItem) => void;
+  onTriggerAssignFlow: (taskId: string) => void;
 }) => (
-    <View style={appSharedStyles.itemContainer}>
-        <Text style={appSharedStyles.itemTitle}>
-            {item.title} ({item.baseTickets} pts)
-        </Text>
-        <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
-        <View style={adminSharedStyles.itemActions}>
-            <Button title="Edit" onPress={() => onEdit(item)} />
-            <Button title="Delete" onPress={() => onDelete(item)} color={colors.danger} />
-            <Button title="Assign (Mock)" onPress={() => onTriggerAssignFlow(item.id)} />
-        </View>
+  <View style={appSharedStyles.itemContainer}>
+    <Text style={appSharedStyles.itemTitle}>
+      {item.title} ({item.baseTickets} pts)
+    </Text>
+    <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
+    <View style={adminSharedStyles.itemActions}>
+      <Button title="Edit" onPress={() => onEdit(item)} />
+      <Button title="Delete" onPress={() => onDelete(item)} color={colors.danger} />
+      <Button title="Assign (Mock)" onPress={() => onTriggerAssignFlow(item.id)} />
     </View>
+  </View>
 );
-
 
 export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
   taskLibrary,
@@ -74,49 +71,76 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
   const [isAssignModalVisible, setIsAssignModalVisible] = useState(false);
   const [isViewAllModalVisible, setIsViewAllModalVisible] = useState(false);
   const handleAddPress = () => setIsCreateModalVisible(true);
-  const handleEditPress = (task: TaskLibraryItem) => { setTaskToEdit(task); setIsEditModalVisible(true); };
-  const handleDeletePress = (task: TaskLibraryItem) => { setTaskToDelete(task); setIsDeleteModalVisible(true); };
+  const handleEditPress = (task: TaskLibraryItem) => {
+    setTaskToEdit(task);
+    setIsEditModalVisible(true);
+  };
+  const handleDeletePress = (task: TaskLibraryItem) => {
+    setTaskToDelete(task);
+    setIsDeleteModalVisible(true);
+  };
   const closeCreateModal = () => setIsCreateModalVisible(false);
-  const closeEditModal = () => { setIsEditModalVisible(false); setTaskToEdit(null); };
-  const closeDeleteModal = () => { setIsDeleteModalVisible(false); setTaskToDelete(null); };
+  const closeEditModal = () => {
+    setIsEditModalVisible(false);
+    setTaskToEdit(null);
+  };
+  const closeDeleteModal = () => {
+    setIsDeleteModalVisible(false);
+    setTaskToDelete(null);
+  };
   const closeAssignModal = () => setIsAssignModalVisible(false);
   const closeViewAllModal = () => setIsViewAllModalVisible(false);
-  const handleCreateConfirm = (taskData: Omit<TaskLibraryItem, 'id'>) => { onCreateTaskLibraryItem(taskData); closeCreateModal(); };
-  const handleEditConfirm = (taskId: string, taskData: Partial<Omit<TaskLibraryItem, 'id'>>) => { onEditTaskLibraryItem(taskId, taskData); closeEditModal(); };
-  const handleDeleteConfirm = () => { if (taskToDelete) { onDeleteTaskLibraryItem(taskToDelete.id); } closeDeleteModal(); };
+  const handleCreateConfirm = (taskData: Omit<TaskLibraryItem, 'id'>) => {
+    onCreateTaskLibraryItem(taskData);
+    closeCreateModal();
+  };
+  const handleEditConfirm = (taskId: string, taskData: Partial<Omit<TaskLibraryItem, 'id'>>) => {
+    onEditTaskLibraryItem(taskId, taskData);
+    closeEditModal();
+  };
+  const handleDeleteConfirm = () => {
+    if (taskToDelete) {
+      onDeleteTaskLibraryItem(taskToDelete.id);
+    }
+    closeDeleteModal();
+  };
   const handleAssignTaskFromLibraryItem = (taskId: string) => {
     Alert.prompt(
       'Assign Task',
       `Assign task "${getTaskTitle(taskId, taskLibrary)}" to which student ID? (e.g., student-1)`,
-      [ { text: 'Cancel', style: 'cancel' }, { text: 'Assign', onPress: studentIdInput => { const studentId = studentIdInput?.trim(); if (studentId && allStudents.some(p => p.id === studentId)) { onAssignTask(taskId, studentId); } else { Alert.alert('Invalid Student ID', `Student ID "${studentId || ''}" not found.`); } } }, ],
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Assign',
+          onPress: studentIdInput => {
+            const studentId = studentIdInput?.trim();
+            if (studentId && allStudents.some(p => p.id === studentId)) {
+              onAssignTask(taskId, studentId);
+            } else {
+              Alert.alert('Invalid Student ID', `Student ID "${studentId || ''}" not found.`);
+            }
+          },
+        },
+      ],
       Platform.OS === 'ios' ? 'default' : 'plain-text'
     );
   };
   const handleInitiateAssignTaskFlow = () => {
-      setIsAssignModalVisible(true);
+    setIsAssignModalVisible(true);
   };
   const handleViewAllAssignedTasks = () => {
-      setIsViewAllModalVisible(true);
+    setIsViewAllModalVisible(true);
   };
   return (
     <View>
       <Text style={appSharedStyles.sectionTitle}>Task Management</Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 20, gap: 5 }}>
-        <Button
-          title="Assign Task to Student"
-          onPress={handleInitiateAssignTaskFlow}
-        />
-        <Button
-          title="View All Assigned Tasks"
-          onPress={handleViewAllAssignedTasks}
-        />
+        <Button title="Assign Task to Student" onPress={handleInitiateAssignTaskFlow} />
+        <Button title="View All Assigned Tasks" onPress={handleViewAllAssignedTasks} />
       </View>
       <Text style={adminSharedStyles.sectionSubTitle}>Task Library ({taskLibrary.length})</Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
-        <Button
-          title="Create New Task Library Item"
-          onPress={handleAddPress}
-        />
+        <Button title="Create New Task Library Item" onPress={handleAddPress} />
       </View>
       <FlatList
         data={taskLibrary}
@@ -136,27 +160,42 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
         )}
       />
 
+      <CreateTaskLibraryModal
+        visible={isCreateModalVisible}
+        onClose={closeCreateModal}
+        onCreateConfirm={handleCreateConfirm}
+      />
+      <EditTaskLibraryModal
+        visible={isEditModalVisible}
+        taskToEdit={taskToEdit}
+        onClose={closeEditModal}
+        onEditConfirm={handleEditConfirm}
+      />
+      <ConfirmationModal
+        visible={isDeleteModalVisible}
+        title="Confirm Delete"
+        message={`Are you sure you want to delete the library task "${taskToDelete?.title || ''}"? This might affect currently assigned tasks using it.`}
+        confirmText="Delete Task"
+        onConfirm={handleDeleteConfirm}
+        onCancel={closeDeleteModal}
+      />
 
-       <CreateTaskLibraryModal visible={isCreateModalVisible} onClose={closeCreateModal} onCreateConfirm={handleCreateConfirm} />
-       <EditTaskLibraryModal visible={isEditModalVisible} taskToEdit={taskToEdit} onClose={closeEditModal} onEditConfirm={handleEditConfirm} />
-       <ConfirmationModal visible={isDeleteModalVisible} title="Confirm Delete" message={`Are you sure you want to delete the library task "${taskToDelete?.title || ''}"? This might affect currently assigned tasks using it.`} confirmText="Delete Task" onConfirm={handleDeleteConfirm} onCancel={closeDeleteModal} />
-
-       <AssignTaskModal
-            visible={isAssignModalVisible}
-            onClose={closeAssignModal}
-            allStudents={allStudents}
-            taskLibrary={taskLibrary}
-            onAssignTask={onAssignTask}
-       />
-       <ViewAllAssignedTasksModal
-            visible={isViewAllModalVisible}
-            onClose={closeViewAllModal}
-            allAssignedTasks={allAssignedTasks}
-            taskLibrary={taskLibrary}
-            allUsers={allUsers}
-            onInitiateVerification={onInitiateVerification}
-            onDeleteAssignment={onDeleteAssignment}
-       />
+      <AssignTaskModal
+        visible={isAssignModalVisible}
+        onClose={closeAssignModal}
+        allStudents={allStudents}
+        taskLibrary={taskLibrary}
+        onAssignTask={onAssignTask}
+      />
+      <ViewAllAssignedTasksModal
+        visible={isViewAllModalVisible}
+        onClose={closeViewAllModal}
+        allAssignedTasks={allAssignedTasks}
+        taskLibrary={taskLibrary}
+        allUsers={allUsers}
+        onInitiateVerification={onInitiateVerification}
+        onDeleteAssignment={onDeleteAssignment}
+      />
     </View>
   );
 };

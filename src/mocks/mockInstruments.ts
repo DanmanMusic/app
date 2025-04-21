@@ -1,9 +1,6 @@
-
-
 export interface Instrument {
   id: string;
   name: string;
-  
 }
 
 export const mockInstruments: Instrument[] = [
@@ -13,6 +10,5 @@ export const mockInstruments: Instrument[] = [
   { id: 'inst-4', name: 'Violin' },
   { id: 'inst-5', name: 'Voice' },
   { id: 'inst-6', name: 'Flute' },
-  { id: 'inst-7', name: 'Bass' }, 
-  
+  { id: 'inst-7', name: 'Bass' },
 ];

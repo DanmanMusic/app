@@ -1,12 +1,9 @@
-
-
 export interface TaskLibraryItem {
   id: string;
   title: string;
   description: string;
   baseTickets: number;
 }
-
 
 export const initialMockTaskLibrary: TaskLibraryItem[] = [
   {
@@ -34,6 +31,5 @@ export const initialMockTaskLibrary: TaskLibraryItem[] = [
     baseTickets: 15,
   },
 ];
-
 
 export const mockTaskLibrary = initialMockTaskLibrary;

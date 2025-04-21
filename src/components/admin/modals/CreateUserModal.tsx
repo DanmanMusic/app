@@ -1,19 +1,18 @@
-
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput, ScrollView } from 'react-native';
 import { UserRole, User } from '../../../types/userTypes';
 import { Instrument } from '../../../mocks/mockInstruments';
 import { colors } from '../../../styles/colors';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
-import { getUserDisplayName } from '../../../utils/helpers'; 
+import { getUserDisplayName } from '../../../utils/helpers';
 
 const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'student'];
 
 interface CreateUserModalProps {
   visible: boolean;
   onClose: () => void;
-  onCreateUser: (userData: Omit<User, 'id'>) => void;  
-  allTeachers: User[]; 
+  onCreateUser: (userData: Omit<User, 'id'>) => void;
+  allTeachers: User[];
   mockInstruments: Instrument[];
 }
 
@@ -21,28 +20,26 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   visible,
   onClose,
   onCreateUser,
-  allTeachers, 
+  allTeachers,
   mockInstruments,
 }) => {
-  
   const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');  
+  const [lastName, setLastName] = useState('');
   const [role, setRole] = useState<UserRole | ''>('');
-  const [instrumentIds, setInstrumentIds] = useState<string[]>([]);   
-  const [linkedTeacherIds, setLinkedTeacherIds] = useState<string[]>([]); 
+  const [instrumentIds, setInstrumentIds] = useState<string[]>([]);
+  const [linkedTeacherIds, setLinkedTeacherIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (visible) {
       setFirstName('');
       setLastName('');
-      
+
       setRole('');
       setInstrumentIds([]);
-      setLinkedTeacherIds([]); 
+      setLinkedTeacherIds([]);
     }
   }, [visible]);
 
-  
   const handleCreatePress = () => {
     if (!firstName || !lastName || !role) {
       alert('Missing Information - Please enter First Name, Last Name, and select a Role.');
@@ -55,8 +52,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
       lastName: lastName.trim(),
       ...(role === 'student' && {
         instrumentIds: instrumentIds,
-        linkedTeacherIds: linkedTeacherIds, 
-      }),      
+        linkedTeacherIds: linkedTeacherIds,
+      }),
     };
     onCreateUser(newUserPartial);
   };
@@ -72,18 +69,13 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const handleAddLinkedTeacher = () => {
     alert('Mock Link Teacher ID');
   };
-  
+
   const handleRemoveLinkedTeacher = (idToRemove: string) => {
     setLinkedTeacherIds(prev => prev.filter(id => id !== idToRemove));
   };
 
   return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
-    >
+    <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
       <View style={modalStyles.centeredView}>
         <View style={modalStyles.modalView}>
           <Text style={modalStyles.modalTitle}>Create New User</Text>
@@ -125,28 +117,43 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
                 {}
                 <Text style={modalStyles.label}>Instrument IDs:</Text>
-                {instrumentIds.length > 0 ? instrumentIds.map(id => (
-                  <View key={id} style={modalStyles.linkedItemRow}>
-                    <Text style={modalStyles.linkedItemText}>
-                      {mockInstruments.find(inst => inst.id === id)?.name || id}
-                    </Text>
-                    <Button title="Remove" onPress={() => handleRemoveInstrument(id)} color={colors.danger} />
-                  </View>
-                )) : <Text style={appSharedStyles.emptyListText}>No instruments selected.</Text>}
-                <Button title="Add Instrument (Mock)" onPress={handleAddInstrument} />
-                <Text style={[modalStyles.label, { marginTop: 15 }]}>Linked Teacher IDs:</Text>
-                {linkedTeacherIds.length > 0 ? linkedTeacherIds.map(id => {
-                  
-                  const teacher = allTeachers.find(t => t.id === id);
-                  return (
+                {instrumentIds.length > 0 ? (
+                  instrumentIds.map(id => (
                     <View key={id} style={modalStyles.linkedItemRow}>
                       <Text style={modalStyles.linkedItemText}>
-                        {teacher ? getUserDisplayName(teacher) : id}
+                        {mockInstruments.find(inst => inst.id === id)?.name || id}
                       </Text>
-                      <Button title="Remove" onPress={() => handleRemoveLinkedTeacher(id)} color={colors.danger} />
+                      <Button
+                        title="Remove"
+                        onPress={() => handleRemoveInstrument(id)}
+                        color={colors.danger}
+                      />
                     </View>
-                  );
-                }) : <Text style={appSharedStyles.emptyListText}>No teachers linked.</Text>}
+                  ))
+                ) : (
+                  <Text style={appSharedStyles.emptyListText}>No instruments selected.</Text>
+                )}
+                <Button title="Add Instrument (Mock)" onPress={handleAddInstrument} />
+                <Text style={[modalStyles.label, { marginTop: 15 }]}>Linked Teacher IDs:</Text>
+                {linkedTeacherIds.length > 0 ? (
+                  linkedTeacherIds.map(id => {
+                    const teacher = allTeachers.find(t => t.id === id);
+                    return (
+                      <View key={id} style={modalStyles.linkedItemRow}>
+                        <Text style={modalStyles.linkedItemText}>
+                          {teacher ? getUserDisplayName(teacher) : id}
+                        </Text>
+                        <Button
+                          title="Remove"
+                          onPress={() => handleRemoveLinkedTeacher(id)}
+                          color={colors.danger}
+                        />
+                      </View>
+                    );
+                  })
+                ) : (
+                  <Text style={appSharedStyles.emptyListText}>No teachers linked.</Text>
+                )}
                 <Button title="Link Teacher (Mock)" onPress={handleAddLinkedTeacher} />
               </View>
             )}
@@ -160,9 +167,10 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
         </View>
       </View>
     </Modal>
-  );                {}
+  );
+  {
+  }
 };
-
 
 const modalStyles = StyleSheet.create({
   centeredView: {
@@ -189,10 +197,10 @@ const modalStyles = StyleSheet.create({
     maxWidth: 500,
     maxHeight: '80%',
   },
-   scrollView: {
-      width: '100%',
-      marginBottom: 15,
-   },
+  scrollView: {
+    width: '100%',
+    marginBottom: 15,
+  },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -231,37 +239,37 @@ const modalStyles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 15,
   },
-   roleSpecificSection: {
-      marginTop: 20,
-      paddingTop: 15,
-      borderTopWidth: 1,
-      borderTopColor: colors.borderPrimary,
-      width: '100%',
-   },
-   roleSectionTitle: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      marginBottom: 10,
-      color: colors.textSecondary,
-      textAlign: 'center',
-   },
-    linkedItemRow: {
-       flexDirection: 'row',
-       justifyContent: 'space-between',
-       alignItems: 'center',
-       padding: 8,
-       backgroundColor: colors.backgroundGrey,
-       borderRadius: 4,
-       marginBottom: 5,
-       borderWidth: 1,
-       borderColor: colors.borderSecondary,
-    },
-    linkedItemText: {
-       flex: 1,
-       marginRight: 10,
-       fontSize: 15,
-       color: colors.textPrimary,
-    },
+  roleSpecificSection: {
+    marginTop: 20,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderPrimary,
+    width: '100%',
+  },
+  roleSectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  linkedItemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 8,
+    backgroundColor: colors.backgroundGrey,
+    borderRadius: 4,
+    marginBottom: 5,
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+  },
+  linkedItemText: {
+    flex: 1,
+    marginRight: 10,
+    fontSize: 15,
+    color: colors.textPrimary,
+  },
   buttonContainer: {
     flexDirection: 'column',
     width: '100%',

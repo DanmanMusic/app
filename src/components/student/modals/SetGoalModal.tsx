@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Modal,
@@ -20,7 +19,7 @@ interface SetGoalModalProps {
   rewardsCatalog: RewardItem[];
   currentBalance: number;
   currentGoalId: string | null;
-  onSetGoal: (goalId: string | null) => void; 
+  onSetGoal: (goalId: string | null) => void;
 }
 
 const RewardGoalItem = ({
@@ -39,7 +38,7 @@ const RewardGoalItem = ({
       style={[
         appSharedStyles.itemContainer,
         styles.goalSelectItem,
-        isCurrentGoal ? styles.currentGoalItem : {}, 
+        isCurrentGoal ? styles.currentGoalItem : {},
       ]}
     >
       <View style={styles.goalSelectItemContent}>
@@ -54,17 +53,14 @@ const RewardGoalItem = ({
             {item.cost} Tickets
           </Text>
           {}
-          {!canAfford && (
-             <Text style={styles.cannotAffordText}>(Need more tickets)</Text>
-          )}
+          {!canAfford && <Text style={styles.cannotAffordText}>(Need more tickets)</Text>}
         </View>
-         {}
-         {isCurrentGoal && <Text style={styles.checkmark}>✓</Text>}
+        {}
+        {isCurrentGoal && <Text style={styles.checkmark}>✓</Text>}
       </View>
     </View>
   </TouchableOpacity>
 );
-
 
 const SetGoalModal: React.FC<SetGoalModalProps> = ({
   visible,
@@ -74,22 +70,16 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
   currentGoalId,
   onSetGoal,
 }) => {
-
   const handleSelectGoal = (id: string) => {
-    onSetGoal(id); 
+    onSetGoal(id);
   };
 
   const handleClearGoal = () => {
-    onSetGoal(null); 
+    onSetGoal(null);
   };
 
   return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
-    >
+    <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
           <Text style={styles.modalTitle}>
@@ -98,7 +88,7 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
 
           <FlatList
             style={styles.listContainer}
-            data={rewardsCatalog.sort((a, b) => a.cost - b.cost)} 
+            data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
             keyExtractor={item => item.id}
             renderItem={({ item }) => (
               <RewardGoalItem
@@ -112,20 +102,15 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
             ListEmptyComponent={
               <Text style={appSharedStyles.emptyListText}>No rewards available.</Text>
             }
-            
             ListFooterComponent={<View style={{ height: 10 }} />}
           />
 
           <View style={styles.buttonContainer}>
             {}
             {currentGoalId && (
-               <Button
-                  title="Clear Current Goal"
-                  onPress={handleClearGoal}
-                  color={colors.warning}
-               />
+              <Button title="Clear Current Goal" onPress={handleClearGoal} color={colors.warning} />
             )}
-             <View style={{ height: 10 }} /> {}
+            <View style={{ height: 10 }} /> {}
             <Button title="Cancel" onPress={onClose} color={colors.secondary} />
           </View>
         </View>
@@ -153,7 +138,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
     width: '90%',
-    maxHeight: '85%', 
+    maxHeight: '85%',
   },
   modalTitle: {
     fontSize: 20,
@@ -163,27 +148,26 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   listContainer: {
-      width: '100%',
-      marginBottom: 15,
+    width: '100%',
+    marginBottom: 15,
   },
   goalSelectItem: {
-     
-     paddingVertical: 8, 
-     paddingHorizontal: 10,
-     
-     marginBottom: 0,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+
+    marginBottom: 0,
   },
   currentGoalItem: {
-    borderColor: colors.primary, 
+    borderColor: colors.primary,
     borderWidth: 2,
-    backgroundColor: colors.backgroundHighlight, 
+    backgroundColor: colors.backgroundHighlight,
   },
   goalSelectItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   goalSelectImage: {
-    width: 45, 
+    width: 45,
     height: 45,
     marginRight: 12,
     borderRadius: 4,
@@ -195,21 +179,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   goalSelectName: {
-    fontSize: 15, 
-    fontWeight: '600', 
+    fontSize: 15,
+    fontWeight: '600',
     color: colors.textPrimary,
     marginBottom: 2,
   },
   cannotAffordText: {
-      fontSize: 12,
-      color: colors.textLight,
-      fontStyle: 'italic',
-      marginTop: 2,
+    fontSize: 12,
+    color: colors.textLight,
+    fontStyle: 'italic',
+    marginTop: 2,
   },
   checkmark: {
-      fontSize: 24,
-      color: colors.primary,
-      marginLeft: 10, 
+    fontSize: 24,
+    color: colors.primary,
+    marginLeft: 10,
   },
   buttonContainer: {
     width: '100%',

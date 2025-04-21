@@ -1,6 +1,3 @@
-
-
-
 import { User, UserRole } from '../types/userTypes';
 
 export const mockUsers: Record<string, User> = {
@@ -15,15 +12,13 @@ export const mockUsers: Record<string, User> = {
     role: 'teacher',
     firstName: 'John',
     lastName: 'Smith',
-    nickname: 'Mr. Smith', 
-    
+    nickname: 'Mr. Smith',
   } as User,
   'teacher-2': {
     id: 'teacher-2',
     role: 'teacher',
     firstName: 'Sarah',
     lastName: 'Jones',
-    
   } as User,
   'student-1': {
     id: 'student-1',
@@ -31,8 +26,7 @@ export const mockUsers: Record<string, User> = {
     firstName: 'Alice',
     lastName: 'Wonder',
     instrumentIds: ['inst-1', 'inst-5'],
-    linkedTeacherIds: ['teacher-1'], 
-    
+    linkedTeacherIds: ['teacher-1'],
   } as User,
   'student-2': {
     id: 'student-2',
@@ -41,8 +35,7 @@ export const mockUsers: Record<string, User> = {
     lastName: 'Builder',
     nickname: 'Bobbie',
     instrumentIds: ['inst-2'],
-    linkedTeacherIds: ['teacher-1'], 
-    
+    linkedTeacherIds: ['teacher-1'],
   } as User,
   'student-3': {
     id: 'student-3',
@@ -50,22 +43,21 @@ export const mockUsers: Record<string, User> = {
     firstName: 'Charlie',
     lastName: 'Builder',
     instrumentIds: ['inst-3'],
-    linkedTeacherIds: ['teacher-2'], 
-    
+    linkedTeacherIds: ['teacher-2'],
   } as User,
-  
+
   'parent-1': {
     id: 'parent-1',
     role: 'parent',
     firstName: 'Mom',
     lastName: 'Wonder',
-    linkedStudentIds: ['student-1'], 
+    linkedStudentIds: ['student-1'],
   } as User,
   'parent-2': {
     id: 'parent-2',
     role: 'parent',
     firstName: 'Dad',
     lastName: 'Builder',
-    linkedStudentIds: ['student-2', 'student-3'], 
+    linkedStudentIds: ['student-2', 'student-3'],
   } as User,
 };

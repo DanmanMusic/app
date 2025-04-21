@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, Button } from 'react-native'; 
+import { Modal, View, Text, StyleSheet, Button } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
 import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
@@ -12,40 +11,38 @@ interface TaskVerificationModalProps {
   visible: boolean;
   task: AssignedTask | null;
   taskLibrary: TaskLibraryItem[];
-  allUsers: User[]; 
+  allUsers: User[];
   onClose: () => void;
   onVerifyTask: (taskId: string, status: TaskVerificationStatus, points: number) => void;
-  onReassignTaskMock: (taskId: string, studentId: string) => void; 
+  onReassignTaskMock: (taskId: string, studentId: string) => void;
 }
 
 const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   visible,
   task,
   taskLibrary,
-  allUsers, 
+  allUsers,
   onClose,
   onVerifyTask,
   onReassignTaskMock,
 }) => {
-  
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<TaskVerificationStatus>(undefined);
   const [awardedPoints, setAwardedPoints] = useState<number>(0);
-  const [baseTickets, setBaseTickets] = useState<number>(0); 
+  const [baseTickets, setBaseTickets] = useState<number>(0);
 
   useEffect(() => {
     if (visible && task) {
-      setCurrentStep(1); 
-      setSelectedStatus(undefined); 
+      setCurrentStep(1);
+      setSelectedStatus(undefined);
       const libraryTask = taskLibrary.find(item => item.id === task.taskId);
       const taskBaseTickets = libraryTask ? libraryTask.baseTickets : 0;
-      setBaseTickets(taskBaseTickets); 
-      setAwardedPoints(0); 
+      setBaseTickets(taskBaseTickets);
+      setAwardedPoints(0);
     } else if (!visible) {
     }
-  }, [visible, task, taskLibrary]); 
+  }, [visible, task, taskLibrary]);
 
-  
   if (!visible || !task) {
     return null;
   }
@@ -54,28 +51,27 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   const student = allUsers.find(user => user.id === task.studentId);
   const studentName = student ? getUserDisplayName(student) : task.studentId;
   const completedDateTime = task.completedDate
-     ? new Date(task.completedDate).toLocaleString() 
-     : 'N/A';
-  
+    ? new Date(task.completedDate).toLocaleString()
+    : 'N/A';
+
   const handleStatusSelect = (status: TaskVerificationStatus) => {
-    let initialPoints = 0;    
+    let initialPoints = 0;
     switch (status) {
       case 'verified':
         initialPoints = baseTickets;
         break;
       case 'partial':
-        initialPoints = Math.round(baseTickets * 0.5); 
+        initialPoints = Math.round(baseTickets * 0.5);
         break;
       case 'incomplete':
-        initialPoints = 0; 
+        initialPoints = 0;
         break;
     }
     setSelectedStatus(status);
-    setAwardedPoints(initialPoints); 
-    setCurrentStep(2); 
+    setAwardedPoints(initialPoints);
+    setCurrentStep(2);
   };
 
-  
   if (currentStep === 1) {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -86,9 +82,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             {}
             <Text>Student: {studentName}</Text>
             <Text>Potential Tickets: {baseTickets}</Text>
-            <Text style={{ marginBottom: 20 }}>
-              Completed: {completedDateTime}
-            </Text>
+            <Text style={{ marginBottom: 20 }}>Completed: {completedDateTime}</Text>
 
             <Text style={modalStyles.stepTitle}>Step 1: Select Status</Text>
 
@@ -117,13 +111,10 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     );
   }
 
-   
   if (currentStep === 2 && selectedStatus) {
-     
-     const sliderMaxValue = baseTickets >= 0 ? baseTickets : 0;
-     
-     const effectiveSliderMaxValue = sliderMaxValue === 0 ? 1 : sliderMaxValue;
+    const sliderMaxValue = baseTickets >= 0 ? baseTickets : 0;
 
+    const effectiveSliderMaxValue = sliderMaxValue === 0 ? 1 : sliderMaxValue;
 
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -131,8 +122,8 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
           <View style={modalStyles.modalView}>
             <Text style={modalStyles.modalTitle}>Verify Task</Text>
             <Text style={modalStyles.taskTitle}>{taskTitle}</Text>
-             {}
-             <Text>Student: {studentName}</Text>
+            {}
+            <Text>Student: {studentName}</Text>
             {}
             <Text style={{ marginBottom: 20 }}>
               Status Selected:{' '}
@@ -160,14 +151,14 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             </View>
 
             {}
-             {}
+            {}
             <Slider
               style={modalStyles.slider}
               minimumValue={0}
               maximumValue={effectiveSliderMaxValue}
               step={1}
-              value={Math.min(effectiveSliderMaxValue, Math.max(0, awardedPoints))} 
-              onValueChange={value => setAwardedPoints(Math.round(value))} 
+              value={Math.min(effectiveSliderMaxValue, Math.max(0, awardedPoints))}
+              onValueChange={value => setAwardedPoints(Math.round(value))}
               minimumTrackTintColor={colors.gold}
               maximumTrackTintColor={colors.borderPrimary}
               thumbTintColor={colors.primary}
@@ -184,15 +175,18 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
                 title="Confirm Tickets"
                 onPress={() => {
                   if (selectedStatus) {
-                     
-                     const finalPoints = Math.min(baseTickets, Math.max(0, awardedPoints));
-                    
+                    const finalPoints = Math.min(baseTickets, Math.max(0, awardedPoints));
+
                     onVerifyTask(task.id, selectedStatus, finalPoints);
-                    setCurrentStep(3); 
+                    setCurrentStep(3);
                   }
                 }}
               />
-              <Button title="Back to Status" onPress={() => setCurrentStep(1)} color={colors.secondary} />
+              <Button
+                title="Back to Status"
+                onPress={() => setCurrentStep(1)}
+                color={colors.secondary}
+              />
             </View>
 
             {}
@@ -205,7 +199,6 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     );
   }
 
-  
   if (currentStep === 3) {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -213,14 +206,19 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
           <View style={modalStyles.modalView}>
             <Text style={modalStyles.modalTitle}>Verification Complete!</Text>
             <Text style={modalStyles.taskTitle}>{taskTitle}</Text>
-             {}
-             <Text>Student: {studentName}</Text>
+            {}
+            <Text>Student: {studentName}</Text>
             {}
             <Text style={{ marginBottom: 20 }}>
               Status: <Text style={{ fontWeight: 'bold' }}>{selectedStatus?.toUpperCase()}</Text>
               {' - '}
               Tickets Awarded:{' '}
-              <Text style={{ fontWeight: 'bold', color: awardedPoints > 0 ? colors.success : colors.danger }}>
+              <Text
+                style={{
+                  fontWeight: 'bold',
+                  color: awardedPoints > 0 ? colors.success : colors.danger,
+                }}
+              >
                 {awardedPoints}
               </Text>
             </Text>
@@ -232,9 +230,8 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               <Button
                 title="Re-assign Task (Mock)"
                 onPress={() => {
-                  
                   onReassignTaskMock(task.taskId, task.studentId);
-                  onClose(); 
+                  onClose();
                 }}
               />
             </View>
@@ -247,10 +244,8 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     );
   }
 
-  
   return null;
 };
-
 
 const modalStyles = StyleSheet.create({
   centeredView: {

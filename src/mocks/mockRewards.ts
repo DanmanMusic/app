@@ -1,11 +1,9 @@
-
-
 export interface RewardItem {
   id: string;
   name: string;
-  cost: number; 
+  cost: number;
   imageUrl: string;
-  description?: string; 
+  description?: string;
 }
 
 export const initialMockRewardsCatalog: RewardItem[] = [
@@ -43,7 +41,7 @@ export const initialMockRewardsCatalog: RewardItem[] = [
     cost: 8000,
     imageUrl: 'https://via.placeholder.com/150x150/FFFF00?text=Guitar',
     description: 'Start your guitar journey!',
-  }, 
+  },
   {
     id: 'reward-6',
     name: 'Fender Stratocaster',
@@ -57,7 +55,7 @@ export const initialMockRewardsCatalog: RewardItem[] = [
     cost: 15000,
     imageUrl: 'https://via.placeholder.com/150x150/FF00FF?text=Bass',
     description: 'Groove machine!',
-  }, 
+  },
 ];
 
 export const mockRewardsCatalog = initialMockRewardsCatalog;

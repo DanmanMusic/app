@@ -1,25 +1,19 @@
-
-
-
-
 export type TaskVerificationStatus = 'pending' | 'verified' | 'partial' | 'incomplete' | undefined;
 
 export interface AssignedTask {
   id: string;
-  taskId: string; 
-  studentId: string; 
-  assignedById: string; 
-  assignedDate: string; 
+  taskId: string;
+  studentId: string;
+  assignedById: string;
+  assignedDate: string;
   isComplete: boolean;
-  completedDate?: string; 
-  verificationStatus?: TaskVerificationStatus; 
-  verifiedById?: string; 
-  verifiedDate?: string; 
-  actualPointsAwarded?: number; 
-  reassignedTaskId?: string; 
-  
+  completedDate?: string;
+  verificationStatus?: TaskVerificationStatus;
+  verifiedById?: string;
+  verifiedDate?: string;
+  actualPointsAwarded?: number;
+  reassignedTaskId?: string;
 }
-
 
 export const mockAssignedTasksStudent1: AssignedTask[] = [
   {
@@ -34,7 +28,7 @@ export const mockAssignedTasksStudent1: AssignedTask[] = [
     verifiedById: 'teacher-1',
     verifiedDate: '2025-04-17T09:00:00Z',
     actualPointsAwarded: 10,
-  }, 
+  },
   {
     id: 'assigned-2',
     taskId: 'tasklib-2',
@@ -47,7 +41,7 @@ export const mockAssignedTasksStudent1: AssignedTask[] = [
     verifiedById: 'teacher-1',
     verifiedDate: '2025-04-16T09:15:00Z',
     actualPointsAwarded: 15,
-  }, 
+  },
   {
     id: 'assigned-3',
     taskId: 'tasklib-1',
@@ -57,7 +51,7 @@ export const mockAssignedTasksStudent1: AssignedTask[] = [
     isComplete: true,
     completedDate: '2025-04-17T19:00:00Z',
     verificationStatus: 'pending',
-  }, 
+  },
   {
     id: 'assigned-4',
     taskId: 'tasklib-3',
@@ -65,9 +59,8 @@ export const mockAssignedTasksStudent1: AssignedTask[] = [
     assignedById: 'admin-1',
     assignedDate: '2025-04-08T10:00:00Z',
     isComplete: false,
-  }, 
+  },
 ];
-
 
 export const mockAssignedTasksStudent2: AssignedTask[] = [
   {
@@ -77,7 +70,7 @@ export const mockAssignedTasksStudent2: AssignedTask[] = [
     assignedById: 'teacher-1',
     assignedDate: '2025-04-17T10:00:00Z',
     isComplete: false,
-  }, 
+  },
 ];
 
 export const mockAssignedTasksStudent3: AssignedTask[] = [
@@ -90,9 +83,8 @@ export const mockAssignedTasksStudent3: AssignedTask[] = [
     isComplete: true,
     completedDate: '2025-04-17T20:00:00Z',
     verificationStatus: 'pending',
-  }, 
+  },
 ];
-
 
 export const mockAllAssignedTasks: AssignedTask[] = [
   ...mockAssignedTasksStudent1,

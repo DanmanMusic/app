@@ -1,10 +1,8 @@
-
 import { StyleSheet } from 'react-native';
 import { colors } from '../../styles/colors';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 
 export const adminSharedStyles = StyleSheet.create({
-
   adminNav: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -96,7 +94,6 @@ export const adminSharedStyles = StyleSheet.create({
   pendingItem: {
     ...appSharedStyles.itemContainer,
     borderColor: colors.borderWarning,
-
   },
 
   pendingTitle: {

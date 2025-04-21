@@ -41,17 +41,21 @@ const DevelopmentViewSelector = () => {
                 viewingStudentId = user.linkedStudentIds[0];
               }
             } else if (user.role === 'teacher') {
-              viewingStudentId = Object.values(currentMockUsers).find(u =>
-                u.role === 'student' && u.linkedTeacherIds?.includes(user.id)
+              viewingStudentId = Object.values(currentMockUsers).find(
+                u => u.role === 'student' && u.linkedTeacherIds?.includes(user.id)
               )?.id;
             }
             setMockAuthState({ role: user.role, userId: user.id, viewingStudentId });
           }}
           color={
-            user.role === 'admin' ? colors.danger
-              : user.role === 'teacher' ? colors.primary
-                : user.role === 'parent' ? colors.success
-                  : user.role === 'student' ? colors.gold
+            user.role === 'admin'
+              ? colors.danger
+              : user.role === 'teacher'
+                ? colors.primary
+                : user.role === 'parent'
+                  ? colors.success
+                  : user.role === 'student'
+                    ? colors.gold
                     : colors.secondary
           }
         />
@@ -62,13 +66,7 @@ const DevelopmentViewSelector = () => {
 
 const AppContent = () => {
   const { isAuthenticated, currentUserRole } = useAuth();
-  const {
-    taskLibrary,
-    currentMockUsers,
-    simulateVerifyTask,
-    simulateReassignTask,
-  } = useData();
-
+  const { taskLibrary, currentMockUsers, simulateVerifyTask, simulateReassignTask } = useData();
 
   const [isVerificationModalVisible, setIsVerificationModalVisible] = useState(false);
   const [taskToVerify, setTaskToVerify] = useState<AssignedTask | null>(null);
@@ -83,9 +81,12 @@ const AppContent = () => {
     setTaskToVerify(null);
   };
 
-  const handleVerifyTask = (taskId: string, status: TaskVerificationStatus, actualTickets: number) => {
+  const handleVerifyTask = (
+    taskId: string,
+    status: TaskVerificationStatus,
+    actualTickets: number
+  ) => {
     simulateVerifyTask(taskId, status, actualTickets);
-
   };
 
   const handleReassignTask = (originalTaskId: string, studentId: string) => {
@@ -106,7 +107,6 @@ const AppContent = () => {
       case 'admin':
         return <AdminView onInitiateVerificationModal={handleInitiateVerificationModal} />;
       default:
-
         return <Text>Loading or Authentication Required.</Text>;
     }
   };
@@ -136,7 +136,7 @@ const AppContent = () => {
       )}
     </View>
   );
-}
+};
 
 export default function App() {
   return (
@@ -152,7 +152,19 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.backgroundPrimary },
-  selectorContainer: { flex: 1, padding: 20, justifyContent: 'center', gap: 10, backgroundColor: colors.backgroundPrimary },
-  selectorTitle: { fontSize: 18, marginBottom: 20, textAlign: 'center', fontWeight: 'bold', color: colors.textPrimary },
+  selectorContainer: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: colors.backgroundPrimary,
+  },
+  selectorTitle: {
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+  },
   resetButtonContainer: { position: 'absolute', bottom: 20, left: 20, right: 20 },
 });

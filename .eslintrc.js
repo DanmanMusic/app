@@ -7,7 +7,7 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
     'plugin:import/recommended',
     'plugin:import/typescript',
-    'prettier'
+    'prettier',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -17,13 +17,7 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
-  plugins: [
-    'react',
-    'react-native',
-    '@typescript-eslint',
-    'import',
-    'prettier'
-  ],
+  plugins: ['react', 'react-native', '@typescript-eslint', 'import', 'prettier'],
   settings: {
     'import/resolver': {
       typescript: {
@@ -43,44 +37,36 @@ module.exports = {
     'react-native/no-unused-styles': 'warn',
 
     'import/order': [
-         'warn',
-         {
-             'newlines-between': 'always',
-             'groups': ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
-             'pathGroupsExcludedImportTypes': ['react'],
-             'pathGroups': [
-                  {
-                     'pattern': 'react',
-                     'group': 'external',
-                     'position': 'before'
-                  },
-                  {
-                     'pattern': '@*(react|redux|expo)*/**',
-                     'group': 'external',
-                     'position': 'before'
-                  },
-                  {
-                     'pattern': './src/**',
-                     'group': 'internal',
-                     'position': 'after'
-                  }
-             ],
-             'alphabetize': {
-                 'order': 'asc',
-                 'caseInsensitive': true
-             },
-         },
-     ],
-     'import/newline-after-import': 'warn',
-     'import/no-duplicates': 'error',
-
+      'warn',
+      {
+        'newlines-between': 'always',
+        groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+        pathGroupsExcludedImportTypes: ['react'],
+        pathGroups: [
+          {
+            pattern: 'react',
+            group: 'external',
+            position: 'before',
+          },
+          {
+            pattern: '@*(react|redux|expo)*/**',
+            group: 'external',
+            position: 'before',
+          },
+          {
+            pattern: './src/**',
+            group: 'internal',
+            position: 'after',
+          },
+        ],
+        alphabetize: {
+          order: 'asc',
+          caseInsensitive: true,
+        },
+      },
+    ],
+    'import/newline-after-import': 'warn',
+    'import/no-duplicates': 'error',
   },
-  ignorePatterns: [
-    '.expo/',
-    'node_modules/',
-    'dist/',
-    'web-build/',
-    '*.js',
-    '*.config.js',
-  ]
+  ignorePatterns: ['.expo/', 'node_modules/', 'dist/', 'web-build/', '*.js', '*.config.js'],
 };

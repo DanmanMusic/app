@@ -1,13 +1,12 @@
-
-import React, { useState } from 'react'; 
-import { View, Text, StyleSheet, Button, FlatList, Image } from 'react-native'; 
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Button, FlatList, Image } from 'react-native';
 import { RewardItem } from '../../mocks/mockRewards';
 import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import CreateRewardModal from './modals/CreateRewardModal';
 import EditRewardModal from './modals/EditRewardModal';
-import ConfirmationModal from '../common/ConfirmationModal'; 
+import ConfirmationModal from '../common/ConfirmationModal';
 
 interface AdminRewardsSectionProps {
   rewardsCatalog: RewardItem[];
@@ -21,23 +20,19 @@ const AdminRewardItem = ({
   onEdit,
   onDelete,
 }: {
-  item: RewardItem;  
+  item: RewardItem;
   onEdit: (reward: RewardItem) => void;
-  onDelete: (reward: RewardItem) => void;  
+  onDelete: (reward: RewardItem) => void;
 }) => (
   <View style={appSharedStyles.itemContainer}>
     <View style={styles.rewardItemContent}>
-      <Image
-        source={{ uri: item.imageUrl }}
-        style={styles.rewardImage}
-        resizeMode="contain"
-      />
+      <Image source={{ uri: item.imageUrl }} style={styles.rewardImage} resizeMode="contain" />
       <View style={styles.rewardDetails}>
         <Text style={appSharedStyles.itemTitle}>{item.name}</Text>
-        <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>{item.cost} Tickets</Text>
-        {item.description && (
-          <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
-        )}
+        <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
+          {item.cost} Tickets
+        </Text>
+        {item.description && <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>}
       </View>
     </View>
     <View style={adminSharedStyles.itemActions}>
@@ -55,7 +50,6 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
   onEditReward,
   onDeleteReward,
 }) => {
-  
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
@@ -71,16 +65,19 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
     setIsDeleteModalVisible(true);
   };
   const closeCreateModal = () => setIsCreateModalVisible(false);
-  const closeEditModal = () => { setIsEditModalVisible(false); setRewardToEdit(null); };
-  const closeDeleteModal = () => { setIsDeleteModalVisible(false); setRewardToDelete(null); };
+  const closeEditModal = () => {
+    setIsEditModalVisible(false);
+    setRewardToEdit(null);
+  };
+  const closeDeleteModal = () => {
+    setIsDeleteModalVisible(false);
+    setRewardToDelete(null);
+  };
   const handleCreateConfirm = (rewardData: Omit<RewardItem, 'id'>) => {
     onCreateReward(rewardData);
     closeCreateModal();
   };
-  const handleEditConfirm = (
-    rewardId: string,
-    rewardData: Partial<Omit<RewardItem, 'id'>>
-  ) => {
+  const handleEditConfirm = (rewardId: string, rewardData: Partial<Omit<RewardItem, 'id'>>) => {
     onEditReward(rewardId, rewardData);
     closeEditModal();
   };
@@ -98,14 +95,10 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
         <Button title="Add New Reward" onPress={handleAddPress} />
       </View>
       <FlatList
-        data={rewardsCatalog} 
+        data={rewardsCatalog}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => (          
-          <AdminRewardItem
-             item={item}
-             onEdit={handleEditPress}
-             onDelete={handleDeletePress}
-          />
+        renderItem={({ item }) => (
+          <AdminRewardItem item={item} onEdit={handleEditPress} onDelete={handleDeletePress} />
         )}
         scrollEnabled={false}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
@@ -140,7 +133,7 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
 };
 
 const styles = StyleSheet.create({
-   rewardItemContent: {
+  rewardItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
