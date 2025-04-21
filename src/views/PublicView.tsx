@@ -4,6 +4,9 @@ import { View, Text, StyleSheet, FlatList, Image, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
+import { useData } from '../contexts/DataContext';
+
+
 import { RewardItem } from '../mocks/mockRewards';
 import { Announcement } from '../mocks/mockAnnouncements';
 
@@ -11,10 +14,8 @@ import { Announcement } from '../mocks/mockAnnouncements';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 
-interface PublicViewProps {
-  rewardsCatalog: RewardItem[];
-  announcements: Announcement[];
-}
+
+interface PublicViewProps {}
 
 
 const RewardItemPublic = ({ item }: { item: RewardItem }) => (
@@ -45,20 +46,22 @@ const AnnouncementListItem = ({ item }: { item: Announcement }) => (
 
 type PublicTab = 'welcome' | 'rewards' | 'announcements';
 
-export const PublicView: React.FC<PublicViewProps> = ({ rewardsCatalog, announcements }) => {
+
+export const PublicView: React.FC<PublicViewProps> = () => {
+  
+  const { rewardsCatalog, announcements } = useData();
+
   
   const [activeTab, setActiveTab] = useState<PublicTab>('welcome');
 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      {}
       <View style={appSharedStyles.container}>
         <Text style={[appSharedStyles.header, styles.publicHeader]}>Danmans Music School</Text>
         <Text style={styles.subheader}>Virtual Ticket Rewards Program</Text>
 
         {}
         <View style={styles.tabContainer}>
-          {}
           <Button
             title="Welcome"
             onPress={() => setActiveTab('welcome')}
@@ -78,16 +81,15 @@ export const PublicView: React.FC<PublicViewProps> = ({ rewardsCatalog, announce
 
         {}
         <View style={styles.contentArea}>
-          {}
           {activeTab === 'welcome' && (
             <View style={styles.tabContentPlaceholder}>
-              {}
               {}
             </View>
           )}
 
           {activeTab === 'rewards' && (
             <FlatList
+              
               data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
               keyExtractor={item => `reward-${item.id}`}
               renderItem={({ item }) => <RewardItemPublic item={item} />}
@@ -100,6 +102,7 @@ export const PublicView: React.FC<PublicViewProps> = ({ rewardsCatalog, announce
 
           {activeTab === 'announcements' && (
             <FlatList
+              
               data={announcements.sort(
                 (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
               )}
@@ -115,12 +118,12 @@ export const PublicView: React.FC<PublicViewProps> = ({ rewardsCatalog, announce
           )}
         </View>
 
-        {}
         <Text style={styles.footer}>Login to track your progress and earn tickets!</Text>
       </View>
     </SafeAreaView>
   );
 };
+
 
 const styles = StyleSheet.create({
   publicHeader: {
@@ -146,12 +149,8 @@ const styles = StyleSheet.create({
   contentArea: {
     flex: 1,
   },
-  
   tabContentPlaceholder: {
     flex: 1,
-    
-    
-    
   },
   rewardItemContent: {
     flexDirection: 'row',
