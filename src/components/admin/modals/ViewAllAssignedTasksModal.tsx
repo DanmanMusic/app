@@ -61,7 +61,6 @@ const AssignedTaskDetailItem = ({
 
     const allowDelete = !item.isComplete || item.verificationStatus === 'pending';
 
-
     return (
         <View style={adminSharedStyles.taskItem}>
             <Text style={adminSharedStyles.taskItemTitle}>{getTaskTitle(item.taskId, taskLibrary)}</Text>
@@ -108,16 +107,11 @@ const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps> = ({
   onInitiateVerification,
   onDeleteAssignment,
 }) => {
-
-
     const [filterStatus, setFilterStatus] = useState<TaskFilterStatus>('all');
-
     const sortedTasks = useMemo(() =>
         [...allAssignedTasks].sort((a, b) => new Date(b.assignedDate).getTime() - new Date(a.assignedDate).getTime()),
         [allAssignedTasks]
     );
-
-
     const filteredTasks = useMemo(() => {
         switch (filterStatus) {
             case 'assigned':
@@ -132,13 +126,11 @@ const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps> = ({
         }
     }, [sortedTasks, filterStatus]);
 
-
     useEffect(() => {
         if (visible) {
             setFilterStatus('all');
         }
     }, [visible]);
-
 
   return (
     <Modal
@@ -153,8 +145,6 @@ const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps> = ({
 
              <Text style={modalStyles.modalTitle}>Assigned Tasks ({filteredTasks.length})</Text>
           </View>
-
-
           <View style={modalStyles.filterContainer}>
                 <Button
                     title="All"
@@ -177,7 +167,6 @@ const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps> = ({
                     color={filterStatus === 'completed' ? colors.primary : colors.secondary}
                  />
           </View>
-
           <FlatList
             style={modalStyles.listContainer}
 

@@ -1,15 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput, Image } from 'react-native'; 
-
 import { Instrument } from '../../../mocks/mockInstruments';
 import { colors } from '../../../styles/colors';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { getInstrumentIconSource } from '../../../utils/helpers'; 
-
-
-
-
 
 const modalStyles = StyleSheet.create({
     centeredView:{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.7)' },
@@ -19,8 +13,7 @@ const modalStyles = StyleSheet.create({
     label:{ fontSize:14, fontWeight:'bold', marginTop:10, marginBottom:5, color:colors.textPrimary, alignSelf:'flex-start', width: '100%' },
     input:{ width:'100%', borderWidth:1, borderColor:colors.borderPrimary, borderRadius:5, padding:10, fontSize:16, color:colors.textPrimary, backgroundColor:colors.backgroundPrimary, marginBottom:15 },
     buttonContainer:{ flexDirection:'column', width:'100%', marginTop:10, gap:10 },
-    footerButton:{ width:'100%', marginTop:10 },
-    
+    footerButton:{ width:'100%', marginTop:10 },    
     iconPreviewContainer: {
         alignItems: 'center',
         marginBottom: 15,
@@ -38,7 +31,6 @@ const modalStyles = StyleSheet.create({
         
     },
 });
-
 
 interface EditInstrumentModalProps {
   visible: boolean;
@@ -85,8 +77,6 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
         <View style={modalStyles.modalView}>
           <Text style={modalStyles.modalTitle}>Edit Instrument</Text>
           <Text style={modalStyles.subTitle}>ID: {instrumentToEdit.id}</Text>
-
-          {}
           <View style={modalStyles.iconPreviewContainer}>
               <Text style={modalStyles.label}>Current Icon (Mock):</Text>
               <Image
@@ -94,10 +84,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
                   style={modalStyles.iconPreview}
                   resizeMode="contain"
                />
-               {}
           </View>
-
-
           <Text style={modalStyles.label}>Instrument Name:</Text>
           <TextInput
             style={modalStyles.input}
@@ -107,7 +94,6 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
             placeholderTextColor={colors.textLight}
             autoCapitalize="words"
           />
-
           <View style={modalStyles.buttonContainer}>
             <Button title="Save Changes" onPress={handleSave} />
           </View>

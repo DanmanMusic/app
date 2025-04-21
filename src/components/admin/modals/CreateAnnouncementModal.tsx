@@ -1,11 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput } from 'react-native';
-
 import { Announcement, AnnouncementType } from '../../../mocks/mockAnnouncements'; 
 import { colors } from '../../../styles/colors';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
-
 
 const modalStyles = StyleSheet.create({
     centeredView:{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.7)' },
@@ -16,14 +13,11 @@ const modalStyles = StyleSheet.create({
     textArea:{ width:'100%', borderWidth:1, borderColor:colors.borderPrimary, borderRadius:5, padding:10, fontSize:16, color:colors.textPrimary, backgroundColor:colors.backgroundPrimary, marginBottom:15, height: 100, textAlignVertical: 'top' }, 
     buttonContainer:{ flexDirection:'column', width:'100%', marginTop:10, gap:10 },
     footerButton:{ width:'100%', marginTop:10 },
-    
-    
 });
 
 interface CreateAnnouncementModalProps {
   visible: boolean;
-  onClose: () => void;
-  
+  onClose: () => void;  
   onCreateConfirm: (announcementData: Omit<Announcement, 'id' | 'date'>) => void;
 }
 
@@ -36,7 +30,6 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({
   const [message, setMessage] = useState('');
   const [type, setType] = useState<AnnouncementType>('announcement'); 
 
-  
   useEffect(() => {
     if (visible) {
       setTitle('');
@@ -68,11 +61,6 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({
       <View style={modalStyles.centeredView}>
         <View style={modalStyles.modalView}>
           <Text style={modalStyles.modalTitle}>Create New Announcement</Text>
-
-          {}
-          {/* <Text style={modalStyles.label}>Type:</Text>
-          <View style={modalStyles.typeButtons}> ... buttons ... </View> */}
-
           <Text style={modalStyles.label}>Title:</Text>
           <TextInput
             style={modalStyles.input}
@@ -82,7 +70,6 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({
             placeholderTextColor={colors.textLight}
             maxLength={100} 
           />
-
           <Text style={modalStyles.label}>Message:</Text>
           <TextInput
             style={modalStyles.textArea}
@@ -93,7 +80,6 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({
             multiline={true}
             numberOfLines={4}
           />
-
           <View style={modalStyles.buttonContainer}>
             <Button title="Create Announcement" onPress={handleCreate} />
           </View>

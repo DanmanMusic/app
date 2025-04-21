@@ -1,19 +1,14 @@
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Button, FlatList, Image } from 'react-native';
-
 import { Instrument } from '../../mocks/mockInstruments'; 
 import { adminSharedStyles } from './adminSharedStyles'; 
 import { appSharedStyles } from '../../styles/appSharedStyles'; 
 import { colors } from '../../styles/colors'; 
 import { getInstrumentIconSource } from '../../utils/helpers'; 
-
-
 import CreateInstrumentModal from './modals/CreateInstrumentModal';
 import EditInstrumentModal from './modals/EditInstrumentModal';
 import ConfirmationModal from '../common/ConfirmationModal'; 
-
-
 
 interface AdminInstrumentsSectionProps {
   mockInstruments: Instrument[];
@@ -21,7 +16,6 @@ interface AdminInstrumentsSectionProps {
   onEditInstrument: (instrumentId: string, instrumentData: Partial<Omit<Instrument, 'id'>>) => void;
   onDeleteInstrument: (instrumentId: string) => void;
 }
-
 
 const AdminInstrumentItem = ({
   item,
@@ -54,25 +48,18 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
   onCreateInstrument,
   onEditInstrument,
   onDeleteInstrument,
-}) => {
-  
+}) => {  
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [instrumentToEdit, setInstrumentToEdit] = useState<Instrument | null>(null);
   const [instrumentToDelete, setInstrumentToDelete] = useState<Instrument | null>(null);
-
-  
   const handleAddPress = () => { setIsCreateModalVisible(true); };
   const handleEditPress = (instrument: Instrument) => { setInstrumentToEdit(instrument); setIsEditModalVisible(true); };
   const handleDeletePress = (instrument: Instrument) => { setInstrumentToDelete(instrument); setIsDeleteModalVisible(true); };
-
-  
   const closeCreateModal = () => setIsCreateModalVisible(false);
   const closeEditModal = () => { setIsEditModalVisible(false); setInstrumentToEdit(null); };
   const closeDeleteModal = () => { setIsDeleteModalVisible(false); setInstrumentToDelete(null); };
-
-  
   const handleCreateConfirm = (instrumentData: Omit<Instrument, 'id'>) => { onCreateInstrument(instrumentData); closeCreateModal(); };
   const handleEditConfirm = (instrumentId: string, instrumentData: Partial<Omit<Instrument, 'id'>>) => { onEditInstrument(instrumentId, instrumentData); closeEditModal(); };
   const handleDeleteConfirm = () => { if (instrumentToDelete) { onDeleteInstrument(instrumentToDelete.id); } closeDeleteModal(); };

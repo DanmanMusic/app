@@ -1,11 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput, ScrollView } from 'react-native';
-
 import { TaskLibraryItem } from '../../../mocks/mockTaskLibrary';
 import { colors } from '../../../styles/colors';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
-
 
 const modalStyles = StyleSheet.create({
     centeredView:{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.7)' },
@@ -19,7 +16,6 @@ const modalStyles = StyleSheet.create({
     buttonContainer:{ flexDirection:'column', width:'100%', marginTop:10, gap:10 },
     footerButton:{ width:'100%', marginTop:10 },
 });
-
 
 interface EditTaskLibraryModalProps {
   visible: boolean;

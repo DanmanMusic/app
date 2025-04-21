@@ -3,7 +3,7 @@
 ## Gemini Rules/Notes
 
 - When requested to print out file content, provide the full content of the file while be mindful to inflate sections of code commented out during iterations.
-- Absolute hard rule of no comments in any code.  If code has comments please remove!
+- Absolute hard rule of no comments in any code. If code has comments please remove!
 - Assume developers are experts but are open to suggestions for better libraries, approaches, or solutions to technical challenges.
 - This project is in an early development phase. Backward compatibility is not a requirement (e.g., database schema changes are acceptable).
 
@@ -29,32 +29,32 @@ These are the major areas and tasks involved in building the application based o
     - [x] Implement multi-step task verification modal with status selection, point adjustment via slider, and re-assign option (Note: Added `@react-native-community/slider` dependency).
     - [x] Replace placeholder images with actual Image components for Rewards Catalog items in Student, Public, and Admin views. Added Instrument icons.
     - [x] Break down large AdminView.tsx file into smaller section components for better organization and readability, including extracting the student detail view and creating shared styles for Admin components.
-    - [x] Refine mock button labels in Admin views to clarify implemented vs. placeholder actions.
+    - [x] Refine mock button labels in Admin views to clarify implemented vs. placeholder actions. (Ongoing as mock flows are implemented)
     - [x] Consolidate color palette and common styles into `src/styles/colors.ts` and `src/styles/appSharedStyles.ts`.
     - [x] Refactor views (`App.tsx`, `StudentView.tsx`, `TeacherView.tsx`, `ParentView.tsx`, `PublicView.tsx`) and key components (`TaskVerificationModal.tsx`, `src/components/admin/*`) to use shared styles and colors.
+    - [x] Implement Context API (`AuthContext`, `DataContext`) to manage state and simulation functions, significantly simplifying `App.tsx` and view props. Refactored all views (`Public`, `Student`, `Teacher`, `Parent`, `Admin`) to use context hooks.
     - [x] Implement Mock UI for "Create User" via a modal in the Admin Users section (Excluding Parent role, moved Teacher linking to Student).
     - [x] Implement mock UI flow for Editing/Deleting Users: Refined Edit User Modal (conditional nickname, student fields, removed delete), moved state/rendering to `AdminStudentDetailView` to fix launch timing. Delete confirmed via detail view.
     - [ ] Implement Mock UI for other User Interactions: Replace placeholder alerts for Admin CRUD operations on other entities (Task Library items, Rewards, Instruments) and other flows (e.g., Teacher/Parent "Add Another Student" flows) with actual mock UI flows.
         - [ ] **Admin View:**
-            - [x] Implement mock UI flow for Creating/Editing/Deleting Task Library Items. (Modals created, state simulation working)
-            - [x] Implement mock UI flow for Creating/Editing/Deleting Rewards Catalog Items. (Modals created, state simulation working)
-                - (Note: Currently uses Image URL field; may need to replace with image upload functionality later)
-            - [x] Implement mock UI flow for Creating/Editing/Deleting Announcements (Modals created, state simulation working).
-            - [x] Implement mock UI flow for Creating/Editing/Deleting Instruments (Modals created, state simulation working).
+            - [x] Implement mock UI flow for Creating/Editing/Deleting Task Library Items. (Modals created, state simulation working via Context)
+            - [x] Implement mock UI flow for Creating/Editing/Deleting Rewards Catalog Items. (Modals created, state simulation working via Context)
+            - [x] Implement mock UI flow for Creating/Editing/Deleting Announcements (Modals created, state simulation working via Context).
+            - [x] Implement mock UI flow for Creating/Editing/Deleting Instruments (Modals created, state simulation working via Context).
             - [ ] Implement mock UI flow for Manual Ticket Adjustments (including input for amount and notes).
             - [ ] Implement mock UI flow for Redeeming Rewards (selecting reward and student).
-            - [x] Implement mock UI flow for Assigning Tasks (selecting tasks and students). (Modal created, state simulation working)
-            - [x] Implement mock screen/list for "View All Assigned Tasks". (Modal created with filtering, state simulation working)
+            - [x] Implement mock UI flow for Assigning Tasks (selecting tasks and students). (Modal created, state simulation working via Context)
+            - [x] Implement mock screen/list for "View All Assigned Tasks". (Modal created with filtering, state simulation working via Context)
             - [ ] Implement mock screen/list for "View Full History" (from student detail).
         - [ ] **Teacher View:**
             - [ ] Implement "Login (QR)" button in student profile view.
             - [ ] Implement mock UI flow for Assigning Tasks (selecting tasks and students).
             - [ ] Implement mock screen/list for "View All Students".
-            - [ ] Implement mock UI flow for Deleting Assigned Tasks (from student profile view).
+            - [x] Implement mock UI flow for Deleting Assigned Tasks (from student profile view - uses context action). *(Label can be updated)*
         - [ ] **Parent View:**
             - [ ] Implement mock UI flow for "Add Another Student" (simulating QR scan input).
             - [ ] Implement mock screen/list for "View Full History" (from student profile view).
-        - [x] **Student View:**
+        - [ ] **Student View:**
             - [x] Implement mock UI flow for "Set/Change Goal" (Modal implemented).
             - [ ] Implement mock screen/list for "View Full History".
             - [x] Implement mock screen/list for "View All Announcements" (Now handled via Announcements Tab).

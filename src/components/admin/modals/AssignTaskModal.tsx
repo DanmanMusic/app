@@ -1,14 +1,10 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, Button, FlatList, TouchableOpacity, ScrollView } from 'react-native';
-
+import { Modal, View, Text, StyleSheet, Button, FlatList, TouchableOpacity } from 'react-native';
 import { TaskLibraryItem } from '../../../mocks/mockTaskLibrary';
-import { SimplifiedStudent } from '../../../views/AdminView'; 
-import { getTaskTitle, getUserDisplayName } from '../../../utils/helpers'; 
+import { SimplifiedStudent } from '../../../types/dataTypes'; 
 import { colors } from '../../../styles/colors';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
-import { User } from '../../../types/userTypes'; 
-
 
 const modalStyles = StyleSheet.create({
     centeredView:{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.7)' },
@@ -28,8 +24,7 @@ const modalStyles = StyleSheet.create({
 
 interface AssignTaskModalProps {
   visible: boolean;
-  onClose: () => void;
-  
+  onClose: () => void;  
   allStudents: SimplifiedStudent[];
   taskLibrary: TaskLibraryItem[];
   onAssignTask: (taskId: string, studentId: string) => void;
@@ -45,12 +40,9 @@ const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   const [step, setStep] = useState(1); 
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-
-  
   const sortedStudents = useMemo(() => [...allStudents].sort((a, b) => a.name.localeCompare(b.name)), [allStudents]);
   const sortedTasks = useMemo(() => [...taskLibrary].sort((a, b) => a.title.localeCompare(b.title)), [taskLibrary]);
 
-  
   useEffect(() => {
     if (!visible) {
       setStep(1);

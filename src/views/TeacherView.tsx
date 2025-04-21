@@ -2,29 +2,16 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Button, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-
-import { User, UserRole } from '../types/userTypes';
-import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
+import { AssignedTask } from '../mocks/mockAssignedTasks';
 import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
 import { Instrument } from '../mocks/mockInstruments';
-
-import { StudentProfileData } from './StudentView';
-
+import { SimplifiedStudent, StudentProfileData } from '../types/dataTypes';
 import { getTaskTitle, getInstrumentNames, getUserDisplayName } from '../utils/helpers';
-
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 import { adminSharedStyles } from '../components/admin/adminSharedStyles';
-
-interface SimplifiedStudent {
-  id: string;
-  name: string;
-  instrumentIds?: string[];
-  balance: number;
-}
 
 interface TeacherViewProps {
     onInitiateVerificationModal: (task: AssignedTask) => void;
@@ -111,28 +98,20 @@ export const TeacherView: React.FC<TeacherViewProps> = ({
       ) : [],
     [assignedTasks, teacherUser, currentMockUsers]
   );
-
   
   const viewingStudentData: StudentProfileData | undefined | null = useMemo(() =>
       viewingStudentId ? getMockStudentData(viewingStudentId) : null,
     [viewingStudentId, getMockStudentData]
   );
   
-
   const handleAssignTaskToStudent = (studentId: string) => {
     const studentInfo = allStudents.find(s => s.id === studentId);
     const studentDisplayName = studentInfo ? studentInfo.name : studentId;
     alert(`Mock Assign Task to ${studentDisplayName}`);
-    
-    
-    
-    
-    
   };
 
   const handleInitiateAssignTask = () => {
-    alert('Mock Assign Task Flow - Select student(s), then select a task.');
-    
+    alert('Mock Assign Task Flow - Select student(s), then select a task.');  
   };
 
   const handleRemoveAssignedTask = (assignmentId: string) => {

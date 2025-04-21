@@ -1,14 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput, Platform, ScrollView } from 'react-native';
-
-
-import { UserRole, User } from '../../types/userTypes';
+import { User } from '../../types/userTypes';
 import { Instrument } from '../../mocks/mockInstruments'; 
 import { colors } from '../../styles/colors';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { getUserDisplayName, getInstrumentNames } from '../../utils/helpers'; 
-
 
 interface EditUserModalProps {
   visible: boolean;
@@ -19,7 +16,6 @@ interface EditUserModalProps {
   mockInstruments: Instrument[];
   allTeachers: User[];
 }
-
 
 const EditUserModal: React.FC<EditUserModalProps> = ({
   visible,
@@ -33,75 +29,54 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [nickname, setNickname] = useState('');
-  const [originalHadNickname, setOriginalHadNickname] = useState(false);
-  
+  const [originalHadNickname, setOriginalHadNickname] = useState(false);  
   const [instrumentIds, setInstrumentIds] = useState<string[]>([]);
   const [linkedTeacherIds, setLinkedTeacherIds] = useState<string[]>([]);
 
-  
-  console.log(`[EditUserModal Render] visible: ${visible}, userToEdit: ${userToEdit?.id ?? 'null'}`);
-
-  
   useEffect(() => {
-    console.log(`[EditUserModal useEffect] visible: ${visible}, userToEdit changed: ${userToEdit?.id ?? 'null'}`);
-    if (visible && userToEdit && userToEdit.role !== 'parent') {
-      
+    if (visible && userToEdit && userToEdit.role !== 'parent') {    
       setFirstName(userToEdit.firstName);
       setLastName(userToEdit.lastName);
       setNickname(userToEdit.nickname || '');
       setOriginalHadNickname(!!userToEdit.nickname);
-
-      
       if (userToEdit.role === 'student') {
         setInstrumentIds(userToEdit.instrumentIds || []);
         setLinkedTeacherIds(userToEdit.linkedTeacherIds || []);
-      } else {
-        
+      } else {        
         setInstrumentIds([]);
         setLinkedTeacherIds([]);
       }
-
-    } else if (!visible) {
-      
+    } else if (!visible) {      
       setFirstName(''); setLastName(''); setNickname(''); setOriginalHadNickname(false);
       setInstrumentIds([]); setLinkedTeacherIds([]);
     }
   }, [visible, userToEdit]); 
 
-  
   const handleSaveChanges = () => {
     if (!userToEdit) { alert('Error: No user data to save.'); return; }
     if (userToEdit.role === 'parent') { alert('Error - Cannot edit parent users.'); return; }
     if (!firstName || !lastName) { alert('Error - First Name and Last Name cannot be empty.'); return; }
-
     
     const updatedUserData: Partial<Omit<User, 'id'>> = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       nickname: nickname.trim() ? nickname.trim() : undefined,
     };
-
     
     if (userToEdit.role === 'student') {
       updatedUserData.instrumentIds = instrumentIds;
       updatedUserData.linkedTeacherIds = linkedTeacherIds;
     }
 
-    console.log('[EditUserModal] handleSaveChanges calling onEditUser prop with:', updatedUserData);
-    onEditUser(userToEdit.id, updatedUserData);
-    
+    onEditUser(userToEdit.id, updatedUserData);    
   };
 
-  
   const handleAddInstrument = () => { alert('Mock Add Instrument'); };
   const handleRemoveInstrument = (idToRemove: string) => { setInstrumentIds(prev => prev.filter(id => id !== idToRemove)); };
   const handleAddTeacher = () => { alert('Mock Link Teacher'); };
   const handleRemoveTeacher = (idToRemove: string) => { setLinkedTeacherIds(prev => prev.filter(id => id !== idToRemove)); };
-
-
   
   if (!visible || !userToEdit || userToEdit.role === 'parent') { return null; }
-
   
   const currentUserDisplayName = getUserDisplayName(userToEdit);
   return (
@@ -166,8 +141,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
     </Modal>
   );
 };
-
-
 
 const modalStyles = StyleSheet.create({
     centeredView:{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.7)' },

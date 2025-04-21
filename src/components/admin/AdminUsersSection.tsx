@@ -1,17 +1,14 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, Button, Alert, FlatList, Platform } from 'react-native';
-
-import { SimplifiedStudent, SimplifiedUser } from '../../views/AdminView';
+import { View, Text, Button, FlatList } from 'react-native';
+import { SimplifiedUser } from '../../views/AdminView';
+import { SimplifiedStudent } from '../../types/dataTypes'
 import { UserRole, User } from '../../types/userTypes';
 import { Instrument } from '../../mocks/mockInstruments';
 import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
-
-import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
-
+import { getInstrumentNames } from '../../utils/helpers';
 import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
-import { colors } from '../../styles/colors';
 
 import CreateUserModal from './modals/CreateUserModal';
 
@@ -29,8 +26,6 @@ interface AdminUsersSectionProps {
   allUsers: User[];
 }
 
-
-
 const AdminUserItem = ({
   user,
   onViewManage,
@@ -45,8 +40,6 @@ const AdminUserItem = ({
     </View>
   </View>
 );
-
-
 
 const AdminStudentItem = ({
   student,
@@ -91,11 +84,8 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     const studentInfo = allStudents.find(p => p.id === studentId);
     const studentDisplayName = studentInfo ? studentInfo.name : studentId;
     alert(`Mock Assign Task to ${studentDisplayName}`);
-    
-    
   };
 
-  
   const teachersList = allUsers.filter(u => u.role === 'teacher');
 
   return (

@@ -1,11 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput, ScrollView } from 'react-native';
-
 import { RewardItem } from '../../../mocks/mockRewards';
 import { colors } from '../../../styles/colors';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
-
 
 const modalStyles = StyleSheet.create({
     centeredView:{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.7)' },
@@ -19,7 +16,6 @@ const modalStyles = StyleSheet.create({
     buttonContainer:{ flexDirection:'column', width:'100%', marginTop:10, gap:10 },
     footerButton:{ width:'100%', marginTop:10 },
 });
-
 
 interface EditRewardModalProps {
   visible: boolean;
@@ -45,9 +41,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({
       setCost(rewardToEdit.cost);
       setDescription(rewardToEdit.description || '');
       setImageUrl(rewardToEdit.imageUrl);
-    } else if (!visible) {
-      
-      
+    } else if (!visible) {      
     }
   }, [visible, rewardToEdit]);
 
@@ -98,7 +92,6 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({
                 placeholderTextColor={colors.textLight}
                 maxLength={100}
               />
-
               <Text style={modalStyles.label}>Ticket Cost:</Text>
               <TextInput
                 style={modalStyles.input}
@@ -107,7 +100,6 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({
                 placeholderTextColor={colors.textLight}
                 keyboardType="numeric"
               />
-
               <Text style={modalStyles.label}>Image URL (Mock):</Text>
               <TextInput
                 style={modalStyles.input}
@@ -117,7 +109,6 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({
                 autoCapitalize="none"
                 keyboardType="url"
               />
-
               <Text style={modalStyles.label}>Description (Optional):</Text>
               <TextInput
                 style={modalStyles.textArea}
@@ -128,7 +119,6 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({
                 numberOfLines={3}
               />
           </ScrollView>
-
           <View style={modalStyles.buttonContainer}>
             <Button title="Save Changes" onPress={handleSave} />
           </View>

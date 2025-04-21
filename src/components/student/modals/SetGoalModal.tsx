@@ -10,11 +10,9 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-
 import { RewardItem } from '../../../mocks/mockRewards';
 import { colors } from '../../../styles/colors';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
-
 
 interface SetGoalModalProps {
   visible: boolean;
@@ -24,7 +22,6 @@ interface SetGoalModalProps {
   currentGoalId: string | null;
   onSetGoal: (goalId: string | null) => void; 
 }
-
 
 const RewardGoalItem = ({
   item,
@@ -136,7 +133,6 @@ const SetGoalModal: React.FC<SetGoalModalProps> = ({
     </Modal>
   );
 };
-
 
 const styles = StyleSheet.create({
   centeredView: {

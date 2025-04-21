@@ -1,9 +1,7 @@
 
 import React from 'react';
 import { Modal, View, Text, StyleSheet, Button } from 'react-native';
-
 import { colors } from '../../styles/colors';
-import { appSharedStyles } from '../../styles/appSharedStyles'; 
 
 interface ConfirmationModalProps {
   visible: boolean;
@@ -47,7 +45,6 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     </Modal>
   );
 };
-
 
 const modalStyles = StyleSheet.create({
   centeredView: {

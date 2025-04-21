@@ -1,14 +1,10 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, Button, Alert } from 'react-native';
-
-import { SimplifiedStudent } from '../../views/AdminView';
+import { View, Text, Button } from 'react-native';
+import { SimplifiedStudent } from '../../types/dataTypes';
 import { AssignedTask } from '../../mocks/mockAssignedTasks';
-
-import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
-
 
 interface AdminDashboardSectionProps {
   allStudents: SimplifiedStudent[];

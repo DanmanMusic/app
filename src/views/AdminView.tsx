@@ -2,20 +2,11 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Button, FlatList, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-
-
 import { User, UserRole } from '../types/userTypes';
-import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
-
-
-
-import { getTaskTitle, getInstrumentNames, getUserDisplayName } from '../utils/helpers';
-
-
+import { AssignedTask } from '../mocks/mockAssignedTasks';
+import { getTaskTitle, getUserDisplayName } from '../utils/helpers';
 import { AdminDashboardSection } from '../components/admin/AdminDashboardSection';
 import { AdminUsersSection } from '../components/admin/AdminUsersSection';
 import { AdminTasksSection } from '../components/admin/AdminTasksSection';
@@ -24,22 +15,18 @@ import { AdminHistorySection } from '../components/admin/AdminHistorySection';
 import { AdminAnnouncementsSection } from '../components/admin/AdminAnnouncementsSection';
 import { AdminInstrumentsSection } from '../components/admin/AdminInstrumentsSection';
 import { AdminStudentDetailView } from '../components/admin/AdminStudentDetailView';
-
-
 import { adminSharedStyles } from '../components/admin/adminSharedStyles';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
+import { SimplifiedStudent } from '../types/dataTypes';
 
-
-export interface SimplifiedStudent { id: string; name: string; instrumentIds?: string[]; balance: number; }
 export interface SimplifiedUser { id: string; name: string; role: UserRole; }
-type AdminSection = | 'dashboard' | 'dashboard-pending-verification' | 'users' | 'tasks' | 'rewards' | 'history' | 'announcements' | 'instruments';
 
+type AdminSection = | 'dashboard' | 'dashboard-pending-verification' | 'users' | 'tasks' | 'rewards' | 'history' | 'announcements' | 'instruments';
 
 interface AdminViewProps {
     onInitiateVerificationModal?: (task: AssignedTask) => void; 
 }
-
 
 const adminPendingListStyles = StyleSheet.create({
    pendingItem: { backgroundColor: colors.backgroundPrimary, padding: 12, marginBottom: 10, borderRadius: 8, borderWidth: 1, borderColor: colors.borderWarning },
@@ -47,9 +34,7 @@ const adminPendingListStyles = StyleSheet.create({
    pendingDetail: { fontSize: 14, color: colors.textSecondary, marginBottom: 3 },
 });
 
-
-export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModal }) => {
-  
+export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModal }) => {  
   const { currentUserId } = useAuth(); 
   const {
     currentMockUsers,
@@ -59,8 +44,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     rewardsCatalog,
     ticketHistory, 
     announcements,
-    mockInstruments,
-    
+    mockInstruments,    
     simulateManualTicketAdjustment,
     simulateRedeemReward,
     simulateAssignTask,
@@ -87,12 +71,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const [viewingSection, setViewingSection] = useState<AdminSection>('dashboard');
   const [viewingStudentId, setViewingStudentId] = useState<string | null>(null);
   const [isCreateUserModalVisible, setIsCreateUserModalVisible] = useState(false);
-  
-
-  
   const adminUser = currentUserId ? currentMockUsers[currentUserId] : null;
   const allUsers = useMemo(() => Object.values(currentMockUsers), [currentMockUsers]);
-  const allStudents = useMemo(() =>
+  const allStudents: SimplifiedStudent[] = useMemo(() =>
       allUsers
           .filter(u => u.role === 'student')
           .map(student => ({
@@ -120,47 +101,33 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   ), [assignedTasks]);
   const viewingStudentData = useMemo(() => {
     return viewingStudentId ? getMockStudentData(viewingStudentId) : null;
-  }, [viewingStudentId, getMockStudentData]);
-
-
-  
+  }, [viewingStudentId, getMockStudentData]);  
   const handleViewManageUser = (userId: string, role: UserRole) => {
     if (role === 'student') {
       setViewingStudentId(userId);
-    } else {
-        
+    } else {        
       const selectedUser = currentMockUsers[userId];
       alert(`Viewing/Managing (Mock): ${selectedUser ? getUserDisplayName(selectedUser) : userId}`);
     }
   };
-
   const handleBackFromStudentDetail = () => {
     setViewingStudentId(null);
     setViewingSection('users'); 
   };
-
   const handleInternalInitiateVerificationModal = (task: AssignedTask) => {
       if (onInitiateVerificationModal) {
           onInitiateVerificationModal(task);
-      } else {
-          
+      } else {          
           console.warn("onInitiateVerificationModal prop not provided to AdminView");
       }
-   };
-
-   
+   };   
    const handleCreateUser = (newUserData: Omit<User, 'id'>) => {
       simulateCreateUser(newUserData); 
       setIsCreateUserModalVisible(false);
   };
-
-  
   if (!adminUser) {
     return <SafeAreaView style={appSharedStyles.safeArea}><Text>Loading Admin Data...</Text></SafeAreaView>;
   }
-
-  
-  
   if (viewingStudentId && viewingStudentData) {
     return (
       <AdminStudentDetailView
@@ -179,7 +146,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
       />
     );
   }
-
   
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>

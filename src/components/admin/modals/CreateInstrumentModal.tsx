@@ -4,8 +4,6 @@ import { Modal, View, Text, StyleSheet, Button, TextInput } from 'react-native';
 
 import { Instrument } from '../../../mocks/mockInstruments'; 
 import { colors } from '../../../styles/colors';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
-
 
 const modalStyles = StyleSheet.create({
     centeredView:{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.7)' },
@@ -17,11 +15,9 @@ const modalStyles = StyleSheet.create({
     footerButton:{ width:'100%', marginTop:10 },
 });
 
-
 interface CreateInstrumentModalProps {
   visible: boolean;
-  onClose: () => void;
-  
+  onClose: () => void;  
   onCreateConfirm: (instrumentData: Omit<Instrument, 'id'>) => void;
 }
 
@@ -32,7 +28,6 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({
 }) => {
   const [name, setName] = useState('');
 
-  
   useEffect(() => {
     if (visible) {
       setName('');

@@ -1,11 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Button, TextInput } from 'react-native';
-
 import { Announcement, AnnouncementType } from '../../../mocks/mockAnnouncements'; 
 import { colors } from '../../../styles/colors';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
-
 
 const modalStyles = StyleSheet.create({
     centeredView:{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.7)' },
@@ -41,8 +38,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
       setTitle(announcementToEdit.title);
       setMessage(announcementToEdit.message);
       setType(announcementToEdit.type); 
-    } else if (!visible) {
-      
+    } else if (!visible) {      
       setTitle('');
       setMessage('');
       setType('announcement');
@@ -76,9 +72,6 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
         <View style={modalStyles.modalView}>
           <Text style={modalStyles.modalTitle}>Edit Announcement</Text>
           <Text style={modalStyles.subTitle}>ID: {announcementToEdit.id}</Text>
-
-          {}
-
           <Text style={modalStyles.label}>Title:</Text>
           <TextInput
             style={modalStyles.input}
@@ -88,7 +81,6 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
             placeholderTextColor={colors.textLight}
             maxLength={100}
           />
-
           <Text style={modalStyles.label}>Message:</Text>
           <TextInput
             style={modalStyles.textArea}
@@ -99,7 +91,6 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
             multiline={true}
             numberOfLines={4}
           />
-
           <View style={modalStyles.buttonContainer}>
             <Button title="Save Changes" onPress={handleSave} />
           </View>

@@ -2,21 +2,13 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-
 import { useData } from '../contexts/DataContext';
-
-
 import { RewardItem } from '../mocks/mockRewards';
 import { Announcement } from '../mocks/mockAnnouncements';
-
-
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 
-
 interface PublicViewProps {}
-
 
 const RewardItemPublic = ({ item }: { item: RewardItem }) => (
   <View style={appSharedStyles.itemContainer}>
@@ -43,17 +35,11 @@ const AnnouncementListItem = ({ item }: { item: Announcement }) => (
   </View>
 );
 
-
 type PublicTab = 'welcome' | 'rewards' | 'announcements';
 
-
-export const PublicView: React.FC<PublicViewProps> = () => {
-  
+export const PublicView: React.FC<PublicViewProps> = () => {  
   const { rewardsCatalog, announcements } = useData();
-
-  
   const [activeTab, setActiveTab] = useState<PublicTab>('welcome');
-
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
       <View style={appSharedStyles.container}>
@@ -101,8 +87,7 @@ export const PublicView: React.FC<PublicViewProps> = () => {
           )}
 
           {activeTab === 'announcements' && (
-            <FlatList
-              
+            <FlatList              
               data={announcements.sort(
                 (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
               )}

@@ -1,14 +1,9 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, Button, Alert, FlatList } from 'react-native';
-
+import { View, Text, FlatList } from 'react-native';
 import { TicketTransaction } from '../../mocks/mockTickets';
-
 import { TicketHistoryItem } from '../../views/StudentView';
-
-import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
-
 
 interface AdminHistorySectionProps {
   allTicketHistory: TicketTransaction[];

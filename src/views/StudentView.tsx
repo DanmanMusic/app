@@ -10,48 +10,21 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-
-
-import { User } from '../types/userTypes';
 import { AssignedTask } from '../mocks/mockAssignedTasks';
 import { TicketTransaction } from '../mocks/mockTickets';
 import { RewardItem } from '../mocks/mockRewards';
 import { Announcement } from '../mocks/mockAnnouncements';
 import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
-import { Instrument } from '../mocks/mockInstruments';
-
-
 import { getTaskTitle, getInstrumentNames, getUserDisplayName } from '../utils/helpers';
-
-
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
-
-
 import SetGoalModal from '../components/student/modals/SetGoalModal';
-
 
 export interface StudentViewProps {
   studentIdToView?: string; 
 }
-
-
-export interface StudentProfileData {
-  user: User;
-  balance: number;
-  assignedTasks: AssignedTask[];
-  history: TicketTransaction[];
-  rewardsCatalog: RewardItem[];
-  announcements: Announcement[];
-  taskLibrary: TaskLibraryItem[];
-  mockInstruments: Instrument[];
-}
-
-
 
 const AssignedTaskItem = ({
     task, taskLibrary, onMarkComplete, canMark,
@@ -76,14 +49,11 @@ const AssignedTaskItem = ({
       )}
       {task.completedDate && ( <Text style={appSharedStyles.itemDetailText}> Completed: {new Date(task.completedDate).toLocaleDateString()} </Text> )}
       {task.verifiedDate && task.verificationStatus !== 'pending' && ( <Text style={appSharedStyles.itemDetailText}> Verified: {new Date(task.verifiedDate).toLocaleDateString()} </Text> )}
-      {}
       {!task.isComplete && canMark && (
         <Button title="Mark Complete" onPress={() => onMarkComplete(task.id)} />
       )}
-      {}
       {!task.isComplete && !canMark && (
-         <Button title="Mark Complete" disabled={true} />
-         
+         <Button title="Mark Complete" disabled={true} />         
       )}
       {task.isComplete && task.verificationStatus === 'pending' && ( <Text style={styles.pendingNote}>Awaiting teacher verification...</Text> )}
     </View>
@@ -131,22 +101,14 @@ export const AnnouncementListItemStudent = ({ item }: { item: Announcement }) =>
     </View>
   );
 
-
-
-export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => {
-  
+export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => {  
   const { currentUserId: loggedInUserId, currentUserRole } = useAuth();
   const {
     currentMockUsers, ticketBalances, assignedTasks: allAssignedTasks, ticketHistory: allTicketHistory, rewardsCatalog, announcements: allAnnouncements, taskLibrary, mockInstruments, simulateMarkTaskComplete,
   } = useData();
-
-  
   const targetStudentId = studentIdToView ?? loggedInUserId;
-
-  
   const user = targetStudentId ? currentMockUsers[targetStudentId] : null;
   const balance = targetStudentId ? ticketBalances[targetStudentId] || 0 : 0;
-
   const studentAssignedTasks = useMemo(() =>
       targetStudentId ? allAssignedTasks.filter(task => task.studentId === targetStudentId) : [],
     [allAssignedTasks, targetStudentId]
@@ -161,20 +123,14 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
       allAnnouncements.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
     [allAnnouncements]
   );
-
-  
   const [goalRewardId, setGoalRewardId] = useState<string | null>(null);
   type StudentTab = 'dashboard' | 'tasks' | 'rewards' | 'announcements';
   const [activeTab, setActiveTab] = useState<StudentTab>('dashboard');
   const [isSetGoalModalVisible, setIsSetGoalModalVisible] = useState(false);
-
-  
   const goalReward = rewardsCatalog.find(reward => reward.id === goalRewardId);
   const rawProgressTowardGoal = goalReward ? (balance / goalReward.cost) * 100 : 0;
   const clampedProgress = Math.min(rawProgressTowardGoal, 100);
   const goalMet = rawProgressTowardGoal >= 100;
-
-  
   const handleSetGoalPress = () => setIsSetGoalModalVisible(true);
   const handleGoalSelected = (newGoalId: string | null) => {
       setGoalRewardId(newGoalId);
@@ -186,22 +142,15 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           alert('Goal cleared!');
       }
   };
-
-  
   const activeTasks = useMemo(() => studentAssignedTasks.filter(task => !task.isComplete), [studentAssignedTasks]);
   const pendingVerificationTasks = useMemo(() => studentAssignedTasks.filter( task => task.isComplete && task.verificationStatus === 'pending' ), [studentAssignedTasks]);
   const recentlyCompletedTasks = useMemo(() => studentAssignedTasks .filter(task => task.isComplete && task.verificationStatus !== 'pending') .sort((a, b) => new Date(b.verifiedDate || b.completedDate || '').getTime() - new Date(a.verifiedDate || a.completedDate || '').getTime()), [studentAssignedTasks]);
-
-  
-  
   const canMarkComplete = (loggedInUserId === targetStudentId) || (currentUserRole === 'parent' && studentIdToView === targetStudentId);
-
   
   if (!user || user.role !== 'student') {
       return ( <SafeAreaView style={appSharedStyles.safeArea}><View style={appSharedStyles.container}><Text>Error: Could not load student data for ID {targetStudentId}.</Text></View></SafeAreaView> );
   }
 
-  
   const studentDisplayName = getUserDisplayName(user);
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>

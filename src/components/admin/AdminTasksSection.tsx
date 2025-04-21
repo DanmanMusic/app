@@ -1,14 +1,12 @@
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Button, Alert, FlatList, Platform } from 'react-native';
-
+import { View, Text, Button, Alert, FlatList, Platform } from 'react-native';
 import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
-import { SimplifiedStudent } from '../../views/AdminView';
+import { SimplifiedStudent } from '../../types/dataTypes';
 import { getTaskTitle } from '../../utils/helpers';
 import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
-
 import CreateTaskLibraryModal from './modals/CreateTaskLibraryModal';
 import EditTaskLibraryModal from './modals/EditTaskLibraryModal';
 import ConfirmationModal from '../common/ConfirmationModal';
@@ -75,23 +73,17 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
   const [taskToDelete, setTaskToDelete] = useState<TaskLibraryItem | null>(null);
   const [isAssignModalVisible, setIsAssignModalVisible] = useState(false);
   const [isViewAllModalVisible, setIsViewAllModalVisible] = useState(false);
-
-
   const handleAddPress = () => setIsCreateModalVisible(true);
   const handleEditPress = (task: TaskLibraryItem) => { setTaskToEdit(task); setIsEditModalVisible(true); };
   const handleDeletePress = (task: TaskLibraryItem) => { setTaskToDelete(task); setIsDeleteModalVisible(true); };
-
   const closeCreateModal = () => setIsCreateModalVisible(false);
   const closeEditModal = () => { setIsEditModalVisible(false); setTaskToEdit(null); };
   const closeDeleteModal = () => { setIsDeleteModalVisible(false); setTaskToDelete(null); };
   const closeAssignModal = () => setIsAssignModalVisible(false);
   const closeViewAllModal = () => setIsViewAllModalVisible(false);
-
   const handleCreateConfirm = (taskData: Omit<TaskLibraryItem, 'id'>) => { onCreateTaskLibraryItem(taskData); closeCreateModal(); };
   const handleEditConfirm = (taskId: string, taskData: Partial<Omit<TaskLibraryItem, 'id'>>) => { onEditTaskLibraryItem(taskId, taskData); closeEditModal(); };
   const handleDeleteConfirm = () => { if (taskToDelete) { onDeleteTaskLibraryItem(taskToDelete.id); } closeDeleteModal(); };
-
-
   const handleAssignTaskFromLibraryItem = (taskId: string) => {
     Alert.prompt(
       'Assign Task',
@@ -100,21 +92,16 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
       Platform.OS === 'ios' ? 'default' : 'plain-text'
     );
   };
-
-
   const handleInitiateAssignTaskFlow = () => {
       setIsAssignModalVisible(true);
   };
   const handleViewAllAssignedTasks = () => {
       setIsViewAllModalVisible(true);
   };
-
   return (
     <View>
       <Text style={appSharedStyles.sectionTitle}>Task Management</Text>
-
       <View style={{ alignItems: 'flex-start', marginBottom: 20, gap: 5 }}>
-
         <Button
           title="Assign Task to Student"
           onPress={handleInitiateAssignTaskFlow}
@@ -124,7 +111,6 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
           onPress={handleViewAllAssignedTasks}
         />
       </View>
-
       <Text style={adminSharedStyles.sectionSubTitle}>Task Library ({taskLibrary.length})</Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button

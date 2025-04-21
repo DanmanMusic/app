@@ -1,23 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, Button, TextInput, Platform, ScrollView } from 'react-native';
-
+import { Modal, View, Text, StyleSheet, Button, TextInput, ScrollView } from 'react-native';
 import { UserRole, User } from '../../../types/userTypes';
 import { Instrument } from '../../../mocks/mockInstruments';
-
 import { colors } from '../../../styles/colors';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
-
 import { getUserDisplayName } from '../../../utils/helpers'; 
-
 
 const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'student'];
 
 interface CreateUserModalProps {
   visible: boolean;
   onClose: () => void;
-  onCreateUser: (userData: Omit<User, 'id'>) => void;
-  
+  onCreateUser: (userData: Omit<User, 'id'>) => void;  
   allTeachers: User[]; 
   mockInstruments: Instrument[];
 }
@@ -31,14 +26,11 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
 }) => {
   
   const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  
+  const [lastName, setLastName] = useState('');  
   const [role, setRole] = useState<UserRole | ''>('');
-  const [instrumentIds, setInstrumentIds] = useState<string[]>([]); 
-  
+  const [instrumentIds, setInstrumentIds] = useState<string[]>([]);   
   const [linkedTeacherIds, setLinkedTeacherIds] = useState<string[]>([]); 
 
-  
   useEffect(() => {
     if (visible) {
       setFirstName('');
@@ -57,24 +49,18 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
       return;
     }
 
-    
     const newUserPartial: Omit<User, 'id'> = {
       role: role,
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      
-      
       ...(role === 'student' && {
         instrumentIds: instrumentIds,
         linkedTeacherIds: linkedTeacherIds, 
-      }),
-      
+      }),      
     };
-
     onCreateUser(newUserPartial);
   };
 
-  
   const handleAddInstrument = () => {
     alert('Mock Add Instrument ID');
   };
@@ -83,11 +69,9 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
     setInstrumentIds(prev => prev.filter(id => id !== idToRemove));
   };
 
-  
   const handleAddLinkedTeacher = () => {
     alert('Mock Link Teacher ID');
   };
-
   
   const handleRemoveLinkedTeacher = (idToRemove: string) => {
     setLinkedTeacherIds(prev => prev.filter(id => id !== idToRemove));
@@ -123,10 +107,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
               placeholder="Enter Last Name"
               placeholderTextColor={colors.textLight}
             />
-
-            {}
-
-            {}
             <Text style={modalStyles.label}>Role:</Text>
             <View style={modalStyles.roleButtons}>
               {}
@@ -139,8 +119,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 />
               ))}
             </View>
-
-            {}
             {role === 'student' && (
               <View style={modalStyles.roleSpecificSection}>
                 <Text style={modalStyles.roleSectionTitle}>Student Details</Text>
@@ -156,8 +134,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
                   </View>
                 )) : <Text style={appSharedStyles.emptyListText}>No instruments selected.</Text>}
                 <Button title="Add Instrument (Mock)" onPress={handleAddInstrument} />
-
-                {}
                 <Text style={[modalStyles.label, { marginTop: 15 }]}>Linked Teacher IDs:</Text>
                 {linkedTeacherIds.length > 0 ? linkedTeacherIds.map(id => {
                   
@@ -174,12 +150,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 <Button title="Link Teacher (Mock)" onPress={handleAddLinkedTeacher} />
               </View>
             )}
-
-            {}
-
           </ScrollView>
-
-          {}
           <View style={modalStyles.buttonContainer}>
             <Button title="Create User" onPress={handleCreatePress} />
           </View>
@@ -189,7 +160,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
         </View>
       </View>
     </Modal>
-  );
+  );                {}
 };
 
 

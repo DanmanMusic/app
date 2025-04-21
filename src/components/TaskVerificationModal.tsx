@@ -1,20 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, Button, Platform } from 'react-native'; 
+import { Modal, View, Text, StyleSheet, Button } from 'react-native'; 
 import Slider from '@react-native-community/slider';
-
-
 import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
 import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
-
 import { User } from '../types/userTypes';
-
 import { getTaskTitle, getUserDisplayName } from '../utils/helpers';
-
-
 import { colors } from '../styles/colors';
-
-
 
 interface TaskVerificationModalProps {
   visible: boolean;
@@ -41,7 +33,6 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   const [awardedPoints, setAwardedPoints] = useState<number>(0);
   const [baseTickets, setBaseTickets] = useState<number>(0); 
 
-  
   useEffect(() => {
     if (visible && task) {
       setCurrentStep(1); 
@@ -51,11 +42,6 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
       setBaseTickets(taskBaseTickets); 
       setAwardedPoints(0); 
     } else if (!visible) {
-      
-      
-      
-      
-      
     }
   }, [visible, task, taskLibrary]); 
 
@@ -64,23 +50,15 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     return null;
   }
 
-  
   const taskTitle = getTaskTitle(task.taskId, taskLibrary);
-  
   const student = allUsers.find(user => user.id === task.studentId);
-  
   const studentName = student ? getUserDisplayName(student) : task.studentId;
-
-  
   const completedDateTime = task.completedDate
      ? new Date(task.completedDate).toLocaleString() 
      : 'N/A';
-
-
   
   const handleStatusSelect = (status: TaskVerificationStatus) => {
-    let initialPoints = 0;
-    
+    let initialPoints = 0;    
     switch (status) {
       case 'verified':
         initialPoints = baseTickets;

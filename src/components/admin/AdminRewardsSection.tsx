@@ -1,39 +1,29 @@
 
 import React, { useState } from 'react'; 
 import { View, Text, StyleSheet, Button, FlatList, Image } from 'react-native'; 
-
 import { RewardItem } from '../../mocks/mockRewards';
-
 import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
-
-
 import CreateRewardModal from './modals/CreateRewardModal';
 import EditRewardModal from './modals/EditRewardModal';
 import ConfirmationModal from '../common/ConfirmationModal'; 
 
 interface AdminRewardsSectionProps {
   rewardsCatalog: RewardItem[];
-  
   onCreateReward: (rewardData: Omit<RewardItem, 'id'>) => void;
   onEditReward: (rewardId: string, rewardData: Partial<Omit<RewardItem, 'id'>>) => void;
   onDeleteReward: (rewardId: string) => void;
-  
 }
 
 const AdminRewardItem = ({
   item,
-  
   onEdit,
   onDelete,
-  
 }: {
-  item: RewardItem;
-  
+  item: RewardItem;  
   onEdit: (reward: RewardItem) => void;
-  onDelete: (reward: RewardItem) => void;
-  
+  onDelete: (reward: RewardItem) => void;  
 }) => (
   <View style={appSharedStyles.itemContainer}>
     <View style={styles.rewardItemContent}>
@@ -71,31 +61,22 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [rewardToEdit, setRewardToEdit] = useState<RewardItem | null>(null);
   const [rewardToDelete, setRewardToDelete] = useState<RewardItem | null>(null);
-
-  
   const handleAddPress = () => setIsCreateModalVisible(true);
-
   const handleEditPress = (reward: RewardItem) => {
     setRewardToEdit(reward);
     setIsEditModalVisible(true);
   };
-
   const handleDeletePress = (reward: RewardItem) => {
     setRewardToDelete(reward);
     setIsDeleteModalVisible(true);
   };
-
-  
   const closeCreateModal = () => setIsCreateModalVisible(false);
   const closeEditModal = () => { setIsEditModalVisible(false); setRewardToEdit(null); };
   const closeDeleteModal = () => { setIsDeleteModalVisible(false); setRewardToDelete(null); };
-
-  
   const handleCreateConfirm = (rewardData: Omit<RewardItem, 'id'>) => {
     onCreateReward(rewardData);
     closeCreateModal();
   };
-
   const handleEditConfirm = (
     rewardId: string,
     rewardData: Partial<Omit<RewardItem, 'id'>>
@@ -103,16 +84,12 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
     onEditReward(rewardId, rewardData);
     closeEditModal();
   };
-
   const handleDeleteConfirm = () => {
     if (rewardToDelete) {
       onDeleteReward(rewardToDelete.id);
     }
     closeDeleteModal();
   };
-
-  
-
   return (
     <View>
       <Text style={appSharedStyles.sectionTitle}>Rewards Catalog ({rewardsCatalog.length})</Text>
@@ -123,8 +100,7 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
       <FlatList
         data={rewardsCatalog} 
         keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          
+        renderItem={({ item }) => (          
           <AdminRewardItem
              item={item}
              onEdit={handleEditPress}

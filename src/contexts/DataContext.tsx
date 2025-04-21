@@ -1,14 +1,12 @@
-
 import React, { createContext, useState, useContext, useMemo, ReactNode, useCallback } from 'react';
 import { Platform } from 'react-native';
-import { StudentProfileData } from '../views/StudentView'; 
-import { User, UserRole } from '../types/userTypes';
+import { StudentProfileData } from '../types/dataTypes'; 
+import { User } from '../types/userTypes';
 import { mockUsers } from '../mocks/mockUsers';
 import {
   mockTicketBalances as initialMockTicketBalances,
   mockTicketHistory as initialMockTicketHistory,
   TicketTransaction,
-  TransactionType,
 } from '../mocks/mockTickets';
 import {
   mockAllAssignedTasks as initialMockAllAssignedTasks,
@@ -22,7 +20,6 @@ import {
 import {
   mockAnnouncements as initialMockAnnouncements,
   Announcement,
-  AnnouncementType,
 } from '../mocks/mockAnnouncements';
 import {
   initialMockTaskLibrary,
@@ -30,11 +27,8 @@ import {
 } from '../mocks/mockTaskLibrary';
 import { mockInstruments, Instrument } from '../mocks/mockInstruments';
 import { getTaskTitle, getUserDisplayName } from '../utils/helpers';
-import { StudentViewProps } from '../views/StudentView'; 
-
 
 interface DataContextType {
-  
   currentMockUsers: Record<string, User>;
   assignedTasks: AssignedTask[];
   ticketBalances: Record<string, number>;
@@ -42,15 +36,13 @@ interface DataContextType {
   announcements: Announcement[];
   rewardsCatalog: RewardItem[];
   taskLibrary: TaskLibraryItem[];
-  mockInstruments: Instrument[]; 
-
-  
+  mockInstruments: Instrument[];
   simulateMarkTaskComplete: (taskId: string) => void;
   simulateVerifyTask: (taskId: string, status: TaskVerificationStatus, actualTickets: number) => void;
   simulateManualTicketAdjustment: (studentId: string, amount: number, notes: string) => void;
   simulateRedeemReward: (studentId: string, rewardId: string) => void;
-  simulateAssignTask: (taskId: string, studentId: string, assignerId?: string) => void; 
-  simulateReassignTask: (originalTaskId: string, studentId: string, assignerId?: string) => void; 
+  simulateAssignTask: (taskId: string, studentId: string, assignerId?: string) => void;
+  simulateReassignTask: (originalTaskId: string, studentId: string, assignerId?: string) => void;
   simulateCreateUser: (userData: Omit<User, 'id'>) => void;
   simulateEditUser: (userId: string, userData: Partial<Omit<User, 'id'>>) => void;
   simulateDeleteUser: (userId: string) => void;
@@ -64,18 +56,15 @@ interface DataContextType {
   simulateEditTaskLibraryItem: (taskId: string, taskData: Partial<Omit<TaskLibraryItem, 'id'>>) => void;
   simulateDeleteTaskLibraryItem: (taskId: string) => void;
   simulateDeleteAssignedTask: (assignmentId: string) => void;
-  simulateCreateInstrument: (instrumentData: Omit<Instrument, 'id'>) => void; 
-  simulateEditInstrument: (instrumentId: string, instrumentData: Partial<Omit<Instrument, 'id'>>) => void; 
-  simulateDeleteInstrument: (instrumentId: string) => void; 
-
-  
+  simulateCreateInstrument: (instrumentData: Omit<Instrument, 'id'>) => void;
+  simulateEditInstrument: (instrumentId: string, instrumentData: Partial<Omit<Instrument, 'id'>>) => void;
+  simulateDeleteInstrument: (instrumentId: string) => void;
   getMockStudentData: (studentId: string) => StudentProfileData | undefined;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
-  
   const [currentMockUsers, setCurrentMockUsers] = useState<Record<string, User>>(mockUsers);
   const [assignedTasks, setAssignedTasks] = useState<AssignedTask[]>(initialMockAllAssignedTasks);
   const [ticketBalances, setTicketBalances] = useState<Record<string, number>>(initialMockTicketBalances);
@@ -83,11 +72,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [announcements, setAnnouncements] = useState<Announcement[]>(initialMockAnnouncements);
   const [rewardsCatalog, setRewardsCatalog] = useState<RewardItem[]>(initialMockRewardsCatalog);
   const [taskLibrary, setTaskLibrary] = useState<TaskLibraryItem[]>(initialMockTaskLibrary);
-  const [instruments, setInstruments] = useState<Instrument[]>(mockInstruments); 
-
-  
-  
-
+  const [instruments, setInstruments] = useState<Instrument[]>(mockInstruments);
   const simulateMarkTaskComplete = useCallback((taskId: string) => {
     setAssignedTasks(prevTasks =>
       prevTasks.map(task =>
@@ -108,9 +93,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
      setAssignedTasks(prevTasks => {
        const taskToVerify = prevTasks.find(t => t.id === taskId);
        if (!taskToVerify || !taskToVerify.isComplete || taskToVerify.verificationStatus !== 'pending') {
-         console.warn('Attempted to verify task not in pending state or not found:', taskId);
          alert("Verification Failed - Task not found or not pending.");
-         
          return prevTasks;
        }
 
@@ -132,11 +115,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
        } else {
          alert(`Task Marked Incomplete - No tickets awarded for task ${taskId}.`);
        }
-       
-
        return updatedTasks;
      });
-   }, [taskLibrary]); 
+   }, [taskLibrary]);
 
    const simulateManualTicketAdjustment = useCallback((studentId: string, amount: number, notes: string) => {
         const student = currentMockUsers[studentId];
@@ -150,7 +131,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             ...prevHistory,
         ]);
         alert(`Balance Adjusted - Adjusted ${amount} tickets for student ${getUserDisplayName(student)}.`);
-    }, [currentMockUsers]); 
+    }, [currentMockUsers]);
 
     const simulateRedeemReward = useCallback((studentId: string, rewardId: string) => {
         const reward = rewardsCatalog.find(r => r.id === rewardId);
@@ -176,9 +157,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const redemptionAnnouncement: Announcement = { id: `ann-redemption-${Date.now()}`, type: 'redemption_celebration', title: '🎉 Reward Redeemed! 🎉', message: `${studentName} redeemed a ${reward.name}!`, date: new Date().toISOString(), relatedStudentId: studentId };
         setAnnouncements(prev => [redemptionAnnouncement, ...prev]);
         alert(`Reward Redeemed - ${reward.name} redeemed for ${studentName}! ${cost} tickets deducted. A public announcement was created.`);
-    }, [rewardsCatalog, currentMockUsers, ticketBalances]); 
+    }, [rewardsCatalog, currentMockUsers, ticketBalances]);
 
-    const simulateAssignTask = useCallback((taskId: string, studentId: string, assignerId: string = 'admin-mock') => { 
+    const simulateAssignTask = useCallback((taskId: string, studentId: string, assignerId: string = 'admin-mock') => {
         const taskDetails = taskLibrary.find(t => t.id === taskId);
         const student = currentMockUsers[studentId];
         if (!taskDetails || !student) {
@@ -189,7 +170,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const newAssignedTask: AssignedTask = { id: `assigned-${Date.now()}`, taskId: taskId, studentId: studentId, assignedById: assignerId, assignedDate: new Date().toISOString(), isComplete: false, verificationStatus: undefined };
         setAssignedTasks(prevTasks => [...prevTasks, newAssignedTask]);
         alert(`Task Assigned - ${taskDetails.title} assigned to ${studentName}.`);
-    }, [taskLibrary, currentMockUsers]); 
+    }, [taskLibrary, currentMockUsers]);
 
     const simulateReassignTask = useCallback((originalTaskId: string, studentId: string, assignerId: string = 'admin-mock') => {
         const taskDetails = taskLibrary.find(t => t.id === originalTaskId);
@@ -202,7 +183,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const newAssignedTask: AssignedTask = { id: `assigned-re-${Date.now()}`, taskId: originalTaskId, studentId: studentId, assignedById: assignerId, assignedDate: new Date().toISOString(), isComplete: false, verificationStatus: undefined, };
         setAssignedTasks(prevTasks => [...prevTasks, newAssignedTask]);
         alert(`Task Re-assigned - ${taskDetails.title} re-assigned to ${studentName}.`);
-    }, [taskLibrary, currentMockUsers]); 
+    }, [taskLibrary, currentMockUsers]);
 
     const simulateCreateUser = useCallback((userData: Omit<User, 'id'>) => {
         const newId = `user-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -223,9 +204,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             editedUserName = getUserDisplayName(updatedUser);
             return { ...prev, [userId]: updatedUser };
         });
-        
         alert(`Mock Edit User SUCCESS: ${editedUserName} (${userId})`);
-    }, []); 
+    }, []);
 
     const simulateDeleteUser = useCallback((userId: string) => {
         const userToDelete = currentMockUsers[userId];
@@ -240,7 +220,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             return newState;
         });
         alert(`Mock Delete User SUCCESS: ${userName} (${userId})`);
-    }, [currentMockUsers]); 
+    }, [currentMockUsers]);
 
     const simulateCreateAnnouncement = useCallback((announcementData: Omit<Announcement, 'id' | 'date'>) => {
         const newId = `ann-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -273,7 +253,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const annTitle = annToDelete.title;
         setAnnouncements(prev => prev.filter(ann => ann.id !== announcementId));
         alert(`Mock Delete Announcement SUCCESS: "${annTitle}" (${announcementId})`);
-    }, [announcements]); 
+    }, [announcements]);
 
     const simulateCreateReward = useCallback((rewardData: Omit<RewardItem, 'id'>) => {
         const newId = `reward-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -306,7 +286,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const rewardName = rewardToDelete.name;
         setRewardsCatalog(prev => prev.filter(reward => reward.id !== rewardId));
         alert(`Mock Delete Reward SUCCESS: "${rewardName}" (${rewardId})`);
-    }, [rewardsCatalog]); 
+    }, [rewardsCatalog]);
 
     const simulateCreateTaskLibraryItem = useCallback((taskData: Omit<TaskLibraryItem, 'id'>) => {
         const newId = `tasklib-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -341,7 +321,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         if (isAssigned) {
           const confirmDelete = Platform.OS === 'web'
             ? confirm(`Warning: Task "${taskTitle}" is currently assigned... Delete anyway?`)
-            : true; 
+            : true;
           if (!confirmDelete) {
               alert(`Mock Delete Task Lib CANCELED: "${taskTitle}" (${taskId})`);
               return;
@@ -349,13 +329,13 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         }
         setTaskLibrary(prev => prev.filter(task => task.id !== taskId));
         alert(`Mock Delete Task Lib SUCCESS: "${taskTitle}" (${taskId})`);
-    }, [taskLibrary, assignedTasks]); 
+    }, [taskLibrary, assignedTasks]);
 
     const simulateDeleteAssignedTask = useCallback((assignmentId: string) => {
         const taskInfo = assignedTasks.find(t => t.id === assignmentId);
         setAssignedTasks(prev => prev.filter(t => t.id !== assignmentId));
         alert(`Mock Delete Assigned Task SUCCESS: Assignment ID ${assignmentId} (Task: ${taskInfo ? getTaskTitle(taskInfo.taskId, taskLibrary) : 'Unknown'})`);
-    }, [assignedTasks, taskLibrary]); 
+    }, [assignedTasks, taskLibrary]);
 
     const simulateCreateInstrument = useCallback((instrumentData: Omit<Instrument, 'id'>) => {
         const newId = `inst-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -391,8 +371,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     }, [instruments]);
 
 
-  
-  const getMockStudentData = useCallback((studentId: string): StudentViewProps | undefined => {
+  const getMockStudentData = useCallback((studentId: string): StudentProfileData | undefined => {
     const studentUser = currentMockUsers[studentId];
     if (!studentUser || studentUser.role !== 'student') return undefined;
 
@@ -406,13 +385,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       rewardsCatalog: rewardsCatalog,
       announcements: announcements,
       taskLibrary: taskLibrary,
-      mockInstruments: instruments, 
-      onMarkTaskComplete: simulateMarkTaskComplete, 
+      mockInstruments: instruments,
+      onMarkTaskComplete: simulateMarkTaskComplete,
     };
-  }, [currentMockUsers, ticketBalances, assignedTasks, ticketHistory, rewardsCatalog, announcements, taskLibrary, instruments, simulateMarkTaskComplete]); 
+  }, [currentMockUsers, ticketBalances, assignedTasks, ticketHistory, rewardsCatalog, announcements, taskLibrary, instruments, simulateMarkTaskComplete]);
 
-
-  
   const value = useMemo(() => ({
     currentMockUsers,
     assignedTasks,
@@ -421,7 +398,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     announcements,
     rewardsCatalog,
     taskLibrary,
-    mockInstruments: instruments, 
+    mockInstruments: instruments,
     simulateMarkTaskComplete,
     simulateVerifyTask,
     simulateManualTicketAdjustment,
@@ -446,14 +423,13 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     simulateDeleteInstrument,
     getMockStudentData,
   }), [
-      currentMockUsers, assignedTasks, ticketBalances, ticketHistory, announcements, rewardsCatalog, taskLibrary, instruments, 
-      simulateMarkTaskComplete, simulateVerifyTask, simulateManualTicketAdjustment, simulateRedeemReward, simulateAssignTask, simulateReassignTask, simulateCreateUser, simulateEditUser, simulateDeleteUser, simulateCreateAnnouncement, simulateEditAnnouncement, simulateDeleteAnnouncement, simulateCreateReward, simulateEditReward, simulateDeleteReward, simulateCreateTaskLibraryItem, simulateEditTaskLibraryItem, simulateDeleteTaskLibraryItem, simulateDeleteAssignedTask, simulateCreateInstrument, simulateEditInstrument, simulateDeleteInstrument, 
+      currentMockUsers, assignedTasks, ticketBalances, ticketHistory, announcements, rewardsCatalog, taskLibrary, instruments,
+      simulateMarkTaskComplete, simulateVerifyTask, simulateManualTicketAdjustment, simulateRedeemReward, simulateAssignTask, simulateReassignTask, simulateCreateUser, simulateEditUser, simulateDeleteUser, simulateCreateAnnouncement, simulateEditAnnouncement, simulateDeleteAnnouncement, simulateCreateReward, simulateEditReward, simulateDeleteReward, simulateCreateTaskLibraryItem, simulateEditTaskLibraryItem, simulateDeleteTaskLibraryItem, simulateDeleteAssignedTask, simulateCreateInstrument, simulateEditInstrument, simulateDeleteInstrument,
       getMockStudentData
-  ]); 
+  ]);
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 };
-
 
 export const useData = (): DataContextType => {
   const context = useContext(DataContext);

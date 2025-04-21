@@ -1,31 +1,12 @@
-
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-
-
-import { User } from '../types/userTypes';
-import { Instrument } from '../mocks/mockInstruments';
-
-
-
 import { getInstrumentNames, getUserDisplayName } from '../utils/helpers';
-
 import { StudentView } from './StudentView';
 import { appSharedStyles } from '../styles/appSharedStyles';
-import { colors } from '../styles/colors';
-
-
-interface SimplifiedStudent {
-  id: string;
-  name: string;
-  instrumentIds?: string[];
-  balance: number;
-}
-
+import { SimplifiedStudent } from '../types/dataTypes';
 
 interface ParentViewProps {}
 
@@ -35,10 +16,6 @@ export const ParentView: React.FC<ParentViewProps> = () => {
     currentMockUsers,
     ticketBalances,
     mockInstruments,
-    
-    
-    
-    
   } = useData();
 
   const parentUser = currentUserId ? currentMockUsers[currentUserId] : null;
@@ -56,15 +33,10 @@ export const ParentView: React.FC<ParentViewProps> = () => {
               };
           }
           return null;
-      });
-      const validStudents = mappedStudents.filter(
-          (s): s is SimplifiedStudent => s !== null
-      );
-      return validStudents.sort((a, b) => a.name.localeCompare(b.name));
+      }).filter((s): s is SimplifiedStudent => s !== null)
+      return mappedStudents.sort((a, b) => a.name.localeCompare(b.name));
     }, [parentUser, currentMockUsers, ticketBalances]
   );
-
-  
 
   const handleGoBackToStudents = () => {
     setMockAuthState(prev => (prev ? { ...prev, viewingStudentId: undefined } : null));
