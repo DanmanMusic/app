@@ -4,9 +4,8 @@ import { StyleSheet, Text, View, Button, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-// Import NEW user type
 import { UserRole, User } from './src/types/userTypes';
-import { mockUsers } from './src/mocks/mockUsers'; // mockUsers now uses the new type
+import { mockUsers } from './src/mocks/mockUsers';
 
 import {
   mockTicketBalances as initialMockTicketBalances,
@@ -19,21 +18,25 @@ import {
   AssignedTask,
   TaskVerificationStatus,
 } from './src/mocks/mockAssignedTasks';
-import { mockRewardsCatalog, RewardItem } from './src/mocks/mockRewards';
-// Import initial mock data AND types for announcements
+import {
+  initialMockRewardsCatalog,
+  RewardItem
+} from './src/mocks/mockRewards';
 import {
   mockAnnouncements as initialMockAnnouncements,
   Announcement,
   AnnouncementType,
 } from './src/mocks/mockAnnouncements';
-import { mockTaskLibrary, TaskLibraryItem } from './src/mocks/mockTaskLibrary';
+import {
+  initialMockTaskLibrary,
+  TaskLibraryItem
+} from './src/mocks/mockTaskLibrary';
 import { mockInstruments, Instrument } from './src/mocks/mockInstruments';
 
-// Import NEW helper
 import { getTaskTitle, getInstrumentNames, getUserDisplayName, getInstrumentIconSource } from './src/utils/helpers';
 
 import { PublicView } from './src/views/PublicView';
-import { PupilView, PupilViewProps } from './src/views/StudentView';
+import { StudentView, StudentViewProps } from './src/views/StudentView';
 import { TeacherView } from './src/views/TeacherView';
 import { ParentView } from './src/views/ParentView';
 import { AdminView } from './src/views/AdminView';
@@ -55,85 +58,89 @@ const DevelopmentViewSelector = ({
 }: {
   onSelectView: (state: MockAuthState) => void;
 }) => {
-  return (
-    <View style={styles.selectorContainer}>
-      <Text style={styles.selectorTitle}>Development Mode: Select User Role</Text>
+    return (
+        <View style={styles.selectorContainer}>
+            <Text style={styles.selectorTitle}>Development Mode: Select User Role</Text>
 
-      <Button
-        title="View as Public (Not Logged In)"
-        onPress={() => onSelectView({ role: 'public' })}
-        color={colors.secondary}
-      />
+            <Button
+                title="View as Public (Not Logged In)"
+                onPress={() => onSelectView({ role: 'public' })}
+                color={colors.secondary}
+            />
 
-      {Object.values(mockUsers).map(user => (
-        <Button
-          key={user.id}
-          // Use helper for display name
-          title={`Login as ${getUserDisplayName(user)} (${user.role})`}
-          onPress={() => {
-            let viewingStudentId: string | undefined;
-            if (user.role === 'student') {
-              viewingStudentId = user.id;
-            } else if (
-              user.role === 'parent' &&
-              user.linkedStudentIds &&
-              user.linkedStudentIds.length > 0
-            ) {
-              viewingStudentId = user.linkedStudentIds[0];
-            } else if (
-              user.role === 'teacher' &&
-              user.linkedStudentIds &&
-              user.linkedStudentIds.length > 0
-            ) {
-              viewingStudentId = user.linkedStudentIds[0];
-            }
+            {Object.values(mockUsers).map(user => (
+                <Button
+                    key={user.id}
+                    title={`Login as ${getUserDisplayName(user)} (${user.role})`}
+                    onPress={() => {
+                        let viewingStudentId: string | undefined;
+                        if (user.role === 'student') {
+                            viewingStudentId = user.id;
+                        } else if (
+                            user.role === 'parent' &&
+                            user.linkedStudentIds &&
+                            user.linkedStudentIds.length > 0
+                        ) {
+                            viewingStudentId = user.linkedStudentIds[0];
+                        } else if (user.role === 'teacher') {
+                            viewingStudentId = Object.values(mockUsers).find(u => u.role === 'student' && u.linkedTeacherIds?.includes(user.id))?.id;
+                        }
 
-            onSelectView({ role: user.role, userId: user.id, viewingStudentId });
-          }}
-          color={
-            user.role === 'admin'
-              ? colors.danger
-              : user.role === 'teacher'
-                ? colors.primary
-                : user.role === 'parent'
-                  ? colors.success
-                  : colors.gold
-          }
-        />
-      ))}
-    </View>
-  );
+                        onSelectView({ role: user.role, userId: user.id, viewingStudentId });
+                    }}
+                    color={
+                        user.role === 'admin'
+                            ? colors.danger
+                            : user.role === 'teacher'
+                                ? colors.primary
+                                : user.role === 'parent'
+                                    ? colors.success
+                                    : user.role === 'student'
+                                        ? colors.gold
+                                        : colors.secondary
+                    }
+                />
+            ))}
+        </View>
+    );
 };
 
 export default function App() {
   const [mockAuthState, setMockAuthState] = useState<MockAuthState | null>(null);
 
-  // State for Mocks - IMPORTANT: Need to update mockUsers state if we implement real CUD ops
   const [currentMockUsers, setCurrentMockUsers] = useState<Record<string, User>>(mockUsers);
   const [assignedTasks, setAssignedTasks] = useState<AssignedTask[]>(initialMockAllAssignedTasks);
   const [ticketBalances, setTicketBalances] = useState<Record<string, number>>(initialMockTicketBalances);
   const [ticketHistory, setTicketHistory] = useState<TicketTransaction[]>(initialMockTicketHistory);
-  // Add state for announcements
   const [announcements, setAnnouncements] = useState<Announcement[]>(initialMockAnnouncements);
-  // Add state for other mock data if they become mutable (e.g., tasks, rewards)
+  const [rewardsCatalog, setRewardsCatalog] = useState<RewardItem[]>(initialMockRewardsCatalog);
+  const [taskLibrary, setTaskLibrary] = useState<TaskLibraryItem[]>(initialMockTaskLibrary);
+
 
   const [isVerificationModalVisible, setIsVerificationModalVisible] = useState(false);
   const [taskToVerify, setTaskToVerify] = useState<AssignedTask | null>(null);
 
 
   useEffect(() => {
-    // Initial load - might remove later if state handles everything
-    // setAssignedTasks(initialMockAllAssignedTasks);
-    // setTicketBalances(initialMockTicketBalances);
-    // setTicketHistory(initialMockTicketHistory);
-    // setCurrentMockUsers(mockUsers); // Initialize user state
-    // setAnnouncements(initialMockAnnouncements); // Initialize announcement state
-  }, []);
+    if (!mockAuthState) {
+        setCurrentMockUsers(mockUsers);
+        setAssignedTasks(initialMockAllAssignedTasks);
+        setTicketBalances(initialMockTicketBalances);
+        setTicketHistory(initialMockTicketHistory);
+        setAnnouncements(initialMockAnnouncements);
+        setRewardsCatalog(initialMockRewardsCatalog);
+        setTaskLibrary(initialMockTaskLibrary);
+
+        setTaskToVerify(null);
+        setIsVerificationModalVisible(false);
+    }
+  }, [mockAuthState]);
 
   const isAuthenticated = !!mockAuthState;
   const currentUserRole: UserRole | 'public' = mockAuthState?.role || 'public';
   const currentUserId: string | undefined = mockAuthState?.userId;
   const currentViewingStudentId: string | undefined = mockAuthState?.viewingStudentId;
+
 
   const handleInitiateVerificationModal = (task: AssignedTask) => {
     setTaskToVerify(task);
@@ -209,7 +216,7 @@ export default function App() {
             amount: tickets,
             type: 'task_award',
             sourceId: taskId,
-            notes: `Task: ${getTaskTitle(taskToVerify.taskId, mockTaskLibrary)} (${status})`,
+            notes: `Task: ${getTaskTitle(taskToVerify.taskId, taskLibrary)} (${status})`,
           };
           return [
             newTaskAwardTx,
@@ -247,68 +254,65 @@ export default function App() {
       },
       ...prevHistory,
     ]);
-    // Use helper for display name
+
     const student = currentMockUsers[studentId];
     alert(`Balance Adjusted - Adjusted ${amount} tickets for student ${getUserDisplayName(student)}.`);
   };
 
   const simulateRedeemReward = (studentId: string, rewardId: string) => {
-    const reward = mockRewardsCatalog.find(r => r.id === rewardId);
-    if (!reward) {
-       alert('Error - Reward not found.');
-      return;
-    }
-    const cost = reward.cost;
-    const currentBalance = ticketBalances[studentId] || 0;
-    // Use helper for display name
-    const redeemedStudent = currentMockUsers[studentId];
-    const redeemedStudentName = getUserDisplayName(redeemedStudent);
+        const reward = rewardsCatalog.find(r => r.id === rewardId);
+        if (!reward) {
+            alert('Error - Reward not found.');
+            return;
+        }
+        const cost = reward.cost;
+        const currentBalance = ticketBalances[studentId] || 0;
+        const redeemedStudent = currentMockUsers[studentId];
+        const redeemedStudentName = getUserDisplayName(redeemedStudent);
 
 
-    if (currentBalance < cost) {
-      alert(`Cannot Redeem - Student ${redeemedStudentName} needs ${cost - currentBalance} more tickets for ${reward.name}.`);
-      return;
-    }
+        if (currentBalance < cost) {
+            alert(`Cannot Redeem - Student ${redeemedStudentName} needs ${cost - currentBalance} more tickets for ${reward.name}.`);
+            return;
+        }
 
-    setTicketBalances(prevBalances => ({
-        ...prevBalances,
-        [studentId]: prevBalances[studentId] - cost,
-      }));
+        setTicketBalances(prevBalances => ({
+            ...prevBalances,
+            [studentId]: prevBalances[studentId] - cost,
+        }));
 
-     setTicketHistory(prevHistory => [
-        {
-          id: `tx-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-          studentId: studentId,
-          timestamp: new Date().toISOString(),
-          amount: -cost,
-          type: 'redemption',
-          sourceId: rewardId,
-          notes: `Redeemed: ${reward.name}`,
-        },
-        ...prevHistory,
-      ]);
+        setTicketHistory(prevHistory => [
+            {
+                id: `tx-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+                studentId: studentId,
+                timestamp: new Date().toISOString(),
+                amount: -cost,
+                type: 'redemption',
+                sourceId: rewardId,
+                notes: `Redeemed: ${reward.name}`,
+            },
+            ...prevHistory,
+        ]);
 
-    // Create announcement for redemption
-    const redemptionAnnouncement: Announcement = {
-      id: `ann-redemption-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-      type: 'redemption_celebration',
-      title: '🎉 Reward Redeemed! 🎉',
-      message: `${redeemedStudentName} redeemed a ${reward.name}!`,
-      date: new Date().toISOString(),
-      relatedStudentId: studentId,
-    };
-    // Add the announcement to the state
-    setAnnouncements(prev => [redemptionAnnouncement, ...prev]);
-    alert(`Reward Redeemed - ${reward.name} redeemed for ${redeemedStudentName}! ${cost} tickets deducted. A public announcement was created.`);
+        const redemptionAnnouncement: Announcement = {
+            id: `ann-redemption-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            type: 'redemption_celebration',
+            title: '🎉 Reward Redeemed! 🎉',
+            message: `${redeemedStudentName} redeemed a ${reward.name}!`,
+            date: new Date().toISOString(),
+            relatedStudentId: studentId,
+        };
+        setAnnouncements(prev => [redemptionAnnouncement, ...prev]);
+        alert(`Reward Redeemed - ${reward.name} redeemed for ${redeemedStudentName}! ${cost} tickets deducted. A public announcement was created.`);
   };
 
   const simulateAssignTask = (taskId: string, studentId: string) => {
-    const taskDetails = mockTaskLibrary.find(t => t.id === taskId);
+    const taskDetails = taskLibrary.find(t => t.id === taskId);
     if (!taskDetails) {
       alert(`Error - Task Library item with ID "${taskId}" not found.`);
       return;
     }
-    // Use helper for display name
+
     const student = currentMockUsers[studentId];
     const studentName = getUserDisplayName(student);
 
@@ -327,12 +331,12 @@ export default function App() {
   };
 
   const simulateReassignTask = (originalTaskId: string, studentId: string) => {
-    const taskDetails = mockTaskLibrary.find(t => t.id === originalTaskId);
+    const taskDetails = taskLibrary.find(t => t.id === originalTaskId);
     if (!taskDetails) {
       alert(`Error - Original Task ID "${originalTaskId}" not found in library.`);
       return;
     }
-     // Use helper for display name
+
     const student = currentMockUsers[studentId];
     const studentName = getUserDisplayName(student);
 
@@ -351,7 +355,7 @@ export default function App() {
     alert(`Task Re-assigned - ${taskDetails.title} re-assigned to ${studentName}.`);
   };
 
-  // MOCK USER CRUD OPERATIONS (Modify state)
+
   const simulateCreateUser = (userData: Omit<User, 'id'>) => {
     const newId = `user-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const newUser: User = { ...userData, id: newId };
@@ -370,8 +374,8 @@ export default function App() {
             [userId]: { ...prev[userId], ...userData }
         };
     });
-     // Use helper for display name
-    const editedUser = { ...currentMockUsers[userId], ...userData } as User; // Get updated data for display
+
+    const editedUser = { ...currentMockUsers[userId], ...userData } as User;
     alert(`Mock Edit User SUCCESS: ${getUserDisplayName(editedUser)} (${userId})`);
   };
 
@@ -388,17 +392,16 @@ export default function App() {
          return newState;
      });
      alert(`Mock Delete User SUCCESS: ${userName} (${userId})`);
-     // Note: Need to handle cascading deletes or updates (e.g., unlinking from teachers/parents) in a real app
+
   };
 
-  // --- MOCK ANNOUNCEMENT CRUD OPERATIONS ---
+
   const simulateCreateAnnouncement = (announcementData: Omit<Announcement, 'id' | 'date'>) => {
     const newId = `ann-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const newAnnouncement: Announcement = {
       ...announcementData,
       id: newId,
-      date: new Date().toISOString(), // Set current date/time
-      // Ensure type is set, default if necessary
+      date: new Date().toISOString(),
       type: announcementData.type || 'announcement',
     };
     setAnnouncements(prev => [newAnnouncement, ...prev]);
@@ -409,17 +412,20 @@ export default function App() {
     announcementId: string,
     announcementData: Partial<Omit<Announcement, 'id' | 'date'>>
   ) => {
+    let editedTitle = announcementId;
     setAnnouncements(prev =>
       prev.map(ann => {
         if (ann.id === announcementId) {
-          return { ...ann, ...announcementData };
+          const updatedAnn = { ...ann, ...announcementData };
+          editedTitle = updatedAnn.title;
+          return updatedAnn;
         }
         return ann;
       })
     );
-    const editedAnn = announcements.find(a => a.id === announcementId); // Find the original for title
-    alert(`Mock Edit Announcement SUCCESS: "${editedAnn?.title || announcementId}"`);
+    alert(`Mock Edit Announcement SUCCESS: "${editedTitle}"`);
   };
+
 
   const simulateDeleteAnnouncement = (announcementId: string) => {
     const annToDelete = announcements.find(a => a.id === announcementId);
@@ -432,11 +438,96 @@ export default function App() {
      alert(`Mock Delete Announcement SUCCESS: "${annTitle}" (${announcementId})`);
   };
 
-  // --- END MOCK ANNOUNCEMENT CRUD ---
 
 
-  const getMockStudentData = (studentId: string): PupilViewProps | undefined => {
-    const studentUser = currentMockUsers[studentId]; // Use state
+  const simulateCreateReward = (rewardData: Omit<RewardItem, 'id'>) => {
+    const newId = `reward-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    const newReward: RewardItem = { ...rewardData, id: newId };
+    setRewardsCatalog(prev => [...prev, newReward].sort((a,b) => a.cost - b.cost));
+    alert(`Mock Create Reward SUCCESS: ${newReward.name} (${newReward.cost} tickets)`);
+  };
+
+  const simulateEditReward = (rewardId: string, rewardData: Partial<Omit<RewardItem, 'id'>>) => {
+     let editedName = rewardId;
+     setRewardsCatalog(prev =>
+       prev.map(reward => {
+         if (reward.id === rewardId) {
+            const updatedReward = { ...reward, ...rewardData };
+            editedName = updatedReward.name;
+            return updatedReward;
+         }
+         return reward;
+       }).sort((a, b) => a.cost - b.cost)
+     );
+     alert(`Mock Edit Reward SUCCESS: "${editedName}"`);
+  };
+
+  const simulateDeleteReward = (rewardId: string) => {
+      const rewardToDelete = rewardsCatalog.find(r => r.id === rewardId);
+      if (!rewardToDelete) {
+          alert(`Mock Delete Reward FAILED: ID ${rewardId} not found.`);
+          return;
+      }
+      const rewardName = rewardToDelete.name;
+      setRewardsCatalog(prev => prev.filter(reward => reward.id !== rewardId));
+      alert(`Mock Delete Reward SUCCESS: "${rewardName}" (${rewardId})`);
+  };
+
+
+  const simulateCreateTaskLibraryItem = (taskData: Omit<TaskLibraryItem, 'id'>) => {
+      const newId = `tasklib-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      const newTask: TaskLibraryItem = { ...taskData, id: newId };
+      setTaskLibrary(prev => [...prev, newTask].sort((a, b) => a.title.localeCompare(b.title)));
+      alert(`Mock Create Task Lib SUCCESS: ${newTask.title} (${newTask.baseTickets} pts)`);
+  };
+
+  const simulateEditTaskLibraryItem = (taskId: string, taskData: Partial<Omit<TaskLibraryItem, 'id'>>) => {
+      let editedTitle = taskId;
+      setTaskLibrary(prev =>
+          prev.map(task => {
+              if (task.id === taskId) {
+                  const updatedTask = { ...task, ...taskData };
+                  editedTitle = updatedTask.title;
+                  return updatedTask;
+              }
+              return task;
+          }).sort((a, b) => a.title.localeCompare(b.title))
+      );
+      alert(`Mock Edit Task Lib SUCCESS: "${editedTitle}"`);
+  };
+
+  const simulateDeleteTaskLibraryItem = (taskId: string) => {
+      const taskToDelete = taskLibrary.find(t => t.id === taskId);
+      if (!taskToDelete) {
+          alert(`Mock Delete Task Lib FAILED: ID ${taskId} not found.`);
+          return;
+      }
+      const taskTitle = taskToDelete.title;
+
+      const isAssigned = assignedTasks.some(at => at.taskId === taskId);
+      if (isAssigned) {
+
+        const confirmDelete = confirm(`Warning: Task "${taskTitle}" is currently assigned to one or more students. Deleting it from the library might cause display issues for those assignments. Are you sure you want to delete it?`);
+        if (!confirmDelete) {
+            alert(`Mock Delete Task Lib CANCELED: "${taskTitle}" (${taskId})`);
+            return;
+        }
+      }
+
+      setTaskLibrary(prev => prev.filter(task => task.id !== taskId));
+      alert(`Mock Delete Task Lib SUCCESS: "${taskTitle}" (${taskId})`);
+
+  };
+
+  const simulateDeleteAssignedTask = (assignmentId: string) => {
+        const taskInfo = assignedTasks.find(t => t.id === assignmentId);
+        setAssignedTasks(prev => prev.filter(t => t.id !== assignmentId));
+        alert(`Mock Delete Assigned Task SUCCESS: Assignment ID ${assignmentId} (Task: ${taskInfo ? getTaskTitle(taskInfo.taskId, taskLibrary) : 'Unknown'})`);
+    };
+
+
+  const getMockStudentData = (studentId: string): StudentViewProps | undefined => {
+    const studentUser = currentMockUsers[studentId];
     if (!studentUser || studentUser.role !== 'student') return undefined;
 
     return {
@@ -446,171 +537,107 @@ export default function App() {
       history: ticketHistory
         .filter(tx => tx.studentId === studentId)
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
-      rewardsCatalog: mockRewardsCatalog,
-      announcements: announcements, // Use announcements from state
-      taskLibrary: mockTaskLibrary, // Assuming task library is static for now
-      mockInstruments: mockInstruments, // Assuming instruments are static for now
+      rewardsCatalog: rewardsCatalog,
+      announcements: announcements,
+      taskLibrary: taskLibrary,
+      mockInstruments: mockInstruments,
       onMarkTaskComplete: simulateMarkTaskComplete,
     };
   };
 
+
   const renderMainView = () => {
-    const usersFromState = Object.values(currentMockUsers); // Use users from state
+    const usersFromState = Object.values(currentMockUsers);
 
     switch (currentUserRole) {
       case 'public':
-        return <PublicView rewardsCatalog={mockRewardsCatalog} announcements={announcements} />; // Use state
-
+        return <PublicView rewardsCatalog={rewardsCatalog} announcements={announcements} />;
       case 'student':
-        if (!currentUserId) return <Text>Error: Student ID not set in mock state.</Text>;
-        const pupilData = getMockStudentData(currentUserId);
-        if (!pupilData)
-          return <Text>Error: Mock data not found for student ID: {currentUserId}</Text>;
-        return <PupilView {...pupilData} />;
-
+        if (!currentUserId) return <Text>Error: Student ID not set.</Text>;
+        const studentData = getMockStudentData(currentUserId);
+        if (!studentData) return <Text>Error: Mock data not found for student.</Text>;
+        return <StudentView {...studentData} />;
       case 'teacher':
-        if (!currentUserId) return <Text>Error: Teacher ID not set in mock state.</Text>;
-        const teacherUser = currentMockUsers[currentUserId];
-        if (!teacherUser) return <Text>Error: Teacher user data not found.</Text>;
-
-        const allPupilUsers = usersFromState.filter(u => u.role === 'student');
-
-        const teacherMockData = {
-          user: teacherUser,
-          allStudents: allPupilUsers.map(student => ({
-            id: student.id,
-            // Use helper for display name
-            name: getUserDisplayName(student),
-            instrumentIds: student.instrumentIds,
-            balance: ticketBalances[student.id] || 0,
-          })),
-          studentsLinkedToTeacher: allPupilUsers
-            .filter(u => u.linkedTeacherIds?.includes(teacherUser.id)) // Check student's linkedTeacherIds
-            .map(student => ({
-              id: student.id,
-              // Use helper for display name
-              name: getUserDisplayName(student),
-              instrumentIds: student.instrumentIds,
-              balance: ticketBalances[student.id] || 0,
-            })),
-          pendingVerifications: assignedTasks.filter(
-            task => task.isComplete && task.verificationStatus === 'pending' &&
-                   (teacherUser.linkedStudentIds?.includes(task.studentId) || // Legacy check (REMOVE LATER)
-                    usersFromState.find(u => u.id === task.studentId && u.role === 'student')?.linkedTeacherIds?.includes(teacherUser.id)) // New Check
-          ),
-          taskLibrary: mockTaskLibrary,
-          allAssignedTasks: assignedTasks,
-          rewardsCatalog: mockRewardsCatalog,
-          mockInstruments: mockInstruments,
-          onVerifyTask: simulateVerifyTask,
-          onAssignTask: simulateAssignTask,
-          onReassignTaskMock: simulateReassignTask,
-          onInitiateVerificationModal: handleInitiateVerificationModal,
-          getStudentData: getMockStudentData,
-        };
-        return <TeacherView {...teacherMockData} />;
-
+         if (!currentUserId) return <Text>Error: Teacher ID not set.</Text>;
+         const teacherUser = currentMockUsers[currentUserId];
+         if (!teacherUser) return <Text>Error: Teacher user data not found.</Text>;
+         const allStudentUsers = usersFromState.filter(u => u.role === 'student');
+         const teacherMockData = {
+             user: teacherUser,
+             allStudents: allStudentUsers.map(student => ({ id: student.id, name: getUserDisplayName(student), instrumentIds: student.instrumentIds, balance: ticketBalances[student.id] || 0 })),
+             studentsLinkedToTeacher: allStudentUsers.filter(u => u.linkedTeacherIds?.includes(teacherUser.id)).map(student => ({ id: student.id, name: getUserDisplayName(student), instrumentIds: student.instrumentIds, balance: ticketBalances[student.id] || 0 })),
+             pendingVerifications: assignedTasks.filter(task => task.isComplete && task.verificationStatus === 'pending' && allStudentUsers.some(student => student.id === task.studentId && student.linkedTeacherIds?.includes(teacherUser.id))),
+             taskLibrary: taskLibrary,
+             allAssignedTasks: assignedTasks,
+             rewardsCatalog: rewardsCatalog,
+             mockInstruments: mockInstruments,
+             onVerifyTask: simulateVerifyTask,
+             onAssignTask: simulateAssignTask,
+             onReassignTaskMock: simulateReassignTask,
+             onInitiateVerificationModal: handleInitiateVerificationModal,
+             getStudentData: getMockStudentData,
+         };
+         return <TeacherView {...teacherMockData} />;
       case 'parent':
-        if (!currentUserId) return <Text>Error: Parent ID not set in mock state.</Text>;
-        const parentUser = currentMockUsers[currentUserId];
+         if (!currentUserId) return <Text>Error: Parent ID not set.</Text>;
+         const parentUser = currentMockUsers[currentUserId];
          if (!parentUser) return <Text>Error: Parent user data not found.</Text>;
+         const linkedStudents = usersFromState.filter(u => parentUser.linkedStudentIds?.includes(u.id) && u.role === 'student');
+         const parentMockData = {
+             user: parentUser,
+             linkedStudents: linkedStudents.map(student => ({ id: student.id, name: getUserDisplayName(student), instrumentIds: student.instrumentIds, balance: ticketBalances[student.id] || 0 })),
+             currentViewingStudentId: currentViewingStudentId,
+             currentViewingStudentData: currentViewingStudentId ? getMockStudentData(currentViewingStudentId) : undefined,
+             setViewingStudentId: (studentId: string) => setMockAuthState(prev => (prev ? { ...prev, viewingStudentId: studentId } : null)),
+             onMarkTaskComplete: simulateMarkTaskComplete,
+             mockInstruments: mockInstruments,
 
-        const linkedStudents = usersFromState.filter(
-          u => parentUser.linkedStudentIds?.includes(u.id) && u.role === 'student'
-        );
-
-        const parentMockData = {
-          user: parentUser,
-          linkedStudents: linkedStudents.map(student => ({
-            id: student.id,
-             // Use helper for display name
-            name: getUserDisplayName(student),
-            instrumentIds: student.instrumentIds,
-            balance: ticketBalances[student.id] || 0,
-          })),
-          currentViewingStudentId: currentViewingStudentId,
-          currentViewingStudentData: currentViewingStudentId
-            ? getMockStudentData(currentViewingStudentId)
-            : undefined,
-          setViewingStudentId: (studentId: string) =>
-            setMockAuthState(prev => (prev ? { ...prev, viewingStudentId: studentId } : null)),
-          onMarkTaskComplete: simulateMarkTaskComplete,
-          mockInstruments: mockInstruments,
-        };
-        return <ParentView {...parentMockData} />;
+         };
+         return <ParentView {...parentMockData} />;
 
       case 'admin':
-        if (!currentUserId) return <Text>Error: Admin ID not set in mock state.</Text>;
+        if (!currentUserId) return <Text>Error: Admin ID not set.</Text>;
         const adminUser = currentMockUsers[currentUserId];
         if (!adminUser) return <Text>Error: Admin user data not found.</Text>;
-
-        const allPupilUsersAdmin = usersFromState.filter(u => u.role === 'student');
+        const allStudentUsersAdmin = usersFromState.filter(u => u.role === 'student');
         const allTeachers = usersFromState.filter(u => u.role === 'teacher');
         const allParents = usersFromState.filter(u => u.role === 'parent');
 
         const adminMockData = {
           user: adminUser,
-          allUsers: usersFromState, // Pass users from state
-          allPupils: allPupilUsersAdmin.map(student => ({
-            id: student.id,
-             // Use helper for display name
-            name: getUserDisplayName(student),
-            instrumentIds: student.instrumentIds,
-            balance: ticketBalances[student.id] || 0,
-          })),
-          // Pass simplified user data for teachers/parents lists
+          allUsers: usersFromState,
+          allStudents: allStudentUsersAdmin.map(student => ({ id: student.id, name: getUserDisplayName(student), instrumentIds: student.instrumentIds, balance: ticketBalances[student.id] || 0 })),
           allTeachers: allTeachers.map(t => ({ id: t.id, name: getUserDisplayName(t), role: t.role })),
           allParents: allParents.map(p => ({ id: p.id, name: getUserDisplayName(p), role: p.role })),
           allAssignedTasks: assignedTasks,
-          taskLibrary: mockTaskLibrary,
-          rewardsCatalog: mockRewardsCatalog,
+          taskLibrary: taskLibrary,
+          rewardsCatalog: rewardsCatalog,
           allTicketHistory: ticketHistory,
-          announcements: announcements, // Use state
+          announcements: announcements,
           mockInstruments: mockInstruments,
-
           onManualTicketAdjust: simulateManualTicketAdjustment,
           onRedeemReward: simulateRedeemReward,
           onVerifyTask: simulateVerifyTask,
           onAssignTask: simulateAssignTask,
           onReassignTaskMock: simulateReassignTask,
           onInitiateVerificationModal: handleInitiateVerificationModal,
-
-          // Use the simulation functions that modify state
           onCreateUser: simulateCreateUser,
           onEditUser: simulateEditUser,
           onDeleteUser: simulateDeleteUser,
-
-          // Announcements CRUD
           onCreateAnnouncement: simulateCreateAnnouncement,
           onEditAnnouncement: simulateEditAnnouncement,
           onDeleteAnnouncement: simulateDeleteAnnouncement,
-
-          // Keep other mocks simple for now
-          onCreateTaskLibraryItem: (taskData: any) =>
-            alert(`Mock Create Task Lib: ${JSON.stringify(taskData)}`),
-          onEditTaskLibraryItem: (taskId: string, taskData: any) =>
-            alert(`Mock Edit Task Lib: ${taskId}: ${JSON.stringify(taskData)}`),
-          onDeleteTaskLibraryItem: (taskId: string) =>
-            alert(`Mock Delete Task Lib: ${taskId}`),
-          onCreateReward: (rewardData: any) =>
-            alert(`Mock Create Reward: ${JSON.stringify(rewardData)}`),
-          onEditReward: (rewardId: string, rewardData: any) =>
-            alert(`Mock Edit Reward: ${rewardId}: ${JSON.stringify(rewardData)}`),
-          onDeleteReward: (rewardId: string) =>
-            alert(`Mock Delete Reward: ${rewardId}`),
-          // onCreateAnnouncement: (announcementData: any) => // Replaced by simulation
-          //   alert(`Mock Create Announcement: ${JSON.stringify(announcementData)}`),
-          // onEditAnnouncement: (announcementId: string, announcementData: any) => // Replaced by simulation
-          //   alert(`Mock Edit Announcement: ${announcementId}: ${JSON.stringify(announcementData)}`),
-          // onDeleteAnnouncement: (announcementId: string) => // Replaced by simulation
-          //   alert(`Mock Delete Announcement: ${announcementId}`),
-          onCreateInstrument: (instrumentData: any) =>
-            alert(`Mock Create Instrument: ${JSON.stringify(instrumentData)}`),
-          onEditInstrument: (instrumentId: string, instrumentData: any) =>
-            alert(`Mock Edit Instrument: ${instrumentId}: ${JSON.stringify(instrumentData)}`),
-          onDeleteInstrument: (instrumentId: string) =>
-            alert(`Mock Delete Instrument: ${instrumentId}`),
+          onCreateTaskLibraryItem: simulateCreateTaskLibraryItem,
+          onEditTaskLibraryItem: simulateEditTaskLibraryItem,
+          onDeleteTaskLibraryItem: simulateDeleteTaskLibraryItem,
+          onCreateReward: simulateCreateReward,
+          onEditReward: simulateEditReward,
+          onDeleteReward: simulateDeleteReward,
+          onCreateInstrument: (instrumentData: any) => alert(`Mock Create Instrument: ${JSON.stringify(instrumentData)}`),
+          onEditInstrument: (instrumentId: string, instrumentData: any) => alert(`Mock Edit Instrument: ${instrumentId}: ${JSON.stringify(instrumentData)}`),
+          onDeleteInstrument: (instrumentId: string) => alert(`Mock Delete Instrument: ${instrumentId}`),
           getStudentData: getMockStudentData,
+          onDeleteAssignment: simulateDeleteAssignedTask, // Pass down delete assignment mock
         };
         return <AdminView {...adminMockData} />;
 
@@ -619,28 +646,17 @@ export default function App() {
     }
   };
 
+
   return (
     <SafeAreaProvider>
       <View style={styles.container}>
         <StatusBar style="auto" />
-
         {__DEV__ && !mockAuthState ? (
           <DevelopmentViewSelector onSelectView={setMockAuthState} />
         ) : (
           renderMainView()
         )}
-
-        <TaskVerificationModal
-           visible={isVerificationModalVisible}
-           task={taskToVerify}
-           taskLibrary={mockTaskLibrary}
-           allUsers={Object.values(currentMockUsers)} // Use state for modal user list
-           onClose={handleCloseVerificationModal}
-           onVerifyTask={simulateVerifyTask}
-           onReassignTaskMock={simulateReassignTask}
-         />
-
-
+        <TaskVerificationModal visible={isVerificationModalVisible} task={taskToVerify} taskLibrary={taskLibrary} allUsers={Object.values(currentMockUsers)} onClose={handleCloseVerificationModal} onVerifyTask={simulateVerifyTask} onReassignTaskMock={simulateReassignTask} />
         {__DEV__ && mockAuthState && (
           <View style={styles.resetButtonContainer}>
             <Button title="Reset Mock View" onPress={() => setMockAuthState(null)} />
@@ -652,28 +668,8 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.backgroundPrimary,
-  },
-  selectorContainer: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: colors.backgroundPrimary,
-  },
-  selectorTitle: {
-    fontSize: 18,
-    marginBottom: 20,
-    textAlign: 'center',
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-  },
-  resetButtonContainer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-  },
+    container: { flex: 1, backgroundColor: colors.backgroundPrimary },
+    selectorContainer: { flex: 1, padding: 20, justifyContent: 'center', gap: 10, backgroundColor: colors.backgroundPrimary },
+    selectorTitle: { fontSize: 18, marginBottom: 20, textAlign: 'center', fontWeight: 'bold', color: colors.textPrimary },
+    resetButtonContainer: { position: 'absolute', bottom: 20, left: 20, right: 20 },
 });

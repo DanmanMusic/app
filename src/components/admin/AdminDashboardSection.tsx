@@ -11,7 +11,7 @@ import { colors } from '../../styles/colors';
 
 
 interface AdminDashboardSectionProps {
-  allPupils: SimplifiedStudent[];
+  allStudents: SimplifiedStudent[];
   allTeachers: { id: string; name: string; role: string }[];
   allParents: { id: string; name: string; role: string }[];
   allAssignedTasks: AssignedTask[];
@@ -19,7 +19,7 @@ interface AdminDashboardSectionProps {
 }
 
 export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
-  allPupils,
+  allStudents,
   allTeachers,
   allParents,
   allAssignedTasks,
@@ -32,7 +32,7 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
   return (
     <View>
       <Text style={appSharedStyles.sectionTitle}>Overview</Text>
-      <Text style={appSharedStyles.itemDetailText}>Total Pupils: {allPupils.length}</Text>
+      <Text style={appSharedStyles.itemDetailText}>Total Students: {allStudents.length}</Text>
       <Text style={appSharedStyles.itemDetailText}>Total Teachers: {allTeachers.length}</Text>
       <Text style={appSharedStyles.itemDetailText}>Total Parents: {allParents.length}</Text>
       <Text style={appSharedStyles.itemDetailText}>

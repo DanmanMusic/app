@@ -1,17 +1,17 @@
-// src/views/PupilView.tsx
+// src/views/StudentView.tsx
 import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  ScrollView, // Keep ScrollView for some tabs
   FlatList,
   Button,
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Import NEW user type
+// Import User type
 import { User } from '../types/userTypes';
 
 // Other required types
@@ -22,27 +22,32 @@ import { Announcement } from '../mocks/mockAnnouncements';
 import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
 import { Instrument } from '../mocks/mockInstruments';
 
-// Import NEW helper for display names
+// Import helper functions
 import { getTaskTitle, getInstrumentNames, getUserDisplayName } from '../utils/helpers';
 
 // Shared styles and colors
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 
-// Props interface uses the new User type
-export interface PupilViewProps {
-  user: User; // Use new User type
+// Import the new modal
+import SetGoalModal from '../components/student/modals/SetGoalModal';
+
+// Props interface uses the User type
+export interface StudentViewProps {
+  user: User;
   balance: number;
   assignedTasks: AssignedTask[];
   history: TicketTransaction[];
   rewardsCatalog: RewardItem[];
-  announcements: Announcement[]; // Full list passed down
+  announcements: Announcement[];
   taskLibrary: TaskLibraryItem[];
   mockInstruments: Instrument[];
   onMarkTaskComplete: (taskId: string) => void;
 }
 
-// Component to render an assigned task item (remains the same)
+// --- Sub-Components (AssignedTaskItem, RewardItemStudent, TicketHistoryItem, AnnouncementListItemStudent) ---
+
+// Component to render an assigned task item
 const AssignedTaskItem = ({
   task,
   onMarkComplete,
@@ -75,7 +80,6 @@ const AssignedTaskItem = ({
         Verified: {new Date(task.verifiedDate).toLocaleDateString()}
       </Text>
     )}
-
     {!task.isComplete && (
       <Button title="Mark Complete" onPress={() => onMarkComplete(task.id)} />
     )}
@@ -85,8 +89,8 @@ const AssignedTaskItem = ({
   </View>
 );
 
-// Component to render a reward item in the catalog (remains the same)
-const RewardItemPupil = ({
+// Component to render a reward item in the catalog
+const RewardItemStudent = ({
   item,
   currentBalance,
   isGoal,
@@ -97,57 +101,29 @@ const RewardItemPupil = ({
 }) => {
   const canEarn = currentBalance >= item.cost;
   const ticketsNeeded = item.cost - currentBalance;
-
   return (
-    <View
-      style={[
-        appSharedStyles.itemContainer,
-        canEarn ? styles.rewardItemAffordable : {},
-        isGoal ? styles.rewardItemGoal : {},
-      ]}
-    >
+    <View style={[ appSharedStyles.itemContainer, canEarn ? styles.rewardItemAffordable : {}, isGoal ? styles.rewardItemGoal : {}, ]}>
       <View style={styles.rewardItemContent}>
-        <Image
-          source={{ uri: item.imageUrl }}
-          style={styles.rewardImage}
-          resizeMode="contain"
-        />
+        <Image source={{ uri: item.imageUrl }} style={styles.rewardImage} resizeMode="contain"/>
         <View style={styles.rewardDetails}>
           <Text style={styles.rewardName}>{item.name}</Text>
           <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>{item.cost} Tickets</Text>
           {item.description && <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>}
-          {canEarn ? (
-            <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textSuccess]}>Available Now!</Text>
-          ) : (
-            <Text style={[appSharedStyles.itemDetailText, { color: colors.textPrimary }]}>Need {ticketsNeeded} more tickets</Text>
-          )}
+          {canEarn ? (<Text style={[appSharedStyles.itemDetailText, appSharedStyles.textSuccess]}>Available Now!</Text>) : (<Text style={[appSharedStyles.itemDetailText, { color: colors.textPrimary }]}>Need {ticketsNeeded} more tickets</Text>)}
         </View>
       </View>
     </View>
   );
 };
 
-// Component to render a ticket history item (remains the same)
+// Component to render a ticket history item
 export const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
   <View style={styles.historyItemContainer}>
     <Text style={styles.historyItemTimestamp}>{new Date(item.timestamp).toLocaleString()}</Text>
     <Text style={styles.historyItemDetails}>
-      {item.type === 'task_award'
-        ? 'Task Award'
-        : item.type === 'manual_add'
-          ? 'Manual Add'
-          : item.type === 'manual_subtract'
-            ? 'Manual Subtract'
-            : item.type === 'redemption'
-              ? 'Redemption'
-              : item.type}
+      {item.type === 'task_award' ? 'Task Award' : item.type === 'manual_add' ? 'Manual Add' : item.type === 'manual_subtract' ? 'Manual Subtract' : item.type === 'redemption' ? 'Redemption' : item.type}
       :{' '}
-      <Text
-        style={[
-          styles.historyItemAmount,
-          item.amount > 0 ? { color: colors.success } : { color: colors.danger },
-        ]}
-      >
+      <Text style={[ styles.historyItemAmount, item.amount > 0 ? { color: colors.success } : { color: colors.danger }, ]}>
         {item.amount > 0 ? `+${item.amount}` : item.amount} Tickets
       </Text>
     </Text>
@@ -155,8 +131,8 @@ export const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
   </View>
 );
 
-// Component to render an announcement item (remains the same, used in both views)
-export const AnnouncementItemPupil = ({ item }: { item: Announcement }) => (
+// Component to render an announcement item
+export const AnnouncementListItemStudent = ({ item }: { item: Announcement }) => (
   <View style={appSharedStyles.itemContainer}>
     <Text style={styles.announcementTitle}>{item.title}</Text>
     <Text style={appSharedStyles.itemDetailText}>{item.message}</Text>
@@ -164,41 +140,55 @@ export const AnnouncementItemPupil = ({ item }: { item: Announcement }) => (
   </View>
 );
 
-// Main PupilView component
-export const PupilView: React.FC<PupilViewProps> = ({
+
+// --- Main StudentView Component ---
+export const StudentView: React.FC<StudentViewProps> = ({
   user,
   balance,
   assignedTasks,
   history,
   rewardsCatalog,
-  announcements, // Full list is passed here
+  announcements,
   taskLibrary,
   mockInstruments,
   onMarkTaskComplete,
 }) => {
   // State for goal setting
   const [goalRewardId, setGoalRewardId] = useState<string | null>(null);
-  // State to control which view is shown: 'main' or 'allAnnouncements'
-  const [currentSubView, setCurrentSubView] = useState<'main' | 'allAnnouncements'>('main');
+  // State for active tab
+  type StudentTab = 'dashboard' | 'tasks' | 'rewards' | 'announcements';
+  const [activeTab, setActiveTab] = useState<StudentTab>('dashboard');
+  // State for modal visibility
+  const [isSetGoalModalVisible, setIsSetGoalModalVisible] = useState(false);
 
   const goalReward = rewardsCatalog.find(reward => reward.id === goalRewardId);
-  const progressTowardGoal = goalReward ? (balance / goalReward.cost) * 100 : 0;
+  // Calculate raw progress (can exceed 100)
+  const rawProgressTowardGoal = goalReward ? (balance / goalReward.cost) * 100 : 0;
+  // Calculate clamped progress for display and bar width (max 100)
+  const clampedProgress = Math.min(rawProgressTowardGoal, 100);
+  // Determine if goal is met for color change and text display
+  const goalMet = rawProgressTowardGoal >= 100;
 
-  // Handler for setting/clearing the goal (remains the same)
-  const handleSetGoal = () => {
-    const mockGoalId = 'reward-6'; // Example goal ID
-    const mockGoalItem = rewardsCatalog.find(r => r.id === mockGoalId);
+  // Handler to open the goal modal
+  const handleSetGoalPress = () => {
+    setIsSetGoalModalVisible(true);
+  };
 
-    if (goalRewardId === mockGoalId) {
-      setGoalRewardId(null);
-      alert(`Goal Cleared - You are no longer saving for the ${mockGoalItem?.name || 'item'}.`);
+  // Callback function for the modal to update the goal
+  const handleGoalSelected = (newGoalId: string | null) => {
+    setGoalRewardId(newGoalId); // Update the goal ID state
+    setIsSetGoalModalVisible(false); // Close the modal
+    // Optional: Show confirmation alert
+    if (newGoalId) {
+        const selectedReward = rewardsCatalog.find(r => r.id === newGoalId);
+        alert(`Goal updated! Saving for ${selectedReward?.name || 'item'}.`);
     } else {
-      setGoalRewardId(mockGoalId);
-      alert(`Goal Set! - You are now saving for the ${mockGoalItem?.name || 'item'}!`);
+        alert('Goal cleared!');
     }
   };
 
-  // Filter tasks for display (remains the same)
+
+  // Filter tasks for display
   const activeTasks = assignedTasks.filter(task => !task.isComplete);
   const pendingVerificationTasks = assignedTasks.filter(
     task => task.isComplete && task.verificationStatus === 'pending'
@@ -212,238 +202,161 @@ export const PupilView: React.FC<PupilViewProps> = ({
     );
 
   // Generate student's display name
-  const pupilDisplayName = getUserDisplayName(user);
+  const studentDisplayName = getUserDisplayName(user);
 
-  // --- Render All Announcements View ---
-  if (currentSubView === 'allAnnouncements') {
-    return (
-      <SafeAreaView style={appSharedStyles.safeArea}>
-        {/* Header for All Announcements */}
-        <View style={appSharedStyles.headerContainer}>
-          <Button title="← Back" onPress={() => setCurrentSubView('main')} />
-          <Text style={appSharedStyles.header}>All Announcements</Text>
-          <View style={{ width: 50 }} /> {/* Spacer */}
-        </View>
-        {/* Scrollable list of all announcements */}
-        <FlatList
-          style={appSharedStyles.container} // Use container style for padding
-          data={announcements.sort( // Sort all announcements
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-          )}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => <AnnouncementItemPupil item={item} />} // Reuse the same component
-          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          ListEmptyComponent={() => (
-            <Text style={appSharedStyles.emptyListText}>No announcements found.</Text>
-          )}
-          // Add some padding at the bottom
-          ListFooterComponent={<View style={{ height: 20 }} />}
-        />
-      </SafeAreaView>
-    );
-  }
-
-  // --- Render Main Student View ---
+  // --- Render Main Tabbed View ---
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      <ScrollView style={appSharedStyles.container}>
-        {/* Welcome Header */}
-        <Text style={appSharedStyles.header}>Welcome, {pupilDisplayName}!</Text>
+      <View style={appSharedStyles.container}>
+        {/* Header */}
+        <Text style={appSharedStyles.header}>Welcome, {studentDisplayName}!</Text>
         <Text style={styles.instrumentText}>
           Instrument(s): {getInstrumentNames(user.instrumentIds, mockInstruments)}
         </Text>
         <Text style={[styles.balance, appSharedStyles.textGold]}>Current Tickets: {balance}</Text>
 
-        {/* My Goal Section (remains the same) */}
-        <Text style={appSharedStyles.sectionTitle}>My Goal</Text>
-        {goalReward ? (
-          <View style={styles.goalContainer}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-              <Image
-                source={{ uri: goalReward.imageUrl }}
-                style={styles.goalImage}
-                resizeMode="contain"
-              />
-              <View style={{ flex: 1, marginLeft: 10 }}>
-                <Text style={styles.goalText}>Saving for: {goalReward.name}</Text>
-                <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>{goalReward.cost} Tickets</Text>
-              </View>
-            </View>
-            <Text style={styles.progressText}>
-              Progress: {balance} / {goalReward.cost} ({progressTowardGoal.toFixed(1)}%)
-            </Text>
-            <View style={styles.progressBarBackground}>
-              <View
-                style={[styles.progressBarFill, { width: `${Math.min(progressTowardGoal, 100)}%` }]}
-              />
-            </View>
-            <Button title="Change Goal (Mock)" onPress={handleSetGoal} />
-          </View>
-        ) : (
-          <View style={styles.goalContainer}>
-            <Text style={styles.goalText}>No goal set yet.</Text>
-            <Button title="Set a Goal" onPress={handleSetGoal} />
-          </View>
-        )}
+        {/* Tab Header Buttons */}
+        <View style={styles.tabContainer}>
+           <Button title="Dashboard" onPress={() => setActiveTab('dashboard')} color={activeTab === 'dashboard' ? colors.primary : colors.secondary}/>
+           <Button title="Tasks" onPress={() => setActiveTab('tasks')} color={activeTab === 'tasks' ? colors.primary : colors.secondary}/>
+           <Button title="Rewards" onPress={() => setActiveTab('rewards')} color={activeTab === 'rewards' ? colors.primary : colors.secondary}/>
+           <Button title="Announcements" onPress={() => setActiveTab('announcements')} color={activeTab === 'announcements' ? colors.primary : colors.secondary}/>
+        </View>
 
-        {/* Rewards Catalog Section (remains the same) */}
-        <Text style={appSharedStyles.sectionTitle}>Rewards Catalog</Text>
-        <FlatList
-          data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <RewardItemPupil
-              item={item}
-              currentBalance={balance}
-              isGoal={item.id === goalRewardId}
-            />
-          )}
-          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>No rewards found.</Text>}
-          scrollEnabled={false}
-          contentContainerStyle={styles.listContentContainer}
-        />
-
-        {/* Assigned Tasks Section (remains the same) */}
-        <Text style={appSharedStyles.sectionTitle}>Assigned Tasks ({activeTasks.length})</Text>
-        <FlatList
-          data={activeTasks}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <AssignedTaskItem
-              task={item}
-              onMarkComplete={onMarkTaskComplete}
-              taskLibrary={taskLibrary}
-            />
-          )}
-          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          ListEmptyComponent={() => (
-            <Text style={appSharedStyles.emptyListText}>No active tasks assigned.</Text>
-          )}
-          scrollEnabled={false}
-          contentContainerStyle={styles.listContentContainer}
-        />
-
-        {/* Pending Verification Section (remains the same) */}
-        {pendingVerificationTasks.length > 0 && (
-          <>
-            <Text style={appSharedStyles.sectionTitle}>
-              Pending Verification ({pendingVerificationTasks.length})
-            </Text>
-            <FlatList
-              data={pendingVerificationTasks}
-              keyExtractor={item => item.id}
-              renderItem={({ item }) => (
-                <AssignedTaskItem
-                  task={item}
-                  onMarkComplete={onMarkTaskComplete}
-                  taskLibrary={taskLibrary}
-                />
+        {/* Conditional Content Area */}
+        <View style={styles.contentArea}>
+          {/* Dashboard Tab */}
+          {activeTab === 'dashboard' && (
+            <ScrollView>
+              {/* My Goal Section */}
+              <Text style={appSharedStyles.sectionTitle}>My Goal</Text>
+              {goalReward ? (
+                <View style={styles.goalContainer}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                    <Image source={{ uri: goalReward.imageUrl }} style={styles.goalImage} resizeMode="contain"/>
+                    <View style={{ flex: 1, marginLeft: 10 }}>
+                      <Text style={styles.goalText}>Saving for: {goalReward.name}</Text>
+                      <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>{goalReward.cost} Tickets</Text>
+                    </View>
+                  </View>
+                  {/* --- Corrected PROGRESS TEXT --- */}
+                  {goalMet ? (
+                     <Text style={styles.progressText}>
+                        Progress: {goalReward.cost} / {goalReward.cost} (100.0%)
+                        {/* Add surplus text only if balance is strictly greater */}
+                        {balance > goalReward.cost && ` with ${balance - goalReward.cost} remaining`}
+                     </Text>
+                  ) : (
+                     <Text style={styles.progressText}>
+                        Progress: {balance} / {goalReward.cost} ({clampedProgress.toFixed(1)}%)
+                     </Text>
+                  )}
+                  {/* --- END Corrected PROGRESS TEXT --- */}
+                  <View style={styles.progressBarBackground}>
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        {
+                            width: `${clampedProgress}%`,
+                            backgroundColor: goalMet ? colors.success : colors.gold
+                        }
+                      ]}
+                    />
+                  </View>
+                  <Button title="Change Goal" onPress={handleSetGoalPress} />
+                </View>
+              ) : (
+                <View style={styles.goalContainer}>
+                  <Text style={styles.goalText}>No goal set yet.</Text>
+                  <Button title="Set a Goal" onPress={handleSetGoalPress} />
+                </View>
               )}
-              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-              ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>None</Text>}
-              scrollEnabled={false}
-              contentContainerStyle={styles.listContentContainer}
-            />
-          </>
-        )}
 
-        {/* Recently Completed Section (remains the same) */}
-        {recentlyCompletedTasks.length > 0 && (
-          <>
-            <Text style={appSharedStyles.sectionTitle}>
-              Recently Completed Tasks ({recentlyCompletedTasks.length})
-            </Text>
-            <FlatList
-              data={recentlyCompletedTasks}
-              keyExtractor={item => item.id}
-              renderItem={({ item }) => (
-                <AssignedTaskItem
-                  task={item}
-                  onMarkComplete={onMarkTaskComplete}
-                  taskLibrary={taskLibrary}
-                />
-              )}
-              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-              ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>None</Text>}
-              scrollEnabled={false}
-              contentContainerStyle={styles.listContentContainer}
-            />
-          </>
-        )}
+              {/* Recent History Section */}
+              <Text style={appSharedStyles.sectionTitle}>Recent History</Text>
+              <FlatList data={history.slice(0, 5)} keyExtractor={item => `history-${item.id}`} renderItem={({ item }) => <TicketHistoryItem item={item} />} ItemSeparatorComponent={() => <View style={{ height: 5 }} />} ListEmptyComponent={() => (<Text style={appSharedStyles.emptyListText}>No history yet.</Text>)} scrollEnabled={false} contentContainerStyle={styles.listContentContainer}/>
+              {history.length > 5 && (<View style={{ alignItems: 'flex-start', marginTop: 10 }}><Button title="View Full History (Mock)" onPress={() => alert('Navigate to full history screen')} /></View>)}
 
-        {/* Recent History Section (remains the same) */}
-        <Text style={appSharedStyles.sectionTitle}>Recent History</Text>
-        <FlatList
-          data={history.slice(0, 5)}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => <TicketHistoryItem item={item} />}
-          ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
-          ListEmptyComponent={() => (
-            <Text style={appSharedStyles.emptyListText}>No history yet.</Text>
+               <View style={{ height: 30 }} />
+            </ScrollView>
           )}
-          scrollEnabled={false}
-          contentContainerStyle={styles.listContentContainer}
-        />
-        {history.length > 5 && (
-          <View style={{ alignItems: 'flex-start', marginTop: 10 }}>
-            <Button
-              title="View Full History (Mock)"
-              onPress={() => alert('Navigate to full history screen')}
-            />
-          </View>
-        )}
 
-        {/* Announcements Section */}
-        <Text style={appSharedStyles.sectionTitle}>Announcements</Text>
-        <FlatList
-          data={announcements.slice(0, 3)} // Still show only first 3 here
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => <AnnouncementItemPupil item={item} />}
-          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>No announcements.</Text>}
-          scrollEnabled={false}
-          contentContainerStyle={styles.listContentContainer}
-        />
-        {announcements.length > 3 && (
-          <View style={{ alignItems: 'flex-start', marginTop: 10 }}>
-            <Button
-              // Update button text and action
-              title="View All Announcements"
-              onPress={() => setCurrentSubView('allAnnouncements')} // Change state to show the full list view
-            />
-          </View>
-        )}
+          {/* Tasks Tab */}
+          {activeTab === 'tasks' && (
+            <ScrollView>
+              <Text style={appSharedStyles.sectionTitle}>Active Tasks ({activeTasks.length})</Text>
+              <FlatList data={activeTasks} keyExtractor={item => `active-task-${item.id}`} renderItem={({ item }) => (<AssignedTaskItem task={item} onMarkComplete={onMarkTaskComplete} taskLibrary={taskLibrary}/>)} ItemSeparatorComponent={() => <View style={{ height: 10 }} />} ListEmptyComponent={() => (<Text style={appSharedStyles.emptyListText}>No active tasks assigned.</Text>)} scrollEnabled={false} contentContainerStyle={styles.listContentContainer}/>
+              {pendingVerificationTasks.length > 0 && (<>
+                  <Text style={appSharedStyles.sectionTitle}>Pending Verification ({pendingVerificationTasks.length})</Text>
+                  <FlatList data={pendingVerificationTasks} keyExtractor={item => `pending-task-${item.id}`} renderItem={({ item }) => (<AssignedTaskItem task={item} onMarkComplete={onMarkTaskComplete} taskLibrary={taskLibrary}/>)} ItemSeparatorComponent={() => <View style={{ height: 10 }} />} ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>None</Text>} scrollEnabled={false} contentContainerStyle={styles.listContentContainer}/>
+                </>)}
+              {recentlyCompletedTasks.length > 0 && (<>
+                  <Text style={appSharedStyles.sectionTitle}>Recently Completed Tasks ({recentlyCompletedTasks.length})</Text>
+                  <FlatList data={recentlyCompletedTasks} keyExtractor={item => `completed-task-${item.id}`} renderItem={({ item }) => (<AssignedTaskItem task={item} onMarkComplete={onMarkTaskComplete} taskLibrary={taskLibrary}/>)} ItemSeparatorComponent={() => <View style={{ height: 10 }} />} ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>None</Text>} scrollEnabled={false} contentContainerStyle={styles.listContentContainer}/>
+                </>)}
+              <View style={{ height: 30 }} />
+            </ScrollView>
+          )}
 
-        {/* Bottom Spacer */}
-        <View style={{ marginTop: 20, marginBottom: 40 }}></View>
-      </ScrollView>
+          {/* Rewards Tab */}
+          {activeTab === 'rewards' && (
+            <FlatList data={rewardsCatalog.sort((a, b) => a.cost - b.cost)} keyExtractor={item => `reward-${item.id}`} renderItem={({ item }) => (<RewardItemStudent item={item} currentBalance={balance} isGoal={item.id === goalRewardId}/>)} ItemSeparatorComponent={() => <View style={{ height: 10 }} />} ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>No rewards found.</Text>} contentContainerStyle={styles.listContentContainer} ListFooterComponent={<View style={{ height: 20 }}/>} />
+          )}
+
+          {/* Announcements Tab */}
+          {activeTab === 'announcements' && (
+             <FlatList data={announcements.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())} keyExtractor={item => `announcement-${item.id}`} renderItem={({ item }) => <AnnouncementListItemStudent item={item} />} ItemSeparatorComponent={() => <View style={{ height: 10 }} />} ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>No announcements found.</Text>} contentContainerStyle={styles.listContentContainer} ListFooterComponent={<View style={{ height: 20 }}/>} />
+          )}
+        </View>
+      </View>
+
+      {/* Render the SetGoalModal */}
+      <SetGoalModal
+          visible={isSetGoalModalVisible}
+          onClose={() => setIsSetGoalModalVisible(false)}
+          rewardsCatalog={rewardsCatalog}
+          currentBalance={balance}
+          currentGoalId={goalRewardId}
+          onSetGoal={handleGoalSelected}
+      />
     </SafeAreaView>
   );
 };
 
-// Styles (remains the same)
+// Styles
 const styles = StyleSheet.create({
   instrumentText: {
     fontSize: 16,
     color: colors.textSecondary,
-    marginBottom: 10,
+    marginBottom: 5,
   },
   balance: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 25,
+    marginBottom: 15,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center', // Kept 'center'
+    flexWrap: 'wrap',
+    marginBottom: 15,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderPrimary,
+    gap: 10, // Kept gap
+  },
+  contentArea: {
+    flex: 1,
   },
   listContentContainer: {
-    // For FlatLists inside ScrollView with scrollEnabled=false
-    // No specific style needed usually, but good to have the definition
+    paddingBottom: 5,
   },
   goalContainer: {
     backgroundColor: colors.backgroundPrimary,
     padding: 15,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.borderHighlight, // Use highlight color for goal border
+    borderColor: colors.borderHighlight,
     marginBottom: 20,
   },
   goalImage: {
@@ -465,14 +378,13 @@ const styles = StyleSheet.create({
   },
   progressBarBackground: {
     height: 10,
-    backgroundColor: '#eee', // Light grey background
+    backgroundColor: '#eee',
     borderRadius: 5,
     overflow: 'hidden',
     marginBottom: 10,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: colors.gold, // Gold fill for progress
     borderRadius: 5,
   },
   taskItemStatus: {
@@ -482,18 +394,18 @@ const styles = StyleSheet.create({
   },
   pendingNote: {
     fontSize: 13,
-    color: colors.warning, // Use warning color
+    color: colors.warning,
     fontStyle: 'italic',
-    marginTop: 5, // Add space above note
+    marginTop: 5,
   },
   rewardItemAffordable: {
-    borderColor: colors.success, // Green border for affordable items
+    borderColor: colors.success,
     borderWidth: 2,
   },
   rewardItemGoal: {
-    borderColor: colors.primary, // Primary color border for the goal item
+    borderColor: colors.primary,
     borderWidth: 2,
-    backgroundColor: colors.backgroundHighlight, // Subtle highlight background for goal
+    backgroundColor: colors.backgroundHighlight,
   },
   rewardItemContent: {
     flexDirection: 'row',
@@ -517,8 +429,8 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   historyItemContainer: {
-    ...appSharedStyles.itemContainer, // Inherit base styles
-    backgroundColor: colors.backgroundGrey, // Specific background for history
+    ...appSharedStyles.itemContainer,
+    backgroundColor: colors.backgroundGrey,
     padding: 10,
     marginBottom: 5,
     borderRadius: 6,
@@ -533,7 +445,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   historyItemAmount: {
-    fontWeight: 'bold', // Make amount stand out
+    fontWeight: 'bold',
   },
   historyItemNotes: {
     fontSize: 13,

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Button, FlatList } from 'react-native';
 
 import { Announcement } from '../../mocks/mockAnnouncements';
-import { AnnouncementItemPupil } from '../../views/StudentView'; // Reusing Student view for display
+import { AnnouncementListItemStudent } from '../../views/StudentView'; // Reusing Student view for display
 
 import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
@@ -91,7 +91,7 @@ export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps>
         renderItem={({ item }) => (
           <View style={appSharedStyles.itemContainer}>
             {/* Reusing Student view item for display is fine for mock */}
-            <AnnouncementItemPupil item={item} />
+            <AnnouncementListItemStudent item={item} />
             <View style={adminSharedStyles.itemActions}>
               {/* Wire up Edit/Delete buttons */}
               <Button title="Edit" onPress={() => handleEditPress(item)} />

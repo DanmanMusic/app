@@ -17,7 +17,7 @@ interface CreateUserModalProps {
   visible: boolean;
   onClose: () => void;
   onCreateUser: (userData: Omit<User, 'id'>) => void;
-  // Changed prop: Pass allTeachers instead of allPupils
+  // Changed prop: Pass allTeachers instead of allStudents
   allTeachers: User[]; // Expect full User objects for teachers
   mockInstruments: Instrument[];
 }
@@ -66,7 +66,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
       // Conditionally add role-specific properties
       ...(role === 'student' && {
         instrumentIds: instrumentIds,
-        linkedTeacherIds: linkedTeacherIds, // Add linked teacher IDs for pupils
+        linkedTeacherIds: linkedTeacherIds, // Add linked teacher IDs for studentss
       }),
       // Removed teacher/parent specific linking (linkedStudentIds)
     };

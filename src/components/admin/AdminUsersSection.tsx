@@ -16,7 +16,7 @@ import { colors } from '../../styles/colors';
 import CreateUserModal from './modals/CreateUserModal';
 
 interface AdminUsersSectionProps {
-  allPupils: SimplifiedStudent[];
+  allStudents: SimplifiedStudent[];
   allTeachers: SimplifiedUser[];
   allParents: SimplifiedUser[];
   mockInstruments: Instrument[];
@@ -47,8 +47,8 @@ const AdminUserItem = ({
 );
 
 // ***** DEFINITION RESTORED *****
-// Renders Pupils using the SimplifiedStudent structure (name = display name)
-const AdminPupilItem = ({
+// Renders Students using the SimplifiedStudent structure (name = display name)
+const AdminStudentItem = ({
   student,
   mockInstruments,
   onViewManage,
@@ -56,7 +56,7 @@ const AdminPupilItem = ({
 }: {
   student: SimplifiedStudent;
   mockInstruments: Instrument[];
-  onViewManage: (pupilId: string, role: UserRole) => void;
+  onViewManage: (studentId: string, role: UserRole) => void;
   onAssignTask: (studentId: string) => void; // Define prop type
 }) => (
   <View style={appSharedStyles.itemContainer}>
@@ -75,24 +75,24 @@ const AdminPupilItem = ({
 );
 
 export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
-  allPupils,
+  allStudents,
   allTeachers,
   allParents,
   mockInstruments,
   onCreateUser,
   onViewManageUser,
-  onAssignTask, // Ensure this prop is received if AdminPupilItem uses it
+  onAssignTask, // Ensure this prop is received if AdminStudentItem uses it
   taskLibrary,
   isCreateUserModalVisible,
   setIsCreateUserModalVisible,
   allUsers,
 }) => {
   const handleAssignTaskToStudent = (studentId: string) => {
-    const studentInfo = allPupils.find(p => p.id === studentId);
+    const studentInfo = allStudents.find(p => p.id === studentId);
     const studentDisplayName = studentInfo ? studentInfo.name : studentId;
     alert(`Mock Assign Task to ${studentDisplayName}`);
     // In a real scenario, you might call the onAssignTask prop here or trigger another modal.
-    // For now, AdminPupilItem calls the mock directly, but the prop could be used.
+    // For now, AdminStudentItem calls the mock directly, but the prop could be used.
   };
 
   // Filter the full user list to get just teachers for the modal
@@ -107,14 +107,14 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
         <Button title="Create New User" onPress={() => setIsCreateUserModalVisible(true)} />
       </View>
 
-      {/* Pupils List */}
-      <Text style={adminSharedStyles.sectionSubTitle}>Pupils ({allPupils.length})</Text>
+      {/* Students List */}
+      <Text style={adminSharedStyles.sectionSubTitle}>Students ({allStudents.length})</Text>
       <FlatList
-        data={allPupils.sort((a, b) => a.name.localeCompare(b.name))}
+        data={allStudents.sort((a, b) => a.name.localeCompare(b.name))}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           // ***** USAGE RESTORED *****
-          <AdminPupilItem
+          <AdminStudentItem
             student={item}
             mockInstruments={mockInstruments}
             onViewManage={onViewManageUser}
@@ -124,7 +124,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
         scrollEnabled={false}
         ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
         ListEmptyComponent={() => (
-          <Text style={appSharedStyles.emptyListText}>No pupils found.</Text>
+          <Text style={appSharedStyles.emptyListText}>No students found.</Text>
         )}
       />
 

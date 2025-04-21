@@ -10,8 +10,8 @@ import { Instrument } from '../mocks/mockInstruments';
 // Import NEW helper for display names
 import { getInstrumentNames, getUserDisplayName } from '../utils/helpers';
 
-// PupilViewProps uses the new User type indirectly
-import { PupilView, PupilViewProps } from './StudentView';
+// StudentViewProps uses the new User type indirectly
+import { StudentView, StudentViewProps } from './StudentView';
 
 // Shared styles and colors
 import { appSharedStyles } from '../styles/appSharedStyles';
@@ -27,18 +27,18 @@ interface SimplifiedStudent {
   balance: number;
 }
 
-// This interface is essentially PupilViewProps, just renamed for context
-// PupilViewProps already uses the updated User type internally
-interface ParentViewingStudentData extends PupilViewProps {}
+// This interface is essentially StudentViewProps, just renamed for context
+// StudentViewProps already uses the updated User type internally
+interface ParentViewingStudentData extends StudentViewProps {}
 
 // Props interface uses the new User type and updated SimplifiedStudent
 interface ParentViewProps {
   user: User; // Use new User type for the logged-in parent
   linkedStudents: SimplifiedStudent[]; // Uses display name
   currentViewingStudentId?: string;
-  currentViewingStudentData?: ParentViewingStudentData; // Uses new User type via PupilViewProps
+  currentViewingStudentData?: ParentViewingStudentData; // Uses new User type via StudentViewProps
   setViewingStudentId: (studentId: string) => void;
-  // Pass down mock action function relevant to ParentView (same as PupilView)
+  // Pass down mock action function relevant to ParentView (same as StudentView)
   onMarkTaskComplete: (taskId: string) => void;
   mockInstruments: Instrument[];
 }
@@ -101,7 +101,7 @@ export const ParentView: React.FC<ParentViewProps> = ({
     );
   }
 
-  // If a child is selected, render their profile using PupilView
+  // If a child is selected, render their profile using StudentView
 
   // Get the display name of the child being viewed
   // currentViewingStudentData.user contains the full User object for the child
@@ -116,10 +116,10 @@ export const ParentView: React.FC<ParentViewProps> = ({
         <View style={{ width: 50 }} /> {/* Spacer */}
       </View>
 
-      {/* Render the PupilView component for the selected child */}
-      {/* PupilView itself now handles displaying names correctly using its user prop */}
-      <PupilView
-        {...currentViewingStudentData} // Spread the props needed by PupilView
+      {/* Render the StudentView component for the selected child */}
+      {/* StudentView itself now handles displaying names correctly using its user prop */}
+      <StudentView
+        {...currentViewingStudentData} // Spread the props needed by StudentView
         onMarkTaskComplete={onMarkTaskComplete} // Pass down the action prop
         mockInstruments={mockInstruments}
       />

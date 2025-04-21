@@ -8,7 +8,7 @@ export interface RewardItem {
   description?: string; // Optional description
 }
 
-export const mockRewardsCatalog: RewardItem[] = [
+export const initialMockRewardsCatalog: RewardItem[] = [
   {
     id: 'reward-1',
     name: 'Snickers Bar',
@@ -59,3 +59,5 @@ export const mockRewardsCatalog: RewardItem[] = [
     description: 'Groove machine!',
   }, // Used your example
 ];
+
+export const mockRewardsCatalog = initialMockRewardsCatalog;

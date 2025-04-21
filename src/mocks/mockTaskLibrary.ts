@@ -7,7 +7,8 @@ export interface TaskLibraryItem {
   baseTickets: number;
 }
 
-export const mockTaskLibrary: TaskLibraryItem[] = [
+// Ensure this export exists for initial state
+export const initialMockTaskLibrary: TaskLibraryItem[] = [
   {
     id: 'tasklib-1',
     title: 'Practice 15 minutes',
@@ -33,3 +34,6 @@ export const mockTaskLibrary: TaskLibraryItem[] = [
     baseTickets: 15,
   },
 ];
+
+// Rename existing export if needed
+export const mockTaskLibrary = initialMockTaskLibrary;

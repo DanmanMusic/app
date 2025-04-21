@@ -1,6 +1,6 @@
 // src/views/PublicView.tsx
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, FlatList, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, Image, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Import types for mock data
@@ -16,6 +16,7 @@ interface PublicViewProps {
   announcements: Announcement[];
 }
 
+// Sub-components (RewardItemPublic, AnnouncementListItem) remain the same
 const RewardItemPublic = ({ item }: { item: RewardItem }) => (
   <View style={appSharedStyles.itemContainer}>
     <View style={styles.rewardItemContent}>
@@ -33,7 +34,7 @@ const RewardItemPublic = ({ item }: { item: RewardItem }) => (
   </View>
 );
 
-const AnnouncementItem = ({ item }: { item: Announcement }) => (
+const AnnouncementListItem = ({ item }: { item: Announcement }) => (
   <View style={appSharedStyles.itemContainer}>
     <Text style={styles.announcementTitle}>{item.title}</Text>
     <Text style={appSharedStyles.itemDetailText}>{item.message}</Text>
@@ -41,41 +42,82 @@ const AnnouncementItem = ({ item }: { item: Announcement }) => (
   </View>
 );
 
+// Define the possible tabs - Add 'welcome'
+type PublicTab = 'welcome' | 'rewards' | 'announcements';
+
 export const PublicView: React.FC<PublicViewProps> = ({ rewardsCatalog, announcements }) => {
+  // State to track the active tab - Default to 'welcome'
+  const [activeTab, setActiveTab] = useState<PublicTab>('welcome');
+
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      <ScrollView style={appSharedStyles.container}>
+      {/* Use a standard View container; FlatList will handle scrolling */}
+      <View style={appSharedStyles.container}>
         <Text style={[appSharedStyles.header, styles.publicHeader]}>Danmans Music School</Text>
         <Text style={styles.subheader}>Virtual Ticket Rewards Program</Text>
 
-        <Text style={appSharedStyles.sectionTitle}>Rewards Catalog</Text>
-        <FlatList
-          data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => <RewardItemPublic item={item} />}
-          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>No rewards found.</Text>}
-          scrollEnabled={false}
-          contentContainerStyle={styles.listContentContainer}
-        />
+        {/* Tab Header Buttons */}
+        <View style={styles.tabContainer}>
+          {/* Add Welcome Tab Button */}
+          <Button
+            title="Welcome"
+            onPress={() => setActiveTab('welcome')}
+            color={activeTab === 'welcome' ? colors.primary : colors.secondary}
+          />
+          <Button
+            title="Announcements"
+            onPress={() => setActiveTab('announcements')}
+            color={activeTab === 'announcements' ? colors.primary : colors.secondary}
+          />
+          <Button
+            title="Rewards Catalog"
+            onPress={() => setActiveTab('rewards')}
+            color={activeTab === 'rewards' ? colors.primary : colors.secondary}
+          />
+        </View>
 
-        <Text style={appSharedStyles.sectionTitle}>Announcements</Text>
-        <FlatList
-          data={announcements.sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        {/* Conditional Content Area */}
+        <View style={styles.contentArea}>
+          {/* Add Welcome Tab Content Area (Blank for now) */}
+          {activeTab === 'welcome' && (
+            <View style={styles.tabContentPlaceholder}>
+              {/* Intentionally blank - add welcome content later */}
+              {/* <Text>Welcome Content Goes Here...</Text> */}
+            </View>
           )}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => <AnnouncementItem item={item} />}
-          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          ListEmptyComponent={() => (
-            <Text style={appSharedStyles.emptyListText}>No announcements found.</Text>
-          )}
-          scrollEnabled={false}
-          contentContainerStyle={styles.listContentContainer}
-        />
 
+          {activeTab === 'rewards' && (
+            <FlatList
+              data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
+              keyExtractor={item => `reward-${item.id}`}
+              renderItem={({ item }) => <RewardItemPublic item={item} />}
+              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+              ListEmptyComponent={() => <Text style={appSharedStyles.emptyListText}>No rewards found.</Text>}
+              contentContainerStyle={styles.listContentContainer}
+              ListFooterComponent={<View style={{ height: 20 }}/>}
+            />
+          )}
+
+          {activeTab === 'announcements' && (
+            <FlatList
+              data={announcements.sort(
+                (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+              )}
+              keyExtractor={item => `announcement-${item.id}`}
+              renderItem={({ item }) => <AnnouncementListItem item={item} />}
+              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+              ListEmptyComponent={() => (
+                <Text style={appSharedStyles.emptyListText}>No announcements found.</Text>
+              )}
+              contentContainerStyle={styles.listContentContainer}
+              ListFooterComponent={<View style={{ height: 20 }}/>}
+            />
+          )}
+        </View>
+
+        {/* Footer text could remain outside the conditional area */}
         <Text style={styles.footer}>Login to track your progress and earn tickets!</Text>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -89,8 +131,27 @@ const styles = StyleSheet.create({
   subheader: {
     fontSize: 18,
     textAlign: 'center',
-    marginBottom: 25,
+    marginBottom: 20,
     color: colors.textSecondary,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 20,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderPrimary,
+    gap: 10,
+  },
+  contentArea: {
+    flex: 1,
+  },
+  // Placeholder style for the blank tab content area
+  tabContentPlaceholder: {
+    flex: 1,
+    // You could add padding or a background color for visual indication
+    // padding: 20,
+    // backgroundColor: colors.backgroundGrey,
   },
   rewardItemContent: {
     flexDirection: 'row',
@@ -130,8 +191,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     textAlign: 'center',
-    marginTop: 40,
-    marginBottom: 20,
+    marginTop: 20,
+    marginBottom: 10,
     fontSize: 16,
     color: colors.textSecondary,
   },
