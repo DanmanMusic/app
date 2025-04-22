@@ -15,74 +15,84 @@ These are the major areas and tasks involved in building the application based o
 
 ### [x] 1. Frontend First: Mock UI & View Prototyping
 
-- [x] Refine User Data Model: Split `name` into `firstName`, `lastName`, `nickname` (optional). Define structure in `src/types/userTypes.ts`. Update mocks, helpers (`getUserDisplayName`), and all views/components using user names. Update Create/Edit User modals. Add `linkedTeacherIds` to Student.
-- [x] Complete `student` -> `student` refactor across codebase (views, types, mocks, props, logic).
-- [x] Set up Mock Data: Create representative JavaScript objects/arrays to simulate the data structure for various users (including student instruments), sample tasks, ticket data, rewards, announcements, and the instrument list.
-- [x] Implement Development View Selector: Create a simple, temporary mechanism visible only in development builds that allows switching between simulating different user roles and navigating to key screens.
-- [x] Build Core Views (Using Mock Data): Develop the React Native screens and components for each user role's main functional areas:
-    - [x] Public / Non-Logged-in View: Implement the public Rewards Catalog and Announcements display. Added basic tab navigation ('Welcome', 'Announcements', 'Rewards Catalog').
-    - [x] Student View: Dashboard/Home (display assigned instrument(s), balance, goal), Assigned Task List, Rewards Catalog, Ticket Transaction History, Announcements. Added tab navigation ('Dashboard', 'Tasks', 'Rewards', 'Announcements'). Implemented Goal setting/changing via modal.
-    - [x] Teacher View: Student List (display student instrument(s)), Task Assignment, Pending Verification List, Task Verification screen, Access to view student details (Task List, History, Balance, Catalog, Instruments).
-    - [x] Parent View: Family Dashboard/Student selector (display child instrument(s)), Navigation to Student view, "Add Another Student" UI.
-    - [x] Admin View: Placeholder/simplified UI for key management workflows, including Instrument List management.
-- [x] Refine UI/UX: Iterate on the visual design, layout, and user flow based on internal review or feedback.
-    - [x] Implement multi-step task verification modal with status selection, point adjustment via slider, and re-assign option (Note: Added `@react-native-community/slider` dependency).
-    - [x] Replace placeholder images with actual Image components for Rewards Catalog items in Student, Public, and Admin views. Added Instrument icons.
-    - [x] Break down large AdminView.tsx file into smaller section components for better organization and readability, including extracting the student detail view and creating shared styles for Admin components.
-    - [x] Refine mock button labels in Admin views to clarify implemented vs. placeholder actions. (Ongoing as mock flows are implemented)
-    - [x] Consolidate color palette and common styles into `src/styles/colors.ts` and `src/styles/appSharedStyles.ts`.
-    - [x] Refactor views (`App.tsx`, `StudentView.tsx`, `TeacherView.tsx`, `ParentView.tsx`, `PublicView.tsx`) and key components (`TaskVerificationModal.tsx`, `src/components/admin/*`) to use shared styles and colors.
-    - [x] Implement Context API (`AuthContext`, `DataContext`) to manage state and simulation functions, significantly simplifying `App.tsx` and view props. Refactored all views (`Public`, `Student`, `Teacher`, `Parent`, `Admin`) to use context hooks.
-    - [x] Implement Mock UI for "Create User" via a modal in the Admin Users section (Excluding Parent role, moved Teacher linking to Student). (Handled by `CreateUserModal` and context).
-    - [x] Implement mock UI flow for Editing/Deleting Users: Refined Edit User Modal (conditional nickname, student fields, removed delete), moved state/rendering to `AdminStudentDetailView` to fix launch timing. Delete confirmed via detail view. (Handled by `EditUserModal`, `ConfirmationModal` and context).
-    - [ ] Implement Mock UI for other User Interactions: Replace placeholder alerts for Admin CRUD operations on other entities (Task Library items, Rewards, Instruments) and other flows (e.g., Teacher/Parent "Add Another Student" flows) with actual mock UI flows. *(Partially complete - CRUD modals exist, but some specific flows still use alerts)*.
-        - [ ] **Admin View:**
-            - [x] Implement mock UI flow for Creating/Editing/Deleting Task Library Items. (Modals created, state simulation working via Context)
-            - [x] Implement mock UI flow for Creating/Editing/Deleting Rewards Catalog Items. (Modals created, state simulation working via Context)
-            - [x] Implement mock UI flow for Creating/Editing/Deleting Announcements (Modals created, state simulation working via Context).
-            - [x] Implement mock UI flow for Creating/Editing/Deleting Instruments (Modals created, state simulation working via Context).
-            - [ ] Implement mock UI flow for Manual Ticket Adjustments (including input for amount and notes). *(Currently uses context with fixed amount)*.
-            - [ ] Implement mock UI flow for Redeeming Rewards (selecting reward and student). *(Currently uses context with fixed reward)*.
-            - [x] Implement mock UI flow for Assigning Tasks (selecting tasks and students). (Modal created, state simulation working via Context)
-            - [x] Implement mock screen/list for "View All Assigned Tasks". (Modal created with filtering, state simulation working via Context)
-            - [ ] Implement mock screen/list for "View Full History" (from student detail). *(Currently uses alert)*.
-        - [ ] **Teacher View:**
-            - [ ] Implement "Login (QR)" button in student profile view. *(Currently uses alert)*.
-            - [ ] Implement mock UI flow for Assigning Tasks (selecting tasks and students). *(Currently uses alert from profile, flow from main Task screen uses alert)*.
-            - [ ] Implement mock screen/list for "View All Students". *(Currently uses alert)*.
-            - [x] Implement mock UI flow for Deleting Assigned Tasks (from student profile view - uses context action).
-        - [ ] **Parent View:**
-            - [ ] Implement mock UI flow for "Add Another Student" (simulating QR scan input). *(Currently uses alert)*.
-            - [ ] Implement mock screen/list for "View Full History" (from student profile view). *(Student view uses alert)*.
-        - [ ] **Student View:**
-            - [x] Implement mock UI flow for "Set/Change Goal" (Modal implemented).
-            - [ ] Implement mock screen/list for "View Full History". *(Currently uses alert)*.
-            - [x] Implement mock screen/list for "View All Announcements" (Now handled via Announcements Tab).
+- [x] Refine User Data Model: Split `name` into `firstName`, `lastName`, `nickname`. Define structure. Update mocks, helpers, components. Added `linkedTeacherIds`, `linkedStudentIds`, `instrumentIds`, `status`.
+- [x] Complete `student` -> `student` refactor across codebase.
+- [x] Set up Mock Data: Created initial mock data. Added more students for pagination testing.
+- [x] Implement Development View Selector.
+- [x] Build Core Views (Using Mock Data):
+    - [x] Public / Non-Logged-in View (incl. Tabs).
+    - [x] Student View (incl. Tabs, Goal Modal).
+    - [x] Teacher View (incl. Student list/profile access).
+    - [x] Parent View (incl. Student selection/view).
+    - [x] Admin View (basic structure).
+- [x] Refine UI/UX:
+    - [x] Implement multi-step task verification modal.
+    - [x] Use actual Image components. Added Instrument icons.
+    - [x] Break down AdminView into section components.
+    - [x] Refine mock button labels.
+    - [x] Consolidate styles (`colors.ts`, `appSharedStyles.ts`).
+    - [x] Refactor views/components to use shared styles/colors.
+    - [x] Implement Context API (`AuthContext`, `DataContext`). Refactored views to use context.
+    - [x] Implement Mock UI for "Create User" via modal.
+    - [x] Implement Mock UI flow for Editing Users via modal.
+    - [x] Refactor Task Assignment: Decoupled `AssignedTask` from `TaskLibrary`, allowing Ad-Hoc tasks via `AssignTaskModal`. Updated related context, views, components.
+    - [x] Implement User Deactivate/Delete Flow: Replaced simple delete with modal offering "Deactivate"/"Reactivate" (primary) and "Permanent Delete" (secondary). Added `status` field to User. Updated `DataContext` (toggle simulation, delete simulation). Updated `AdminStudentDetailView` buttons and modal trigger. Disabled actions for inactive users in detail view. Filtered inactive users from Teacher view list and Assign Task modal.
+    - [x] Implement Pagination Architecture:
+        - [x] Created `hooks` directory.
+        - [x] Created `usePaginatedStudents`, `usePaginatedTeachers`, `usePaginatedParents` hooks (using mock data).
+        - [x] Created `usePaginatedAssignedTasks`, `usePaginatedTicketHistory` (global lists).
+        - [x] Created `usePaginatedStudentTasks`, `usePaginatedStudentHistory` (single student lists).
+        - [x] Created `PaginationControls` component.
+        - [x] Refactored `AdminView` and `AdminUsersSection` for tabbed, paginated user lists with filtering.
+        - [x] Refactored `ViewAllAssignedTasksModal` to use pagination hook.
+        - [x] Refactored `AdminHistorySection` to use pagination hook.
+        - [x] Refactored `AdminStudentDetailView`, `TeacherView` (profile), `StudentView` to use student-specific pagination hooks for task/history lists.
+    - [x] Implement Search for Student Selection: Added search input to Step 1 of `AssignTaskModal`.
+    - [ ] Implement Student Search (Admin): Add search input to Admin Users 'Students' tab. Update `usePaginatedStudents` hook (and eventually API) to filter by search term.
+    - [ ] Implement Mock UI for other User Interactions:
+        - [x] Admin CRUD: Task Library (Modal done).
+        - [x] Admin CRUD: Rewards (Modal done).
+        - [x] Admin CRUD: Announcements (Modal done).
+        - [x] Admin CRUD: Instruments (Modal done).
+        - [ ] Admin Action: Manual Ticket Adjustments (needs modal/input).
+        - [ ] Admin Action: Redeeming Rewards (needs modal/selection).
+        - [ ] Teacher Action: View All Students (mock) (needs list/modal).
+        - [ ] Parent Action: Link Another Student (needs mock QR flow).
 
 ### [ ] 2. Backend Development and Integration
 
-- [ ] Choose and set up backend technology.
-- [ ] Design and implement the database schema, including a table/collection for Instruments and the relationship between Students and Instruments (1-to-many), and Students and Teachers (many-to-many via `linkedTeacherIds` on Student).
-- [ ] Develop backend APIs for all functional areas (User Auth, CRUD, Linking; Task management; Ticket management; Rewards Catalog; Announcements; Instrument Management - CRUD).
-    - [ ] **Data Integrity:** Ensure deleting a **Teacher** removes references from the `linkedTeacherIds` array on all associated **Student** records.
-- [ ] Update APIs to handle Student instrument assignments and allow filtering tasks/students by instrument.
-- [ ] Integrate Frontend with Backend: Replace mock data and context simulation functions in UI components with actual API calls (likely using a server state library like React Query/TanStack Query).
-- [ ] Implement authentication flow connecting UI to backend auth endpoints.
-- [ ] **Scalability:** Implement backend pagination, searching, and filtering for large datasets (Users, Tasks, History) and update frontend to fetch data on demand instead of loading everything into context.
+- [ ] Choose and set up backend technology (e.g., Node.js, Express, Prisma/TypeORM, PostgreSQL/MongoDB).
+- [ ] Design and implement the database schema based on Data Models (Sec 6 in SPECIFICATION.md). Include `status` on Users table. Ensure `AssignedTask` stores snapshot data.
+- [ ] Develop backend APIs for all functional areas:
+    - [ ] User Auth (Teacher/Admin Login, QR Code generation/validation/consumption for Student/Parent).
+    - [ ] User CRUD & Linking (incl. Deactivate/Reactivate endpoints setting `status`, separate Permanent Delete endpoint).
+    - [ ] Implement Cascading Logic on Backend (Sec 8 in SPECIFICATION.md) for deactivation/deletion (unlinking, parent deletion if orphaned on *deactivate*).
+    - [ ] Task Library CRUD.
+    - [ ] Task Assignment (accepting snapshot details).
+    - [ ] Task Completion & Verification flow.
+    - [ ] Rewards Catalog CRUD.
+    - [ ] Ticket Management (Awards, Redemptions, Manual Adjustments, History).
+    - [ ] Announcements CRUD.
+    - [ ] Instrument CRUD & Student Assignment.
+    - [ ] **API Pagination/Filtering/Search:** Implement server-side pagination, filtering (by status etc.), and searching (by name etc.) for relevant endpoints (Users, Assigned Tasks, History).
+- [ ] Integrate Frontend with Backend:
+    - [ ] Replace mock data context (`useData`) simulation functions with actual API calls.
+    - [ ] Update custom pagination hooks (`usePaginated*`) to fetch data from API endpoints, handle loading/error states.
+    - [ ] Implement real authentication flow using backend endpoints.
+    - [ ] Use a server state management library (e.g., React Query/TanStack Query) to handle caching, refetching, mutations.
 
 ### [ ] 3. Implementing Core Feature Logic
 
-- [ ] Connect UI actions (Mark Complete, Verify, Assign, Adjust, Redeem) to backend API calls.
-- [ ] Implement real-time updates for relevant data (e.g., using WebSockets or server-sent events).
-- [ ] Implement push notification registration and handling logic.
+- [ ] Connect UI actions to backend API calls via mutations (using server state library).
+- [ ] Implement real-time updates (optional V1 enhancement - e.g., WebSockets).
+- [ ] Implement push notifications (optional V1 enhancement).
 
 ### [ ] 4. Supporting Features & Refinements
 
-- [ ] Implement secure QR code generation (Admin/Teacher) and scanning/verification (Mobile) logic.
-- [ ] Implement QR code revocation/recovery mechanism.
-- [ ] Implement robust error handling and loading states in the frontend (especially during API calls).
+- [ ] Implement secure QR code generation and scanning logic (using appropriate libraries).
+- [ ] Implement QR code revocation/expiry on backend.
+- [ ] Implement robust frontend error handling (displaying API errors) and loading states.
 - [ ] Refine UI/UX based on testing with real data flows.
-- [ ] Implement any required offline capabilities.
 - [ ] Add unit and integration tests.
 
 ## [ ] Android Release Steps

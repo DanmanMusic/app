@@ -1,18 +1,31 @@
+// src/components/admin/AdminStudentDetailView.tsx
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Button, FlatList, SafeAreaView, StyleSheet } from 'react-native';
 
+// Components
 import { TicketHistoryItem } from '../../views/StudentView';
+import DeactivateOrDeleteUserModal from '../common/DeactivateOrDeleteUserModal';
+import EditUserModal from '../common/EditUserModal';
+import PaginationControls from './PaginationControls'; // <-- Import pagination
+
+// Hooks
+import { usePaginatedStudentTasks } from '../../hooks/usePaginatedStudentTasks'; // <-- Import hook
+import { usePaginatedStudentHistory } from '../../hooks/usePaginatedStudentHistory'; // <-- Import hook
+
+// Types & Mocks
 import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
 import { Instrument } from '../../mocks/mockInstruments';
-import { User } from '../../types/userTypes';
+import { User, UserStatus } from '../../types/userTypes';
 import { StudentProfileData } from '../../types/dataTypes';
-import ConfirmationModal from '../common/ConfirmationModal';
-import EditUserModal from '../common/EditUserModal';
-import { getTaskTitle, getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
+import { AssignedTask } from '../../mocks/mockAssignedTasks';
+
+// Utils & Styles
+import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
 import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 
+// Props Updated: No longer receives assignedTasks/history directly via studentData
 interface AdminStudentDetailViewProps {
   studentData: StudentProfileData;
   taskLibrary: TaskLibraryItem[];
@@ -21,11 +34,13 @@ interface AdminStudentDetailViewProps {
   adminUserName: string;
   onManualTicketAdjust: (studentId: string, amount: number, notes: string) => void;
   onRedeemReward: (studentId: string, rewardId: string) => void;
-  onAssignTask: (taskId: string, studentId: string) => void;
-  onEditUser: (userId: string, userData: Partial<Omit<User, 'id'>>) => void;
-  onDeleteUser: (userId: string) => void;
+  onAssignTask: () => void;
+  onEditUser: (userId: string, userData: Partial<Omit<User, 'id' | 'status'>>) => void;
+  onToggleUserStatus: (userId: string) => void;
+  onPermanentDeleteUser: (userId: string) => void;
   onBack: () => void;
   onDeleteAssignment?: (assignmentId: string) => void;
+  onInitiateVerification?: (task: AssignedTask) => void;
 }
 
 export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
@@ -38,219 +53,169 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   onRedeemReward,
   onAssignTask,
   onEditUser,
-  onDeleteUser,
+  onToggleUserStatus,
+  onPermanentDeleteUser,
   onBack,
   onDeleteAssignment,
+  onInitiateVerification,
 }) => {
-  const { user, balance, assignedTasks, history } = studentData;
-  const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
+  // User info and balance from props
+  const { user, balance } = studentData;
+
+  // State for modals
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isStatusModalVisible, setIsStatusModalVisible] = useState(false);
+
+  // Use pagination hooks for this specific student
+  const {
+      tasks: paginatedTasks,
+      currentPage: tasksCurrentPage,
+      totalPages: tasksTotalPages,
+      setPage: setTasksPage,
+      totalTasksCount, // Get total count for display
+  } = usePaginatedStudentTasks(user?.id); // Pass student ID to the hook
+
+  const {
+      history: paginatedHistory,
+      currentPage: historyCurrentPage,
+      totalPages: historyTotalPages,
+      setPage: setHistoryPage,
+      totalHistoryCount, // Get total count for display
+  } = usePaginatedStudentHistory(user?.id); // Pass student ID to the hook
+
+
+  // Other derived data and handlers
   const studentDisplayName = getUserDisplayName(user);
+  const studentStatusText = user.status === 'active' ? 'Active' : 'Inactive';
+  const isStudentActive = user.status === 'active';
   const allTeachers = useMemo(() => allUsers.filter(u => u.role === 'teacher'), [allUsers]);
-  const handleAssignTaskToStudent = () => {
-    alert(`Mock Assign Task for ${studentDisplayName}`);
-  };
-  const handleEditStudent = () => {
-    console.log('[AdminStudentDetailView] handleEditStudent called, setting modal visible');
-    setIsEditModalVisible(true);
-  };
-  const handleDeleteStudent = () => {
-    setIsDeleteConfirmVisible(true);
-  };
-  const confirmDelete = () => {
-    setIsDeleteConfirmVisible(false);
-    onDeleteUser(user.id);
-  };
-  const cancelDelete = () => {
-    setIsDeleteConfirmVisible(false);
-  };
-  const handleLoginAsStudent = () => {
-    alert(`Simulating QR Code Generation for ${studentDisplayName} (${user.id})...`);
-  };
-  const handleBackClick = () => {
-    console.log('[AdminStudentDetailView] Back button clicked');
-    onBack();
-  };
-  const closeEditModal = () => {
-    console.log('[AdminStudentDetailView] closeEditModal called');
-    setIsEditModalVisible(false);
-  };
-  const handleEditSubmit = (userId: string, updatedData: Partial<Omit<User, 'id'>>) => {
-    console.log('[AdminStudentDetailView] handleEditSubmit called for:', userId);
-    onEditUser(userId, updatedData);
-    closeEditModal();
-  };
-  const handleRemoveAssignedTask = (assignmentId: string) => {
-    if (onDeleteAssignment) {
-      onDeleteAssignment(assignmentId);
-    } else {
-      alert(`Mock Remove Assigned Task ${assignmentId}`);
-    }
-  };
+
+  // Handlers
+  const handleAssignTaskClick = () => { onAssignTask(); };
+  const handleEditStudent = () => { setIsEditModalVisible(true); };
+  const handleManageStatus = () => { setIsStatusModalVisible(true); };
+  const closeStatusModal = () => { setIsStatusModalVisible(false); };
+  const handleToggleStatusConfirm = (userId: string, currentStatus: UserStatus) => { onToggleUserStatus(userId); closeStatusModal(); };
+  const handlePermanentDeleteConfirm = (userId: string) => { onPermanentDeleteUser(userId); closeStatusModal(); if (userId === user.id) { onBack(); } };
+  const handleLoginAsStudent = () => { alert(`Simulating QR Code Generation for ${studentDisplayName} (${user.id})...`); };
+  const handleBackClick = () => { onBack(); };
+  const closeEditModal = () => { setIsEditModalVisible(false); };
+  const handleEditSubmit = (userId: string, updatedData: Partial<Omit<User, 'id'>>) => { onEditUser(userId, updatedData); closeEditModal(); };
+  const handleRemoveAssignedTask = (assignmentId: string) => { if (onDeleteAssignment) { onDeleteAssignment(assignmentId); } else { alert(`Mock Remove Assigned Task ${assignmentId}`); } };
+  const handleVerifyTaskClick = (task: AssignedTask) => { if (onInitiateVerification) { onInitiateVerification(task); } else { console.warn("onInitiateVerification not provided"); alert(`Mock Verify Task ${task.taskTitle}`); } };
+
+
+  // --- Render Logic ---
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      <View style={appSharedStyles.headerContainer}>
-        <Button title="← Back to Admin" onPress={handleBackClick} />
-        <Text style={appSharedStyles.header} numberOfLines={1} ellipsizeMode="tail">
-          {' '}
-          {studentDisplayName}'s Details{' '}
-        </Text>
-        <View style={styles.headerActions}>
-          <Button title="Login (QR)" onPress={handleLoginAsStudent} color={colors.info} />
-          <Button title="Edit" onPress={handleEditStudent} color={colors.warning} />
-          <Button title="Delete" onPress={handleDeleteStudent} color={colors.danger} />
-        </View>
+      {/* Header */}
+      <View style={styles.headerContainer}>
+          <Button title="← Back to Admin" onPress={handleBackClick} />
+          <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail"> {studentDisplayName}'s Details </Text>
+          <View style={styles.headerActions}>
+              <Button title="Login (QR)" onPress={handleLoginAsStudent} color={colors.info} disabled={!isStudentActive} />
+              <Button title="Edit" onPress={handleEditStudent} color={colors.warning} disabled={!isStudentActive} />
+              <Button title="Status" onPress={handleManageStatus} color={colors.secondary} />
+          </View>
       </View>
 
+      {/* Use ScrollView for overall page scrolling */}
       <ScrollView style={appSharedStyles.container}>
+        {/* User Details */}
         <Text style={appSharedStyles.sectionTitle}>Viewing Student: {studentDisplayName}</Text>
         <Text style={appSharedStyles.itemDetailText}>ID: {user.id}</Text>
-        <Text style={appSharedStyles.itemDetailText}>
-          {' '}
-          Instrument(s): {getInstrumentNames(user.instrumentIds, mockInstruments)}{' '}
-        </Text>
-        {user.linkedTeacherIds && user.linkedTeacherIds.length > 0 && (
-          <Text style={appSharedStyles.itemDetailText}>
-            {' '}
-            Linked Teacher IDs: {user.linkedTeacherIds.join(', ')}{' '}
-          </Text>
-        )}
-        <Text style={[appSharedStyles.itemDetailText, { fontWeight: 'bold' }]}>
-          {' '}
-          Balance: {balance} Tickets{' '}
-        </Text>
+        <Text style={appSharedStyles.itemDetailText}> Status: <Text style={{fontWeight: 'bold', color: isStudentActive ? colors.success : colors.secondary}}>{studentStatusText}</Text> </Text>
+        <Text style={appSharedStyles.itemDetailText}> Instrument(s): {getInstrumentNames(user.instrumentIds, mockInstruments)} </Text>
+        {user.linkedTeacherIds && user.linkedTeacherIds.length > 0 && ( <Text style={appSharedStyles.itemDetailText}> Linked Teacher IDs: {user.linkedTeacherIds.join(', ')} </Text> )}
+        <Text style={[appSharedStyles.itemDetailText, { fontWeight: 'bold' }]}> Balance: {balance} Tickets </Text>
+
+        {/* Admin Actions */}
         <View style={adminSharedStyles.adminStudentActions}>
-          <Button
-            title="Adjust Tickets (Mock)"
-            onPress={() =>
-              onManualTicketAdjust(user.id, 100, `Admin adjustment by ${adminUserName}`)
-            }
-          />
-          <Button
-            title="Redeem Reward (Mock)"
-            onPress={() => onRedeemReward(user.id, 'reward-6')}
-          />
-          <Button title="Assign Task (Mock)" onPress={handleAssignTaskToStudent} />
+            <Button title="Adjust Tickets (Mock)" onPress={() => onManualTicketAdjust(user.id, 100, `Admin adjustment by ${adminUserName}`)} disabled={!isStudentActive} />
+            <Button title="Redeem Reward (Mock)" onPress={() => onRedeemReward(user.id, 'reward-6')} disabled={!isStudentActive} />
+            <Button title="Assign Task" onPress={handleAssignTaskClick} disabled={!isStudentActive} />
         </View>
-        <Text style={appSharedStyles.sectionTitle}>Assigned Tasks ({assignedTasks.length})</Text>
-        {assignedTasks.length > 0 ? (
+
+        {/* Assigned Tasks List */}
+        <Text style={appSharedStyles.sectionTitle}>Assigned Tasks ({totalTasksCount})</Text>
+        {totalTasksCount > 0 ? (
           <FlatList
-            data={assignedTasks.sort(
-              (a, b) => new Date(b.assignedDate).getTime() - new Date(a.assignedDate).getTime()
-            )}
+            data={paginatedTasks}
             keyExtractor={item => item.id}
             renderItem={({ item }) => {
-              const allowDelete = !item.isComplete || item.verificationStatus === 'pending';
-              return (
-                <View style={adminSharedStyles.taskItem}>
-                  <Text style={adminSharedStyles.taskItemTitle}>
-                    {' '}
-                    {getTaskTitle(item.taskId, taskLibrary)}{' '}
-                  </Text>
-                  <Text style={adminSharedStyles.taskItemStatus}>
-                    {' '}
-                    Status:{' '}
-                    {item.isComplete
-                      ? item.verificationStatus === 'pending'
-                        ? 'Complete (Pending Verification)'
-                        : `Verified (${item.verificationStatus})`
-                      : 'Assigned'}{' '}
-                  </Text>
-                  {item.completedDate && (
-                    <Text style={appSharedStyles.itemDetailText}>
-                      {' '}
-                      Completed: {new Date(item.completedDate).toLocaleDateString()}{' '}
-                    </Text>
-                  )}
-                  {item.verifiedDate && item.verificationStatus !== 'pending' && (
-                    <Text style={appSharedStyles.itemDetailText}>
-                      {' '}
-                      Verified: {new Date(item.verifiedDate).toLocaleDateString()}{' '}
-                    </Text>
-                  )}
-                  {item.actualPointsAwarded !== undefined &&
-                    item.verificationStatus !== 'pending' && (
-                      <Text style={adminSharedStyles.taskItemTickets}>
-                        {' '}
-                        Awarded: {item.actualPointsAwarded ?? 0} Tickets{' '}
-                      </Text>
-                    )}
-                  {item.isComplete && item.verificationStatus === 'pending' && (
-                    <Text style={adminSharedStyles.pendingNote}>Awaiting verification...</Text>
-                  )}
-                  <View style={adminSharedStyles.assignedTaskActions}>
-                    {item.isComplete && item.verificationStatus === 'pending' && (
-                      <Button
-                        title="Verify (Mock)"
-                        onPress={() => alert(`Mock Verify Task ${item.id}`)}
-                      />
-                    )}
-                    {}
-                    {allowDelete && (
-                      <Button
-                        title="Remove (Mock)"
-                        onPress={() => handleRemoveAssignedTask(item.id)}
-                        color={colors.danger}
-                      />
-                    )}
-                  </View>
-                </View>
-              );
-            }}
+                const allowDelete = (!item.isComplete || item.verificationStatus === 'pending') && isStudentActive;
+                const allowVerify = item.isComplete && item.verificationStatus === 'pending' && isStudentActive;
+                const taskStatus = item.isComplete ? (item.verificationStatus === 'pending' ? 'Complete (Pending Verification)' : `Verified (${item.verificationStatus || 'status unknown'})`) : 'Assigned';
+                return (
+                    <View style={adminSharedStyles.taskItem}>
+                        <Text style={adminSharedStyles.taskItemTitle}>{item.taskTitle}</Text>
+                        <Text style={adminSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
+                        {item.completedDate && (<Text style={appSharedStyles.itemDetailText}>Completed: {new Date(item.completedDate).toLocaleDateString()}</Text>)}
+                        {item.verifiedDate && item.verificationStatus !== 'pending' && (<Text style={appSharedStyles.itemDetailText}>Verified: {new Date(item.verifiedDate).toLocaleDateString()}</Text>)}
+                        {item.actualPointsAwarded !== undefined && item.verificationStatus !== 'pending' && (<Text style={adminSharedStyles.taskItemTickets}>Awarded: {item.actualPointsAwarded ?? 0} Tickets</Text>)}
+                        {item.isComplete && item.verificationStatus === 'pending' && (<Text style={adminSharedStyles.pendingNote}>Awaiting verification...</Text>)}
+                        <View style={adminSharedStyles.assignedTaskActions}>
+                            {onInitiateVerification && ( <Button title="Verify" onPress={() => handleVerifyTaskClick(item)} disabled={!allowVerify} /> )}
+                            {onDeleteAssignment && ( <Button title="Remove" onPress={() => handleRemoveAssignedTask(item.id)} color={colors.danger} disabled={!allowDelete} /> )}
+                        </View>
+                    </View>
+                );
+             }}
             scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-            ListEmptyComponent={() => (
-              <Text style={appSharedStyles.emptyListText}>No tasks assigned.</Text>
-            )}
+            ListEmptyComponent={() => ( <Text style={appSharedStyles.emptyListText}>No tasks assigned.</Text> )}
+            ListFooterComponent={
+                tasksTotalPages > 1 ? (
+                    <PaginationControls
+                        currentPage={tasksCurrentPage}
+                        totalPages={tasksTotalPages}
+                        onPageChange={setTasksPage}
+                    />
+                ) : null
+            }
+            contentContainerStyle={{ paddingBottom: 10 }}
           />
         ) : (
           <Text style={appSharedStyles.emptyListText}>No tasks assigned.</Text>
         )}
-        <Text style={appSharedStyles.sectionTitle}>History ({history.length})</Text>
-        {history.length > 0 ? (
+
+        {/* History Section */}
+        <Text style={appSharedStyles.sectionTitle}>History ({totalHistoryCount})</Text>
+        {totalHistoryCount > 0 ? (
           <FlatList
-            data={history.slice(0, 5)}
+            data={paginatedHistory}
             keyExtractor={item => item.id}
             renderItem={({ item }) => <TicketHistoryItem item={item} />}
             scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
-            ListEmptyComponent={() => (
-              <Text style={appSharedStyles.emptyListText}>No history yet.</Text>
-            )}
+            ListEmptyComponent={() => ( <Text style={appSharedStyles.emptyListText}>No history yet.</Text> )}
+             ListFooterComponent={
+                historyTotalPages > 1 ? (
+                    <PaginationControls
+                        currentPage={historyCurrentPage}
+                        totalPages={historyTotalPages}
+                        onPageChange={setHistoryPage}
+                    />
+                ) : null
+            }
+            contentContainerStyle={{ paddingBottom: 10 }}
           />
         ) : (
           <Text style={appSharedStyles.emptyListText}>No history yet.</Text>
         )}
-        {history.length > 5 && (
-          <View style={{ alignItems: 'flex-start', marginTop: 10 }}>
-            {' '}
-            <Button
-              title="View Full History (Mock)"
-              onPress={() => alert('Navigate to full history screen')}
-            />{' '}
-          </View>
-        )}
       </ScrollView>
-      <ConfirmationModal
-        visible={isDeleteConfirmVisible}
-        title="Confirm Deletion"
-        message={`Are you sure you want to delete student ${studentDisplayName} (${user?.id || ''})? This action cannot be undone.`}
-        confirmText="Delete User"
-        onConfirm={confirmDelete}
-        onCancel={cancelDelete}
-      />
-      <EditUserModal
-        visible={isEditModalVisible}
-        userToEdit={user}
-        onClose={closeEditModal}
-        onEditUser={handleEditSubmit}
-        mockInstruments={mockInstruments}
-        allTeachers={allTeachers}
-      />
+
+      {/* Modals */}
+      <DeactivateOrDeleteUserModal visible={isStatusModalVisible} user={user} onClose={closeStatusModal} onToggleUserStatus={handleToggleStatusConfirm} onPermanentDelete={handlePermanentDeleteConfirm}/>
+      <EditUserModal visible={isEditModalVisible} userToEdit={user} onClose={closeEditModal} onEditUser={handleEditSubmit} mockInstruments={mockInstruments} allTeachers={allTeachers}/>
     </SafeAreaView>
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
+  headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.borderPrimary, backgroundColor: colors.backgroundPrimary, },
+  headerSideContainer: { minWidth: 60, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', },
+  headerTitle: { flex: 1, fontSize: 22, fontWeight: 'bold', color: colors.textPrimary, textAlign: 'center', marginHorizontal: 5, },
   headerActions: { flexDirection: 'row', gap: 10 },
 });

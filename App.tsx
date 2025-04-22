@@ -65,7 +65,7 @@ const DevelopmentViewSelector = () => {
 };
 
 const AppContent = () => {
-  const { isAuthenticated, currentUserRole } = useAuth();
+  const { isAuthenticated, currentUserRole, currentUserId } = useAuth();
   const { taskLibrary, currentMockUsers, simulateVerifyTask, simulateReassignTask } = useData();
 
   const [isVerificationModalVisible, setIsVerificationModalVisible] = useState(false);
@@ -90,7 +90,7 @@ const AppContent = () => {
   };
 
   const handleReassignTask = (originalTaskId: string, studentId: string) => {
-    simulateReassignTask(originalTaskId, studentId);
+    simulateReassignTask(originalTaskId, studentId, currentUserId);
     handleCloseVerificationModal();
   };
 

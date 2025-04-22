@@ -2,6 +2,9 @@ import { StyleSheet } from 'react-native';
 import { colors } from './colors';
 
 export const appSharedStyles = StyleSheet.create({
+  hidden: {
+    display: 'none',
+  },
   safeArea: {
     flex: 1,
     backgroundColor: colors.backgroundSecondary,
@@ -44,7 +47,6 @@ export const appSharedStyles = StyleSheet.create({
     marginTop: 5,
     fontStyle: 'italic',
   },
-
   itemContainer: {
     backgroundColor: colors.backgroundPrimary,
     padding: 12,
@@ -64,7 +66,6 @@ export const appSharedStyles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: 2,
   },
-
   textGold: { color: colors.gold },
   textSuccess: { color: colors.success },
   textDanger: { color: colors.danger },
