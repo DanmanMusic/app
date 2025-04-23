@@ -1,52 +1,55 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, Button, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { useQuery } from '@tanstack/react-query';
 
+import { View, Text, StyleSheet, FlatList, Image, Button, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 // Import API functions
-import { fetchRewards } from '../api/rewards';
 import { fetchAnnouncements } from '../api/announcements';
+import { fetchRewards } from '../api/rewards';
 
 // Import types
-import { RewardItem } from '../mocks/mockRewards';
 import { Announcement } from '../mocks/mockAnnouncements';
+import { RewardItem } from '../mocks/mockRewards';
 // --- Import the Prop Type ---
+import { appSharedStyles } from '../styles/appSharedStyles';
+import { colors } from '../styles/colors';
 import { PublicViewProps } from '../types/componentProps'; // Adjust path if needed
 
 // Import styles
-import { appSharedStyles } from '../styles/appSharedStyles';
-import { colors } from '../styles/colors';
 
 // RewardItemPublic component (remains the same)
 const RewardItemPublic = ({ item }: { item: RewardItem }) => (
-    <View style={appSharedStyles.itemContainer}>
-        <View style={styles.rewardItemContent}>
-        <Image source={{ uri: item.imageUrl }} style={styles.rewardImage} resizeMode="contain" />
-        <View style={styles.rewardDetails}>
-            <Text style={styles.rewardName}>{item.name}</Text>
-            <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
-            {item.cost} Tickets
-            </Text>
-            {item.description && <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>}
-        </View>
-        </View>
+  <View style={appSharedStyles.itemContainer}>
+    <View style={styles.rewardItemContent}>
+      <Image source={{ uri: item.imageUrl }} style={styles.rewardImage} resizeMode="contain" />
+      <View style={styles.rewardDetails}>
+        <Text style={styles.rewardName}>{item.name}</Text>
+        <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
+          {item.cost} Tickets
+        </Text>
+        {item.description && <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>}
+      </View>
     </View>
+  </View>
 );
 
 // AnnouncementListItem component (remains the same)
 const AnnouncementListItem = ({ item }: { item: Announcement }) => (
-    <View style={appSharedStyles.itemContainer}>
-        <Text style={styles.announcementTitle}>{item.title}</Text>
-        <Text style={appSharedStyles.itemDetailText}>{item.message}</Text>
-        <Text style={styles.announcementDate}>{new Date(item.date).toLocaleDateString()}</Text>
-    </View>
+  <View style={appSharedStyles.itemContainer}>
+    <Text style={styles.announcementTitle}>{item.title}</Text>
+    <Text style={appSharedStyles.itemDetailText}>{item.message}</Text>
+    <Text style={styles.announcementDate}>{new Date(item.date).toLocaleDateString()}</Text>
+  </View>
 );
 
 // Define the possible tabs
 type PublicTab = 'welcome' | 'rewards' | 'announcements';
 
 // --- Use the imported Prop Type ---
-export const PublicView: React.FC<PublicViewProps> = () => { // No props destructured as interface is empty
+export const PublicView: React.FC<PublicViewProps> = () => {
+  // No props destructured as interface is empty
   // State for the active tab
   const [activeTab, setActiveTab] = useState<PublicTab>('welcome');
 
@@ -76,9 +79,9 @@ export const PublicView: React.FC<PublicViewProps> = () => { // No props destruc
 
   // Helper to get error message
   const getErrorMessage = (error: Error | null) => {
-      if (!error) return 'An unknown error occurred.';
-      return error.message;
-  }
+    if (!error) return 'An unknown error occurred.';
+    return error.message;
+  };
 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
@@ -110,7 +113,9 @@ export const PublicView: React.FC<PublicViewProps> = () => { // No props destruc
           {/* Welcome Tab */}
           {activeTab === 'welcome' && (
             <View style={styles.tabContentPlaceholder}>
-                <Text style={{textAlign: 'center', padding: 20}}>Welcome! Check out the announcements and rewards.</Text>
+              <Text style={{ textAlign: 'center', padding: 20 }}>
+                Welcome! Check out the announcements and rewards.
+              </Text>
             </View>
           )}
 
@@ -118,37 +123,50 @@ export const PublicView: React.FC<PublicViewProps> = () => { // No props destruc
           {activeTab === 'rewards' && (
             <>
               {/* Loading State */}
-              {isLoadingRewards && <ActivityIndicator style={{ marginTop: 20 }} size="large" color={colors.primary}/>}
+              {isLoadingRewards && (
+                <ActivityIndicator style={{ marginTop: 20 }} size="large" color={colors.primary} />
+              )}
               {/* Error State */}
-              {isErrorRewards && <Text style={[appSharedStyles.textDanger, {textAlign: 'center', marginTop: 10}]}>Error loading rewards: {getErrorMessage(errorRewards)}</Text>}
+              {isErrorRewards && (
+                <Text style={[appSharedStyles.textDanger, { textAlign: 'center', marginTop: 10 }]}>
+                  Error loading rewards: {getErrorMessage(errorRewards)}
+                </Text>
+              )}
               {/* Data Loaded State */}
               {!isLoadingRewards && !isErrorRewards && (
-                  <FlatList
-                    data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
-                    keyExtractor={item => `reward-${item.id}`}
-                    renderItem={({ item }) => <RewardItemPublic item={item} />}
-                    ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-                    ListEmptyComponent={() => (
-                      <Text style={appSharedStyles.emptyListText}>No rewards found.</Text>
-                    )}
-                    contentContainerStyle={styles.listContentContainer}
-                    ListFooterComponent={<View style={{ height: 20 }} />}
-                  />
+                <FlatList
+                  data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
+                  keyExtractor={item => `reward-${item.id}`}
+                  renderItem={({ item }) => <RewardItemPublic item={item} />}
+                  ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+                  ListEmptyComponent={() => (
+                    <Text style={appSharedStyles.emptyListText}>No rewards found.</Text>
+                  )}
+                  contentContainerStyle={styles.listContentContainer}
+                  ListFooterComponent={<View style={{ height: 20 }} />}
+                />
               )}
             </>
           )}
 
           {/* Announcements Tab */}
           {activeTab === 'announcements' && (
-             <>
+            <>
               {/* Loading State */}
-              {isLoadingAnnouncements && <ActivityIndicator style={{ marginTop: 20 }} size="large" color={colors.primary}/>}
+              {isLoadingAnnouncements && (
+                <ActivityIndicator style={{ marginTop: 20 }} size="large" color={colors.primary} />
+              )}
               {/* Error State */}
-              {isErrorAnnouncements && <Text style={[appSharedStyles.textDanger, {textAlign: 'center', marginTop: 10}]}>Error loading announcements: {getErrorMessage(errorAnnouncements)}</Text>}
+              {isErrorAnnouncements && (
+                <Text style={[appSharedStyles.textDanger, { textAlign: 'center', marginTop: 10 }]}>
+                  Error loading announcements: {getErrorMessage(errorAnnouncements)}
+                </Text>
+              )}
               {/* Data Loaded State */}
               {!isLoadingAnnouncements && !isErrorAnnouncements && (
                 <FlatList
-                  data={announcements.sort( // Sort by date using fetched data
+                  data={announcements.sort(
+                    // Sort by date using fetched data
                     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
                   )}
                   keyExtractor={item => `announcement-${item.id}`}
@@ -160,7 +178,7 @@ export const PublicView: React.FC<PublicViewProps> = () => { // No props destruc
                   contentContainerStyle={styles.listContentContainer}
                   ListFooterComponent={<View style={{ height: 20 }} />}
                 />
-               )}
+              )}
             </>
           )}
         </View>

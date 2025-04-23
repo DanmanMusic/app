@@ -1,7 +1,8 @@
 import { ImageSourcePropType } from 'react-native';
-import { User } from '../types/userTypes';
-import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
+
 import { Instrument } from '../mocks/mockInstruments';
+import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
+import { User } from '../types/userTypes';
 
 export const getTaskTitle = (taskId: string, taskLibrary: TaskLibraryItem[]): string => {
   const taskDetail = taskLibrary.find(libTask => libTask.id === taskId);

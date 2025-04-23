@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {
   View,
   Text,
@@ -10,52 +11,24 @@ import {
 } from 'react-native';
 
 // Import types
+import { Instrument } from '../../mocks/mockInstruments';
+import { appSharedStyles } from '../../styles/appSharedStyles';
+import { colors } from '../../styles/colors';
 import { SimplifiedStudent } from '../../types/dataTypes';
 import { UserRole, User, UserStatus } from '../../types/userTypes';
-import { Instrument } from '../../mocks/mockInstruments';
 
 // Import utils and styles
 import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
+
 import { adminSharedStyles } from './adminSharedStyles';
-import { appSharedStyles } from '../../styles/appSharedStyles';
-import { colors } from '../../styles/colors';
 
 // Import common components
 import PaginationControls from './PaginationControls';
+import { AdminUsersSectionProps } from '../../types/componentProps';
 
 // Define filter/tab types used locally
 type UserTab = 'students' | 'teachers' | 'parents';
 type StudentFilter = UserStatus | 'all';
-
-
-// Define the props the component expects
-interface AdminUsersSectionProps {
-  // Data & State (passed down from AdminView's TQ hooks)
-  displayData: Array<User | SimplifiedStudent>; // The actual list to render
-  currentPage: number;                           // Current page from pagination hook
-  totalPages: number;                            // Total pages from pagination hook
-  isLoading: boolean;                            // Loading state from TQ query
-  isFetching?: boolean;                           // Fetching state from TQ query (optional)
-  isError: boolean;                              // Error state from TQ query
-  error: Error | null;                           // Error object from TQ query
-  mockInstruments: Instrument[];                 // Instrument list from TQ query in AdminView
-
-  // UI State & Setters (managed in AdminView)
-  activeTab: UserTab;                            // Which tab is selected (students/teachers/parents)
-  setActiveTab: (tab: UserTab) => void;          // Function to change the active tab
-
-  // Pagination & Filtering Setters (passed down from AdminView's TQ hooks)
-  setPage: (page: number) => void;               // Function to change the page
-  studentFilter?: StudentFilter;                 // Current student filter state (active/inactive/all)
-  setStudentFilter?: (filter: StudentFilter) => void; // Function to set the student filter
-  // setFilter?: (filter: UserStatus | 'all') => void; // <<< NOTE: This seems redundant if setStudentFilter is used
-  studentSearchTerm?: string;                    // Current student search term
-  setStudentSearchTerm?: (term: string) => void; // Function to set the search term
-
-  // Action Callbacks (passed down from AdminView)
-  onViewManageUser: (userId: string, role: UserRole) => void; // Callback when 'View/Edit' is pressed
-  onInitiateAssignTaskForStudent: (studentId: string) => void; // Callback when 'Assign Task' is pressed
-}
 
 // Component for rendering a generic User item (Teacher/Parent/Admin)
 const AdminUserItem = ({
@@ -105,35 +78,40 @@ const AdminStudentItem = ({
 }) => {
   console.log('[AdminStudentItem] Received student prop:', JSON.stringify(student, null, 2)); // Log the received prop
   return (
-  // Apply inactive styling if needed
-  <View style={[appSharedStyles.itemContainer, !student.isActive ? styles.inactiveItem : {}]}>
-    <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
-    <Text style={appSharedStyles.itemDetailText}>
-      Instrument(s): {getInstrumentNames(student.instrumentIds, mockInstruments)}
-    </Text>
-    <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
-      Balance: {student.balance}
-    </Text>
-    <Text
-      style={[
-        appSharedStyles.itemDetailText,
-        { fontWeight: 'bold', color: student.isActive ? colors.success : colors.secondary },
-      ]}
-    >
-      Status: {student.isActive ? 'Active' : 'Inactive'}
-    </Text>
-    {/* Action buttons */}
-    <View style={adminSharedStyles.itemActions}>
-      <Button title="View Details" onPress={() => { 
-        console.log(`[AdminStudentItem] Button Press - student.id: ${student?.id}`);
-        onViewManage(student.id, 'student')}}/>
-      {/* Only show Assign Task button for active students */}
-      {student.isActive && (
-        <Button title="Assign Task" onPress={() => onInitiateAssignTask(student.id)} />
-      )}
+    // Apply inactive styling if needed
+    <View style={[appSharedStyles.itemContainer, !student.isActive ? styles.inactiveItem : {}]}>
+      <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
+      <Text style={appSharedStyles.itemDetailText}>
+        Instrument(s): {getInstrumentNames(student.instrumentIds, mockInstruments)}
+      </Text>
+      <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
+        Balance: {student.balance}
+      </Text>
+      <Text
+        style={[
+          appSharedStyles.itemDetailText,
+          { fontWeight: 'bold', color: student.isActive ? colors.success : colors.secondary },
+        ]}
+      >
+        Status: {student.isActive ? 'Active' : 'Inactive'}
+      </Text>
+      {/* Action buttons */}
+      <View style={adminSharedStyles.itemActions}>
+        <Button
+          title="View Details"
+          onPress={() => {
+            console.log(`[AdminStudentItem] Button Press - student.id: ${student?.id}`);
+            onViewManage(student.id, 'student');
+          }}
+        />
+        {/* Only show Assign Task button for active students */}
+        {student.isActive && (
+          <Button title="Assign Task" onPress={() => onInitiateAssignTask(student.id)} />
+        )}
+      </View>
     </View>
-  </View>
-)};
+  );
+};
 
 // The main AdminUsersSection component
 export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
@@ -157,7 +135,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   onViewManageUser,
   onInitiateAssignTaskForStudent,
 }) => {
-
   // Function to render the correct item component based on the active tab
   const renderUserItem = ({ item }: { item: User | SimplifiedStudent }) => {
     console.log('[AdminUsersSection] Rendering item:', JSON.stringify(item)); // Log the whole item
@@ -182,7 +159,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   // Helper function to format error messages
   const getErrorMessage = () => {
     if (!error) return 'An unknown error occurred.';
-    let resource =
+    const resource =
       activeTab === 'students' ? 'students' : activeTab === 'teachers' ? 'teachers' : 'parents';
     return `Error loading ${resource}: ${error.message}`;
   };
@@ -216,42 +193,39 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
       </View>
 
       {/* Student Filter and Search Section (only shown for 'students' tab) */}
-      {activeTab === 'students' &&
-        studentFilter &&
-        setStudentFilter &&
-        setStudentSearchTerm && (
-          <View style={styles.filterAndSearchContainer}>
-            {/* Filter Buttons */}
-            <View style={styles.filterContainer}>
-              <Text style={styles.filterLabel}>Show:</Text>
-              <Button
-                title="Active"
-                onPress={() => handleFilterChange('active')}
-                color={studentFilter === 'active' ? colors.success : colors.secondary}
-              />
-              <Button
-                title="Inactive"
-                onPress={() => handleFilterChange('inactive')}
-                color={studentFilter === 'inactive' ? colors.warning : colors.secondary}
-              />
-              <Button
-                title="All"
-                onPress={() => handleFilterChange('all')}
-                color={studentFilter === 'all' ? colors.info : colors.secondary}
-              />
-            </View>
-            {/* Search Input */}
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search Students by Name..."
-              placeholderTextColor={colors.textLight}
-              value={studentSearchTerm}
-              onChangeText={setStudentSearchTerm} // Use the setter prop
-              autoCapitalize="none"
-              autoCorrect={false}
+      {activeTab === 'students' && studentFilter && setStudentFilter && setStudentSearchTerm && (
+        <View style={styles.filterAndSearchContainer}>
+          {/* Filter Buttons */}
+          <View style={styles.filterContainer}>
+            <Text style={styles.filterLabel}>Show:</Text>
+            <Button
+              title="Active"
+              onPress={() => handleFilterChange('active')}
+              color={studentFilter === 'active' ? colors.success : colors.secondary}
+            />
+            <Button
+              title="Inactive"
+              onPress={() => handleFilterChange('inactive')}
+              color={studentFilter === 'inactive' ? colors.warning : colors.secondary}
+            />
+            <Button
+              title="All"
+              onPress={() => handleFilterChange('all')}
+              color={studentFilter === 'all' ? colors.info : colors.secondary}
             />
           </View>
-        )}
+          {/* Search Input */}
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search Students by Name..."
+            placeholderTextColor={colors.textLight}
+            value={studentSearchTerm}
+            onChangeText={setStudentSearchTerm} // Use the setter prop
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
+      )}
 
       {/* Spacer for non-student tabs */}
       {activeTab !== 'students' && <View style={{ height: 5 }} />}
@@ -263,11 +237,12 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
           <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
         )}
         {/* Error Display */}
-        {isError && !isLoading && ( // Only show error if not initially loading
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{getErrorMessage()}</Text>
-          </View>
-        )}
+        {isError &&
+          !isLoading && ( // Only show error if not initially loading
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{getErrorMessage()}</Text>
+            </View>
+          )}
         {/* List Display: Show only if NOT initially loading and NO error */}
         {!isLoading && !isError && (
           <FlatList
@@ -276,7 +251,8 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
             renderItem={renderUserItem} // Use the item renderer function
             scrollEnabled={false} // Typically disable scroll if parent is ScrollView
             ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
-            ListEmptyComponent={() => ( // Message for empty list/filters
+            ListEmptyComponent={() => (
+              // Message for empty list/filters
               <Text style={appSharedStyles.emptyListText}>
                 {activeTab === 'students'
                   ? 'No students match filters/search.'

@@ -1,32 +1,25 @@
-
-import { Instrument } from '../mocks/mockInstruments'; 
-
+import { Instrument } from '../mocks/mockInstruments';
 
 interface InstrumentsListResponse {
   items: Instrument[];
-  
 }
-
-
 
 /**
  * Fetches all instruments.
  */
 export const fetchInstruments = async (): Promise<Instrument[]> => {
   console.log(`[API] Fetching Instruments`);
-  const response = await fetch('/api/instruments'); 
+  const response = await fetch('/api/instruments');
   console.log(`[API] Instruments Response status: ${response.status}`);
   if (!response.ok) {
     console.error(`[API] Instruments Network response was not ok: ${response.statusText}`);
     throw new Error(`Failed to fetch instruments: ${response.statusText}`);
   }
-  
+
   const data: Instrument[] = await response.json();
   console.log(`[API] Received ${data?.length} instrument items from API mock.`);
   return data;
 };
-
-
 
 /**
  * Creates a new instrument item.
@@ -46,9 +39,7 @@ export const createInstrument = async (
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Create Instrument failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -79,9 +70,7 @@ export const updateInstrument = async ({
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Update Instrument failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -104,9 +93,7 @@ export const deleteInstrument = async (instrumentId: string): Promise<void> => {
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Delete Instrument failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }

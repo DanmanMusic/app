@@ -1,5 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -7,57 +9,45 @@ import {
   StyleSheet,
   Button,
   TextInput,
-  ActivityIndicator, 
-  Alert, 
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { useMutation, useQueryClient } from '@tanstack/react-query'; 
 
-
-import { createAnnouncement } from '../../../api/announcements'; 
+import { createAnnouncement } from '../../../api/announcements';
 import { Announcement, AnnouncementType } from '../../../mocks/mockAnnouncements';
 import { colors } from '../../../styles/colors';
-
-
-interface CreateAnnouncementModalProps {
-  visible: boolean;
-  onClose: () => void;
-  
-}
+import { CreateAnnouncementModalProps } from '../../../types/componentProps';
 
 const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visible, onClose }) => {
-  
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  
+
   const [type, setType] = useState<AnnouncementType>('announcement');
 
   const queryClient = useQueryClient();
 
-  
   const mutation = useMutation({
-    mutationFn: createAnnouncement, 
+    mutationFn: createAnnouncement,
     onSuccess: createdAnnouncement => {
       console.log('Announcement created successfully via mutation:', createdAnnouncement);
-      queryClient.invalidateQueries({ queryKey: ['announcements'] }); 
-      onClose(); 
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      onClose();
     },
     onError: error => {
       console.error('Error creating announcement via mutation:', error);
     },
   });
 
-  
   useEffect(() => {
     if (visible) {
       setTitle('');
       setMessage('');
-      setType('announcement'); 
+      setType('announcement');
       mutation.reset();
     }
   }, [visible]);
 
   const handleCreate = () => {
-    
     if (!title.trim()) {
       return;
     }
@@ -68,10 +58,9 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
     const newAnnouncementData: Omit<Announcement, 'id' | 'date'> = {
       title: title.trim(),
       message: message.trim(),
-      type: type, 
+      type: type,
     };
 
-    
     mutation.mutate(newAnnouncementData);
   };
 
@@ -89,7 +78,7 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
             placeholder="Announcement Title"
             placeholderTextColor={colors.textLight}
             maxLength={100}
-            editable={!mutation.isPending} 
+            editable={!mutation.isPending}
           />
 
           <Text style={modalStyles.label}>Message:</Text>
@@ -133,7 +122,7 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
             <Button
               title="Create Announcement"
               onPress={handleCreate}
-              disabled={mutation.isPending} 
+              disabled={mutation.isPending}
             />
           </View>
           <View style={modalStyles.footerButton}>
@@ -149,7 +138,6 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
     </Modal>
   );
 };
-
 
 const modalStyles = StyleSheet.create({
   centeredView: {

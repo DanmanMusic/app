@@ -1,5 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -8,70 +10,51 @@ import {
   Button,
   TextInput,
   ScrollView,
-  ActivityIndicator, 
-  Alert, 
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { useMutation, useQueryClient } from '@tanstack/react-query'; 
 
-
-import { updateTaskLibraryItem } from '../../../api/taskLibrary'; 
+import { updateTaskLibraryItem } from '../../../api/taskLibrary';
 import { TaskLibraryItem } from '../../../mocks/mockTaskLibrary';
 import { colors } from '../../../styles/colors';
-
-
-interface EditTaskLibraryModalProps {
-  visible: boolean;
-  taskToEdit: TaskLibraryItem | null;
-  onClose: () => void;
-  
-}
+import { EditTaskLibraryModalProps } from '../../../types/componentProps';
 
 const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
   visible,
   taskToEdit,
   onClose,
 }) => {
-  
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [baseTickets, setBaseTickets] = useState<number | ''>('');
 
   const queryClient = useQueryClient();
 
-  
   const mutation = useMutation({
-    mutationFn: updateTaskLibraryItem, 
+    mutationFn: updateTaskLibraryItem,
     onSuccess: updatedTask => {
       console.log('Task library item updated successfully via mutation:', updatedTask);
-      
+
       queryClient.invalidateQueries({ queryKey: ['task-library'] });
-      onClose(); 
+      onClose();
     },
     onError: (error, variables) => {
       console.error(`Error updating task library item ${variables.taskId} via mutation:`, error);
     },
   });
 
-  
   useEffect(() => {
     if (visible && taskToEdit) {
       setTitle(taskToEdit.title);
       setDescription(taskToEdit.description);
       setBaseTickets(taskToEdit.baseTickets);
-      mutation.reset(); 
+      mutation.reset();
     }
-    
-    
-    
-    
-    
-    
   }, [visible, taskToEdit]);
 
   const handleSave = () => {
     if (!taskToEdit) return;
 
-    
     const numericTickets =
       typeof baseTickets === 'number' ? baseTickets : parseInt(String(baseTickets || '0'), 10);
     if (!title.trim()) {
@@ -84,23 +67,19 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       return;
     }
 
-    
     const updates: Partial<Omit<TaskLibraryItem, 'id'>> = {};
     if (title.trim() !== taskToEdit.title) updates.title = title.trim();
     if (description.trim() !== taskToEdit.description) updates.description = description.trim();
     if (numericTickets !== taskToEdit.baseTickets) updates.baseTickets = numericTickets;
 
-    
     if (Object.keys(updates).length === 0) {
-      onClose(); 
+      onClose();
       return;
     }
 
-    
     mutation.mutate({ taskId: taskToEdit.id, updates });
   };
 
-  
   if (!taskToEdit) return null;
 
   return (
@@ -117,7 +96,7 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
               onChangeText={setTitle}
               placeholderTextColor={colors.textLight}
               maxLength={100}
-              editable={!mutation.isPending} 
+              editable={!mutation.isPending}
             />
 
             <Text style={modalStyles.label}>Base Tickets:</Text>
@@ -161,11 +140,7 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
           )}
 
           <View style={modalStyles.buttonContainer}>
-            <Button
-              title="Save Changes"
-              onPress={handleSave}
-              disabled={mutation.isPending} 
-            />
+            <Button title="Save Changes" onPress={handleSave} disabled={mutation.isPending} />
           </View>
           <View style={modalStyles.footerButton}>
             <Button
@@ -180,7 +155,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     </Modal>
   );
 };
-
 
 const modalStyles = StyleSheet.create({
   centeredView: {

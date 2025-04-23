@@ -1,13 +1,9 @@
-
 import React from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
-import { colors } from '../../styles/colors';
 
-interface PaginationControlsProps {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}
+import { View, Text, Button, StyleSheet } from 'react-native';
+
+import { colors } from '../../styles/colors';
+import { PaginationControlsProps } from '../../types/componentProps';
 
 const PaginationControls: React.FC<PaginationControlsProps> = ({
   currentPage,
@@ -26,7 +22,6 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
     }
   };
 
-  
   if (totalPages <= 1) {
     return null;
   }
@@ -67,7 +62,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.textSecondary,
-    marginHorizontal: 15, 
+    marginHorizontal: 15,
   },
 });
 

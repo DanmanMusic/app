@@ -1,5 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -8,25 +10,16 @@ import {
   Button,
   TextInput,
   ScrollView,
-  ActivityIndicator, 
-  Alert, 
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { useMutation, useQueryClient } from '@tanstack/react-query'; 
 
-
-import { createReward } from '../../../api/rewards'; 
+import { createReward } from '../../../api/rewards';
 import { RewardItem } from '../../../mocks/mockRewards';
 import { colors } from '../../../styles/colors';
-
-
-interface CreateRewardModalProps {
-  visible: boolean;
-  onClose: () => void;
-  
-}
+import { CreateRewardModalProps } from '../../../types/componentProps';
 
 const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose }) => {
-  
   const [name, setName] = useState('');
   const [cost, setCost] = useState<number | ''>('');
   const [description, setDescription] = useState('');
@@ -34,32 +27,29 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
 
   const queryClient = useQueryClient();
 
-  
   const mutation = useMutation({
-    mutationFn: createReward, 
+    mutationFn: createReward,
     onSuccess: createdReward => {
       console.log('Reward created successfully via mutation:', createdReward);
-      queryClient.invalidateQueries({ queryKey: ['rewards'] }); 
-      onClose(); 
+      queryClient.invalidateQueries({ queryKey: ['rewards'] });
+      onClose();
     },
     onError: error => {
       console.error('Error creating reward via mutation:', error);
     },
   });
 
-  
   useEffect(() => {
     if (visible) {
       setName('');
       setCost('');
       setDescription('');
       setImageUrl('');
-      mutation.reset(); 
+      mutation.reset();
     }
   }, [visible]);
 
   const handleCreate = () => {
-    
     const numericCost = typeof cost === 'number' ? cost : parseInt(String(cost || '0'), 10);
     if (!name.trim()) {
       return;
@@ -68,7 +58,6 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
       return;
     }
     if (!imageUrl.trim()) {
-      
       if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
         return;
       }
@@ -77,11 +66,10 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
     const newRewardData: Omit<RewardItem, 'id'> = {
       name: name.trim(),
       cost: numericCost,
-      description: description.trim() || undefined, 
+      description: description.trim() || undefined,
       imageUrl: imageUrl.trim(),
     };
 
-    
     mutation.mutate(newRewardData);
   };
 
@@ -99,7 +87,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
               placeholder="e.g., Fender Stratocaster"
               placeholderTextColor={colors.textLight}
               maxLength={100}
-              editable={!mutation.isPending} 
+              editable={!mutation.isPending}
             />
 
             <Text style={modalStyles.label}>Ticket Cost:</Text>
@@ -157,11 +145,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
           )}
 
           <View style={modalStyles.buttonContainer}>
-            <Button
-              title="Create Reward"
-              onPress={handleCreate}
-              disabled={mutation.isPending} 
-            />
+            <Button title="Create Reward" onPress={handleCreate} disabled={mutation.isPending} />
           </View>
           <View style={modalStyles.footerButton}>
             <Button
@@ -176,7 +160,6 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
     </Modal>
   );
 };
-
 
 const modalStyles = StyleSheet.create({
   centeredView: {

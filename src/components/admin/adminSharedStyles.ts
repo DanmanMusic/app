@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
-import { colors } from '../../styles/colors';
+
 import { appSharedStyles } from '../../styles/appSharedStyles';
+import { colors } from '../../styles/colors';
 
 export const adminSharedStyles = StyleSheet.create({
   adminNav: {

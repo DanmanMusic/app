@@ -3,8 +3,8 @@
 import React, { createContext, useState, useContext, useMemo, ReactNode } from 'react';
 
 // Import User type and initial mock users data
-import { User } from '../types/userTypes';
 import { mockUsers as initialMockUsers } from '../mocks/mockUsers'; // Use initial mock data
+import { User } from '../types/userTypes';
 
 // --- Define the minimal Context Type ---
 // Only include what's strictly needed for DevelopmentViewSelector
@@ -48,8 +48,8 @@ export const useData = (): DataContextType => {
   }
   // Runtime check to ensure the expected property is present
   if (!context.currentMockUsers) {
-      console.error("DataContext value is missing 'currentMockUsers' property!");
-      // You might want to return a default or throw here depending on strictness
+    console.error("DataContext value is missing 'currentMockUsers' property!");
+    // You might want to return a default or throw here depending on strictness
   }
   return context;
 };

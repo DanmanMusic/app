@@ -1,5 +1,3 @@
-
-
 export type TransactionType = 'task_award' | 'manual_add' | 'manual_subtract' | 'redemption';
 
 export interface TicketTransaction {
@@ -16,16 +14,14 @@ export const mockTicketBalances: Record<string, number> = {
   'student-1': 5200,
   'student-2': 150,
   'student-3': 7500,
-  'student-inactive': 50, 
-  
+  'student-inactive': 50,
+
   'student-4': 250,
   'student-5': 1200,
   'student-6': 80,
-  
 };
 
 export const mockTicketHistory: TicketTransaction[] = [
-  
   {
     id: 'tx-1',
     studentId: 'student-1',
@@ -80,7 +76,7 @@ export const mockTicketHistory: TicketTransaction[] = [
     sourceId: 'manual-adj-3-mock',
     notes: 'Welcome Bonus',
   },
-  
+
   {
     id: 'tx-7',
     studentId: 'student-4',
@@ -117,5 +113,4 @@ export const mockTicketHistory: TicketTransaction[] = [
     sourceId: 'manual-adj-inactive-mock',
     notes: 'Initial balance',
   },
-  
 ];

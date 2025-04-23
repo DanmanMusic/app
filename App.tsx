@@ -1,28 +1,30 @@
 // Import necessary React and React Native components
 import React, { useState } from 'react'; // Removed useEffect as it's not used here anymore
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Button, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 // Import TanStack Query client and provider
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import Contexts & Views
+import TaskVerificationModal from './src/components/TaskVerificationModal';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 // DataProvider is likely removable soon, but keep for now if other parts still use it
 import { DataProvider, useData } from './src/contexts/DataContext';
+import { AssignedTask } from './src/mocks/mockAssignedTasks'; // Removed TaskVerificationStatus as it's handled internally now
+import { colors } from './src/styles/colors';
+import { getUserDisplayName } from './src/utils/helpers';
+import { AdminView } from './src/views/AdminView';
+import { ParentView } from './src/views/ParentView';
 import { PublicView } from './src/views/PublicView';
 import { StudentView } from './src/views/StudentView';
 import { TeacherView } from './src/views/TeacherView';
-import { ParentView } from './src/views/ParentView';
-import { AdminView } from './src/views/AdminView';
 
 // Import Components & Types
-import TaskVerificationModal from './src/components/TaskVerificationModal';
-import { AssignedTask } from './src/mocks/mockAssignedTasks'; // Removed TaskVerificationStatus as it's handled internally now
 
 // Import Utils & Styles
-import { colors } from './src/styles/colors';
-import { getUserDisplayName } from './src/utils/helpers';
 // Import API functions needed for mutations (will be used in TaskVerificationModal)
 // import { createAssignedTask } from './src/api/assignedTasks'; // Import if re-assign uses it directly here
 

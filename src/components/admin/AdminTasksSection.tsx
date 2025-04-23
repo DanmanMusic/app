@@ -1,14 +1,15 @@
 // src/components/admin/AdminTasksSection.tsx
 import React, { useState } from 'react'; // Keep useState if needed for modals internal to section
+
 import { View, Text, Button, FlatList, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+
 // Removed useQuery, useMutation, useQueryClient
 // Import API functions only if mutations are handled *here* (they shouldn't be)
 // import { deleteTaskLibraryItem } from '../../api/taskLibrary';
-import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
 import { AssignedTask } from '../../mocks/mockAssignedTasks';
+import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
 
 // Import styles
-import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 
@@ -20,19 +21,31 @@ import { colors } from '../../styles/colors';
 // Import the props type
 import { AdminTasksSectionProps } from '../../types/componentProps'; // Adjust path
 
-// Define sub-components like AdminTaskLibraryItem (or import if common)
-const AdminTaskLibraryItem = ({ item, /* onEdit, onDelete, disabled */ }: { item: TaskLibraryItem, /* ... */ }) => (
-    <View style={appSharedStyles.itemContainer}>
-        <Text style={appSharedStyles.itemTitle}> {item.title} ({item.baseTickets} pts) </Text>
-        <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
-        <View style={adminSharedStyles.itemActions}>
-            {/* Buttons trigger callbacks or open modals managed by parent/local state */}
-            <Button title="Edit (TODO)" onPress={() => alert(`TODO: Edit ${item.id}`)} />
-            <Button title="Delete (TODO)" onPress={() => alert(`TODO: Delete ${item.id}`)} color={colors.danger} />
-        </View>
-    </View>
-);
+import { adminSharedStyles } from './adminSharedStyles';
 
+// Define sub-components like AdminTaskLibraryItem (or import if common)
+const AdminTaskLibraryItem = ({
+  item /* onEdit, onDelete, disabled */,
+}: {
+  item: TaskLibraryItem /* ... */;
+}) => (
+  <View style={appSharedStyles.itemContainer}>
+    <Text style={appSharedStyles.itemTitle}>
+      {' '}
+      {item.title} ({item.baseTickets} pts){' '}
+    </Text>
+    <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
+    <View style={adminSharedStyles.itemActions}>
+      {/* Buttons trigger callbacks or open modals managed by parent/local state */}
+      <Button title="Edit (TODO)" onPress={() => alert(`TODO: Edit ${item.id}`)} />
+      <Button
+        title="Delete (TODO)"
+        onPress={() => alert(`TODO: Delete ${item.id}`)}
+        color={colors.danger}
+      />
+    </View>
+  </View>
+);
 
 // Use the imported props type
 export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
@@ -81,9 +94,12 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
       {/* Task Library Section Title */}
       <Text style={adminSharedStyles.sectionSubTitle}>Task Library ({taskLibrary.length})</Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
-         {/* TODO: Create/Edit/Delete Modals likely need to be triggered from AdminView? Or handled locally? */}
-         {/* If handled locally, need state/handlers back + TQ mutations */}
-        <Button title="Create New Task Library Item (TODO)" onPress={() => alert("TODO: Open Create Task Modal")} />
+        {/* TODO: Create/Edit/Delete Modals likely need to be triggered from AdminView? Or handled locally? */}
+        {/* If handled locally, need state/handlers back + TQ mutations */}
+        <Button
+          title="Create New Task Library Item (TODO)"
+          onPress={() => alert('TODO: Open Create Task Modal')}
+        />
       </View>
 
       {/* Loading Indicator */}
@@ -130,6 +146,14 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
 
 // Add local styles if needed (e.g., for error container)
 const styles = StyleSheet.create({
-  errorContainer: { marginVertical: 20, padding: 15, alignItems: 'center', backgroundColor: '#ffebee', borderColor: colors.danger, borderWidth: 1, borderRadius: 5, },
-  errorText: { color: colors.danger, fontSize: 14, textAlign: 'center', },
+  errorContainer: {
+    marginVertical: 20,
+    padding: 15,
+    alignItems: 'center',
+    backgroundColor: '#ffebee',
+    borderColor: colors.danger,
+    borderWidth: 1,
+    borderRadius: 5,
+  },
+  errorText: { color: colors.danger, fontSize: 14, textAlign: 'center' },
 });

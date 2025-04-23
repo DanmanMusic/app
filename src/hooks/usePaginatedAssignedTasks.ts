@@ -1,11 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
+
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
 // Import the API function to fetch assigned tasks and related types
 import {
   fetchAssignedTasks,
   TaskAssignmentFilterStatusAPI, // API specific type
-  StudentTaskFilterStatusAPI,   // API specific type
+  StudentTaskFilterStatusAPI, // API specific type
 } from '../api/assignedTasks';
 // Import the data type for an assigned task
 import { AssignedTask } from '../mocks/mockAssignedTasks';
@@ -45,7 +46,6 @@ export const usePaginatedAssignedTasks = (
   initialStudentStatusFilter: StudentTaskFilterStatus = 'active',
   initialStudentId: string | null = null // Allow optional initial student ID filter
 ): UsePaginatedAssignedTasksReturn => {
-
   // State for filters and pagination
   const [assignmentFilter, setAssignmentFilter] =
     useState<TaskAssignmentFilterStatus>(initialAssignmentFilter);

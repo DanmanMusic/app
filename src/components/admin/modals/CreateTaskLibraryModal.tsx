@@ -1,5 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -8,57 +10,45 @@ import {
   Button,
   TextInput,
   ScrollView,
-  ActivityIndicator, 
-  Alert, 
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { useMutation, useQueryClient } from '@tanstack/react-query'; 
 
-
-import { createTaskLibraryItem } from '../../../api/taskLibrary'; 
+import { createTaskLibraryItem } from '../../../api/taskLibrary';
 import { TaskLibraryItem } from '../../../mocks/mockTaskLibrary';
 import { colors } from '../../../styles/colors';
-
-
-interface CreateTaskLibraryModalProps {
-  visible: boolean;
-  onClose: () => void;
-  
-}
+import { CreateTaskLibraryModalProps } from '../../../types/componentProps';
 
 const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible, onClose }) => {
-  
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [baseTickets, setBaseTickets] = useState<number | ''>('');
 
   const queryClient = useQueryClient();
 
-  
   const mutation = useMutation({
-    mutationFn: createTaskLibraryItem, 
+    mutationFn: createTaskLibraryItem,
     onSuccess: createdTask => {
       console.log('Task library item created successfully via mutation:', createdTask);
-      
+
       queryClient.invalidateQueries({ queryKey: ['task-library'] });
-      onClose(); 
+      onClose();
     },
     onError: error => {
       console.error('Error creating task library item via mutation:', error);
     },
   });
 
-  
   useEffect(() => {
     if (visible) {
       setTitle('');
       setDescription('');
       setBaseTickets('');
-      mutation.reset(); 
+      mutation.reset();
     }
   }, [visible]);
 
   const handleCreate = () => {
-    
     const numericTickets =
       typeof baseTickets === 'number' ? baseTickets : parseInt(String(baseTickets || '0'), 10);
     if (!title.trim()) {
@@ -77,7 +67,6 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
       baseTickets: numericTickets,
     };
 
-    
     mutation.mutate(newTaskData);
   };
 
@@ -95,7 +84,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
               placeholder="e.g., Practice Scales"
               placeholderTextColor={colors.textLight}
               maxLength={100}
-              editable={!mutation.isPending} 
+              editable={!mutation.isPending}
             />
 
             <Text style={modalStyles.label}>Base Tickets:</Text>
@@ -141,11 +130,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
           )}
 
           <View style={modalStyles.buttonContainer}>
-            <Button
-              title="Create Task"
-              onPress={handleCreate}
-              disabled={mutation.isPending} 
-            />
+            <Button title="Create Task" onPress={handleCreate} disabled={mutation.isPending} />
           </View>
           <View style={modalStyles.footerButton}>
             <Button
@@ -160,7 +145,6 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
     </Modal>
   );
 };
-
 
 const modalStyles = StyleSheet.create({
   centeredView: {

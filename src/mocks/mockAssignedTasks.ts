@@ -1,23 +1,12 @@
-
-
-
-
-
-
-
-
-
 export type TaskVerificationStatus = 'pending' | 'verified' | 'partial' | 'incomplete' | undefined;
-
 
 export interface AssignedTask {
   id: string;
-  
+
   studentId: string;
   assignedById: string;
   assignedDate: string;
 
-  
   taskTitle: string;
   taskDescription: string;
   taskBasePoints: number;
@@ -28,20 +17,18 @@ export interface AssignedTask {
   verifiedById?: string;
   verifiedDate?: string;
   actualPointsAwarded?: number;
-  
 }
-
 
 export const mockAssignedTasksStudent1: AssignedTask[] = [
   {
     id: 'assigned-1',
-    
+
     studentId: 'student-1',
     assignedById: 'teacher-1',
     assignedDate: '2025-04-15T10:00:00Z',
-    taskTitle: 'Practice 15 minutes', 
-    taskDescription: 'Daily practice on your instrument', 
-    taskBasePoints: 10, 
+    taskTitle: 'Practice 15 minutes',
+    taskDescription: 'Daily practice on your instrument',
+    taskBasePoints: 10,
     isComplete: true,
     completedDate: '2025-04-16T18:00:00Z',
     verificationStatus: 'verified',
@@ -51,13 +38,13 @@ export const mockAssignedTasksStudent1: AssignedTask[] = [
   },
   {
     id: 'assigned-2',
-    
+
     studentId: 'student-1',
     assignedById: 'teacher-1',
     assignedDate: '2025-04-14T10:00:00Z',
-    taskTitle: 'Learn Scale C Major', 
-    taskDescription: 'Play the C Major scale ascending and descending', 
-    taskBasePoints: 25, 
+    taskTitle: 'Learn Scale C Major',
+    taskDescription: 'Play the C Major scale ascending and descending',
+    taskBasePoints: 25,
     isComplete: true,
     completedDate: '2025-04-15T09:00:00Z',
     verificationStatus: 'partial',
@@ -67,26 +54,26 @@ export const mockAssignedTasksStudent1: AssignedTask[] = [
   },
   {
     id: 'assigned-3',
-    
+
     studentId: 'student-1',
     assignedById: 'teacher-1',
     assignedDate: '2025-04-16T10:00:00Z',
-    taskTitle: 'Practice 15 minutes', 
-    taskDescription: 'Daily practice on your instrument', 
-    taskBasePoints: 10, 
+    taskTitle: 'Practice 15 minutes',
+    taskDescription: 'Daily practice on your instrument',
+    taskBasePoints: 10,
     isComplete: true,
     completedDate: '2025-04-17T19:00:00Z',
     verificationStatus: 'pending',
   },
   {
     id: 'assigned-4',
-    
+
     studentId: 'student-1',
     assignedById: 'admin-1',
     assignedDate: '2025-04-08T10:00:00Z',
-    taskTitle: 'Perform at Recital', 
-    taskDescription: 'Participate in the quarterly student recital', 
-    taskBasePoints: 100, 
+    taskTitle: 'Perform at Recital',
+    taskDescription: 'Participate in the quarterly student recital',
+    taskBasePoints: 100,
     isComplete: false,
   },
 ];
@@ -94,13 +81,13 @@ export const mockAssignedTasksStudent1: AssignedTask[] = [
 export const mockAssignedTasksStudent2: AssignedTask[] = [
   {
     id: 'assigned-5',
-    
+
     studentId: 'student-2',
     assignedById: 'teacher-1',
     assignedDate: '2025-04-17T10:00:00Z',
-    taskTitle: 'Practice 15 minutes', 
-    taskDescription: 'Daily practice on your instrument', 
-    taskBasePoints: 10, 
+    taskTitle: 'Practice 15 minutes',
+    taskDescription: 'Daily practice on your instrument',
+    taskBasePoints: 10,
     isComplete: false,
   },
 ];
@@ -108,13 +95,13 @@ export const mockAssignedTasksStudent2: AssignedTask[] = [
 export const mockAssignedTasksStudent3: AssignedTask[] = [
   {
     id: 'assigned-6',
-    
+
     studentId: 'student-3',
     assignedById: 'teacher-2',
     assignedDate: '2025-04-16T10:00:00Z',
-    taskTitle: 'Practice 15 minutes', 
-    taskDescription: 'Daily practice on your instrument', 
-    taskBasePoints: 10, 
+    taskTitle: 'Practice 15 minutes',
+    taskDescription: 'Daily practice on your instrument',
+    taskBasePoints: 10,
     isComplete: true,
     completedDate: '2025-04-17T20:00:00Z',
     verificationStatus: 'pending',

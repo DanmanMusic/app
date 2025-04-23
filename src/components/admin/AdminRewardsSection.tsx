@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   View,
   Text,
@@ -10,23 +13,23 @@ import {
   // Removed Alert if ConfirmationModal is used
 } from 'react-native';
 // Import TQ hooks
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Import API functions
 import { fetchRewards, createReward, updateReward, deleteReward } from '../../api/rewards';
 // Import Types
 import { RewardItem } from '../../mocks/mockRewards';
+import { appSharedStyles } from '../../styles/appSharedStyles';
+import { colors } from '../../styles/colors';
 import { AdminRewardsSectionProps } from '../../types/componentProps'; // Use imported type
 
 // Import Styles
+import ConfirmationModal from '../common/ConfirmationModal'; // For delete confirmation
+
 import { adminSharedStyles } from './adminSharedStyles';
-import { appSharedStyles } from '../../styles/appSharedStyles';
-import { colors } from '../../styles/colors';
 
 // Import Modals used by this section
 import CreateRewardModal from './modals/CreateRewardModal';
 import EditRewardModal from './modals/EditRewardModal';
-import ConfirmationModal from '../common/ConfirmationModal'; // For delete confirmation
 
 // --- Sub-Component: AdminRewardItem ---
 // Renders a single reward item with Edit/Delete buttons
@@ -67,7 +70,8 @@ const AdminRewardItem = ({
 // --- End Sub-Component ---
 
 // --- Main Section Component ---
-export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = () => { // Uses the imported prop type
+export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = () => {
+  // Uses the imported prop type
 
   // --- State for Modals ---
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -213,7 +217,6 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = () => { /
     </View>
   );
 };
-
 
 // Styles for this section
 const styles = StyleSheet.create({

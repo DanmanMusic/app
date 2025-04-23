@@ -1,49 +1,34 @@
-
 import { http, HttpResponse } from 'msw';
 
-
-import { mockUsers } from './mockUsers';
+import { TaskAssignmentFilterStatusAPI, StudentTaskFilterStatusAPI } from '../api/assignedTasks';
 import { User, UserStatus } from '../types/userTypes';
 import { getUserDisplayName } from '../utils/helpers';
 
-
-import { initialMockTaskLibrary, TaskLibraryItem } from './mockTaskLibrary';
-
-
-import { initialMockRewardsCatalog, RewardItem } from './mockRewards';
-
-
 import { mockAnnouncements as initialMockAnnouncements, Announcement } from './mockAnnouncements';
-
-
-import { mockInstruments as initialMockInstruments, Instrument } from './mockInstruments';
-
-
 import { mockAllAssignedTasks, AssignedTask, TaskVerificationStatus } from './mockAssignedTasks';
-import { TaskAssignmentFilterStatusAPI, StudentTaskFilterStatusAPI } from '../api/assignedTasks';
-
-
+import { mockInstruments as initialMockInstruments, Instrument } from './mockInstruments';
+import { initialMockRewardsCatalog, RewardItem } from './mockRewards';
+import { initialMockTaskLibrary, TaskLibraryItem } from './mockTaskLibrary';
 import {
   mockTicketBalances,
   mockTicketHistory,
   TicketTransaction,
   TransactionType,
 } from './mockTickets';
+import { mockUsers } from './mockUsers';
 
-const ITEMS_PER_PAGE = 5; 
-const ASSIGNED_TASKS_PAGE_LIMIT = 10; 
-const HISTORY_PAGE_LIMIT = 15; 
+const ITEMS_PER_PAGE = 5;
+const ASSIGNED_TASKS_PAGE_LIMIT = 10;
+const HISTORY_PAGE_LIMIT = 15;
 
-
-let currentMockUsers = { ...mockUsers };
-let mockTaskLibraryData: TaskLibraryItem[] = [...initialMockTaskLibrary];
-let mockRewardsData: RewardItem[] = [...initialMockRewardsCatalog];
-let mockAnnouncementsData: Announcement[] = [...initialMockAnnouncements];
-let mockInstrumentsData: Instrument[] = [...initialMockInstruments];
-let mockAssignedTasksData: AssignedTask[] = [...mockAllAssignedTasks];
-let mockTicketBalancesData = { ...mockTicketBalances };
-let mockTicketHistoryData: TicketTransaction[] = [...mockTicketHistory];
-
+const currentMockUsers = { ...mockUsers };
+const mockTaskLibraryData: TaskLibraryItem[] = [...initialMockTaskLibrary];
+const mockRewardsData: RewardItem[] = [...initialMockRewardsCatalog];
+const mockAnnouncementsData: Announcement[] = [...initialMockAnnouncements];
+const mockInstrumentsData: Instrument[] = [...initialMockInstruments];
+const mockAssignedTasksData: AssignedTask[] = [...mockAllAssignedTasks];
+const mockTicketBalancesData = { ...mockTicketBalances };
+const mockTicketHistoryData: TicketTransaction[] = [...mockTicketHistory];
 
 const getFilteredStudents = (filter: UserStatus | 'all', searchTerm: string): User[] => {
   const termLower = searchTerm.toLowerCase();
@@ -89,9 +74,7 @@ const getSortedParents = (): User[] => {
     });
 };
 
-
 export const handlers = [
-  
   http.get('/api/students', ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1', 10);
@@ -130,12 +113,14 @@ export const handlers = [
       if (!d || !d.firstName || !d.lastName || !d.role)
         return new HttpResponse('Invalid data', { status: 400 });
       const i = `user-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-      const n: User = { ...d, id: i, 
-        status: 'active', 
+      const n: User = {
+        ...d,
+        id: i,
+        status: 'active',
         ...(d.role === 'student' && {
           instrumentIds: d.instrumentIds || [], // Ensure instrumentIds exists, default to empty array
           linkedTeacherIds: d.linkedTeacherIds || [], // Also ensure linkedTeacherIds exists
-        })        
+        }),
       };
       currentMockUsers[i] = n;
       return HttpResponse.json(n, { status: 201 });
@@ -147,34 +132,34 @@ export const handlers = [
     const { id } = params;
     console.log(`[MSW] Intercepted GET /api/users/${id}`); // Add/Confirm this log
     if (typeof id !== 'string') {
-        console.error('[MSW] Invalid ID type received:', typeof id);
-        return new HttpResponse('Invalid ID', { status: 400 });
+      console.error('[MSW] Invalid ID type received:', typeof id);
+      return new HttpResponse('Invalid ID', { status: 400 });
     }
     const user = currentMockUsers[id];
     if (user) {
-        console.log(`[MSW] Found user for ID ${id}:`, user.firstName);
-        return HttpResponse.json(user); // <<< MUST return JSON
+      console.log(`[MSW] Found user for ID ${id}:`, user.firstName);
+      return HttpResponse.json(user); // <<< MUST return JSON
     } else {
-        console.warn(`[MSW] User not found for ID ${id}`);
-        return HttpResponse.json({ message: 'User not found' }, { status: 404 });
+      console.warn(`[MSW] User not found for ID ${id}`);
+      return HttpResponse.json({ message: 'User not found' }, { status: 404 });
     }
-  }),  
+  }),
   http.patch('/api/users/:id', async ({ request, params }) => {
     const { id } = params;
-    console.log('got here:', id)
+    console.log('got here:', id);
     if (typeof id !== 'string') return new HttpResponse('Invalid ID', { status: 400 });
     const u = currentMockUsers[id];
-    console.log('got here 2:', u)
+    console.log('got here 2:', u);
     if (!u) return new HttpResponse('Not found', { status: 404 });
     try {
       const upd = (await request.json()) as Partial<Omit<User, 'id' | 'role' | 'status'>>;
-      let v = { ...upd };
+      const v = { ...upd };
       if ('role' in v || 'status' in v) {
         delete (v as any).role;
         delete (v as any).status;
       }
       currentMockUsers[id] = { ...u, ...v };
-      console.log('got here 3:', currentMockUsers[id])
+      console.log('got here 3:', currentMockUsers[id]);
       return HttpResponse.json(currentMockUsers[id]);
     } catch (e) {
       return new HttpResponse('Bad request', { status: 400 });
@@ -199,7 +184,6 @@ export const handlers = [
     return HttpResponse.json(u);
   }),
 
-  
   http.get('/api/task-library', () => {
     const d = [...mockTaskLibraryData].sort((a, b) => a.title.localeCompare(b.title));
     return HttpResponse.json(d);
@@ -249,7 +233,6 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  
   http.get('/api/rewards', () => {
     const d = [...mockRewardsData].sort((a, b) => a.cost - b.cost);
     return HttpResponse.json(d);
@@ -300,7 +283,6 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  
   http.get('/api/announcements', () => {
     const d = [...mockAnnouncementsData].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -343,7 +325,6 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  
   http.get('/api/instruments', () => {
     const d = [...mockInstrumentsData].sort((a, b) => a.name.localeCompare(b.name));
     return HttpResponse.json(d);
@@ -385,7 +366,6 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  
   http.get('/api/assigned-tasks', ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1', 10);
@@ -479,7 +459,7 @@ export const handlers = [
     try {
       const u = (await request.json()) as Partial<AssignedTask>;
       const e = mockAssignedTasksData[idx];
-      let n = { ...e };
+      const n = { ...e };
       if (u.isComplete === true && !e.isComplete) {
         n.isComplete = true;
         n.completedDate = new Date().toISOString();
@@ -527,7 +507,6 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  
   http.get('/api/ticket-history', ({ request }) => {
     console.log('[MSW] Intercepted GET /api/ticket-history');
     const url = new URL(request.url);
@@ -535,14 +514,12 @@ export const handlers = [
     const limit = parseInt(url.searchParams.get('limit') || String(HISTORY_PAGE_LIMIT), 10);
     const studentId = url.searchParams.get('studentId');
 
-    let history = studentId
+    const history = studentId
       ? mockTicketHistoryData.filter(tx => tx.studentId === studentId)
       : [...mockTicketHistoryData];
 
-    
     history.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-    
     const totalItems = history.length;
     const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
     const startIndex = (page - 1) * limit;
@@ -585,17 +562,15 @@ export const handlers = [
       if (!currentMockUsers[studentId] || currentMockUsers[studentId].role !== 'student') {
         return new HttpResponse('Student not found', { status: 404 });
       }
-      
+
       if (typeof amount !== 'number') {
         return new HttpResponse('Invalid amount', { status: 400 });
       }
 
-      
       const currentBalance = mockTicketBalancesData[studentId] || 0;
       const newBalance = currentBalance + amount;
-      mockTicketBalancesData[studentId] = newBalance; 
+      mockTicketBalancesData[studentId] = newBalance;
 
-      
       const transaction: TicketTransaction = {
         id: `tx-${Date.now()}`,
         studentId: studentId,
@@ -605,12 +580,12 @@ export const handlers = [
         sourceId: `manual-${adjusterId}-${Date.now()}`,
         notes: `Manual Adjustment by ${adjusterId}: ${notes}`,
       };
-      mockTicketHistoryData.unshift(transaction); 
+      mockTicketHistoryData.unshift(transaction);
 
       console.log(
         `[MSW] Adjusted tickets for ${studentId} by ${amount}. New Balance: ${newBalance}. Tx: ${transaction.id}`
       );
-      return HttpResponse.json(transaction, { status: 201 }); 
+      return HttpResponse.json(transaction, { status: 201 });
     } catch (error) {
       console.error('[MSW] Error processing ticket adjustment:', error);
       return new HttpResponse('Failed to process request', { status: 400 });
@@ -643,61 +618,55 @@ export const handlers = [
         return new HttpResponse('Insufficient balance', { status: 400 });
       }
 
-      
       const newBalance = currentBalance - reward.cost;
-      mockTicketBalancesData[studentId] = newBalance; 
+      mockTicketBalancesData[studentId] = newBalance;
 
-      
       const transaction: TicketTransaction = {
         id: `tx-${Date.now()}`,
         studentId: studentId,
         timestamp: new Date().toISOString(),
-        amount: -reward.cost, 
+        amount: -reward.cost,
         type: 'redemption',
         sourceId: rewardId,
         notes: `Redeemed: ${reward.name} (by ${redeemerId})`,
       };
-      mockTicketHistoryData.unshift(transaction); 
-
-      
-      
+      mockTicketHistoryData.unshift(transaction);
 
       console.log(
         `[MSW] Redeemed ${reward.name} for ${studentId}. Cost: ${reward.cost}. New Balance: ${newBalance}. Tx: ${transaction.id}`
       );
-      return HttpResponse.json(transaction, { status: 201 }); 
+      return HttpResponse.json(transaction, { status: 201 });
     } catch (error) {
       console.error('[MSW] Error processing reward redemption:', error);
       return new HttpResponse('Failed to process request', { status: 400 });
     }
   }),
 
-      // Handler for User Counts
-      http.get('/api/stats/user-counts', () => {
-        const users = Object.values(currentMockUsers);
-        const counts = {
-            studentCount: users.filter(u => u.role === 'student').length,
-            teacherCount: users.filter(u => u.role === 'teacher').length,
-            parentCount: users.filter(u => u.role === 'parent').length,
-            activeStudentCount: users.filter(u => u.role === 'student' && u.status === 'active').length,
-            // Add other counts if needed
-        };
-        console.log('[MSW] Returning user counts:', counts);
-        return HttpResponse.json(counts);
-    }),
+  // Handler for User Counts
+  http.get('/api/stats/user-counts', () => {
+    const users = Object.values(currentMockUsers);
+    const counts = {
+      studentCount: users.filter(u => u.role === 'student').length,
+      teacherCount: users.filter(u => u.role === 'teacher').length,
+      parentCount: users.filter(u => u.role === 'parent').length,
+      activeStudentCount: users.filter(u => u.role === 'student' && u.status === 'active').length,
+      // Add other counts if needed
+    };
+    console.log('[MSW] Returning user counts:', counts);
+    return HttpResponse.json(counts);
+  }),
 
-    // Handler for Pending Task Count
-    http.get('/api/assigned-tasks/stats', () => {
-        const pendingCount = mockAssignedTasksData.filter(
-            task => task.isComplete && task.verificationStatus === 'pending'
-                    // Optionally add student active check if needed for dashboard count
-                    // && currentMockUsers[task.studentId]?.status === 'active'
-        ).length;
-        const stats = {
-            pendingVerificationCount: pendingCount,
-        };
-        console.log('[MSW] Returning task stats:', stats);
-        return HttpResponse.json(stats);
-    }),
-
+  // Handler for Pending Task Count
+  http.get('/api/assigned-tasks/stats', () => {
+    const pendingCount = mockAssignedTasksData.filter(
+      task => task.isComplete && task.verificationStatus === 'pending'
+      // Optionally add student active check if needed for dashboard count
+      // && currentMockUsers[task.studentId]?.status === 'active'
+    ).length;
+    const stats = {
+      pendingVerificationCount: pendingCount,
+    };
+    console.log('[MSW] Returning task stats:', stats);
+    return HttpResponse.json(stats);
+  }),
 ];

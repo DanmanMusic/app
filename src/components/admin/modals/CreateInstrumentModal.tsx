@@ -1,5 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -7,43 +9,32 @@ import {
   StyleSheet,
   Button,
   TextInput,
-  ActivityIndicator, 
-  Alert, 
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { useMutation, useQueryClient } from '@tanstack/react-query'; 
 
-
-import { createInstrument } from '../../../api/instruments'; 
+import { createInstrument } from '../../../api/instruments';
 import { Instrument } from '../../../mocks/mockInstruments';
 import { colors } from '../../../styles/colors';
-
-
-interface CreateInstrumentModalProps {
-  visible: boolean;
-  onClose: () => void;
-  
-}
+import { CreateInstrumentModalProps } from '../../../types/componentProps';
 
 const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, onClose }) => {
-  
   const [name, setName] = useState('');
 
   const queryClient = useQueryClient();
 
-  
   const mutation = useMutation({
-    mutationFn: createInstrument, 
+    mutationFn: createInstrument,
     onSuccess: createdInstrument => {
       console.log('Instrument created successfully via mutation:', createdInstrument);
-      queryClient.invalidateQueries({ queryKey: ['instruments'] }); 
-      onClose(); 
+      queryClient.invalidateQueries({ queryKey: ['instruments'] });
+      onClose();
     },
     onError: error => {
       console.error('Error creating instrument via mutation:', error);
     },
   });
 
-  
   useEffect(() => {
     if (visible) {
       setName('');
@@ -52,7 +43,6 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
   }, [visible]);
 
   const handleCreate = () => {
-    
     if (!name.trim()) {
       return;
     }
@@ -61,7 +51,6 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
       name: name.trim(),
     };
 
-    
     mutation.mutate(newInstrumentData);
   };
 
@@ -79,7 +68,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             placeholder="e.g., Saxophone"
             placeholderTextColor={colors.textLight}
             autoCapitalize="words"
-            editable={!mutation.isPending} 
+            editable={!mutation.isPending}
           />
 
           {}
@@ -104,7 +93,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             <Button
               title="Create Instrument"
               onPress={handleCreate}
-              disabled={mutation.isPending} 
+              disabled={mutation.isPending}
             />
           </View>
           <View style={modalStyles.footerButton}>
@@ -120,7 +109,6 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
     </Modal>
   );
 };
-
 
 const modalStyles = StyleSheet.create({
   centeredView: {

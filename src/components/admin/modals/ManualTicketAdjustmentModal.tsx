@@ -1,5 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -8,27 +10,14 @@ import {
   Button,
   TextInput,
   ActivityIndicator,
-  Alert, 
+  Alert,
 } from 'react-native';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-
 
 import { adjustTickets } from '../../../api/tickets';
-import { TicketTransaction } from '../../../mocks/mockTickets'; 
-
-
 import { useAuth } from '../../../contexts/AuthContext';
-
-
+import { TicketTransaction } from '../../../mocks/mockTickets';
 import { colors } from '../../../styles/colors';
-
-interface ManualTicketAdjustmentModalProps {
-  visible: boolean;
-  onClose: () => void;
-  studentId: string;
-  studentName: string;
-  currentBalance: number;
-}
+import { ManualTicketAdjustmentModalProps } from '../../../types/componentProps';
 
 const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = ({
   visible,
@@ -37,25 +26,23 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
   studentName,
   currentBalance,
 }) => {
-  const { currentUserId } = useAuth(); 
+  const { currentUserId } = useAuth();
   const queryClient = useQueryClient();
 
-  
   const [amount, setAmount] = useState<number | ''>('');
   const [notes, setNotes] = useState('');
-  const [isSubtracting, setIsSubtracting] = useState(false); 
+  const [isSubtracting, setIsSubtracting] = useState(false);
 
-  
   const mutation = useMutation({
-    mutationFn: adjustTickets, 
+    mutationFn: adjustTickets,
     onSuccess: createdTransaction => {
       console.log('Ticket adjustment successful via mutation:', createdTransaction);
-      
-      queryClient.invalidateQueries({ queryKey: ['balance', studentId] }); 
-      queryClient.invalidateQueries({ queryKey: ['ticket-history', { studentId }] }); 
-      queryClient.invalidateQueries({ queryKey: ['ticket-history'] }); 
+
+      queryClient.invalidateQueries({ queryKey: ['balance', studentId] });
+      queryClient.invalidateQueries({ queryKey: ['ticket-history', { studentId }] });
+      queryClient.invalidateQueries({ queryKey: ['ticket-history'] });
       Alert.alert('Success', `Tickets adjusted successfully for ${studentName}.`);
-      onClose(); 
+      onClose();
     },
     onError: error => {
       console.error('Error adjusting tickets via mutation:', error);
@@ -63,11 +50,9 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
         'Error',
         `Failed to adjust tickets: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
-      
     },
   });
 
-  
   useEffect(() => {
     if (visible) {
       setAmount('');
@@ -93,7 +78,6 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
 
     const adjustmentAmount = isSubtracting ? -Number(amount) : Number(amount);
 
-    
     if (isSubtracting && currentBalance < Number(amount)) {
       Alert.alert(
         'Insufficient Balance',
@@ -215,7 +199,6 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
     </Modal>
   );
 };
-
 
 const modalStyles = StyleSheet.create({
   centeredView: {

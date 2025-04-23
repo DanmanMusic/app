@@ -1,32 +1,17 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, Button, FlatList, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-// Corrected: Import useQuery and useQueries
+
 import { useQuery, useQueries } from '@tanstack/react-query';
 
-// Import Auth context for parent's ID
+import { View, Text, StyleSheet, Button, FlatList, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
-
-// Import StudentView to render child profile
-import { StudentView } from './StudentView';
-
-// Import API functions (need function to fetch user by ID)
-// import { fetchUserById } from '../api/users'; // Assuming this exists or fetch directly
-
-// Import types
-import { User } from '../types/userTypes';
-import { ParentViewProps } from '../types/componentProps'; // Import props type
-
-// Import utils and styles
-import { getUserDisplayName } from '../utils/helpers';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
+import { ParentStudentListItemProps, ParentViewProps } from '../types/componentProps';
+import { User } from '../types/userTypes';
+import { getUserDisplayName } from '../utils/helpers';
 
-// Component for the student selection list item
-interface ParentStudentListItemProps {
-  student: User; // Expecting full User object for display
-  onSelectStudent: (studentId: string) => void;
-}
+import { StudentView } from './StudentView';
 
 const ParentStudentListItem: React.FC<ParentStudentListItemProps> = ({
   student,
@@ -65,13 +50,13 @@ export const ParentView: React.FC<ParentViewProps> = () => {
   } = useQuery<User, Error>({
     queryKey: ['user', currentUserId], // Fetch user data for the logged-in parent
     queryFn: async () => {
-      if (!currentUserId) throw new Error("No logged in parent user ID");
+      if (!currentUserId) throw new Error('No logged in parent user ID');
       // Replace with fetchUserById(currentUserId) if available
       const response = await fetch(`/api/users/${currentUserId}`);
       if (!response.ok) {
-          const errorBody = await response.text();
-          console.error("API Error fetching parent:", errorBody);
-          throw new Error(`Failed to fetch parent data (status ${response.status})`);
+        const errorBody = await response.text();
+        console.error('API Error fetching parent:', errorBody);
+        throw new Error(`Failed to fetch parent data (status ${response.status})`);
       }
       const userData = await response.json();
       if (userData.role !== 'parent') throw new Error('Logged in user is not a parent');
@@ -86,19 +71,19 @@ export const ParentView: React.FC<ParentViewProps> = () => {
 
   // Corrected: Use useQueries
   const linkedStudentsQueriesResults = useQueries({
-    queries: linkedStudentIds.map((id) => ({
+    queries: linkedStudentIds.map(id => ({
       queryKey: ['user', id], // Unique key for each student query
       queryFn: async () => {
-          // Replace with fetchUserById(id) if available
-          const response = await fetch(`/api/users/${id}`);
-          if (!response.ok) {
-              console.error(`Failed to fetch linked student ${id}, status: ${response.status}`);
-              // Return null or throw? Returning null allows partial success display
-              return null;
-          }
-          const studentData = await response.json();
-          // Ensure it's actually a student before returning
-          return studentData?.role === 'student' ? (studentData as User) : null;
+        // Replace with fetchUserById(id) if available
+        const response = await fetch(`/api/users/${id}`);
+        if (!response.ok) {
+          console.error(`Failed to fetch linked student ${id}, status: ${response.status}`);
+          // Return null or throw? Returning null allows partial success display
+          return null;
+        }
+        const studentData = await response.json();
+        // Ensure it's actually a student before returning
+        return studentData?.role === 'student' ? (studentData as User) : null;
       },
       enabled: !!parentUser, // Enable queries only after parent data (and IDs) are loaded
       staleTime: 5 * 60 * 1000, // Cache student data
@@ -108,22 +93,25 @@ export const ParentView: React.FC<ParentViewProps> = () => {
   // --- End TQ Queries ---
 
   // --- Process results from useQueries ---
-  const linkedStudents: User[] = useMemo(() =>
-    linkedStudentsQueriesResults
-      .map(result => result.data) // Get the data from each result object
-      .filter((student): student is User => !!student), // Filter out nulls (failed fetches) and ensure type is User
+  const linkedStudents: User[] = useMemo(
+    () =>
+      linkedStudentsQueriesResults
+        .map(result => result.data) // Get the data from each result object
+        .filter((student): student is User => !!student), // Filter out nulls (failed fetches) and ensure type is User
     [linkedStudentsQueriesResults] // Recompute when the results array changes
   );
 
-  const isLoadingStudents = useMemo(() =>
-    // Check if *any* of the queries are still loading
-    linkedStudentsQueriesResults.some(result => result.isLoading),
+  const isLoadingStudents = useMemo(
+    () =>
+      // Check if *any* of the queries are still loading
+      linkedStudentsQueriesResults.some(result => result.isLoading),
     [linkedStudentsQueriesResults]
   );
 
-  const isErrorStudents = useMemo(() =>
-    // Check if *any* of the queries resulted in an error
-    linkedStudentsQueriesResults.some(result => result.isError),
+  const isErrorStudents = useMemo(
+    () =>
+      // Check if *any* of the queries resulted in an error
+      linkedStudentsQueriesResults.some(result => result.isError),
     [linkedStudentsQueriesResults]
   );
   // --- End Processing Results ---
@@ -134,13 +122,23 @@ export const ParentView: React.FC<ParentViewProps> = () => {
   // Effect to auto-select if only one student is linked
   useEffect(() => {
     // Check loading states before auto-selecting
-    if (!isLoadingParent && !isLoadingStudents && !viewingStudentId && linkedStudents.length === 1) {
+    if (
+      !isLoadingParent &&
+      !isLoadingStudents &&
+      !viewingStudentId &&
+      linkedStudents.length === 1
+    ) {
       console.log('[ParentView] Auto-selecting single student:', linkedStudents[0].id);
       setViewingStudentId(linkedStudents[0].id);
     }
     // Effect to reset view if the currently viewed student is no longer linked
     // Check parentUser exists before accessing linkedStudentIds
-    if (viewingStudentId && !isLoadingParent && parentUser && !parentUser.linkedStudentIds?.includes(viewingStudentId)) {
+    if (
+      viewingStudentId &&
+      !isLoadingParent &&
+      parentUser &&
+      !parentUser.linkedStudentIds?.includes(viewingStudentId)
+    ) {
       console.log('[ParentView] Viewed student no longer linked, resetting view.');
       setViewingStudentId(null);
     }
@@ -163,13 +161,15 @@ export const ParentView: React.FC<ParentViewProps> = () => {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
         <View style={appSharedStyles.container}>
-          <Text style={appSharedStyles.textDanger}>Error: Could not load parent data. {errorParent?.message}</Text>
+          <Text style={appSharedStyles.textDanger}>
+            Error: Could not load parent data. {errorParent?.message}
+          </Text>
           {/* Maybe add a logout/retry button */}
         </View>
       </SafeAreaView>
     );
   }
-   // Note: isErrorStudents is checked later for less critical display
+  // Note: isErrorStudents is checked later for less critical display
 
   // --- Render Logic ---
 
@@ -215,23 +215,27 @@ export const ParentView: React.FC<ParentViewProps> = () => {
         <Text style={appSharedStyles.header}>Parent Dashboard</Text>
         <Text style={appSharedStyles.sectionTitle}>Your Students</Text>
         {/* Display error loading students if applicable */}
-        {isErrorStudents && <Text style={appSharedStyles.textDanger}>Error loading some student details.</Text>}
+        {isErrorStudents && (
+          <Text style={appSharedStyles.textDanger}>Error loading some student details.</Text>
+        )}
 
-        {!isErrorStudents && linkedStudents.length > 0 ? (
-          <FlatList
-            data={linkedStudents.sort((a, b) =>
-              getUserDisplayName(a).localeCompare(getUserDisplayName(b))
-            )}
-            keyExtractor={item => item.id}
-            renderItem={({ item }) => (
-              // Pass the fetched student object to the list item
-              <ParentStudentListItem student={item} onSelectStudent={setViewingStudentId} />
-            )}
-            ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          />
-        ) : !isErrorStudents && linkedStudents.length === 0 ? ( // Handle case where parent has no linked students
-          <Text style={appSharedStyles.emptyListText}>No students linked to your account.</Text>
-        ) : null /* Don't show empty text if there was an error */}
+        {
+          !isErrorStudents && linkedStudents.length > 0 ? (
+            <FlatList
+              data={linkedStudents.sort((a, b) =>
+                getUserDisplayName(a).localeCompare(getUserDisplayName(b))
+              )}
+              keyExtractor={item => item.id}
+              renderItem={({ item }) => (
+                // Pass the fetched student object to the list item
+                <ParentStudentListItem student={item} onSelectStudent={setViewingStudentId} />
+              )}
+              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+            />
+          ) : !isErrorStudents && linkedStudents.length === 0 ? ( // Handle case where parent has no linked students
+            <Text style={appSharedStyles.emptyListText}>No students linked to your account.</Text>
+          ) : null /* Don't show empty text if there was an error */
+        }
 
         {/* Link Another Student Button (mock action) */}
         <View style={{ marginTop: 20 }}>

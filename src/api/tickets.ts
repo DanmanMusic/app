@@ -1,7 +1,4 @@
-
-import { TicketTransaction } from '../mocks/mockTickets'; 
-
-
+import { TicketTransaction } from '../mocks/mockTickets';
 
 interface TicketHistoryResponse {
   items: TicketTransaction[];
@@ -14,13 +11,11 @@ interface BalanceResponse {
   balance: number;
 }
 
-
-
 /**
  * Fetches ticket transaction history for a specific student or globally.
  */
 export const fetchTicketHistory = async ({
-  studentId, 
+  studentId,
   page = 1,
   limit = 15,
 }: {
@@ -55,7 +50,7 @@ export const fetchTicketHistory = async ({
  */
 export const fetchStudentBalance = async (studentId: string): Promise<number> => {
   console.log(`[API] Fetching balance for student ${studentId}`);
-  
+
   const response = await fetch(`/api/students/${studentId}/balance`);
   console.log(`[API] Student Balance Response status: ${response.status}`);
   if (!response.ok) {
@@ -67,8 +62,6 @@ export const fetchStudentBalance = async (studentId: string): Promise<number> =>
   return data.balance;
 };
 
-
-
 /**
  * Manually adjusts a student's ticket balance.
  */
@@ -76,14 +69,13 @@ export const adjustTickets = async ({
   studentId,
   amount,
   notes,
-  adjusterId, 
+  adjusterId,
 }: {
   studentId: string;
   amount: number;
   notes: string;
   adjusterId: string;
 }): Promise<TicketTransaction> => {
-  
   console.log(`[API] Adjusting tickets for ${studentId} by ${amount}. Notes: ${notes}`);
   const response = await fetch('/api/ticket-adjustments', {
     method: 'POST',
@@ -96,9 +88,7 @@ export const adjustTickets = async ({
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Adjust Tickets failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -113,13 +103,12 @@ export const adjustTickets = async ({
 export const redeemReward = async ({
   studentId,
   rewardId,
-  redeemerId, 
+  redeemerId,
 }: {
   studentId: string;
   rewardId: string;
   redeemerId: string;
 }): Promise<TicketTransaction> => {
-  
   console.log(`[API] Redeeming reward ${rewardId} for student ${studentId}`);
   const response = await fetch('/api/reward-redemptions', {
     method: 'POST',
@@ -132,9 +121,7 @@ export const redeemReward = async ({
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Redeem Reward failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }

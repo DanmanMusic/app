@@ -1,11 +1,8 @@
-
-import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks'; 
-import { UserStatus } from '../types/userTypes'; 
-
+import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
+import { UserStatus } from '../types/userTypes';
 
 export type TaskAssignmentFilterStatusAPI = 'all' | 'assigned' | 'pending' | 'completed';
 export type StudentTaskFilterStatusAPI = UserStatus | 'all';
-
 
 interface AssignedTasksListResponse {
   items: AssignedTask[];
@@ -14,17 +11,15 @@ interface AssignedTasksListResponse {
   totalItems: number;
 }
 
-
-
 /**
  * Fetches assigned tasks with pagination and filtering.
  */
 export const fetchAssignedTasks = async ({
   page = 1,
-  limit = 10, 
+  limit = 10,
   assignmentStatus = 'all',
   studentStatus = 'all',
-  studentId, 
+  studentId,
 }: {
   page?: number;
   limit?: number;
@@ -61,19 +56,16 @@ export const fetchAssignedTasks = async ({
   return data;
 };
 
-
-
 /**
  * Creates a new assigned task.
  * Corresponds to Admin/Teacher assigning a task.
  */
 export const createAssignedTask = async (
-  
   assignmentData: Omit<
     AssignedTask,
     'id' | 'isComplete' | 'verificationStatus' | 'assignedDate'
   > & {
-    assignedById: string; 
+    assignedById: string;
   }
 ): Promise<AssignedTask> => {
   console.log(
@@ -82,17 +74,13 @@ export const createAssignedTask = async (
     'to student',
     assignmentData.studentId
   );
-  
-  
-  
-  
-  
+
   const payload = assignmentData;
 
   const response = await fetch('/api/assigned-tasks', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload), 
+    body: JSON.stringify(payload),
   });
   console.log(`[API] Create Assigned Task Response status: ${response.status}`);
   if (!response.ok) {
@@ -100,9 +88,7 @@ export const createAssignedTask = async (
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Create Assigned Task failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -130,10 +116,10 @@ export const updateAssignedTask = async ({
       | 'verifiedDate'
       | 'actualPointsAwarded'
     >
-  >; 
+  >;
 }): Promise<AssignedTask> => {
   console.log(`[API] Updating assigned task ${assignmentId}:`, updates);
-  
+
   if (updates.actualPointsAwarded != null && updates.actualPointsAwarded < 0) {
     throw new Error('Awarded points cannot be negative.');
   }
@@ -149,9 +135,7 @@ export const updateAssignedTask = async ({
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Update Assigned Task failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -175,9 +159,7 @@ export const deleteAssignedTask = async (assignmentId: string): Promise<void> =>
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Delete Assigned Task failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }

@@ -1,5 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -7,55 +9,43 @@ import {
   StyleSheet,
   Button,
   TextInput,
-  ActivityIndicator, 
-  Alert, 
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { useMutation, useQueryClient } from '@tanstack/react-query'; 
 
-
-import { updateAnnouncement } from '../../../api/announcements'; 
+import { updateAnnouncement } from '../../../api/announcements';
 import { Announcement, AnnouncementType } from '../../../mocks/mockAnnouncements';
 import { colors } from '../../../styles/colors';
-
-
-interface EditAnnouncementModalProps {
-  visible: boolean;
-  announcementToEdit: Announcement | null;
-  onClose: () => void;
-  
-}
+import { EditAnnouncementModalProps } from '../../../types/componentProps';
 
 const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
   visible,
   announcementToEdit,
   onClose,
 }) => {
-  
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [type, setType] = useState<AnnouncementType>('announcement'); 
+  const [type, setType] = useState<AnnouncementType>('announcement');
 
   const queryClient = useQueryClient();
 
-  
   const mutation = useMutation({
-    mutationFn: updateAnnouncement, 
+    mutationFn: updateAnnouncement,
     onSuccess: updatedAnnouncement => {
       console.log('Announcement updated successfully via mutation:', updatedAnnouncement);
-      queryClient.invalidateQueries({ queryKey: ['announcements'] }); 
-      onClose(); 
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      onClose();
     },
     onError: (error, variables) => {
       console.error(`Error updating announcement ${variables.announcementId} via mutation:`, error);
     },
   });
 
-  
   useEffect(() => {
     if (visible && announcementToEdit) {
       setTitle(announcementToEdit.title);
       setMessage(announcementToEdit.message);
-      setType(announcementToEdit.type); 
+      setType(announcementToEdit.type);
       mutation.reset();
     }
   }, [visible, announcementToEdit]);
@@ -63,7 +53,6 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
   const handleSave = () => {
     if (!announcementToEdit) return;
 
-    
     if (!title.trim()) {
       return;
     }
@@ -71,24 +60,19 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
       return;
     }
 
-    
     const updates: Partial<Omit<Announcement, 'id' | 'date'>> = {};
     if (title.trim() !== announcementToEdit.title) updates.title = title.trim();
     if (message.trim() !== announcementToEdit.message) updates.message = message.trim();
     if (type !== announcementToEdit.type) updates.type = type;
-    
 
-    
     if (Object.keys(updates).length === 0) {
-      onClose(); 
+      onClose();
       return;
     }
 
-    
     mutation.mutate({ announcementId: announcementToEdit.id, updates });
   };
 
-  
   if (!announcementToEdit) return null;
 
   return (
@@ -106,7 +90,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
             placeholder="Announcement Title"
             placeholderTextColor={colors.textLight}
             maxLength={100}
-            editable={!mutation.isPending} 
+            editable={!mutation.isPending}
           />
 
           <Text style={modalStyles.label}>Message:</Text>
@@ -140,11 +124,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
           )}
 
           <View style={modalStyles.buttonContainer}>
-            <Button
-              title="Save Changes"
-              onPress={handleSave}
-              disabled={mutation.isPending} 
-            />
+            <Button title="Save Changes" onPress={handleSave} disabled={mutation.isPending} />
           </View>
           <View style={modalStyles.footerButton}>
             <Button
@@ -159,7 +139,6 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
     </Modal>
   );
 };
-
 
 const modalStyles = StyleSheet.create({
   centeredView: {

@@ -1,84 +1,65 @@
-
-
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
-
-import { fetchStudents } from '../api/users'; 
-import { UserStatus } from '../types/userTypes';
+import { fetchStudents } from '../api/users';
 import { SimplifiedStudent } from '../types/dataTypes';
-
+import { UserStatus } from '../types/userTypes';
 
 export interface UsePaginatedStudentsReturn {
   students: SimplifiedStudent[];
   currentPage: number;
   totalPages: number;
-  totalItems: number; 
+  totalItems: number;
   setPage: (page: number) => void;
   currentFilter: UserStatus | 'all';
   setFilter: (filter: UserStatus | 'all') => void;
-  searchTerm: string; 
-  setSearchTerm: (term: string) => void; 
-  isLoading: boolean; 
-  isFetching: boolean; 
-  isPlaceholderData: boolean; 
-  isError: boolean; 
-  error: Error | null; 
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  isLoading: boolean;
+  isFetching: boolean;
+  isPlaceholderData: boolean;
+  isError: boolean;
+  error: Error | null;
 }
 
-const ITEMS_PER_PAGE = 5; 
+const ITEMS_PER_PAGE = 5;
 
 export const usePaginatedStudents = (): UsePaginatedStudentsReturn => {
-  
   const [currentPage, setCurrentPage] = useState(1);
-  const [currentFilter, setFilter] = useState<UserStatus | 'all'>('active'); 
+  const [currentFilter, setFilter] = useState<UserStatus | 'all'>('active');
   const [searchTerm, setSearchTerm] = useState('');
 
-  
-
-  
   const queryResult = useQuery({
-    
-    
     queryKey: ['students', { page: currentPage, filter: currentFilter, search: searchTerm }],
-    
+
     queryFn: () =>
       fetchStudents({ page: currentPage, filter: currentFilter, searchTerm: searchTerm }),
-    
-    
-    
+
     placeholderData: keepPreviousData,
-    staleTime: 5 * 60 * 1000, 
-    gcTime: 10 * 60 * 1000, 
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
-  
-  
   const { data, isLoading, isFetching, isError, error, isPlaceholderData } = queryResult;
 
-  
-  
   const students = data?.students ?? [];
-  const totalPages = data?.totalPages ?? 1; 
+  const totalPages = data?.totalPages ?? 1;
   const totalItems = data?.totalItems ?? 0;
 
-  
   useEffect(() => {
     console.log(`[usePaginatedStudents] Filter or Search changed, resetting page to 1.`);
-    
+
     if (currentPage !== 1) {
       setCurrentPage(1);
     }
-  }, [currentFilter, searchTerm]); 
+  }, [currentFilter, searchTerm]);
 
-  
   const setPage = useCallback(
     (page: number) => {
       console.log(`[usePaginatedStudents] setPage called with: ${page}`);
       let targetPage = page;
-      
-      
+
       const effectiveTotalPages = totalPages >= 1 ? totalPages : 1;
       if (page < 1) {
         targetPage = 1;
@@ -89,9 +70,8 @@ export const usePaginatedStudents = (): UsePaginatedStudentsReturn => {
       setCurrentPage(targetPage);
     },
     [totalPages]
-  ); 
+  );
 
-  
   return {
     students,
     currentPage,
@@ -102,12 +82,11 @@ export const usePaginatedStudents = (): UsePaginatedStudentsReturn => {
     setFilter,
     searchTerm,
     setSearchTerm,
-    isLoading, 
-    
-    
+    isLoading,
+
     isFetching: isFetching,
-    isPlaceholderData, 
+    isPlaceholderData,
     isError,
-    error: error instanceof Error ? error : null, 
+    error: error instanceof Error ? error : null,
   };
 };

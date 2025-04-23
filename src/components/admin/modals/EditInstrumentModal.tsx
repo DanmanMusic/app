@@ -1,5 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -7,50 +9,38 @@ import {
   StyleSheet,
   Button,
   TextInput,
-  Image, 
-  ActivityIndicator, 
-  Alert, 
+  Image,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { useMutation, useQueryClient } from '@tanstack/react-query'; 
 
-
-import { updateInstrument } from '../../../api/instruments'; 
+import { updateInstrument } from '../../../api/instruments';
 import { Instrument } from '../../../mocks/mockInstruments';
 import { colors } from '../../../styles/colors';
 import { getInstrumentIconSource } from '../../../utils/helpers';
-
-
-interface EditInstrumentModalProps {
-  visible: boolean;
-  instrumentToEdit: Instrument | null;
-  onClose: () => void;
-  
-}
+import { EditInstrumentModalProps } from '../../../types/componentProps';
 
 const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
   visible,
   instrumentToEdit,
   onClose,
 }) => {
-  
   const [name, setName] = useState('');
 
   const queryClient = useQueryClient();
 
-  
   const mutation = useMutation({
-    mutationFn: updateInstrument, 
+    mutationFn: updateInstrument,
     onSuccess: updatedInstrument => {
       console.log('Instrument updated successfully via mutation:', updatedInstrument);
-      queryClient.invalidateQueries({ queryKey: ['instruments'] }); 
-      onClose(); 
+      queryClient.invalidateQueries({ queryKey: ['instruments'] });
+      onClose();
     },
     onError: (error, variables) => {
       console.error(`Error updating instrument ${variables.instrumentId} via mutation:`, error);
     },
   });
 
-  
   useEffect(() => {
     if (visible && instrumentToEdit) {
       setName(instrumentToEdit.name);
@@ -61,29 +51,24 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
   const handleSave = () => {
     if (!instrumentToEdit) return;
 
-    
     const trimmedName = name.trim();
     if (!trimmedName) {
       return;
     }
 
-    
     const updates: Partial<Omit<Instrument, 'id'>> = {};
     if (trimmedName !== instrumentToEdit.name) {
       updates.name = trimmedName;
     }
 
-    
     if (Object.keys(updates).length === 0) {
-      onClose(); 
+      onClose();
       return;
     }
 
-    
     mutation.mutate({ instrumentId: instrumentToEdit.id, updates });
   };
 
-  
   if (!instrumentToEdit) return null;
 
   return (
@@ -96,7 +81,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
           <View style={modalStyles.iconPreviewContainer}>
             <Text style={modalStyles.label}>Current Icon (Mock):</Text>
             <Image
-              source={getInstrumentIconSource(instrumentToEdit.name)} 
+              source={getInstrumentIconSource(instrumentToEdit.name)}
               style={modalStyles.iconPreview}
               resizeMode="contain"
             />
@@ -110,7 +95,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
             placeholder="e.g., Saxophone"
             placeholderTextColor={colors.textLight}
             autoCapitalize="words"
-            editable={!mutation.isPending} 
+            editable={!mutation.isPending}
           />
 
           {}
@@ -130,11 +115,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
           )}
 
           <View style={modalStyles.buttonContainer}>
-            <Button
-              title="Save Changes"
-              onPress={handleSave}
-              disabled={mutation.isPending} 
-            />
+            <Button title="Save Changes" onPress={handleSave} disabled={mutation.isPending} />
           </View>
           <View style={modalStyles.footerButton}>
             <Button
@@ -149,7 +130,6 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
     </Modal>
   );
 };
-
 
 const modalStyles = StyleSheet.create({
   centeredView: {

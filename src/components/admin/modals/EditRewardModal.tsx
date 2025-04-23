@@ -1,5 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -8,26 +10,16 @@ import {
   Button,
   TextInput,
   ScrollView,
-  ActivityIndicator, 
-  Alert, 
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { useMutation, useQueryClient } from '@tanstack/react-query'; 
 
-
-import { updateReward } from '../../../api/rewards'; 
+import { updateReward } from '../../../api/rewards';
 import { RewardItem } from '../../../mocks/mockRewards';
 import { colors } from '../../../styles/colors';
-
-
-interface EditRewardModalProps {
-  visible: boolean;
-  rewardToEdit: RewardItem | null;
-  onClose: () => void;
-  
-}
+import { EditRewardModalProps } from '../../../types/componentProps';
 
 const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit, onClose }) => {
-  
   const [name, setName] = useState('');
   const [cost, setCost] = useState<number | ''>('');
   const [description, setDescription] = useState('');
@@ -35,34 +27,31 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
 
   const queryClient = useQueryClient();
 
-  
   const mutation = useMutation({
-    mutationFn: updateReward, 
+    mutationFn: updateReward,
     onSuccess: updatedReward => {
       console.log('Reward updated successfully via mutation:', updatedReward);
-      queryClient.invalidateQueries({ queryKey: ['rewards'] }); 
-      onClose(); 
+      queryClient.invalidateQueries({ queryKey: ['rewards'] });
+      onClose();
     },
     onError: (error, variables) => {
       console.error(`Error updating reward ${variables.rewardId} via mutation:`, error);
     },
   });
 
-  
   useEffect(() => {
     if (visible && rewardToEdit) {
       setName(rewardToEdit.name);
       setCost(rewardToEdit.cost);
       setDescription(rewardToEdit.description || '');
       setImageUrl(rewardToEdit.imageUrl);
-      mutation.reset(); 
+      mutation.reset();
     }
   }, [visible, rewardToEdit]);
 
   const handleSave = () => {
     if (!rewardToEdit) return;
 
-    
     const numericCost = typeof cost === 'number' ? cost : parseInt(String(cost || '0'), 10);
     if (!name.trim()) {
       return;
@@ -76,27 +65,23 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
       return;
     }
 
-    
     const updates: Partial<Omit<RewardItem, 'id'>> = {};
     if (name.trim() !== rewardToEdit.name) updates.name = name.trim();
     if (numericCost !== rewardToEdit.cost) updates.cost = numericCost;
     const trimmedDescription = description.trim();
     if (trimmedDescription !== (rewardToEdit.description || '')) {
-      updates.description = trimmedDescription ? trimmedDescription : undefined; 
+      updates.description = trimmedDescription ? trimmedDescription : undefined;
     }
     if (imageUrl.trim() !== rewardToEdit.imageUrl) updates.imageUrl = imageUrl.trim();
 
-    
     if (Object.keys(updates).length === 0) {
-      onClose(); 
+      onClose();
       return;
     }
 
-    
     mutation.mutate({ rewardId: rewardToEdit.id, updates });
   };
 
-  
   if (!rewardToEdit) return null;
 
   return (
@@ -113,7 +98,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
               onChangeText={setName}
               placeholderTextColor={colors.textLight}
               maxLength={100}
-              editable={!mutation.isPending} 
+              editable={!mutation.isPending}
             />
             <Text style={modalStyles.label}>Ticket Cost:</Text>
             <TextInput
@@ -165,11 +150,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
           )}
 
           <View style={modalStyles.buttonContainer}>
-            <Button
-              title="Save Changes"
-              onPress={handleSave}
-              disabled={mutation.isPending} 
-            />
+            <Button title="Save Changes" onPress={handleSave} disabled={mutation.isPending} />
           </View>
           <View style={modalStyles.footerButton}>
             <Button
@@ -184,7 +165,6 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
     </Modal>
   );
 };
-
 
 const modalStyles = StyleSheet.create({
   centeredView: {

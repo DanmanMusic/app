@@ -1,11 +1,11 @@
+import { Announcement } from '../mocks/mockAnnouncements';
+import { AssignedTask } from '../mocks/mockAssignedTasks';
+import { Instrument } from '../mocks/mockInstruments';
+import { RewardItem } from '../mocks/mockRewards';
+import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
+import { TicketTransaction } from '../mocks/mockTickets';
 
 import { User } from './userTypes';
-import { AssignedTask } from '../mocks/mockAssignedTasks';
-import { TicketTransaction } from '../mocks/mockTickets';
-import { RewardItem } from '../mocks/mockRewards';
-import { Announcement } from '../mocks/mockAnnouncements';
-import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
-import { Instrument } from '../mocks/mockInstruments';
 
 export interface SimplifiedStudent {
   id: string;

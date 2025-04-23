@@ -1,13 +1,8 @@
-
-import { RewardItem } from '../mocks/mockRewards'; 
-
+import { RewardItem } from '../mocks/mockRewards';
 
 interface RewardsListResponse {
   items: RewardItem[];
-  
 }
-
-
 
 /**
  * Fetches the entire rewards catalog.
@@ -15,19 +10,17 @@ interface RewardsListResponse {
  */
 export const fetchRewards = async (): Promise<RewardItem[]> => {
   console.log(`[API] Fetching Rewards Catalog`);
-  const response = await fetch('/api/rewards'); 
+  const response = await fetch('/api/rewards');
   console.log(`[API] Rewards Catalog Response status: ${response.status}`);
   if (!response.ok) {
     console.error(`[API] Rewards Catalog Network response was not ok: ${response.statusText}`);
     throw new Error(`Failed to fetch rewards catalog: ${response.statusText}`);
   }
-  
+
   const data: RewardItem[] = await response.json();
   console.log(`[API] Received ${data?.length} reward items from API mock.`);
   return data;
 };
-
-
 
 /**
  * Creates a new reward item.
@@ -45,9 +38,7 @@ export const createReward = async (rewardData: Omit<RewardItem, 'id'>): Promise<
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Create Reward Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -78,9 +69,7 @@ export const updateReward = async ({
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Update Reward Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -103,9 +92,7 @@ export const deleteReward = async (rewardId: string): Promise<void> => {
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Delete Reward Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }

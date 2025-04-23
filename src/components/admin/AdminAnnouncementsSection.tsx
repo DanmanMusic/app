@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   View,
   Text,
@@ -9,30 +12,34 @@ import {
   // Alert, // Keep or remove depending on feedback preference
 } from 'react-native';
 // Import TQ hooks
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Import API functions
-import { fetchAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement } from '../../api/announcements';
+import {
+  fetchAnnouncements,
+  createAnnouncement,
+  updateAnnouncement,
+  deleteAnnouncement,
+} from '../../api/announcements';
 // Import Type
 import { Announcement } from '../../mocks/mockAnnouncements';
 // Import Prop Type
+import { appSharedStyles } from '../../styles/appSharedStyles';
+import { colors } from '../../styles/colors';
 import { AdminAnnouncementsSectionProps } from '../../types/componentProps'; // Adjust path
 
 // Import common components/styles
 // Assuming AnnouncementListItemStudent is defined elsewhere (e.g., StudentView or common)
 import { AnnouncementListItemStudent } from '../../views/StudentView'; // Adjust path if moved
+import ConfirmationModal from '../common/ConfirmationModal';
+
 import { adminSharedStyles } from './adminSharedStyles';
-import { appSharedStyles } from '../../styles/appSharedStyles';
-import { colors } from '../../styles/colors';
 
 // Import Modals used by this section
 import CreateAnnouncementModal from './modals/CreateAnnouncementModal';
 import EditAnnouncementModal from './modals/EditAnnouncementModal';
-import ConfirmationModal from '../common/ConfirmationModal';
 
 // --- Main Section Component ---
 export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps> = () => {
-
   // --- State for Modals ---
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -69,7 +76,9 @@ export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps>
     },
     onError: (err, deletedAnnouncementId) => {
       console.error(`Error deleting announcement ${deletedAnnouncementId}:`, err);
-      alert(`Failed to delete announcement: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      alert(
+        `Failed to delete announcement: ${err instanceof Error ? err.message : 'Unknown error'}`
+      );
       closeDeleteModal();
     },
   });
@@ -114,7 +123,10 @@ export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps>
   return (
     <View>
       {/* Section Title */}
-      <Text style={appSharedStyles.sectionTitle}> Announcements & Challenges ({announcements.length}) </Text>
+      <Text style={appSharedStyles.sectionTitle}>
+        {' '}
+        Announcements & Challenges ({announcements.length}){' '}
+      </Text>
       {/* Add Button */}
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button title="Create New Announcement" onPress={handleAddPress} />
@@ -189,7 +201,6 @@ export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps>
     </View>
   );
 };
-
 
 // Styles for this section
 const styles = StyleSheet.create({

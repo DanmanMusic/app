@@ -1,15 +1,12 @@
-
-
 import { useState, useCallback } from 'react';
+
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
-
-import { fetchTeachers } from '../api/users'; 
+import { fetchTeachers } from '../api/users';
 import { User } from '../types/userTypes';
 
-
 interface UsePaginatedTeachersReturn {
-  teachers: User[]; 
+  teachers: User[];
   currentPage: number;
   totalPages: number;
   totalItems: number;
@@ -21,28 +18,25 @@ interface UsePaginatedTeachersReturn {
   error: Error | null;
 }
 
-const ITEMS_PER_PAGE = 5; 
+const ITEMS_PER_PAGE = 5;
 
 export const usePaginatedTeachers = (): UsePaginatedTeachersReturn => {
   const [currentPage, setCurrentPage] = useState(1);
 
-  
   const queryResult = useQuery({
-    queryKey: ['teachers', { page: currentPage }], 
-    queryFn: () => fetchTeachers({ page: currentPage }), 
-    placeholderData: keepPreviousData, 
-    staleTime: 5 * 60 * 1000, 
-    gcTime: 10 * 60 * 1000, 
+    queryKey: ['teachers', { page: currentPage }],
+    queryFn: () => fetchTeachers({ page: currentPage }),
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
-  
   const { data, isLoading, isFetching, isError, error, isPlaceholderData } = queryResult;
 
-  const teachers = data?.items ?? []; 
-  const totalPages = data?.totalPages ?? 1; 
+  const teachers = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
   const totalItems = data?.totalItems ?? 0;
 
-  
   const setPage = useCallback(
     (page: number) => {
       console.log(`[usePaginatedTeachers] setPage called with: ${page}`);

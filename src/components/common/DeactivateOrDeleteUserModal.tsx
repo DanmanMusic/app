@@ -1,35 +1,25 @@
-
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, Button, ActivityIndicator } from 'react-native';
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-
-import { User, UserStatus } from '../../types/userTypes';
-import { getUserDisplayName } from '../../utils/helpers';
-import { colors } from '../../styles/colors';
+import { Modal, View, Text, StyleSheet, Button, ActivityIndicator } from 'react-native';
 
 import { deleteUser, toggleUserStatus } from '../../api/users';
+import { colors } from '../../styles/colors';
+import { User, UserStatus } from '../../types/userTypes';
+import { getUserDisplayName } from '../../utils/helpers';
 
 import ConfirmationModal from './ConfirmationModal';
-
-interface DeactivateOrDeleteUserModalProps {
-  visible: boolean;
-  user: User | null;
-  onClose: () => void;
-  
-  
-}
+import { DeactivateOrDeleteUserModalProps } from '../../types/componentProps';
 
 const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = ({
   visible,
   user,
   onClose,
-  
 }) => {
   const [isConfirmDeleteVisible, setIsConfirmDeleteVisible] = useState(false);
   const queryClient = useQueryClient();
 
-  
   const deleteMutation = useMutation({
     mutationFn: deleteUser,
     onSuccess: (_, userId) => {
@@ -54,16 +44,13 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
     },
   });
 
-  
   const toggleStatusMutation = useMutation({
-    mutationFn: toggleUserStatus, 
+    mutationFn: toggleUserStatus,
     onSuccess: updatedUser => {
-      
       console.log(
         `User ${updatedUser.id} status toggled successfully to ${updatedUser.status} via mutation.`
       );
 
-      
       if (updatedUser.role === 'student') {
         queryClient.invalidateQueries({ queryKey: ['students'] });
       } else if (updatedUser.role === 'teacher') {
@@ -71,32 +58,28 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
       } else if (updatedUser.role === 'parent') {
         queryClient.invalidateQueries({ queryKey: ['parents'] });
       }
-      
+
       queryClient.invalidateQueries({ queryKey: ['user', updatedUser.id] });
 
       console.log(
         `Successfully toggled status for ${getUserDisplayName(updatedUser)} to ${updatedUser.status}.`
       );
-      
-      
     },
     onError: (error, userId) => {
       console.error(`Error toggling status for user ${userId} via mutation:`, error);
       console.error(
         `Failed to toggle status: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
-      
     },
   });
 
-  
   useEffect(() => {
     if (!visible) {
       deleteMutation.reset();
-      toggleStatusMutation.reset(); 
+      toggleStatusMutation.reset();
       setIsConfirmDeleteVisible(false);
     }
-  }, [visible, user]); 
+  }, [visible, user]);
 
   if (!visible || !user) {
     return null;
@@ -108,17 +91,14 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
   const toggleButtonText = isCurrentlyActive ? 'Deactivate User' : 'Reactivate User';
   const toggleActionColor = isCurrentlyActive ? colors.warning : colors.success;
 
-  
   const handleToggle = () => {
     if (user?.id && !toggleStatusMutation.isPending) {
-      
       toggleStatusMutation.mutate(user.id);
     }
   };
 
   const handleDeletePress = () => {
     if (!deleteMutation.isPending && !toggleStatusMutation.isPending) {
-      
       setIsConfirmDeleteVisible(true);
     }
   };
@@ -126,7 +106,6 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
   const handleConfirmDeleteAction = () => {
     setIsConfirmDeleteVisible(false);
     if (user?.id && !deleteMutation.isPending) {
-      
       deleteMutation.mutate(user.id);
     } else {
       console.error('Cannot delete: User ID is missing or delete already in progress.');
@@ -137,7 +116,6 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
     setIsConfirmDeleteVisible(false);
   };
 
-  
   const isActionPending = deleteMutation.isPending || toggleStatusMutation.isPending;
 
   return (
@@ -190,7 +168,7 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
             <View style={modalStyles.buttonContainer}>
               <Button
                 title={toggleButtonText}
-                onPress={handleToggle} 
+                onPress={handleToggle}
                 color={toggleActionColor}
                 disabled={isActionPending}
               />
@@ -204,7 +182,7 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
 
             <View style={modalStyles.footerButton}>
               <Button
-                title="Close" 
+                title="Close"
                 onPress={onClose}
                 color={colors.secondary}
                 disabled={isActionPending}
@@ -225,7 +203,6 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
     </>
   );
 };
-
 
 const modalStyles = StyleSheet.create({
   centeredView: {
@@ -267,7 +244,7 @@ const modalStyles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 5,
     marginBottom: 10,
-    height: 20, 
+    height: 20,
   },
   loadingText: {
     marginLeft: 10,
@@ -280,7 +257,7 @@ const modalStyles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 10,
     fontSize: 14,
-    minHeight: 18, 
+    minHeight: 18,
   },
   buttonContainer: {
     width: '100%',

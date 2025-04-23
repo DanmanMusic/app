@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   View,
   Text,
@@ -10,25 +13,30 @@ import {
   // Alert, // Keep or remove depending on feedback preference
 } from 'react-native';
 // Import TQ hooks
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Import API functions
-import { fetchInstruments, createInstrument, updateInstrument, deleteInstrument } from '../../api/instruments';
+import {
+  fetchInstruments,
+  createInstrument,
+  updateInstrument,
+  deleteInstrument,
+} from '../../api/instruments';
 // Import Type
 import { Instrument } from '../../mocks/mockInstruments';
 // Import Prop Type
+import { appSharedStyles } from '../../styles/appSharedStyles';
+import { colors } from '../../styles/colors';
 import { AdminInstrumentsSectionProps } from '../../types/componentProps'; // Adjust path
 
 // Import Styles and Utils
-import { adminSharedStyles } from './adminSharedStyles';
-import { appSharedStyles } from '../../styles/appSharedStyles';
-import { colors } from '../../styles/colors';
 import { getInstrumentIconSource } from '../../utils/helpers'; // For displaying icons
+import ConfirmationModal from '../common/ConfirmationModal'; // For delete confirmation
+
+import { adminSharedStyles } from './adminSharedStyles';
 
 // Import Modals used by this section
 import CreateInstrumentModal from './modals/CreateInstrumentModal';
 import EditInstrumentModal from './modals/EditInstrumentModal';
-import ConfirmationModal from '../common/ConfirmationModal'; // For delete confirmation
 
 // --- Sub-Component: AdminInstrumentItem ---
 // Renders a single instrument item with Edit/Delete buttons
@@ -66,9 +74,9 @@ const AdminInstrumentItem = ({
 );
 // --- End Sub-Component ---
 
-
 // --- Main Section Component ---
-export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = () => { // Uses the imported prop type
+export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = () => {
+  // Uses the imported prop type
 
   // --- State for Modals ---
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -215,22 +223,21 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
   );
 };
 
-
 // Styles for this section
 const styles = StyleSheet.create({
   itemContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10
+    marginBottom: 10,
   },
   instrumentIcon: {
     width: 40,
     height: 40,
-    marginRight: 15
+    marginRight: 15,
   },
   itemTitleText: {
     flexShrink: 1, // Allow text to wrap if needed
-    marginBottom: 0 // Remove bottom margin from default itemTitle style
+    marginBottom: 0, // Remove bottom margin from default itemTitle style
   },
   errorContainer: {
     marginVertical: 20,

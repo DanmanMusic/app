@@ -1,37 +1,38 @@
 import React from 'react'; // Removed useState if no local state needed
+
 import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 
 // Import the TQ hook for paginated GLOBAL history
 import { usePaginatedTicketHistory } from '../../hooks/usePaginatedTicketHistory';
 
 // Import common components
-import PaginationControls from './PaginationControls';
 // Import the display component for a history item (or define locally)
-import { TicketHistoryItem } from '../../views/StudentView'; // Assuming it's exported from StudentView or moved to common
 
 // Import Prop Type
-import { AdminHistorySectionProps } from '../../types/componentProps'; // Adjust path
 
 // Import Styles
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
+import { AdminHistorySectionProps } from '../../types/componentProps'; // Adjust path
+import { TicketHistoryItem } from '../../views/StudentView'; // Assuming it's exported from StudentView or moved to common
+
+import PaginationControls from './PaginationControls';
 
 // --- Main Section Component ---
 // Use the imported prop type (currently empty)
 export const AdminHistorySection: React.FC<AdminHistorySectionProps> = () => {
-
   // --- Use the TQ hook for paginated global history ---
   // This hook encapsulates useQuery and pagination logic
   const {
-    history,          // The fetched list of transactions for the current page
+    history, // The fetched list of transactions for the current page
     currentPage,
     totalPages,
-    totalItems,       // Total count of all history items
-    setPage,          // Function to change the page
-    isLoading,        // Initial loading state
-    isFetching,       // Fetching state (for background refresh/pagination)
-    isError,          // Error state
-    error,            // Error object
+    totalItems, // Total count of all history items
+    setPage, // Function to change the page
+    isLoading, // Initial loading state
+    isFetching, // Fetching state (for background refresh/pagination)
+    isError, // Error state
+    error, // Error object
     // isPlaceholderData // Available if needed
   } = usePaginatedTicketHistory(); // Call without studentId for global history
 
@@ -73,7 +74,9 @@ export const AdminHistorySection: React.FC<AdminHistorySectionProps> = () => {
           )}
           // Show fetching indicator at top when refetching/paginating
           ListHeaderComponent={
-            isFetching && !isLoading ? <ActivityIndicator size="small" color={colors.secondary} /> : null
+            isFetching && !isLoading ? (
+              <ActivityIndicator size="small" color={colors.secondary} />
+            ) : null
           }
           // Show pagination controls if more than one page exists
           ListFooterComponent={
@@ -91,7 +94,6 @@ export const AdminHistorySection: React.FC<AdminHistorySectionProps> = () => {
     </View>
   );
 };
-
 
 // Styles for this section
 const styles = StyleSheet.create({

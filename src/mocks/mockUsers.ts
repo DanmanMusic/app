@@ -1,5 +1,3 @@
-
-
 import { User } from '../types/userTypes';
 
 export const mockUsers: Record<string, User> = {
@@ -30,7 +28,7 @@ export const mockUsers: Record<string, User> = {
     role: 'student',
     firstName: 'Alice',
     lastName: 'Wonder',
-    instrumentIds: ['inst-1', 'inst-5'], 
+    instrumentIds: ['inst-1', 'inst-5'],
     linkedTeacherIds: ['teacher-1'],
     status: 'active',
   },
@@ -40,7 +38,7 @@ export const mockUsers: Record<string, User> = {
     firstName: 'Bob',
     lastName: 'Builder',
     nickname: 'Bobbie',
-    instrumentIds: ['inst-2'], 
+    instrumentIds: ['inst-2'],
     linkedTeacherIds: ['teacher-1'],
     status: 'active',
   },
@@ -48,8 +46,8 @@ export const mockUsers: Record<string, User> = {
     id: 'student-3',
     role: 'student',
     firstName: 'Charlie',
-    lastName: 'Chaplin', 
-    instrumentIds: ['inst-3'], 
+    lastName: 'Chaplin',
+    instrumentIds: ['inst-3'],
     linkedTeacherIds: ['teacher-2'],
     status: 'active',
   },
@@ -58,17 +56,17 @@ export const mockUsers: Record<string, User> = {
     role: 'student',
     firstName: 'Inactive',
     lastName: 'Student',
-    instrumentIds: ['inst-1'], 
+    instrumentIds: ['inst-1'],
     linkedTeacherIds: ['teacher-1'],
     status: 'inactive',
   },
-  
+
   'student-4': {
     id: 'student-4',
     role: 'student',
     firstName: 'Diana',
     lastName: 'Prince',
-    instrumentIds: ['inst-7'], 
+    instrumentIds: ['inst-7'],
     linkedTeacherIds: ['teacher-2'],
     status: 'active',
   },
@@ -77,7 +75,7 @@ export const mockUsers: Record<string, User> = {
     role: 'student',
     firstName: 'Ethan',
     lastName: 'Hunt',
-    instrumentIds: ['inst-2', 'inst-5'], 
+    instrumentIds: ['inst-2', 'inst-5'],
     linkedTeacherIds: ['teacher-1'],
     status: 'active',
   },
@@ -86,11 +84,11 @@ export const mockUsers: Record<string, User> = {
     role: 'student',
     firstName: 'Fiona',
     lastName: 'Glenanne',
-    instrumentIds: ['inst-4'], 
+    instrumentIds: ['inst-4'],
     linkedTeacherIds: ['teacher-2'],
     status: 'active',
   },
-  
+
   'parent-1': {
     id: 'parent-1',
     role: 'parent',
@@ -103,17 +101,8 @@ export const mockUsers: Record<string, User> = {
     id: 'parent-2',
     role: 'parent',
     firstName: 'Dad',
-    lastName: 'Builder', 
-    linkedStudentIds: ['student-2', 'student-3'], 
+    lastName: 'Builder',
+    linkedStudentIds: ['student-2', 'student-3'],
     status: 'active',
   },
-  
-  
-  
-  
-  
-  
-  
-  
-  
 };

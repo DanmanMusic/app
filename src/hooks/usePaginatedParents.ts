@@ -1,15 +1,12 @@
-
-
 import { useState, useCallback } from 'react';
+
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
-
-import { fetchParents } from '../api/users'; 
+import { fetchParents } from '../api/users';
 import { User } from '../types/userTypes';
 
-
 interface UsePaginatedParentsReturn {
-  parents: User[]; 
+  parents: User[];
   currentPage: number;
   totalPages: number;
   totalItems: number;
@@ -21,28 +18,25 @@ interface UsePaginatedParentsReturn {
   error: Error | null;
 }
 
-const ITEMS_PER_PAGE = 5; 
+const ITEMS_PER_PAGE = 5;
 
 export const usePaginatedParents = (): UsePaginatedParentsReturn => {
   const [currentPage, setCurrentPage] = useState(1);
 
-  
   const queryResult = useQuery({
-    queryKey: ['parents', { page: currentPage }], 
-    queryFn: () => fetchParents({ page: currentPage }), 
-    placeholderData: keepPreviousData, 
+    queryKey: ['parents', { page: currentPage }],
+    queryFn: () => fetchParents({ page: currentPage }),
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 
-  
   const { data, isLoading, isFetching, isError, error, isPlaceholderData } = queryResult;
 
-  const parents = data?.items ?? []; 
+  const parents = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
   const totalItems = data?.totalItems ?? 0;
 
-  
   const setPage = useCallback(
     (page: number) => {
       console.log(`[usePaginatedParents] setPage called with: ${page}`);

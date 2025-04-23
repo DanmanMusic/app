@@ -1,5 +1,9 @@
 // Import necessary React and React Native components
 import React, { useState, useEffect } from 'react';
+
+import Slider from '@react-native-community/slider';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -10,43 +14,50 @@ import {
   Alert, // Keep Alert for now, or replace with a better feedback mechanism later
 } from 'react-native';
 // Import the slider component
-import Slider from '@react-native-community/slider';
 // Import TanStack Query mutation hook and query client hook
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Import API functions for updating and creating tasks
 import { updateAssignedTask, createAssignedTask } from '../api/assignedTasks';
 // Import data types
+import { useAuth } from '../contexts/AuthContext';
 import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
+import { colors } from '../styles/colors';
 import { User } from '../types/userTypes';
 
 // Import authentication context to get the current user ID (verifier/assigner)
-import { useAuth } from '../contexts/AuthContext';
 
 // Import utils and styles
 import { getUserDisplayName } from '../utils/helpers';
-import { colors } from '../styles/colors';
+import { TaskVerificationModalProps } from '../types/componentProps';
 
 // Define the props for the component
-interface TaskVerificationModalProps {
-  visible: boolean;
-  task: AssignedTask | null; // The task being verified/managed
-  allUsers: User[]; // List of all users for displaying names
-  onClose: () => void; // Function to close the modal
-  // Removed onVerifyTask and onReassignTaskMock props
-}
+
 
 // The TaskVerificationModal component
 const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   visible,
   task,
-  allUsers,
   onClose,
 }) => {
   // Get the current user's ID from the Auth context
   const { currentUserId } = useAuth();
+
+  const studentId = task?.studentId;
   // Get the Query Client instance to invalidate queries on success
   const queryClient = useQueryClient();
+
+  const { data: student, isLoading: isLoadingStudent } = useQuery<User, Error>({
+    queryKey: ['user', studentId], // Query depends on studentId
+    queryFn: async () => {
+        if (!studentId) throw new Error("No student ID for verification modal");
+        // Replace with fetchUserById if available
+        const response = await fetch(`/api/users/${studentId}`);
+        if (!response.ok) throw new Error("Failed to fetch student for modal");
+        return response.json();
+    },
+    enabled: !!visible && !!studentId, // Only fetch when modal is visible and ID exists
+    staleTime: 5 * 60 * 1000,
+});
 
   // --- State Management ---
   const [currentStep, setCurrentStep] = useState(1); // Controls the modal step (1: Status, 2: Points, 3: Re-assign?)
@@ -59,7 +70,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   // Mutation hook for handling the task verification/update API call
   const verifyMutation = useMutation({
     mutationFn: updateAssignedTask, // The API function to call
-    onSuccess: (updatedTask) => {
+    onSuccess: updatedTask => {
       // Function to run on successful mutation
       console.log(`Task ${updatedTask.id} verified successfully via mutation.`);
 
@@ -95,7 +106,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   // Mutation hook for handling the task re-assignment API call
   const reassignMutation = useMutation({
     mutationFn: createAssignedTask, // Use the standard create task API function
-    onSuccess: (createdAssignment) => {
+    onSuccess: createdAssignment => {
       // Function to run on successful re-assignment
       console.log(`Task re-assigned successfully via mutation (New ID: ${createdAssignment.id})`);
       Alert.alert('Success', `Task "${createdAssignment.taskTitle}" re-assigned successfully.`);
@@ -109,7 +120,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
       // Close the modal after successful re-assignment
       onClose();
     },
-    onError: (error) => {
+    onError: error => {
       // Function to run on re-assignment error
       console.error('Error re-assigning task via mutation:', error);
       Alert.alert(
@@ -144,7 +155,6 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
 
   // Helper variables for display
   const taskTitle = task.taskTitle;
-  const student = allUsers.find(user => user.id === task.studentId);
   const studentName = student ? getUserDisplayName(student) : task.studentId;
   const completedDateTime = task.completedDate
     ? new Date(task.completedDate).toLocaleString()
@@ -280,8 +290,8 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             <Text style={{ marginBottom: 10 }}>
               Status Selected:{' '}
               <Text
-                style={{ /* Status color styling */
-                  fontWeight: 'bold',
+                style={{
+                  /* Status color styling */ fontWeight: 'bold',
                   color:
                     selectedStatus === 'verified'
                       ? colors.success
@@ -384,8 +394,8 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               {' - '}
               Tickets Awarded:{' '}
               <Text
-                style={{ /* Points awarded styling */
-                  fontWeight: 'bold',
+                style={{
+                  /* Points awarded styling */ fontWeight: 'bold',
                   color: awardedPoints > 0 ? colors.success : colors.danger,
                 }}
               >
@@ -397,12 +407,12 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
 
             {/* Loading/Error indicator for re-assign mutation */}
             {reassignMutation.isPending && (
-               <View style={modalStyles.loadingContainer}>
+              <View style={modalStyles.loadingContainer}>
                 <ActivityIndicator size="small" color={colors.primary} />
                 <Text style={modalStyles.loadingText}>Re-assigning...</Text>
               </View>
             )}
-             {reassignMutation.isError && (
+            {reassignMutation.isError && (
               <Text style={modalStyles.errorText}>
                 Re-assign Error:{' '}
                 {reassignMutation.error instanceof Error

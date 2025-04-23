@@ -1,8 +1,6 @@
-
-import { User, UserStatus } from '../types/userTypes';
 import { SimplifiedStudent } from '../types/dataTypes';
+import { User, UserStatus } from '../types/userTypes';
 import { getUserDisplayName } from '../utils/helpers';
-
 
 interface StudentsApiResponse {
   items: User[];
@@ -23,15 +21,12 @@ interface ParentsApiResponse {
   totalItems: number;
 }
 
-
 interface FetchStudentsResult {
   students: SimplifiedStudent[];
   totalPages: number;
   currentPage: number;
   totalItems: number;
 }
-
-
 
 export const fetchStudents = async ({
   page = 1,
@@ -110,8 +105,6 @@ export const fetchParents = async ({
   return data;
 };
 
-
-
 export const createUser = async (userData: Omit<User, 'id' | 'status'>): Promise<User> => {
   console.log('[API] Creating user:', userData.firstName, userData.lastName);
   const response = await fetch('/api/users', {
@@ -125,9 +118,7 @@ export const createUser = async (userData: Omit<User, 'id' | 'status'>): Promise
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Create User failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -158,9 +149,7 @@ export const updateUser = async ({
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Update User failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -178,9 +167,7 @@ export const deleteUser = async (userId: string): Promise<void> => {
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Delete User failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -191,18 +178,14 @@ export const deleteUser = async (userId: string): Promise<void> => {
   }
 };
 
-
 export const toggleUserStatus = async (userId: string): Promise<User> => {
-  
   console.log(`[API] Toggling status for user ${userId}`);
 
-  
   const response = await fetch(`/api/users/${userId}/status`, {
     method: 'PATCH',
     headers: {
-      'Content-Type': 'application/json', 
+      'Content-Type': 'application/json',
     },
-    
   });
 
   console.log(`[API] Toggle Status Response status: ${response.status}`);
@@ -212,14 +195,12 @@ export const toggleUserStatus = async (userId: string): Promise<User> => {
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Toggle Status failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
 
-  const updatedUser: User = await response.json(); 
+  const updatedUser: User = await response.json();
   console.log(`[API] User ${userId} status toggled successfully to ${updatedUser.status}`);
   return updatedUser;
 };

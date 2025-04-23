@@ -1,18 +1,9 @@
-
 import React from 'react';
-import { Modal, View, Text, StyleSheet, Button } from 'react-native';
-import { colors } from '../../styles/colors';
 
-interface ConfirmationModalProps {
-  visible: boolean;
-  title: string;
-  message: string;
-  confirmText?: string;
-  cancelText?: string;
-  confirmDisabled?: boolean; 
-  onConfirm: () => void;
-  onCancel: () => void;
-}
+import { Modal, View, Text, StyleSheet, Button } from 'react-native';
+
+import { colors } from '../../styles/colors';
+import { ConfirmationModalProps } from '../../types/componentProps';
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   visible,
@@ -20,7 +11,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   message,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
-  confirmDisabled = false, 
+  confirmDisabled = false,
   onConfirm,
   onCancel,
 }) => {
@@ -36,15 +27,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               title={confirmText}
               onPress={onConfirm}
               color={colors.danger}
-              disabled={confirmDisabled} 
+              disabled={confirmDisabled}
             />
-            <Button
-              title={cancelText}
-              onPress={onCancel}
-              color={colors.secondary}
-              
-              
-            />
+            <Button title={cancelText} onPress={onCancel} color={colors.secondary} />
           </View>
         </View>
       </View>

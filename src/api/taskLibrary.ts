@@ -1,16 +1,8 @@
-
-import { TaskLibraryItem } from '../mocks/mockTaskLibrary'; 
-
+import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
 
 interface TaskLibraryListResponse {
   items: TaskLibraryItem[];
-  
-  
-  
-  
 }
-
-
 
 /**
  * Fetches the entire task library.
@@ -18,22 +10,17 @@ interface TaskLibraryListResponse {
  */
 export const fetchTaskLibrary = async (): Promise<TaskLibraryItem[]> => {
   console.log(`[API] Fetching Task Library`);
-  const response = await fetch('/api/task-library'); 
+  const response = await fetch('/api/task-library');
   console.log(`[API] Task Library Response status: ${response.status}`);
   if (!response.ok) {
     console.error(`[API] Task Library Network response was not ok: ${response.statusText}`);
     throw new Error(`Failed to fetch task library: ${response.statusText}`);
   }
-  
-  
-  
-  
+
   const data: TaskLibraryItem[] = await response.json();
   console.log(`[API] Received ${data?.length} task library items from API mock.`);
   return data;
 };
-
-
 
 /**
  * Creates a new task library item.
@@ -53,9 +40,7 @@ export const createTaskLibraryItem = async (
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Create Task Library Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -86,9 +71,7 @@ export const updateTaskLibraryItem = async ({
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Update Task Library Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -111,9 +94,7 @@ export const deleteTaskLibraryItem = async (taskId: string): Promise<void> => {
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     console.error(`[API] Delete Task Library Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
