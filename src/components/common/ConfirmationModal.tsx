@@ -1,3 +1,4 @@
+// src/components/common/ConfirmationModal.tsx
 import React from 'react';
 import { Modal, View, Text, StyleSheet, Button } from 'react-native';
 import { colors } from '../../styles/colors';
@@ -8,6 +9,7 @@ interface ConfirmationModalProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
+  confirmDisabled?: boolean; // Added prop
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -18,6 +20,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   message,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
+  confirmDisabled = false, // Added prop with default value
   onConfirm,
   onCancel,
 }) => {
@@ -29,10 +32,19 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           <Text style={modalStyles.modalMessage}>{message}</Text>
 
           <View style={modalStyles.buttonContainer}>
-            {}
-            <Button title={confirmText} onPress={onConfirm} color={colors.danger} />
-            {}
-            <Button title={cancelText} onPress={onCancel} color={colors.secondary} />
+            <Button
+              title={confirmText}
+              onPress={onConfirm}
+              color={colors.danger}
+              disabled={confirmDisabled} // Use the prop here
+            />
+            <Button
+              title={cancelText}
+              onPress={onCancel}
+              color={colors.secondary}
+              // Optionally disable cancel while confirm action is pending?
+              // disabled={confirmDisabled}
+            />
           </View>
         </View>
       </View>

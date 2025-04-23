@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'; // Added TQ
 // Types & API
 import { UserRole, User } from '../../../types/userTypes';
 import { Instrument } from '../../../mocks/mockInstruments';
-import { createUser } from '../../../api/students'; // Import the API function
+import { createUser } from '../../../api/users'; // Import the API function
 
 // Utils & Styles
 import { colors } from '../../../styles/colors';
@@ -52,16 +52,10 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
       } else if (createdUser.role === 'teacher') {
         queryClient.invalidateQueries({ queryKey: ['teachers'] });
       }
-      // Could also invalidate a general 'users' query if you have one
-      // queryClient.invalidateQueries({ queryKey: ['users'] });
-
-      Alert.alert('Success', `User "${getUserDisplayName(createdUser)}" created successfully!`);
       onClose(); // Close the modal
     },
     onError: (error) => {
       console.error('Error creating user via mutation:', error);
-      Alert.alert('Error', `Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      // Keep modal open on error
     },
   });
 
@@ -79,7 +73,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
   const handleCreatePress = () => {
     if (!firstName.trim() || !lastName.trim() || !role) {
-      Alert.alert('Missing Information', 'Please enter First Name, Last Name, and select a Role.');
       return;
     }
 
@@ -100,9 +93,9 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   };
 
   // Handlers for mock instrument/teacher linking (keep as is for now)
-  const handleAddInstrument = () => { Alert.alert('Mock Add Instrument ID'); };
+  const handleAddInstrument = () => { alert('Mock Add Instrument ID'); };
   const handleRemoveInstrument = (idToRemove: string) => { setInstrumentIds(prev => prev.filter(id => id !== idToRemove)); };
-  const handleAddLinkedTeacher = () => { Alert.alert('Mock Link Teacher ID'); };
+  const handleAddLinkedTeacher = () => { alert('Mock Link Teacher ID'); };
   const handleRemoveLinkedTeacher = (idToRemove: string) => { setLinkedTeacherIds(prev => prev.filter(id => id !== idToRemove)); };
 
   return (

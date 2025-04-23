@@ -1,149 +1,140 @@
 // src/hooks/usePaginatedAssignedTasks.ts
+import { useState, useCallback, useEffect } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query'; // Import TQ hooks
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
-
-// Contexts & Types
-import { useData } from '../contexts/DataContext';
+// API Client & Types
+import {
+  fetchAssignedTasks,
+  TaskAssignmentFilterStatusAPI, // Use API types for filters
+  StudentTaskFilterStatusAPI,
+} from '../api/assignedTasks';
 import { AssignedTask } from '../mocks/mockAssignedTasks';
-import { UserStatus } from '../types/userTypes';
+// Removed: useData context import
+// Removed: UserStatus type (using API type now)
 
-// Type definitions for filters
+// Type definitions for filters remain the same for the hook's interface
 export type TaskAssignmentFilterStatus = 'all' | 'assigned' | 'pending' | 'completed';
-export type StudentTaskFilterStatus = UserStatus | 'all'; // 'active', 'inactive', 'all'
+export type StudentTaskFilterStatus = 'active' | 'inactive' | 'all'; // Keep UserStatus 'active'/'inactive' for hook interface clarity if preferred
 
-// Define the shape of the return value
+// Define the shape of the return value, adding TQ flags
 export interface UsePaginatedAssignedTasksReturn {
-    tasks: AssignedTask[];
-    currentPage: number;
-    totalPages: number;
-    setPage: (page: number) => void;
-    assignmentFilter: TaskAssignmentFilterStatus;
-    setAssignmentFilter: (filter: TaskAssignmentFilterStatus) => void;
-    studentStatusFilter: StudentTaskFilterStatus;
-    setStudentStatusFilter: (filter: StudentTaskFilterStatus) => void;
-    isLoading: boolean;
-    error: null | Error;
+  tasks: AssignedTask[];
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  setPage: (page: number) => void;
+  assignmentFilter: TaskAssignmentFilterStatus;
+  setAssignmentFilter: (filter: TaskAssignmentFilterStatus) => void;
+  studentStatusFilter: StudentTaskFilterStatus;
+  setStudentStatusFilter: (filter: StudentTaskFilterStatus) => void;
+  isLoading: boolean; // From TQ
+  isFetching: boolean; // From TQ
+  isPlaceholderData: boolean; // From TQ
+  isError: boolean; // From TQ
+  error: Error | null; // From TQ
+  // Added studentId prop for filtering
+  studentId?: string | null;
+  setStudentId?: (id: string | null) => void; // Optional setter
 }
 
-const ITEMS_PER_PAGE = 10; // Adjust page size as needed
+const ITEMS_PER_PAGE = 10; // Default page size for tasks
 
 export const usePaginatedAssignedTasks = (
-    initialAssignmentFilter: TaskAssignmentFilterStatus = 'pending',
-    initialStudentStatusFilter: StudentTaskFilterStatus = 'active'
+  initialAssignmentFilter: TaskAssignmentFilterStatus = 'pending',
+  initialStudentStatusFilter: StudentTaskFilterStatus = 'active',
+  initialStudentId: string | null = null // Accept optional initial student ID
 ): UsePaginatedAssignedTasksReturn => {
-    const { assignedTasks, currentMockUsers } = useData();
+  // Removed: useData hook call
 
-    // State for filters and pagination
-    const [assignmentFilter, setAssignmentFilter] = useState<TaskAssignmentFilterStatus>(initialAssignmentFilter);
-    const [studentStatusFilter, setStudentStatusFilter] = useState<StudentTaskFilterStatus>(initialStudentStatusFilter);
-    const [currentPage, setCurrentPage] = useState(1);
+  // State for filters and pagination
+  const [assignmentFilter, setAssignmentFilter] =
+    useState<TaskAssignmentFilterStatus>(initialAssignmentFilter);
+  const [studentStatusFilter, setStudentStatusFilter] =
+    useState<StudentTaskFilterStatus>(initialStudentStatusFilter);
+  const [studentId, setStudentId] = useState<string | null>(initialStudentId); // State for student ID filter
+  const [currentPage, setCurrentPage] = useState(1);
 
-    // Memoize the filtered and sorted list
-    const filteredAndSortedTasks = useMemo(() => {
-        console.log(`[usePaginatedAssignedTasks] Filtering tasks. Assignment: ${assignmentFilter}, Student Status: ${studentStatusFilter}`);
+  // --- TanStack Query ---
+  const queryResult = useQuery({
+    // Query key includes all parameters that affect the query
+    queryKey: [
+      'assigned-tasks',
+      {
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        assignmentStatus: assignmentFilter as TaskAssignmentFilterStatusAPI, // Cast for API call
+        studentStatus: studentStatusFilter as StudentTaskFilterStatusAPI, // Cast for API call
+        studentId: studentId, // Include studentId in key
+      },
+    ],
+    // Query function calls the API client
+    queryFn: () =>
+      fetchAssignedTasks({
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        assignmentStatus: assignmentFilter as TaskAssignmentFilterStatusAPI,
+        studentStatus: studentStatusFilter as StudentTaskFilterStatusAPI,
+        studentId: studentId ?? undefined, // Pass undefined if null
+      }),
+    placeholderData: keepPreviousData, // Show previous data while fetching
+    staleTime: 1 * 60 * 1000, // Consider data fresh for 1 minute
+    gcTime: 5 * 60 * 1000,
+  });
 
-        const filtered = assignedTasks.filter(task => {
-            // Filter by assignment status
-            let assignmentMatch: boolean = false; // <-- Initialize here
-            switch (assignmentFilter) {
-                case 'assigned':
-                    assignmentMatch = !task.isComplete;
-                    break;
-                case 'pending':
-                    assignmentMatch = task.isComplete && task.verificationStatus === 'pending';
-                    break;
-                case 'completed':
-                    // Ensure boolean evaluation even if verificationStatus is undefined but task is complete
-                    assignmentMatch = task.isComplete === true && task.verificationStatus !== undefined && task.verificationStatus !== 'pending';
-                    break;
-                case 'all':
-                default:
-                    assignmentMatch = true;
-                    break;
-            }
-            if (!assignmentMatch) return false;
+  // Extract data and state from queryResult
+  const { data, isLoading, isFetching, isError, error, isPlaceholderData } = queryResult;
 
-            // Filter by student status
-            const student = currentMockUsers[task.studentId];
-            if (!student) {
-                 console.warn(`[usePaginatedAssignedTasks] Student ${task.studentId} not found for task ${task.id}. Excluding task.`);
-                 return false; // Skip tasks with unknown students
-            }
-            let studentStatusMatch: boolean = false; // <-- Initialize here
-            switch (studentStatusFilter) {
-                case 'active':
-                    studentStatusMatch = student.status === 'active';
-                    break;
-                case 'inactive':
-                    studentStatusMatch = student.status === 'inactive';
-                    break;
-                case 'all':
-                default:
-                    studentStatusMatch = true;
-                    break;
-            }
-            return studentStatusMatch; // Combined result (assignmentMatch already checked)
-        });
+  // Memoized values from data or defaults
+  const tasks = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const totalItems = data?.totalItems ?? 0;
 
-        // Sort (e.g., by assigned date descending)
-        return filtered.sort((a, b) => new Date(b.assignedDate).getTime() - new Date(a.assignedDate).getTime());
+  // Reset to page 1 when filters or studentId change
+  useEffect(() => {
+    console.log(
+      `[usePaginatedAssignedTasks] Filters/StudentId changed, resetting page to 1.`,
+      { assignmentFilter, studentStatusFilter, studentId }
+    );
+    // Check if currentPage is already 1 to avoid unnecessary state update/refetch
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [assignmentFilter, studentStatusFilter, studentId]); // Removed currentPage dependency
 
-    }, [assignedTasks, assignmentFilter, studentStatusFilter, currentMockUsers]);
+  // Function to change the current page
+  const setPage = useCallback(
+    (page: number) => {
+      console.log(`[usePaginatedAssignedTasks] setPage called with: ${page}`);
+      let targetPage = page;
+      const effectiveTotalPages = totalPages >= 1 ? totalPages : 1;
+      if (page < 1) {
+        targetPage = 1;
+      } else if (page > effectiveTotalPages) {
+        targetPage = effectiveTotalPages;
+      }
+      console.log(`[usePaginatedAssignedTasks] Setting current page to: ${targetPage}`);
+      setCurrentPage(targetPage);
+    },
+    [totalPages]
+  );
 
-    // Recalculate total pages whenever the filtered list changes
-    const totalPages = useMemo(() => {
-        const totalItems = filteredAndSortedTasks.length;
-        const pages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-        console.log(`[usePaginatedAssignedTasks] Recalculated totalPages: ${pages} for ${totalItems} items`);
-        return pages > 0 ? pages : 1;
-    }, [filteredAndSortedTasks]);
-
-    // Reset to page 1 whenever *any* filter changes
-    useEffect(() => {
-        console.log(`[usePaginatedAssignedTasks] Filter changed, resetting to page 1.`);
-        setCurrentPage(1);
-    }, [assignmentFilter, studentStatusFilter]);
-
-    // Clamp currentPage if it becomes invalid
-    useEffect(() => {
-        if (currentPage > totalPages) {
-             console.log(`[usePaginatedAssignedTasks] Current page ${currentPage} > total pages ${totalPages}, setting to ${totalPages}`);
-            setCurrentPage(totalPages);
-        }
-    }, [currentPage, totalPages]);
-
-    // Memoize the slice of tasks for the current page
-    const paginatedTasks = useMemo(() => {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        const endIndex = startIndex + ITEMS_PER_PAGE;
-        console.log(`[usePaginatedAssignedTasks] Slicing page ${currentPage}: startIndex=${startIndex}, endIndex=${endIndex}`);
-        return filteredAndSortedTasks.slice(startIndex, endIndex);
-    }, [currentPage, filteredAndSortedTasks]);
-
-    // Function to change the current page with bounds checking
-    const setPage = useCallback((page: number) => {
-        console.log(`[usePaginatedAssignedTasks] setPage called with: ${page}`);
-        let targetPage = page;
-        if (page < 1) {
-            targetPage = 1;
-        } else if (page > totalPages) {
-            targetPage = totalPages >= 1 ? totalPages : 1;
-        }
-        console.log(`[usePaginatedAssignedTasks] Setting current page to: ${targetPage}`);
-        setCurrentPage(targetPage);
-    }, [totalPages]);
-
-    // Return the state and functions
-    return {
-        tasks: paginatedTasks,
-        currentPage,
-        totalPages,
-        setPage,
-        assignmentFilter,
-        setAssignmentFilter,
-        studentStatusFilter,
-        setStudentStatusFilter,
-        isLoading: false,
-        error: null,
-    };
+  // Return the state and functions needed by components
+  return {
+    tasks,
+    currentPage,
+    totalPages,
+    totalItems,
+    setPage,
+    assignmentFilter,
+    setAssignmentFilter,
+    studentStatusFilter,
+    setStudentStatusFilter,
+    studentId,
+    setStudentId, // Expose setter for studentId if needed outside
+    isLoading,
+    isFetching,
+    isPlaceholderData,
+    isError,
+    error: error instanceof Error ? error : null,
+  };
 };

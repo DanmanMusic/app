@@ -9,7 +9,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'; // Added TQ
 // Types & API
 import { User } from '../../types/userTypes';
 import { Instrument } from '../../mocks/mockInstruments';
-import { updateUser } from '../../api/students'; // Import the update API function
+import { updateUser } from '../../api/users'; // Import the update API function
 
 // Utils & Styles
 import { colors } from '../../styles/colors';
@@ -59,15 +59,10 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
       } else if (updatedUser.role === 'teacher') {
         queryClient.invalidateQueries({ queryKey: ['teachers'] });
       }
-      // Could also invalidate a general 'users' query
-
-      Alert.alert('Success', `User "${getUserDisplayName(updatedUser)}" updated successfully!`);
       onClose(); // Close the modal on success
     },
     onError: (error) => {
       console.error('Error updating user via mutation:', error);
-      Alert.alert('Error', `Failed to update user: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      // Keep modal open on error
     },
   });
 
@@ -99,11 +94,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
 
   const handleSaveChanges = () => {
     if (!userToEdit || userToEdit.role === 'parent') {
-      Alert.alert('Error', 'Cannot edit this user.');
       return;
     }
     if (!firstName.trim() || !lastName.trim()) {
-      Alert.alert('Error', 'First Name and Last Name cannot be empty.');
       return;
     }
 
@@ -131,7 +124,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
 
     // Only mutate if there are actual changes
     if (Object.keys(updates).length === 0) {
-        Alert.alert('No Changes', 'No changes were detected.');
         onClose(); // Close if no changes
         return;
     }
@@ -141,9 +133,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   };
 
   // Mock handlers for linking (keep as is for now)
-  const handleAddInstrument = () => { Alert.alert('Mock Add Instrument'); };
+  const handleAddInstrument = () => { alert('Mock Add Instrument'); };
   const handleRemoveInstrument = (idToRemove: string) => { setInstrumentIds(prev => prev.filter(id => id !== idToRemove)); };
-  const handleAddTeacher = () => { Alert.alert('Mock Link Teacher'); };
+  const handleAddTeacher = () => { alert('Mock Link Teacher'); };
   const handleRemoveTeacher = (idToRemove: string) => { setLinkedTeacherIds(prev => prev.filter(id => id !== idToRemove)); };
 
   // Don't render if not visible or user is invalid/parent

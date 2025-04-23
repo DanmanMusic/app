@@ -1,6 +1,22 @@
+// src/components/admin/AdminRewardsSection.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Button, FlatList, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Button,
+  FlatList,
+  Image,
+  ActivityIndicator, // Added
+  Alert, // Added
+} from 'react-native';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; // Added
+
+// API & Types
+import { fetchRewards, deleteReward } from '../../api/rewards'; // Use new API file
 import { RewardItem } from '../../mocks/mockRewards';
+
+// Components & Styles
 import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
@@ -8,21 +24,22 @@ import CreateRewardModal from './modals/CreateRewardModal';
 import EditRewardModal from './modals/EditRewardModal';
 import ConfirmationModal from '../common/ConfirmationModal';
 
+// Interface updated: Removed rewardsCatalog and CRUD props
 interface AdminRewardsSectionProps {
-  rewardsCatalog: RewardItem[];
-  onCreateReward: (rewardData: Omit<RewardItem, 'id'>) => void;
-  onEditReward: (rewardId: string, rewardData: Partial<Omit<RewardItem, 'id'>>) => void;
-  onDeleteReward: (rewardId: string) => void;
+  // No props needed for data/CRUD anymore
 }
 
+// Reward Item Component (Add disabled prop)
 const AdminRewardItem = ({
   item,
   onEdit,
   onDelete,
+  disabled, // Added disabled prop
 }: {
   item: RewardItem;
   onEdit: (reward: RewardItem) => void;
   onDelete: (reward: RewardItem) => void;
+  disabled?: boolean; // Disable buttons during delete
 }) => (
   <View style={appSharedStyles.itemContainer}>
     <View style={styles.rewardItemContent}>
@@ -36,25 +53,51 @@ const AdminRewardItem = ({
       </View>
     </View>
     <View style={adminSharedStyles.itemActions}>
-      {}
-      <Button title="Edit" onPress={() => onEdit(item)} />
-      <Button title="Delete" onPress={() => onDelete(item)} color={colors.danger} />
-      {}
+      <Button title="Edit" onPress={() => onEdit(item)} disabled={disabled} />
+      <Button title="Delete" onPress={() => onDelete(item)} color={colors.danger} disabled={disabled} />
     </View>
   </View>
 );
 
-export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
-  rewardsCatalog,
-  onCreateReward,
-  onEditReward,
-  onDeleteReward,
-}) => {
+export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = (/* props removed */) => {
+  // State for Modals
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [rewardToEdit, setRewardToEdit] = useState<RewardItem | null>(null);
   const [rewardToDelete, setRewardToDelete] = useState<RewardItem | null>(null);
+
+  const queryClient = useQueryClient();
+
+  // --- TanStack Query Hook for fetching rewards ---
+  const {
+    data: rewardsCatalog = [], // Default to empty array
+    isLoading,
+    isError,
+    error,
+  } = useQuery<RewardItem[], Error>({
+    queryKey: ['rewards'], // Unique key for rewards query
+    queryFn: fetchRewards, // Function to fetch data
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    // Rewards are sorted by cost in the API handler
+  });
+
+  // --- TanStack Mutation Hook for Deleting ---
+  const deleteMutation = useMutation({
+    mutationFn: deleteReward, // API function: expects rewardId
+    onSuccess: (_, deletedRewardId) => {
+      console.log(`Reward item ${deletedRewardId} deleted successfully via mutation.`);
+      queryClient.invalidateQueries({ queryKey: ['rewards'] });
+      closeDeleteModal(); // Close confirmation modal
+    },
+    onError: (err, deletedRewardId) => {
+      console.error(`Error deleting reward item ${deletedRewardId}:`, err);
+      closeDeleteModal();
+    },
+  });
+
+  // Handlers for Modals
   const handleAddPress = () => setIsCreateModalVisible(true);
   const handleEditPress = (reward: RewardItem) => {
     setRewardToEdit(reward);
@@ -72,66 +115,84 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = ({
   const closeDeleteModal = () => {
     setIsDeleteModalVisible(false);
     setRewardToDelete(null);
+    deleteMutation.reset();
   };
-  const handleCreateConfirm = (rewardData: Omit<RewardItem, 'id'>) => {
-    onCreateReward(rewardData);
-    closeCreateModal();
-  };
-  const handleEditConfirm = (rewardId: string, rewardData: Partial<Omit<RewardItem, 'id'>>) => {
-    onEditReward(rewardId, rewardData);
-    closeEditModal();
-  };
+
+  // Confirmation handler calls the mutation
   const handleDeleteConfirm = () => {
-    if (rewardToDelete) {
-      onDeleteReward(rewardToDelete.id);
+    if (rewardToDelete && !deleteMutation.isPending) {
+      deleteMutation.mutate(rewardToDelete.id);
     }
-    closeDeleteModal();
   };
+
+  const getErrorMessage = () => {
+    if (!error) return 'An unknown error occurred.';
+    return `Error loading rewards catalog: ${error.message}`;
+  };
+
   return (
     <View>
       <Text style={appSharedStyles.sectionTitle}>Rewards Catalog ({rewardsCatalog.length})</Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
-        {}
         <Button title="Add New Reward" onPress={handleAddPress} />
       </View>
-      <FlatList
-        data={rewardsCatalog}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <AdminRewardItem item={item} onEdit={handleEditPress} onDelete={handleDeletePress} />
-        )}
-        scrollEnabled={false}
-        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-        ListEmptyComponent={() => (
-          <Text style={appSharedStyles.emptyListText}>No rewards found.</Text>
-        )}
-      />
 
-      {}
-      <CreateRewardModal
-        visible={isCreateModalVisible}
-        onClose={closeCreateModal}
-        onCreateConfirm={handleCreateConfirm}
-      />
+      {/* Loading State */}
+      {isLoading && (
+        <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
+      )}
+
+      {/* Error State */}
+      {isError && !isLoading && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{getErrorMessage()}</Text>
+        </View>
+      )}
+
+      {/* Data List */}
+      {!isLoading && !isError && (
+        <FlatList
+          data={rewardsCatalog} // Use data from useQuery
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => (
+            <AdminRewardItem
+              item={item}
+              onEdit={handleEditPress}
+              onDelete={handleDeletePress}
+              disabled={deleteMutation.isPending} // Disable row buttons if delete is happening
+            />
+          )}
+          scrollEnabled={false}
+          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+          ListEmptyComponent={() => (
+            <Text style={appSharedStyles.emptyListText}>No rewards found.</Text>
+          )}
+        />
+      )}
+
+      {/* Modals (Create/Edit will handle their own mutations) */}
+      <CreateRewardModal visible={isCreateModalVisible} onClose={closeCreateModal} />
       <EditRewardModal
         visible={isEditModalVisible}
         rewardToEdit={rewardToEdit}
         onClose={closeEditModal}
-        onEditConfirm={handleEditConfirm}
       />
       <ConfirmationModal
         visible={isDeleteModalVisible}
         title="Confirm Delete"
-        message={`Are you sure you want to delete the reward "${rewardToDelete?.name || ''}"? This cannot be undone.`}
-        confirmText="Delete Reward"
+        message={`Are you sure you want to delete the reward "${
+          rewardToDelete?.name || ''
+        }"? This cannot be undone.`}
+        confirmText={deleteMutation.isPending ? 'Deleting...' : 'Delete Reward'}
         onConfirm={handleDeleteConfirm}
         onCancel={closeDeleteModal}
+        confirmDisabled={deleteMutation.isPending}
       />
-      {}
     </View>
   );
 };
 
+// --- Styles ---
 const styles = StyleSheet.create({
   rewardItemContent: {
     flexDirection: 'row',
@@ -148,5 +209,19 @@ const styles = StyleSheet.create({
   },
   rewardDetails: {
     flex: 1,
+  },
+  errorContainer: {
+    marginVertical: 20,
+    padding: 15,
+    alignItems: 'center',
+    backgroundColor: '#ffebee',
+    borderColor: colors.danger,
+    borderWidth: 1,
+    borderRadius: 5,
+  },
+  errorText: {
+    color: colors.danger,
+    fontSize: 14,
+    textAlign: 'center',
   },
 });

@@ -1,8 +1,182 @@
+// src/components/admin/modals/CreateRewardModal.tsx
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, Button, TextInput, ScrollView } from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  Button,
+  TextInput,
+  ScrollView,
+  ActivityIndicator, // Added
+  Alert, // Added
+} from 'react-native';
+import { useMutation, useQueryClient } from '@tanstack/react-query'; // Added
+
+// API & Types
+import { createReward } from '../../../api/rewards'; // Use new API file
 import { RewardItem } from '../../../mocks/mockRewards';
 import { colors } from '../../../styles/colors';
 
+// Interface updated: removed onCreateConfirm prop
+interface CreateRewardModalProps {
+  visible: boolean;
+  onClose: () => void;
+  // Removed: onCreateConfirm: (rewardData: Omit<RewardItem, 'id'>) => void;
+}
+
+const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose }) => {
+  // Form State
+  const [name, setName] = useState('');
+  const [cost, setCost] = useState<number | ''>('');
+  const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+
+  const queryClient = useQueryClient();
+
+  // --- TanStack Mutation ---
+  const mutation = useMutation({
+    mutationFn: createReward, // API function to call
+    onSuccess: createdReward => {
+      console.log('Reward created successfully via mutation:', createdReward);
+      queryClient.invalidateQueries({ queryKey: ['rewards'] }); // Refetch rewards list
+      onClose(); // Close modal on success
+    },
+    onError: error => {
+      console.error('Error creating reward via mutation:', error);
+    },
+  });
+
+  // Effect to reset form when modal visibility changes
+  useEffect(() => {
+    if (visible) {
+      setName('');
+      setCost('');
+      setDescription('');
+      setImageUrl('');
+      mutation.reset(); // Reset mutation state
+    }
+  }, [visible]);
+
+  const handleCreate = () => {
+    // Validate input
+    const numericCost = typeof cost === 'number' ? cost : parseInt(String(cost || '0'), 10);
+    if (!name.trim()) {
+      return;
+    }
+    if (isNaN(numericCost) || numericCost < 0) {
+      return;
+    }
+    if (!imageUrl.trim()) {
+      // Basic URL validation (can be improved)
+      if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+        return;
+      }
+    }
+
+    const newRewardData: Omit<RewardItem, 'id'> = {
+      name: name.trim(),
+      cost: numericCost,
+      description: description.trim() || undefined, // Store empty string as undefined
+      imageUrl: imageUrl.trim(),
+    };
+
+    // Trigger the mutation
+    mutation.mutate(newRewardData);
+  };
+
+  return (
+    <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
+      <View style={modalStyles.centeredView}>
+        <View style={modalStyles.modalView}>
+          <Text style={modalStyles.modalTitle}>Create New Reward</Text>
+          <ScrollView style={modalStyles.scrollView}>
+            <Text style={modalStyles.label}>Reward Name:</Text>
+            <TextInput
+              style={modalStyles.input}
+              value={name}
+              onChangeText={setName}
+              placeholder="e.g., Fender Stratocaster"
+              placeholderTextColor={colors.textLight}
+              maxLength={100}
+              editable={!mutation.isPending} // Disable while loading
+            />
+
+            <Text style={modalStyles.label}>Ticket Cost:</Text>
+            <TextInput
+              style={modalStyles.input}
+              value={String(cost)}
+              onChangeText={text =>
+                setCost(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)
+              }
+              placeholder="e.g., 10000"
+              placeholderTextColor={colors.textLight}
+              keyboardType="numeric"
+              editable={!mutation.isPending}
+            />
+
+            <Text style={modalStyles.label}>Image URL:</Text>
+            <TextInput
+              style={modalStyles.input}
+              value={imageUrl}
+              onChangeText={setImageUrl}
+              placeholder="https://example.com/image.jpg"
+              placeholderTextColor={colors.textLight}
+              autoCapitalize="none"
+              keyboardType="url"
+              editable={!mutation.isPending}
+            />
+
+            <Text style={modalStyles.label}>Description (Optional):</Text>
+            <TextInput
+              style={modalStyles.textArea}
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Enter details about the reward..."
+              placeholderTextColor={colors.textLight}
+              multiline={true}
+              numberOfLines={3}
+              editable={!mutation.isPending}
+            />
+          </ScrollView>
+
+          {/* Loading Indicator */}
+          {mutation.isPending && (
+            <View style={modalStyles.loadingContainer}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={modalStyles.loadingText}>Creating Reward...</Text>
+            </View>
+          )}
+
+          {/* Error Message */}
+          {mutation.isError && (
+            <Text style={modalStyles.errorText}>
+              Error: {mutation.error instanceof Error ? mutation.error.message : 'Failed to create reward'}
+            </Text>
+          )}
+
+          <View style={modalStyles.buttonContainer}>
+            <Button
+              title="Create Reward"
+              onPress={handleCreate}
+              disabled={mutation.isPending} // Disable button while loading
+            />
+          </View>
+          <View style={modalStyles.footerButton}>
+            <Button
+              title="Cancel"
+              onPress={onClose}
+              color={colors.secondary}
+              disabled={mutation.isPending}
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// --- Styles ---
 const modalStyles = StyleSheet.create({
   centeredView: {
     flex: 1,
@@ -58,131 +232,32 @@ const modalStyles = StyleSheet.create({
     marginBottom: 10,
   },
   textArea: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: colors.borderPrimary,
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16,
-    color: colors.textPrimary,
-    backgroundColor: colors.backgroundPrimary,
-    marginBottom: 10,
     minHeight: 80,
     textAlignVertical: 'top',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    marginBottom: 5,
+    height: 20,
+  },
+  loadingText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  errorText: {
+    color: colors.danger,
+    textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 5,
+    fontSize: 14,
+    minHeight: 18,
   },
   buttonContainer: { flexDirection: 'column', width: '100%', marginTop: 10, gap: 10 },
   footerButton: { width: '100%', marginTop: 10 },
 });
-
-interface CreateRewardModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onCreateConfirm: (rewardData: Omit<RewardItem, 'id'>) => void;
-}
-
-const CreateRewardModal: React.FC<CreateRewardModalProps> = ({
-  visible,
-  onClose,
-  onCreateConfirm,
-}) => {
-  const [name, setName] = useState('');
-  const [cost, setCost] = useState<number | ''>('');
-  const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-
-  useEffect(() => {
-    if (visible) {
-      setName('');
-      setCost('');
-      setDescription('');
-      setImageUrl('');
-    }
-  }, [visible]);
-
-  const handleCreate = () => {
-    const numericCost = typeof cost === 'number' ? cost : parseInt(String(cost || '0'), 10);
-    if (!name.trim()) {
-      alert('Please enter a reward name.');
-      return;
-    }
-    if (isNaN(numericCost) || numericCost < 0) {
-      alert('Please enter a valid, non-negative ticket cost.');
-      return;
-    }
-    if (!imageUrl.trim()) {
-      alert('Please enter an image URL (mock).');
-      return;
-    }
-
-    onCreateConfirm({
-      name: name.trim(),
-      cost: numericCost,
-      description: description.trim() || undefined,
-      imageUrl: imageUrl.trim(),
-    });
-  };
-
-  return (
-    <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalStyles.centeredView}>
-        <View style={modalStyles.modalView}>
-          <Text style={modalStyles.modalTitle}>Create New Reward</Text>
-          <ScrollView style={modalStyles.scrollView}>
-            <Text style={modalStyles.label}>Reward Name:</Text>
-            <TextInput
-              style={modalStyles.input}
-              value={name}
-              onChangeText={setName}
-              placeholder="e.g., Fender Stratocaster"
-              placeholderTextColor={colors.textLight}
-              maxLength={100}
-            />
-
-            <Text style={modalStyles.label}>Ticket Cost:</Text>
-            <TextInput
-              style={modalStyles.input}
-              value={String(cost)}
-              onChangeText={text =>
-                setCost(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)
-              }
-              placeholder="e.g., 10000"
-              placeholderTextColor={colors.textLight}
-              keyboardType="numeric"
-            />
-
-            <Text style={modalStyles.label}>Image URL (Mock):</Text>
-            <TextInput
-              style={modalStyles.input}
-              value={imageUrl}
-              onChangeText={setImageUrl}
-              placeholder="https://via.placeholder.com/150?text=Reward"
-              placeholderTextColor={colors.textLight}
-              autoCapitalize="none"
-              keyboardType="url"
-            />
-
-            <Text style={modalStyles.label}>Description (Optional):</Text>
-            <TextInput
-              style={modalStyles.textArea}
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Enter details about the reward..."
-              placeholderTextColor={colors.textLight}
-              multiline={true}
-              numberOfLines={3}
-            />
-          </ScrollView>
-
-          <View style={modalStyles.buttonContainer}>
-            <Button title="Create Reward" onPress={handleCreate} />
-          </View>
-          <View style={modalStyles.footerButton}>
-            <Button title="Cancel" onPress={onClose} color={colors.secondary} />
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-};
 
 export default CreateRewardModal;

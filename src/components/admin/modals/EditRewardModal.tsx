@@ -1,8 +1,190 @@
+// src/components/admin/modals/EditRewardModal.tsx
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, Button, TextInput, ScrollView } from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  Button,
+  TextInput,
+  ScrollView,
+  ActivityIndicator, // Added
+  Alert, // Added
+} from 'react-native';
+import { useMutation, useQueryClient } from '@tanstack/react-query'; // Added
+
+// API & Types
+import { updateReward } from '../../../api/rewards'; // Use new API file
 import { RewardItem } from '../../../mocks/mockRewards';
 import { colors } from '../../../styles/colors';
 
+// Interface updated: removed onEditConfirm prop
+interface EditRewardModalProps {
+  visible: boolean;
+  rewardToEdit: RewardItem | null;
+  onClose: () => void;
+  // Removed: onEditConfirm: (rewardId: string, rewardData: Partial<Omit<RewardItem, 'id'>>) => void;
+}
+
+const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit, onClose }) => {
+  // Form State
+  const [name, setName] = useState('');
+  const [cost, setCost] = useState<number | ''>('');
+  const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+
+  const queryClient = useQueryClient();
+
+  // --- TanStack Mutation ---
+  const mutation = useMutation({
+    mutationFn: updateReward, // API function: expects { rewardId, updates }
+    onSuccess: updatedReward => {
+      console.log('Reward updated successfully via mutation:', updatedReward);
+      queryClient.invalidateQueries({ queryKey: ['rewards'] }); // Refetch rewards list
+      onClose(); // Close modal on success
+    },
+    onError: (error, variables) => {
+      console.error(`Error updating reward ${variables.rewardId} via mutation:`, error);
+    },
+  });
+
+  // Effect to populate form when rewardToEdit changes or modal opens
+  useEffect(() => {
+    if (visible && rewardToEdit) {
+      setName(rewardToEdit.name);
+      setCost(rewardToEdit.cost);
+      setDescription(rewardToEdit.description || '');
+      setImageUrl(rewardToEdit.imageUrl);
+      mutation.reset(); // Reset mutation state
+    }
+  }, [visible, rewardToEdit]);
+
+  const handleSave = () => {
+    if (!rewardToEdit) return;
+
+    // Validate input
+    const numericCost = typeof cost === 'number' ? cost : parseInt(String(cost || '0'), 10);
+    if (!name.trim()) {
+      return;
+    }
+    if (isNaN(numericCost) || numericCost < 0) {
+      return;
+    }
+    if (!imageUrl.trim()) {
+      return;
+    } else if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+      return;
+    }
+
+    // Construct the updates object - only include changed fields
+    const updates: Partial<Omit<RewardItem, 'id'>> = {};
+    if (name.trim() !== rewardToEdit.name) updates.name = name.trim();
+    if (numericCost !== rewardToEdit.cost) updates.cost = numericCost;
+    const trimmedDescription = description.trim();
+    if (trimmedDescription !== (rewardToEdit.description || '')) {
+        updates.description = trimmedDescription ? trimmedDescription : undefined; // Handle clearing
+    }
+    if (imageUrl.trim() !== rewardToEdit.imageUrl) updates.imageUrl = imageUrl.trim();
+
+    // Only mutate if there are actual changes
+    if (Object.keys(updates).length === 0) {
+      onClose(); // Close if no changes
+      return;
+    }
+
+    // Trigger the mutation
+    mutation.mutate({ rewardId: rewardToEdit.id, updates });
+  };
+
+  // Don't render if no reward is selected
+  if (!rewardToEdit) return null;
+
+  return (
+    <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
+      <View style={modalStyles.centeredView}>
+        <View style={modalStyles.modalView}>
+          <Text style={modalStyles.modalTitle}>Edit Reward</Text>
+          <Text style={modalStyles.subTitle}>ID: {rewardToEdit.id}</Text>
+          <ScrollView style={modalStyles.scrollView}>
+            <Text style={modalStyles.label}>Reward Name:</Text>
+            <TextInput
+              style={modalStyles.input}
+              value={name}
+              onChangeText={setName}
+              placeholderTextColor={colors.textLight}
+              maxLength={100}
+              editable={!mutation.isPending} // Disable while loading
+            />
+            <Text style={modalStyles.label}>Ticket Cost:</Text>
+            <TextInput
+              style={modalStyles.input}
+              value={String(cost)}
+              onChangeText={text =>
+                setCost(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)
+              }
+              placeholderTextColor={colors.textLight}
+              keyboardType="numeric"
+              editable={!mutation.isPending}
+            />
+            <Text style={modalStyles.label}>Image URL:</Text>
+            <TextInput
+              style={modalStyles.input}
+              value={imageUrl}
+              onChangeText={setImageUrl}
+              placeholderTextColor={colors.textLight}
+              autoCapitalize="none"
+              keyboardType="url"
+              editable={!mutation.isPending}
+            />
+            <Text style={modalStyles.label}>Description (Optional):</Text>
+            <TextInput
+              style={modalStyles.textArea}
+              value={description}
+              onChangeText={setDescription}
+              placeholderTextColor={colors.textLight}
+              multiline={true}
+              numberOfLines={3}
+              editable={!mutation.isPending}
+            />
+          </ScrollView>
+
+          {/* Loading Indicator */}
+          {mutation.isPending && (
+            <View style={modalStyles.loadingContainer}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={modalStyles.loadingText}>Saving Changes...</Text>
+            </View>
+          )}
+
+          {/* Error Message */}
+          {mutation.isError && (
+            <Text style={modalStyles.errorText}>
+              Error: {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
+            </Text>
+          )}
+
+          <View style={modalStyles.buttonContainer}>
+            <Button
+              title="Save Changes"
+              onPress={handleSave}
+              disabled={mutation.isPending} // Disable button while loading
+            />
+          </View>
+          <View style={modalStyles.footerButton}>
+            <Button
+              title="Cancel"
+              onPress={onClose}
+              color={colors.secondary}
+              disabled={mutation.isPending}
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// --- Styles ---
 const modalStyles = StyleSheet.create({
   centeredView: {
     flex: 1,
@@ -65,131 +247,32 @@ const modalStyles = StyleSheet.create({
     marginBottom: 10,
   },
   textArea: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: colors.borderPrimary,
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16,
-    color: colors.textPrimary,
-    backgroundColor: colors.backgroundPrimary,
-    marginBottom: 10,
     minHeight: 80,
     textAlignVertical: 'top',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    marginBottom: 5,
+    height: 20,
+  },
+  loadingText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  errorText: {
+    color: colors.danger,
+    textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 5,
+    fontSize: 14,
+    minHeight: 18,
   },
   buttonContainer: { flexDirection: 'column', width: '100%', marginTop: 10, gap: 10 },
   footerButton: { width: '100%', marginTop: 10 },
 });
-
-interface EditRewardModalProps {
-  visible: boolean;
-  rewardToEdit: RewardItem | null;
-  onClose: () => void;
-  onEditConfirm: (rewardId: string, rewardData: Partial<Omit<RewardItem, 'id'>>) => void;
-}
-
-const EditRewardModal: React.FC<EditRewardModalProps> = ({
-  visible,
-  rewardToEdit,
-  onClose,
-  onEditConfirm,
-}) => {
-  const [name, setName] = useState('');
-  const [cost, setCost] = useState<number | ''>('');
-  const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-
-  useEffect(() => {
-    if (visible && rewardToEdit) {
-      setName(rewardToEdit.name);
-      setCost(rewardToEdit.cost);
-      setDescription(rewardToEdit.description || '');
-      setImageUrl(rewardToEdit.imageUrl);
-    } else if (!visible) {
-    }
-  }, [visible, rewardToEdit]);
-
-  const handleSave = () => {
-    if (!rewardToEdit) return;
-
-    const numericCost = typeof cost === 'number' ? cost : parseInt(String(cost || '0'), 10);
-    if (!name.trim()) {
-      alert('Reward name cannot be empty.');
-      return;
-    }
-    if (isNaN(numericCost) || numericCost < 0) {
-      alert('Please enter a valid, non-negative ticket cost.');
-      return;
-    }
-    if (!imageUrl.trim()) {
-      alert('Please enter an image URL (mock).');
-      return;
-    }
-
-    onEditConfirm(rewardToEdit.id, {
-      name: name.trim(),
-      cost: numericCost,
-      description: description.trim() || undefined,
-      imageUrl: imageUrl.trim(),
-    });
-  };
-
-  if (!rewardToEdit) return null;
-
-  return (
-    <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalStyles.centeredView}>
-        <View style={modalStyles.modalView}>
-          <Text style={modalStyles.modalTitle}>Edit Reward</Text>
-          <Text style={modalStyles.subTitle}>ID: {rewardToEdit.id}</Text>
-          <ScrollView style={modalStyles.scrollView}>
-            <Text style={modalStyles.label}>Reward Name:</Text>
-            <TextInput
-              style={modalStyles.input}
-              value={name}
-              onChangeText={setName}
-              placeholderTextColor={colors.textLight}
-              maxLength={100}
-            />
-            <Text style={modalStyles.label}>Ticket Cost:</Text>
-            <TextInput
-              style={modalStyles.input}
-              value={String(cost)}
-              onChangeText={text =>
-                setCost(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)
-              }
-              placeholderTextColor={colors.textLight}
-              keyboardType="numeric"
-            />
-            <Text style={modalStyles.label}>Image URL (Mock):</Text>
-            <TextInput
-              style={modalStyles.input}
-              value={imageUrl}
-              onChangeText={setImageUrl}
-              placeholderTextColor={colors.textLight}
-              autoCapitalize="none"
-              keyboardType="url"
-            />
-            <Text style={modalStyles.label}>Description (Optional):</Text>
-            <TextInput
-              style={modalStyles.textArea}
-              value={description}
-              onChangeText={setDescription}
-              placeholderTextColor={colors.textLight}
-              multiline={true}
-              numberOfLines={3}
-            />
-          </ScrollView>
-          <View style={modalStyles.buttonContainer}>
-            <Button title="Save Changes" onPress={handleSave} />
-          </View>
-          <View style={modalStyles.footerButton}>
-            <Button title="Cancel" onPress={onClose} color={colors.secondary} />
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-};
 
 export default EditRewardModal;

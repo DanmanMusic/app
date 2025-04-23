@@ -1,89 +1,100 @@
 // src/hooks/usePaginatedStudentHistory.ts
+import { useState, useCallback, useEffect } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query'; // Import TQ hooks
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
-
-// Contexts & Types
-import { useData } from '../contexts/DataContext';
+// API Client & Types
+import { fetchTicketHistory } from '../api/tickets'; // Import API function
 import { TicketTransaction } from '../mocks/mockTickets';
+// Removed: useData context import
 
-// Define the shape of the return value
+// Define the shape of the return value, adding TQ flags and total count
 export interface UsePaginatedStudentHistoryReturn {
-    history: TicketTransaction[];
-    currentPage: number;
-    totalPages: number;
-    setPage: (page: number) => void;
-    isLoading: boolean;
-    error: null | Error;
-    totalHistoryCount: number; // Added total count
+  history: TicketTransaction[];
+  currentPage: number;
+  totalPages: number;
+  totalItems: number; // Renamed from totalHistoryCount
+  setPage: (page: number) => void;
+  isLoading: boolean;
+  isFetching: boolean;
+  isPlaceholderData: boolean;
+  isError: boolean;
+  error: Error | null;
 }
 
-const ITEMS_PER_PAGE = 10; // Can use a different page size for history
+const ITEMS_PER_PAGE = 10; // Page size for student history view
 
-export const usePaginatedStudentHistory = (studentId: string | null | undefined): UsePaginatedStudentHistoryReturn => {
-    const { ticketHistory } = useData();
+export const usePaginatedStudentHistory = (
+  studentId: string | null | undefined
+): UsePaginatedStudentHistoryReturn => {
+  // Removed: useData hook call
 
-    // State for pagination
-    const [currentPage, setCurrentPage] = useState(1);
+  // State for pagination
+  const [currentPage, setCurrentPage] = useState(1);
 
-    // Memoize the filtered and sorted list for the specific student
-    const studentHistory = useMemo(() => {
-        if (!studentId) return []; // Return empty if no student ID
-        console.log(`[usePaginatedStudentHistory] Filtering history for student: ${studentId}`);
-        const filtered = ticketHistory.filter(tx => tx.studentId === studentId);
-        // Sort (most recent first)
-        return filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    }, [ticketHistory, studentId]);
+  // --- TanStack Query ---
+  const queryResult = useQuery({
+    // Query key includes 'studentId' to differentiate student histories
+    // and trigger refetch when studentId changes.
+    queryKey: ['ticket-history', { studentId, page: currentPage, limit: ITEMS_PER_PAGE }],
+    // Query function calls the API client with the studentId
+    queryFn: () =>
+      fetchTicketHistory({
+        studentId: studentId ?? undefined, // Pass studentId if available
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+      }),
+    // Only enable the query if studentId is provided
+    enabled: !!studentId,
+    placeholderData: keepPreviousData,
+    staleTime: 1 * 60 * 1000, // History might update
+    gcTime: 5 * 60 * 1000,
+  });
 
-     // Get total count before pagination
-    const totalHistoryCount = useMemo(() => studentHistory.length, [studentHistory]);
+  // Extract data and state from queryResult
+  const { data, isLoading, isFetching, isError, error, isPlaceholderData } = queryResult;
 
-    // Memoize the total number of pages
-    const totalPages = useMemo(() => {
-        const totalItems = studentHistory.length;
-        const pages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-        console.log(`[usePaginatedStudentHistory] Recalculated totalPages: ${pages} for ${totalItems} items`);
-        return pages > 0 ? pages : 1; // Ensure at least 1 page
-    }, [studentHistory]);
+  // Memoized values from data or defaults
+  const history = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const totalItems = data?.totalItems ?? 0;
 
-     // Clamp currentPage and reset if studentId changes
-     useEffect(() => {
-        if (currentPage > totalPages) {
-             console.log(`[usePaginatedStudentHistory] Current page ${currentPage} > total pages ${totalPages}, setting to ${totalPages}`);
-            setCurrentPage(totalPages);
-        }
-         // Reset to page 1 if studentId changes
-         setCurrentPage(1);
-    }, [currentPage, totalPages, studentId]); // Add studentId dependency
+  // Reset to page 1 if studentId changes
+  useEffect(() => {
+    console.log(`[usePaginatedStudentHistory] studentId changed to ${studentId}, resetting page.`);
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+    // TQ refetches automatically because studentId is in the queryKey
+  }, [studentId]); // Removed currentPage dependency
 
-    // Memoize the slice of history for the current page
-    const paginatedHistory = useMemo(() => {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        const endIndex = startIndex + ITEMS_PER_PAGE;
-         console.log(`[usePaginatedStudentHistory] Slicing page ${currentPage}: startIndex=${startIndex}, endIndex=${endIndex}`);
-        return studentHistory.slice(startIndex, endIndex);
-    }, [currentPage, studentHistory]);
+  // Function to change the current page
+  const setPage = useCallback(
+    (page: number) => {
+      console.log(`[usePaginatedStudentHistory] setPage called with: ${page}`);
+      let targetPage = page;
+      const effectiveTotalPages = totalPages >= 1 ? totalPages : 1;
+      if (page < 1) {
+        targetPage = 1;
+      } else if (page > effectiveTotalPages) {
+        targetPage = effectiveTotalPages;
+      }
+      console.log(`[usePaginatedStudentHistory] Setting current page to: ${targetPage}`);
+      setCurrentPage(targetPage);
+    },
+    [totalPages]
+  );
 
-    // Function to change the current page with bounds checking
-    const setPage = useCallback((page: number) => {
-        console.log(`[usePaginatedStudentHistory] setPage called with: ${page}`);
-        let targetPage = page;
-        if (page < 1) {
-            targetPage = 1;
-        } else if (page > totalPages) {
-            targetPage = totalPages >= 1 ? totalPages : 1;
-        }
-         console.log(`[usePaginatedStudentHistory] Setting current page to: ${targetPage}`);
-        setCurrentPage(targetPage);
-    }, [totalPages]);
-
-    // Return the state and functions
-    return {
-        history: paginatedHistory,
-        currentPage,
-        totalPages,
-        setPage,
-        isLoading: false, // Placeholder
-        error: null, // Placeholder
-        totalHistoryCount, // Return total count
-    };
+  // Return the state and functions needed by components
+  return {
+    history,
+    currentPage,
+    totalPages,
+    totalItems, // Use totalItems from API response
+    setPage,
+    isLoading,
+    isFetching,
+    isPlaceholderData,
+    isError,
+    error: error instanceof Error ? error : null,
+  };
 };

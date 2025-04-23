@@ -30,7 +30,7 @@ if (__DEV__) { // Only run MSW in development
       import('./src/mocks/browser') // Adjusted path
         .then(({ worker }) => {
           console.log('[MSW] Starting worker for web...');
-          worker.start({    
+          worker.start({
             onUnhandledRequest: 'bypass', // Allow unhandled requests (like static assets)
           });
           console.log('[MSW] Web worker started.');
@@ -55,7 +55,8 @@ const queryClient = new QueryClient();
 
 const DevelopmentViewSelector = () => {
   const { setMockAuthState } = useAuth();
-  const { currentMockUsers } = useData(); // Still need DataContext for mock users initially
+  // Use TQ to get users? Or keep context for initial selector? Keep context for now.
+  const { currentMockUsers } = useData();
 
   return (
     <View style={styles.selectorContainer}>
@@ -76,9 +77,11 @@ const DevelopmentViewSelector = () => {
             if (user.role === 'student') {
               viewingStudentId = user.id;
             } else if (user.role === 'parent') {
+              // Auto-select first linked student if only one exists
               if (user.linkedStudentIds && user.linkedStudentIds.length === 1) {
                 viewingStudentId = user.linkedStudentIds[0];
               }
+              // If multiple, ParentView will handle selection
             } else if (user.role === 'teacher') {
               // Find *any* active student linked to this teacher for initial view
               viewingStudentId = Object.values(currentMockUsers).find(
@@ -88,15 +91,11 @@ const DevelopmentViewSelector = () => {
             setMockAuthState({ role: user.role, userId: user.id, viewingStudentId });
           }}
           color={
-            user.role === 'admin'
-              ? colors.danger
-              : user.role === 'teacher'
-                ? colors.primary
-                : user.role === 'parent'
-                  ? colors.success
-                  : user.role === 'student'
-                    ? colors.gold
-                    : colors.secondary
+            user.role === 'admin' ? colors.danger :
+            user.role === 'teacher' ? colors.primary :
+            user.role === 'parent' ? colors.success :
+            user.role === 'student' ? colors.gold :
+            colors.secondary
           }
         />
       ))}
@@ -106,8 +105,13 @@ const DevelopmentViewSelector = () => {
 
 const AppContent = () => {
   const { mockAuthState, setMockAuthState, currentUserRole, currentUserId } = useAuth();
-  // Still use DataContext for *actions* until those are refactored
-  const { taskLibrary, currentMockUsers, simulateVerifyTask, simulateReassignTask } = useData();
+  // Still use DataContext for simulations not yet migrated
+  const {
+    currentMockUsers, // Needed for user lookups
+    simulateVerifyTask, // Keep for now
+    simulateReassignTask, // Keep for now
+    // taskLibrary, // No longer needed directly here
+  } = useData();
 
   const [isVerificationModalVisible, setIsVerificationModalVisible] = useState(false);
   const [taskToVerify, setTaskToVerify] = useState<AssignedTask | null>(null);
@@ -129,12 +133,21 @@ const AppContent = () => {
     actualTickets: number
   ) => {
     simulateVerifyTask(taskId, status, actualTickets, currentUserId); // Pass verifierId
+    handleCloseVerificationModal(); // Close modal after verification attempt
   };
 
-  const handleReassignTask = (originalTask: AssignedTask, studentId: string) => {
+  // Updated to accept the full original task object
+  const handleReassignTask = (originalTask: AssignedTask) => {
+      console.log("[App.tsx] Reassigning task based on:", originalTask);
       // Use snapshot data from the original task for re-assignment
-    simulateReassignTask(studentId, originalTask.taskTitle, originalTask.taskDescription, originalTask.taskBasePoints, currentUserId);
-    handleCloseVerificationModal();
+      simulateReassignTask(
+          originalTask.studentId, // Ensure studentId is correct
+          originalTask.taskTitle,
+          originalTask.taskDescription,
+          originalTask.taskBasePoints,
+          currentUserId // Pass current user as assigner
+       );
+      handleCloseVerificationModal(); // Close modal after reassigning
   };
 
 
@@ -143,15 +156,14 @@ const AppContent = () => {
       case 'public':
         return <PublicView />;
       case 'student':
-        return <StudentView />; // StudentView might need its own studentId prop if used by Parent
+        return <StudentView />; // StudentView handles its own ID via useAuth
       case 'teacher':
         return <TeacherView onInitiateVerificationModal={handleInitiateVerificationModal} />;
       case 'parent':
-        return <ParentView />;
+        return <ParentView />; // ParentView handles student selection/viewing
       case 'admin':
         return <AdminView onInitiateVerificationModal={handleInitiateVerificationModal} />;
       default:
-        // Handle the case where mockAuthState exists but role is unexpected
         return <Text>Loading or Invalid Role...</Text>;
     }
   };
@@ -166,26 +178,20 @@ const AppContent = () => {
     <View style={styles.container}>
       <StatusBar style="auto" />
       {renderMainView()}
+
+      {/* Task Verification Modal */}
       <TaskVerificationModal
         visible={isVerificationModalVisible}
         task={taskToVerify}
-        taskLibrary={taskLibrary} // Still needed by modal? Maybe remove later
+        // Removed taskLibrary prop
         allUsers={Object.values(currentMockUsers)} // Pass users for display names
         onClose={handleCloseVerificationModal}
         onVerifyTask={handleVerifyTask}
-        // Pass the full task object to reassign handler
-        onReassignTaskMock={(originalTaskId, studentId) => {
-            // Find the original task object to get its details for re-assignment
-             const originalTask = taskToVerify; // Use the task that was being verified
-             if (originalTask) {
-                handleReassignTask(originalTask, studentId);
-             } else {
-                console.error("Could not find original task to reassign.");
-                alert("Error: Could not reassign task.");
-             }
-        }}
+        // --- FIX: Pass the full original task object ---
+        onReassignTaskMock={handleReassignTask} // Prop now expects AssignedTask object
       />
-      {/* Show reset button if in DEV mode and logged in */}
+
+      {/* Reset Button (Dev Only) */}
       {__DEV__ && mockAuthState && (
         <View style={styles.resetButtonContainer}>
           <Button title="Reset Mock View" onPress={() => setMockAuthState(null)} color={colors.secondary}/>
@@ -202,6 +208,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <AuthProvider>
+          {/* DataProvider might eventually be removed if all state goes to TQ */}
           <DataProvider>
             <AppContent />
           </DataProvider>
@@ -212,29 +219,8 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.backgroundPrimary }, // Use primary background
-  selectorContainer: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: colors.backgroundPrimary, // Use primary background
-  },
-  selectorTitle: {
-    fontSize: 18,
-    marginBottom: 20,
-    textAlign: 'center',
-    fontWeight: 'bold',
-    color: colors.textPrimary, // Use primary text color
-  },
-  resetButtonContainer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    // Add some background/padding for visibility if needed
-    // backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    // padding: 5,
-    // borderRadius: 5,
-  },
+  container: { flex: 1, backgroundColor: colors.backgroundPrimary },
+  selectorContainer: { flex: 1, padding: 20, justifyContent: 'center', gap: 10, backgroundColor: colors.backgroundPrimary },
+  selectorTitle: { fontSize: 18, marginBottom: 20, textAlign: 'center', fontWeight: 'bold', color: colors.textPrimary },
+  resetButtonContainer: { position: 'absolute', bottom: 20, left: 20, right: 20 },
 });

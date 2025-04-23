@@ -8,7 +8,7 @@ import { User, UserStatus } from '../../types/userTypes';
 import { getUserDisplayName } from '../../utils/helpers';
 import { colors } from '../../styles/colors';
 // Import API functions
-import { deleteUser, toggleUserStatus } from '../../api/students';
+import { deleteUser, toggleUserStatus } from '../../api/users';
 
 import ConfirmationModal from './ConfirmationModal';
 

@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
 // API Client & Types
-import { fetchTeachers } from '../api/students'; // Assuming API functions are in this file
+import { fetchTeachers } from '../api/users'; // Assuming API functions are in this file
 import { User } from '../types/userTypes';
 
 // Define the shape of the return value

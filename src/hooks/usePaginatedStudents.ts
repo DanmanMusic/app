@@ -5,7 +5,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
 // API Client & Types
-import { fetchStudents } from '../api/students'; // Use the API client function
+import { fetchStudents } from '../api/users'; // Use the API client function
 import { UserStatus } from '../types/userTypes';
 import { SimplifiedStudent } from '../types/dataTypes';
 

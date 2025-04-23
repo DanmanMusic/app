@@ -1,8 +1,153 @@
+// src/components/admin/modals/CreateAnnouncementModal.tsx
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, Button, TextInput } from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  Button,
+  TextInput,
+  ActivityIndicator, // Added
+  Alert, // Added
+} from 'react-native';
+import { useMutation, useQueryClient } from '@tanstack/react-query'; // Added
+
+// API & Types
+import { createAnnouncement } from '../../../api/announcements'; // Use API file
 import { Announcement, AnnouncementType } from '../../../mocks/mockAnnouncements';
 import { colors } from '../../../styles/colors';
 
+// Interface updated: removed onCreateConfirm prop
+interface CreateAnnouncementModalProps {
+  visible: boolean;
+  onClose: () => void;
+  // Removed: onCreateConfirm: (announcementData: Omit<Announcement, 'id' | 'date'>) => void;
+}
+
+const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visible, onClose }) => {
+  // Form State
+  const [title, setTitle] = useState('');
+  const [message, setMessage] = useState('');
+  // Default type could be 'announcement'
+  const [type, setType] = useState<AnnouncementType>('announcement');
+
+  const queryClient = useQueryClient();
+
+  // --- TanStack Mutation ---
+  const mutation = useMutation({
+    mutationFn: createAnnouncement, // API function to call
+    onSuccess: createdAnnouncement => {
+      console.log('Announcement created successfully via mutation:', createdAnnouncement);
+      queryClient.invalidateQueries({ queryKey: ['announcements'] }); // Refetch list
+      onClose(); // Close modal on success
+    },
+    onError: error => {
+      console.error('Error creating announcement via mutation:', error);
+    },
+  });
+
+  // Effect to reset form when modal visibility changes
+  useEffect(() => {
+    if (visible) {
+      setTitle('');
+      setMessage('');
+      setType('announcement'); // Reset type
+      mutation.reset();
+    }
+  }, [visible]);
+
+  const handleCreate = () => {
+    // Validate input
+    if (!title.trim()) {
+      return;
+    }
+    if (!message.trim()) {
+      return;
+    }
+
+    const newAnnouncementData: Omit<Announcement, 'id' | 'date'> = {
+      title: title.trim(),
+      message: message.trim(),
+      type: type, // Use selected type
+    };
+
+    // Trigger the mutation
+    mutation.mutate(newAnnouncementData);
+  };
+
+  return (
+    <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
+      <View style={modalStyles.centeredView}>
+        <View style={modalStyles.modalView}>
+          <Text style={modalStyles.modalTitle}>Create New Announcement</Text>
+
+          <Text style={modalStyles.label}>Title:</Text>
+          <TextInput
+            style={modalStyles.input}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Announcement Title"
+            placeholderTextColor={colors.textLight}
+            maxLength={100}
+            editable={!mutation.isPending} // Disable while loading
+          />
+
+          <Text style={modalStyles.label}>Message:</Text>
+          <TextInput
+            style={modalStyles.textArea}
+            value={message}
+            onChangeText={setMessage}
+            placeholder="Enter the full announcement message..."
+            placeholderTextColor={colors.textLight}
+            multiline={true}
+            numberOfLines={4}
+            editable={!mutation.isPending}
+          />
+
+          {/* Optional: Add controls to select 'type' if needed */}
+          {/* <Text style={modalStyles.label}>Type:</Text> */}
+          {/* <Picker selectedValue={type} onValueChange={(itemValue) => setType(itemValue)}>
+              <Picker.Item label="General Announcement" value="announcement" />
+              <Picker.Item label="Challenge" value="challenge" />
+              </Picker> */}
+
+          {/* Loading Indicator */}
+          {mutation.isPending && (
+            <View style={modalStyles.loadingContainer}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={modalStyles.loadingText}>Creating Announcement...</Text>
+            </View>
+          )}
+
+          {/* Error Message */}
+          {mutation.isError && (
+            <Text style={modalStyles.errorText}>
+              Error: {mutation.error instanceof Error ? mutation.error.message : 'Failed to create announcement'}
+            </Text>
+          )}
+
+          <View style={modalStyles.buttonContainer}>
+            <Button
+              title="Create Announcement"
+              onPress={handleCreate}
+              disabled={mutation.isPending} // Disable button while loading
+            />
+          </View>
+          <View style={modalStyles.footerButton}>
+            <Button
+              title="Cancel"
+              onPress={onClose}
+              color={colors.secondary}
+              disabled={mutation.isPending}
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// --- Styles ---
 const modalStyles = StyleSheet.create({
   centeredView: {
     flex: 1,
@@ -56,91 +201,32 @@ const modalStyles = StyleSheet.create({
     marginBottom: 15,
   },
   textArea: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: colors.borderPrimary,
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16,
-    color: colors.textPrimary,
-    backgroundColor: colors.backgroundPrimary,
-    marginBottom: 15,
-    height: 100,
+    minHeight: 100,
     textAlignVertical: 'top',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    marginBottom: 5,
+    height: 20,
+  },
+  loadingText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  errorText: {
+    color: colors.danger,
+    textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 5,
+    fontSize: 14,
+    minHeight: 18,
   },
   buttonContainer: { flexDirection: 'column', width: '100%', marginTop: 10, gap: 10 },
   footerButton: { width: '100%', marginTop: 10 },
 });
-
-interface CreateAnnouncementModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onCreateConfirm: (announcementData: Omit<Announcement, 'id' | 'date'>) => void;
-}
-
-const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({
-  visible,
-  onClose,
-  onCreateConfirm,
-}) => {
-  const [title, setTitle] = useState('');
-  const [message, setMessage] = useState('');
-  const [type, setType] = useState<AnnouncementType>('announcement');
-
-  useEffect(() => {
-    if (visible) {
-      setTitle('');
-      setMessage('');
-      setType('announcement');
-    }
-  }, [visible]);
-
-  const handleCreate = () => {
-    if (!title.trim() || !message.trim()) {
-      alert('Please enter both a title and a message.');
-      return;
-    }
-    onCreateConfirm({
-      title: title.trim(),
-      message: message.trim(),
-      type: type,
-    });
-  };
-
-  return (
-    <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalStyles.centeredView}>
-        <View style={modalStyles.modalView}>
-          <Text style={modalStyles.modalTitle}>Create New Announcement</Text>
-          <Text style={modalStyles.label}>Title:</Text>
-          <TextInput
-            style={modalStyles.input}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Announcement Title"
-            placeholderTextColor={colors.textLight}
-            maxLength={100}
-          />
-          <Text style={modalStyles.label}>Message:</Text>
-          <TextInput
-            style={modalStyles.textArea}
-            value={message}
-            onChangeText={setMessage}
-            placeholder="Enter the full announcement message..."
-            placeholderTextColor={colors.textLight}
-            multiline={true}
-            numberOfLines={4}
-          />
-          <View style={modalStyles.buttonContainer}>
-            <Button title="Create Announcement" onPress={handleCreate} />
-          </View>
-          <View style={modalStyles.footerButton}>
-            <Button title="Cancel" onPress={onClose} color={colors.secondary} />
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-};
 
 export default CreateAnnouncementModal;
