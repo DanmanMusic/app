@@ -1,86 +1,71 @@
 // src/hooks/usePaginatedParents.ts
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
-// Contexts & Types
-import { useData } from '../contexts/DataContext';
+// API Client & Types
+import { fetchParents } from '../api/students'; // Assuming API functions are in this file
 import { User } from '../types/userTypes';
-
-// Constants
-const ITEMS_PER_PAGE = 5; // Keep consistent
 
 // Define the shape of the return value
 interface UsePaginatedParentsReturn {
-    parents: User[]; // Returns the User objects for the current page
+    parents: User[]; // Returns the User objects
     currentPage: number;
     totalPages: number;
+    totalItems: number;
     setPage: (page: number) => void;
     isLoading: boolean;
-    error: null | Error;
+    isFetching: boolean;
+    isPlaceholderData: boolean;
+    isError: boolean;
+    error: Error | null;
 }
 
-export const usePaginatedParents = (): UsePaginatedParentsReturn => {
-    const { currentMockUsers } = useData();
+const ITEMS_PER_PAGE = 5; // Keep consistent or adjust
 
+export const usePaginatedParents = (): UsePaginatedParentsReturn => {
     const [currentPage, setCurrentPage] = useState(1);
 
-    // Memoize the list of all parents, sorted
-    const sortedParents = useMemo(() => {
-        return Object.values(currentMockUsers)
-            .filter(user => user.role === 'parent')
-            .sort((a, b) => {
-                // Parents might not always have last names in some systems, add fallback
-                const lastNameA = a.lastName || '';
-                const lastNameB = b.lastName || '';
-                const firstNameA = a.firstName || '';
-                const firstNameB = b.firstName || '';
+    // Use TanStack Query to fetch parents
+    const queryResult = useQuery({
+        queryKey: ['parents', { page: currentPage }], // Query key includes page
+        queryFn: () => fetchParents({ page: currentPage }), // Call the API function
+        placeholderData: keepPreviousData, // Use placeholder for smooth pagination
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+    });
 
-                const lastNameComparison = lastNameA.localeCompare(lastNameB);
-                if (lastNameComparison !== 0) return lastNameComparison;
-                return firstNameA.localeCompare(firstNameB);
-            });
-    }, [currentMockUsers]);
+    // Extract data and flags
+    const { data, isLoading, isFetching, isError, error, isPlaceholderData } = queryResult;
 
-    // Memoize the total number of pages
-    const totalPages = useMemo(() => {
-        const totalItems = sortedParents.length;
-        return Math.ceil(totalItems / ITEMS_PER_PAGE);
-    }, [sortedParents]);
-
-    // Memoize the slice of parents for the current page
-    const paginatedParents = useMemo(() => {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        const endIndex = startIndex + ITEMS_PER_PAGE;
-         if (currentPage > totalPages && totalPages > 0) {
-             const firstPageStartIndex = 0;
-             const firstPageEndIndex = firstPageStartIndex + ITEMS_PER_PAGE;
-             return sortedParents.slice(firstPageStartIndex, firstPageEndIndex);
-         }
-          if (currentPage < 1 && totalPages > 0) {
-             const firstPageStartIndex = 0;
-             const firstPageEndIndex = firstPageStartIndex + ITEMS_PER_PAGE;
-             return sortedParents.slice(firstPageStartIndex, firstPageEndIndex);
-         }
-        return sortedParents.slice(startIndex, endIndex);
-    }, [currentPage, sortedParents, totalPages]);
+    const parents = data?.items ?? []; // API returns items array
+    const totalPages = data?.totalPages ?? 1;
+    const totalItems = data?.totalItems ?? 0;
 
     // Function to change the current page
     const setPage = useCallback((page: number) => {
+        console.log(`[usePaginatedParents] setPage called with: ${page}`);
         let targetPage = page;
+        const effectiveTotalPages = totalPages >= 1 ? totalPages : 1;
         if (page < 1) {
             targetPage = 1;
-        } else if (page > totalPages && totalPages > 0) {
-            targetPage = totalPages;
+        } else if (page > effectiveTotalPages) {
+            targetPage = effectiveTotalPages;
         }
+        console.log(`[usePaginatedParents] Setting current page to: ${targetPage}`);
         setCurrentPage(targetPage);
     }, [totalPages]);
 
     return {
-        parents: paginatedParents,
+        parents,
         currentPage,
         totalPages,
+        totalItems,
         setPage,
-        isLoading: false,
-        error: null,
+        isLoading,
+        isFetching,
+        isPlaceholderData,
+        isError,
+        error: error instanceof Error ? error : null,
     };
 };

@@ -1,81 +1,71 @@
 // src/hooks/usePaginatedTeachers.ts
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
-// Contexts & Types
-import { useData } from '../contexts/DataContext';
+// API Client & Types
+import { fetchTeachers } from '../api/students'; // Assuming API functions are in this file
 import { User } from '../types/userTypes';
-
-// Constants
-const ITEMS_PER_PAGE = 5; // Keep consistent or adjust as needed
 
 // Define the shape of the return value
 interface UsePaginatedTeachersReturn {
-    teachers: User[]; // Returns the User objects for the current page
+    teachers: User[]; // Returns the User objects
     currentPage: number;
     totalPages: number;
+    totalItems: number;
     setPage: (page: number) => void;
     isLoading: boolean;
-    error: null | Error;
+    isFetching: boolean;
+    isPlaceholderData: boolean;
+    isError: boolean;
+    error: Error | null;
 }
 
-export const usePaginatedTeachers = (): UsePaginatedTeachersReturn => {
-    const { currentMockUsers } = useData();
+const ITEMS_PER_PAGE = 5; // Keep consistent or adjust
 
+export const usePaginatedTeachers = (): UsePaginatedTeachersReturn => {
     const [currentPage, setCurrentPage] = useState(1);
 
-    // Memoize the list of all teachers, sorted
-    const sortedTeachers = useMemo(() => {
-        return Object.values(currentMockUsers)
-            .filter(user => user.role === 'teacher')
-            .sort((a, b) => {
-                const lastNameComparison = a.lastName.localeCompare(b.lastName);
-                if (lastNameComparison !== 0) return lastNameComparison;
-                return a.firstName.localeCompare(b.firstName);
-            });
-    }, [currentMockUsers]);
+    // Use TanStack Query to fetch teachers
+    const queryResult = useQuery({
+        queryKey: ['teachers', { page: currentPage }], // Query key includes page
+        queryFn: () => fetchTeachers({ page: currentPage }), // Call the API function
+        placeholderData: keepPreviousData, // Use placeholder for smooth pagination
+        staleTime: 5 * 60 * 1000, // Data fresh for 5 minutes
+        gcTime: 10 * 60 * 1000, // Cache for 10 minutes
+    });
 
-    // Memoize the total number of pages
-    const totalPages = useMemo(() => {
-        const totalItems = sortedTeachers.length;
-        return Math.ceil(totalItems / ITEMS_PER_PAGE);
-    }, [sortedTeachers]);
+    // Extract data and flags
+    const { data, isLoading, isFetching, isError, error, isPlaceholderData } = queryResult;
 
-    // Memoize the slice of teachers for the current page
-    const paginatedTeachers = useMemo(() => {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        const endIndex = startIndex + ITEMS_PER_PAGE;
-        // Basic bounds check for currentPage, though less critical without filtering
-         if (currentPage > totalPages && totalPages > 0) {
-             const firstPageStartIndex = 0;
-             const firstPageEndIndex = firstPageStartIndex + ITEMS_PER_PAGE;
-             return sortedTeachers.slice(firstPageStartIndex, firstPageEndIndex);
-         }
-          if (currentPage < 1 && totalPages > 0) {
-             const firstPageStartIndex = 0;
-             const firstPageEndIndex = firstPageStartIndex + ITEMS_PER_PAGE;
-             return sortedTeachers.slice(firstPageStartIndex, firstPageEndIndex);
-         }
-        return sortedTeachers.slice(startIndex, endIndex);
-    }, [currentPage, sortedTeachers, totalPages]);
+    const teachers = data?.items ?? []; // API returns items array
+    const totalPages = data?.totalPages ?? 1; // Default to 1 page
+    const totalItems = data?.totalItems ?? 0;
 
     // Function to change the current page
     const setPage = useCallback((page: number) => {
+        console.log(`[usePaginatedTeachers] setPage called with: ${page}`);
         let targetPage = page;
+        const effectiveTotalPages = totalPages >= 1 ? totalPages : 1;
         if (page < 1) {
             targetPage = 1;
-        } else if (page > totalPages && totalPages > 0) {
-            targetPage = totalPages;
+        } else if (page > effectiveTotalPages) {
+            targetPage = effectiveTotalPages;
         }
+        console.log(`[usePaginatedTeachers] Setting current page to: ${targetPage}`);
         setCurrentPage(targetPage);
     }, [totalPages]);
 
     return {
-        teachers: paginatedTeachers,
+        teachers,
         currentPage,
         totalPages,
+        totalItems,
         setPage,
-        isLoading: false,
-        error: null,
+        isLoading,
+        isFetching,
+        isPlaceholderData,
+        isError,
+        error: error instanceof Error ? error : null,
     };
 };

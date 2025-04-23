@@ -1,7 +1,15 @@
+// src/components/admin/modals/CreateUserModal.tsx
+
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, Button, TextInput, ScrollView } from 'react-native';
+import { Modal, View, Text, StyleSheet, Button, TextInput, ScrollView, ActivityIndicator, Alert } from 'react-native'; // Added ActivityIndicator, Alert
+import { useMutation, useQueryClient } from '@tanstack/react-query'; // Added TQ imports
+
+// Types & API
 import { UserRole, User } from '../../../types/userTypes';
 import { Instrument } from '../../../mocks/mockInstruments';
+import { createUser } from '../../../api/students'; // Import the API function
+
+// Utils & Styles
 import { colors } from '../../../styles/colors';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { getUserDisplayName } from '../../../utils/helpers';
@@ -11,15 +19,15 @@ const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'student'];
 interface CreateUserModalProps {
   visible: boolean;
   onClose: () => void;
-  onCreateUser: (userData: Omit<User, 'id'>) => void;
-  allTeachers: User[];
-  mockInstruments: Instrument[];
+  // Removed: onCreateUser: (userData: Omit<User, 'id'>) => void;
+  allTeachers: User[]; // Still needed for teacher linking UI
+  mockInstruments: Instrument[]; // Still needed for instrument linking UI
 }
 
 const CreateUserModal: React.FC<CreateUserModalProps> = ({
   visible,
   onClose,
-  onCreateUser,
+  // onCreateUser, // Removed
   allTeachers,
   mockInstruments,
 }) => {
@@ -29,50 +37,73 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const [instrumentIds, setInstrumentIds] = useState<string[]>([]);
   const [linkedTeacherIds, setLinkedTeacherIds] = useState<string[]>([]);
 
+  // Get QueryClient instance
+  const queryClient = useQueryClient();
+
+  // Setup the mutation
+  const mutation = useMutation({
+    mutationFn: createUser, // Function that performs the async task
+    onSuccess: (createdUser) => { // 'createdUser' is the data returned by the API on success
+      console.log('User created successfully via mutation:', createdUser);
+      // Invalidate queries to refetch data after successful creation
+      // Invalidate based on the role created
+      if (createdUser.role === 'student') {
+        queryClient.invalidateQueries({ queryKey: ['students'] });
+      } else if (createdUser.role === 'teacher') {
+        queryClient.invalidateQueries({ queryKey: ['teachers'] });
+      }
+      // Could also invalidate a general 'users' query if you have one
+      // queryClient.invalidateQueries({ queryKey: ['users'] });
+
+      Alert.alert('Success', `User "${getUserDisplayName(createdUser)}" created successfully!`);
+      onClose(); // Close the modal
+    },
+    onError: (error) => {
+      console.error('Error creating user via mutation:', error);
+      Alert.alert('Error', `Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // Keep modal open on error
+    },
+  });
+
+  // Reset form state when modal visibility changes
   useEffect(() => {
     if (visible) {
       setFirstName('');
       setLastName('');
-
       setRole('');
       setInstrumentIds([]);
       setLinkedTeacherIds([]);
+      mutation.reset(); // Reset mutation state (isLoading, isError, etc.)
     }
   }, [visible]);
 
   const handleCreatePress = () => {
-    if (!firstName || !lastName || !role) {
-      alert('Missing Information - Please enter First Name, Last Name, and select a Role.');
+    if (!firstName.trim() || !lastName.trim() || !role) {
+      Alert.alert('Missing Information', 'Please enter First Name, Last Name, and select a Role.');
       return;
     }
 
-    const newUserPartial: Omit<User, 'id'> = {
+    const newUserPartial: Omit<User, 'id' | 'status'> = {
       role: role,
       firstName: firstName.trim(),
       lastName: lastName.trim(),
+      // Only include role-specific fields if they exist
       ...(role === 'student' && {
-        instrumentIds: instrumentIds,
-        linkedTeacherIds: linkedTeacherIds,
+        instrumentIds: instrumentIds.length > 0 ? instrumentIds : undefined,
+        linkedTeacherIds: linkedTeacherIds.length > 0 ? linkedTeacherIds : undefined,
       }),
+      // Nickname could be added here if needed
     };
-    onCreateUser(newUserPartial);
+
+    // Trigger the mutation
+    mutation.mutate(newUserPartial);
   };
 
-  const handleAddInstrument = () => {
-    alert('Mock Add Instrument ID');
-  };
-
-  const handleRemoveInstrument = (idToRemove: string) => {
-    setInstrumentIds(prev => prev.filter(id => id !== idToRemove));
-  };
-
-  const handleAddLinkedTeacher = () => {
-    alert('Mock Link Teacher ID');
-  };
-
-  const handleRemoveLinkedTeacher = (idToRemove: string) => {
-    setLinkedTeacherIds(prev => prev.filter(id => id !== idToRemove));
-  };
+  // Handlers for mock instrument/teacher linking (keep as is for now)
+  const handleAddInstrument = () => { Alert.alert('Mock Add Instrument ID'); };
+  const handleRemoveInstrument = (idToRemove: string) => { setInstrumentIds(prev => prev.filter(id => id !== idToRemove)); };
+  const handleAddLinkedTeacher = () => { Alert.alert('Mock Link Teacher ID'); };
+  const handleRemoveLinkedTeacher = (idToRemove: string) => { setLinkedTeacherIds(prev => prev.filter(id => id !== idToRemove)); };
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -81,7 +112,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
           <Text style={modalStyles.modalTitle}>Create New User</Text>
 
           <ScrollView style={modalStyles.scrollView}>
-            {}
             <Text style={modalStyles.label}>First Name:</Text>
             <TextInput
               style={modalStyles.input}
@@ -89,6 +119,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
               onChangeText={setFirstName}
               placeholder="Enter First Name"
               placeholderTextColor={colors.textLight}
+              editable={!mutation.isPending} // Disable input while loading
             />
 
             <Text style={modalStyles.label}>Last Name:</Text>
@@ -98,24 +129,26 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
               onChangeText={setLastName}
               placeholder="Enter Last Name"
               placeholderTextColor={colors.textLight}
+              editable={!mutation.isPending}
             />
+
             <Text style={modalStyles.label}>Role:</Text>
             <View style={modalStyles.roleButtons}>
-              {}
               {CREATABLE_ROLES.map(r => (
                 <Button
                   key={r}
                   title={r.charAt(0).toUpperCase() + r.slice(1)}
                   onPress={() => setRole(r)}
                   color={role === r ? colors.primary : colors.secondary}
+                  disabled={mutation.isPending} // Disable role selection while loading
                 />
               ))}
             </View>
+
             {role === 'student' && (
               <View style={modalStyles.roleSpecificSection}>
-                <Text style={modalStyles.roleSectionTitle}>Student Details</Text>
+                <Text style={modalStyles.roleSectionTitle}>Student Details (Optional)</Text>
 
-                {}
                 <Text style={modalStyles.label}>Instrument IDs:</Text>
                 {instrumentIds.length > 0 ? (
                   instrumentIds.map(id => (
@@ -127,13 +160,15 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
                         title="Remove"
                         onPress={() => handleRemoveInstrument(id)}
                         color={colors.danger}
+                        disabled={mutation.isPending}
                       />
                     </View>
                   ))
                 ) : (
                   <Text style={appSharedStyles.emptyListText}>No instruments selected.</Text>
                 )}
-                <Button title="Add Instrument (Mock)" onPress={handleAddInstrument} />
+                <Button title="Add Instrument (Mock)" onPress={handleAddInstrument} disabled={mutation.isPending}/>
+
                 <Text style={[modalStyles.label, { marginTop: 15 }]}>Linked Teacher IDs:</Text>
                 {linkedTeacherIds.length > 0 ? (
                   linkedTeacherIds.map(id => {
@@ -147,6 +182,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
                           title="Remove"
                           onPress={() => handleRemoveLinkedTeacher(id)}
                           color={colors.danger}
+                          disabled={mutation.isPending}
                         />
                       </View>
                     );
@@ -154,22 +190,37 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 ) : (
                   <Text style={appSharedStyles.emptyListText}>No teachers linked.</Text>
                 )}
-                <Button title="Link Teacher (Mock)" onPress={handleAddLinkedTeacher} />
+                <Button title="Link Teacher (Mock)" onPress={handleAddLinkedTeacher} disabled={mutation.isPending}/>
               </View>
             )}
           </ScrollView>
+
+          {/* Display loading indicator */}
+          {mutation.isPending && (
+             <View style={modalStyles.loadingContainer}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={modalStyles.loadingText}>Creating User...</Text>
+            </View>
+          )}
+
+          {/* Display error message (optional) */}
+          {mutation.isError && (
+            <Text style={modalStyles.errorText}>
+                Error: {mutation.error instanceof Error ? mutation.error.message : 'Failed to create user'}
+            </Text>
+          )}
+
           <View style={modalStyles.buttonContainer}>
-            <Button title="Create User" onPress={handleCreatePress} />
+            {/* Disable button while mutation is pending */}
+            <Button title="Create User" onPress={handleCreatePress} disabled={mutation.isPending} />
           </View>
           <View style={modalStyles.footerButton}>
-            <Button title="Cancel" onPress={onClose} color={colors.secondary} />
+            <Button title="Cancel" onPress={onClose} color={colors.secondary} disabled={mutation.isPending} />
           </View>
         </View>
       </View>
     </Modal>
   );
-  {
-  }
 };
 
 const modalStyles = StyleSheet.create({
@@ -186,16 +237,13 @@ const modalStyles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
     width: '95%',
     maxWidth: 500,
-    maxHeight: '80%',
+    maxHeight: '80%', // Adjusted maxHeight slightly
   },
   scrollView: {
     width: '100%',
@@ -269,6 +317,25 @@ const modalStyles = StyleSheet.create({
     marginRight: 10,
     fontSize: 15,
     color: colors.textPrimary,
+  },
+  loadingContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 10,
+      marginBottom: 5,
+  },
+  loadingText: {
+      marginLeft: 10,
+      fontSize: 14,
+      color: colors.textSecondary,
+  },
+   errorText: {
+      color: colors.danger,
+      textAlign: 'center',
+      marginTop: 10,
+      marginBottom: 5,
+      fontSize: 14,
   },
   buttonContainer: {
     flexDirection: 'column',

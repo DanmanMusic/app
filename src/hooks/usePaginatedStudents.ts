@@ -1,124 +1,109 @@
 // src/hooks/usePaginatedStudents.ts
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+// Import useQuery and the keepPreviousData helper from TanStack Query
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
-// Contexts & Types
-import { useData } from '../contexts/DataContext';
-import { User, UserStatus } from '../types/userTypes';
-import { SimplifiedStudent } from '../types/dataTypes'; // Needed for return type
-import { getUserDisplayName } from '../utils/helpers';
+// API Client & Types
+import { fetchStudents } from '../api/students'; // Use the API client function
+import { UserStatus } from '../types/userTypes';
+import { SimplifiedStudent } from '../types/dataTypes';
 
-// Constants
-const ITEMS_PER_PAGE = 5; // Or your desired page size
-
-// Define the shape of the return value for this hook
+// Define the shape of the return value for this hook (adding search and TQ flags)
 export interface UsePaginatedStudentsReturn {
-    students: SimplifiedStudent[]; // Return simplified structure for display list
+    students: SimplifiedStudent[];
     currentPage: number;
     totalPages: number;
+    totalItems: number; // Add total items count
     setPage: (page: number) => void;
-    currentFilter: UserStatus | 'all'; // The currently active filter
-    setFilter: (filter: UserStatus | 'all') => void; // Function to change the filter
-    isLoading: boolean; // Placeholder for future API loading state
-    error: null | Error; // Placeholder for future API errors
+    currentFilter: UserStatus | 'all';
+    setFilter: (filter: UserStatus | 'all') => void;
+    searchTerm: string; // Add search term state
+    setSearchTerm: (term: string) => void; // Add search term setter
+    isLoading: boolean; // Loading state for initial fetch when no data/placeholder exists
+    isFetching: boolean; // Loading state for background refetches/new page fetches
+    isPlaceholderData: boolean; // Flag indicating placeholder data is shown
+    isError: boolean; // Query error state
+    error: Error | null; // Error object
 }
 
+const ITEMS_PER_PAGE = 5; // Ensure this matches the MSW handler if needed there
+
 export const usePaginatedStudents = (): UsePaginatedStudentsReturn => {
-    const { currentMockUsers, ticketBalances } = useData(); // Need balances for SimplifiedStudent
-
-    // State for pagination and filtering
+    // State for pagination, filtering, and searching
     const [currentPage, setCurrentPage] = useState(1);
-    const [currentFilter, setFilter] = useState<UserStatus | 'all'>('active'); // Default to active
+    const [currentFilter, setFilter] = useState<UserStatus | 'all'>('active'); // Default filter
+    const [searchTerm, setSearchTerm] = useState('');
 
-    // Memoize the filtered and sorted list based on the current filter
-    const filteredAndSortedStudents = useMemo(() => {
-        console.log(`[usePaginatedStudents] Filtering/Sorting based on filter: ${currentFilter}`);
-        return Object.values(currentMockUsers)
-            .filter(user => user.role === 'student')
-            .filter(student => {
-                if (currentFilter === 'all') return true;
-                return student.status === currentFilter;
-            })
-            .sort((a, b) => {
-                // Sort primarily by status (active first), then by name
-                if (a.status === 'active' && b.status === 'inactive') return -1;
-                if (a.status === 'inactive' && b.status === 'active') return 1;
-                // If statuses are the same, sort by name
-                const lastNameComparison = a.lastName.localeCompare(b.lastName);
-                if (lastNameComparison !== 0) return lastNameComparison;
-                return a.firstName.localeCompare(b.firstName);
-            });
-    }, [currentMockUsers, currentFilter]);
+    // Debounce search term locally if needed in a real app, but skip for simplicity here
 
-    // Recalculate total pages whenever the filtered list changes
-    const totalPages = useMemo(() => {
-        const totalItems = filteredAndSortedStudents.length;
-        const pages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-        console.log(`[usePaginatedStudents] Recalculated totalPages: ${pages} for ${totalItems} items`);
-        return pages > 0 ? pages : 1; // Ensure at least 1 page
-    }, [filteredAndSortedStudents]);
+    // Use TanStack Query to fetch data
+    const queryResult = useQuery({
+        // Query key: An array that uniquely identifies this query.
+        // TQ automatically refetches when these keys change.
+        queryKey: ['students', { page: currentPage, filter: currentFilter, search: searchTerm }],
+        // Query function: The async function to fetch data.
+        queryFn: () => fetchStudents({ page: currentPage, filter: currentFilter, searchTerm: searchTerm }),
+        // Options:
+        // Use the keepPreviousData function from TQ as placeholderData
+        // This shows the data from the previous page/filter while the new data loads
+        placeholderData: keepPreviousData,
+        staleTime: 5 * 60 * 1000, // Data is considered fresh for 5 minutes
+        gcTime: 10 * 60 * 1000, // cacheTime is now gcTime (garbage collection time in ms)
+    });
 
-    // Reset to page 1 whenever the filter changes
+    // Extract data and flags from the query result
+    // isPlaceholderData tells us if we are showing old data while fetching new data
+    const { data, isLoading, isFetching, isError, error, isPlaceholderData } = queryResult;
+
+    // If using placeholderData, 'data' might be from a previous query key.
+    // We often rely on `isFetching` to show loading state during page changes.
+    const students = data?.students ?? [];
+    const totalPages = data?.totalPages ?? 1; // Default to 1 page if no data
+    const totalItems = data?.totalItems ?? 0;
+
+    // Reset to page 1 whenever filter or search term changes
     useEffect(() => {
-        console.log(`[usePaginatedStudents] Filter changed to ${currentFilter}, resetting to page 1.`);
-        setCurrentPage(1);
-    }, [currentFilter]);
-
-
-     // Clamp currentPage if it becomes invalid after filtering/data changes
-     useEffect(() => {
-        if (currentPage > totalPages) {
-            console.log(`[usePaginatedStudents] Current page ${currentPage} > total pages ${totalPages}, setting to ${totalPages}`);
-            setCurrentPage(totalPages);
+        console.log(`[usePaginatedStudents] Filter or Search changed, resetting page to 1.`);
+        // Check if currentPage is already 1 to avoid unnecessary state update/refetch
+        if (currentPage !== 1) {
+            setCurrentPage(1);
         }
-         // Optional: handle case where currentPage is less than 1? Should be prevented by setPage.
-         // if (currentPage < 1 && totalPages >= 1) {
-         //     setCurrentPage(1);
-         // }
-    }, [currentPage, totalPages]);
-
-    // Memoize the slice of students for the current page
-    const paginatedStudents = useMemo(() => {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        const endIndex = startIndex + ITEMS_PER_PAGE;
-        console.log(`[usePaginatedStudents] Slicing page ${currentPage}: startIndex=${startIndex}, endIndex=${endIndex}`);
-        const sliced = filteredAndSortedStudents.slice(startIndex, endIndex);
-
-        // Map to SimplifiedStudent structure
-        return sliced.map(student => ({
-             id: student.id,
-             name: getUserDisplayName(student),
-             instrumentIds: student.instrumentIds,
-             balance: ticketBalances[student.id] || 0, // Get balance from context
-             isActive: student.status === 'active',
-        }));
-
-    }, [currentPage, filteredAndSortedStudents, ticketBalances]);
+    }, [currentFilter, searchTerm]); // Removed currentPage from dependency array here
 
     // Function to change the current page with bounds checking
     const setPage = useCallback((page: number) => {
         console.log(`[usePaginatedStudents] setPage called with: ${page}`);
         let targetPage = page;
+        // Ensure page is within valid bounds (1 to totalPages)
+        // Ensure totalPages is at least 1 before using it in comparison
+        const effectiveTotalPages = totalPages >= 1 ? totalPages : 1;
         if (page < 1) {
             targetPage = 1;
-        } else if (page > totalPages) {
-            // Avoid setting page beyond total pages if totalPages is 0 or more
-             targetPage = totalPages >= 1 ? totalPages : 1;
+        } else if (page > effectiveTotalPages) {
+            targetPage = effectiveTotalPages;
         }
-         console.log(`[usePaginatedStudents] Setting current page to: ${targetPage}`);
+        console.log(`[usePaginatedStudents] Setting current page to: ${targetPage}`);
         setCurrentPage(targetPage);
-    }, [totalPages]);
-
+    }, [totalPages]); // Depends only on totalPages for bounds check
 
     // Return the state and functions needed by the component
     return {
-        students: paginatedStudents,
+        students,
         currentPage,
         totalPages,
+        totalItems,
         setPage,
         currentFilter,
-        setFilter, // Expose the filter setter function
-        isLoading: false, // Placeholder
-        error: null, // Placeholder
+        setFilter,
+        searchTerm,
+        setSearchTerm,
+        isLoading, // Use for initial load indicator
+        // Use isFetching to indicate background activity or new page load indicator
+        // when placeholderData is being shown
+        isFetching: isFetching,
+        isPlaceholderData, // Pass this flag through
+        isError,
+        error: error instanceof Error ? error : null, // Ensure error is Error or null
     };
 };

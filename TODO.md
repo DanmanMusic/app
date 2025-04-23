@@ -9,11 +9,11 @@
 
 Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 
-## [x] Development
+## [ ] Development
 
 These are the major areas and tasks involved in building the application based on the functional specification in `SPECIFICATION.md`.
 
-### [x] 1. Frontend First: Mock UI & View Prototyping
+### [x] 1. Frontend First: Mock UI & View Prototyping (with Initial TQ/MSW Integration)
 
 - [x] Refine User Data Model: Split `name` into `firstName`, `lastName`, `nickname`. Define structure. Update mocks, helpers, components. Added `linkedTeacherIds`, `linkedStudentIds`, `instrumentIds`, `status`.
 - [x] Complete `student` -> `student` refactor across codebase.
@@ -36,64 +36,69 @@ These are the major areas and tasks involved in building the application based o
     - [x] Implement Mock UI for "Create User" via modal.
     - [x] Implement Mock UI flow for Editing Users via modal.
     - [x] Refactor Task Assignment: Decoupled `AssignedTask` from `TaskLibrary`, allowing Ad-Hoc tasks via `AssignTaskModal`. Updated related context, views, components.
-    - [x] Implement User Deactivate/Delete Flow: Replaced simple delete with modal offering "Deactivate"/"Reactivate" (primary) and "Permanent Delete" (secondary). Added `status` field to User. Updated `DataContext` (toggle simulation, delete simulation). Updated `AdminStudentDetailView` buttons and modal trigger. Disabled actions for inactive users in detail view. Filtered inactive users from Teacher view list and Assign Task modal.
+    - [x] Implement User Deactivate/Delete Flow: Replaced simple delete with modal offering "Deactivate"/"Reactivate" (primary) and "Permanent Delete" (secondary via `ConfirmationModal`). Added `status` field to User. Updated relevant components.
     - [x] Implement Pagination Architecture:
         - [x] Created `hooks` directory.
-        - [x] Created `usePaginatedStudents`, `usePaginatedTeachers`, `usePaginatedParents` hooks (using mock data).
-        - [x] Created `usePaginatedAssignedTasks`, `usePaginatedTicketHistory` (global lists).
-        - [x] Created `usePaginatedStudentTasks`, `usePaginatedStudentHistory` (single student lists).
+        - [x] Created initial pagination hooks using `DataContext`.
         - [x] Created `PaginationControls` component.
-        - [x] Refactored `AdminView` and `AdminUsersSection` for tabbed, paginated user lists with filtering.
-        - [x] Refactored `ViewAllAssignedTasksModal` to use pagination hook.
-        - [x] Refactored `AdminHistorySection` to use pagination hook.
-        - [x] Refactored `AdminStudentDetailView`, `TeacherView` (profile), `StudentView` to use student-specific pagination hooks for task/history lists.
+        - [x] Refactored initial views/components to use hooks.
+    - [x] Implement TQ/MSW for Admin User Lists:
+        - [x] Installed TQ & MSW.
+        - [x] Configured MSW handlers (`GET /api/students`, `GET /api/teachers`, `GET /api/parents`).
+        - [x] Configured TQ Provider & `metro.config.js`.
+        - [x] Created API client functions (`fetchStudents`, `fetchTeachers`, `fetchParents`).
+        - [x] Refactored `usePaginatedStudents`, `usePaginatedTeachers`, `usePaginatedParents` hooks to use TQ/MSW.
+        - [x] Updated `AdminView` & `AdminUsersSection` to use refactored hooks & display loading/error states.
+    - [x] Implement TQ/MSW User Mutations:
+        - [x] Added MSW handlers (`POST /api/users`, `PATCH /api/users/:id`, `DELETE /api/users/:id`, `PATCH /api/users/:id/status`).
+        - [x] Created API client functions (`createUser`, `updateUser`, `deleteUser`, `toggleUserStatus`).
+        - [x] Refactored `CreateUserModal`, `EditUserModal`, `DeactivateOrDeleteUserModal` to use `useMutation`.
+        - [x] Removed corresponding simulation functions from `DataContext`.
     - [x] Implement Search for Student Selection: Added search input to Step 1 of `AssignTaskModal`.
-    - [ ] Implement Student Search (Admin): Add search input to Admin Users 'Students' tab. Update `usePaginatedStudents` hook (and eventually API) to filter by search term.
-    - [ ] Implement Mock UI for other User Interactions:
-        - [x] Admin CRUD: Task Library (Modal done).
-        - [x] Admin CRUD: Rewards (Modal done).
-        - [x] Admin CRUD: Announcements (Modal done).
-        - [x] Admin CRUD: Instruments (Modal done).
-        - [ ] Admin Action: Manual Ticket Adjustments (needs modal/input).
-        - [ ] Admin Action: Redeeming Rewards (needs modal/selection).
-        - [ ] Teacher Action: View All Students (mock) (needs list/modal).
-        - [ ] Parent Action: Link Another Student (needs mock QR flow).
+    - [x] Implement Student Search (Admin): Added search input & state plumbing to Admin Users 'Students' tab via `usePaginatedStudents`.
+    - [ ] Refactor Other Lists with TQ/MSW:
+        - [ ] `ViewAllAssignedTasksModal` (`usePaginatedAssignedTasks` hook).
+        - [ ] `AdminHistorySection` (`usePaginatedTicketHistory` hook).
+        - [ ] `AdminStudentDetailView`, `TeacherView` (profile), `StudentView` (task/history lists using `usePaginatedStudentTasks`/`usePaginatedStudentHistory`).
+    - [ ] Implement Other Mutations with TQ/MSW:
+        - [ ] Task Library CRUD.
+        - [ ] Rewards CRUD.
+        - [ ] Announcements CRUD.
+        - [ ] Instruments CRUD.
+        - [ ] Assigned Task mutations (Mark Complete, Verify, Delete Assignment).
+        - [ ] Ticket/Reward mutations (Manual Adjust, Redeem).
+    - [ ] Implement Remaining Mock UI for User Interactions:
+        - [ ] Admin Action: Manual Ticket Adjustments (needs modal/input, connect to TQ mutation).
+        - [ ] Admin Action: Redeeming Rewards (needs modal/selection, connect to TQ mutation).
+        - [ ] Teacher Action: View All Students (mock) (needs list/modal, connect to TQ query).
+        - [ ] Parent Action: Link Another Student (needs mock QR flow/confirmation).
 
-### [ ] 2. Backend Development and Integration
+### [ ] 2. Backend Development and Integration (Target: Supabase)
 
-- [ ] Choose and set up backend technology (e.g., Node.js, Express, Prisma/TypeORM, PostgreSQL/MongoDB).
-- [ ] Design and implement the database schema based on Data Models (Sec 6 in SPECIFICATION.md). Include `status` on Users table. Ensure `AssignedTask` stores snapshot data.
-- [ ] Develop backend APIs for all functional areas:
-    - [ ] User Auth (Teacher/Admin Login, QR Code generation/validation/consumption for Student/Parent).
-    - [ ] User CRUD & Linking (incl. Deactivate/Reactivate endpoints setting `status`, separate Permanent Delete endpoint).
-    - [ ] Implement Cascading Logic on Backend (Sec 8 in SPECIFICATION.md) for deactivation/deletion (unlinking, parent deletion if orphaned on *deactivate*).
-    - [ ] Task Library CRUD.
-    - [ ] Task Assignment (accepting snapshot details).
-    - [ ] Task Completion & Verification flow.
-    - [ ] Rewards Catalog CRUD.
-    - [ ] Ticket Management (Awards, Redemptions, Manual Adjustments, History).
-    - [ ] Announcements CRUD.
-    - [ ] Instrument CRUD & Student Assignment.
-    - [ ] **API Pagination/Filtering/Search:** Implement server-side pagination, filtering (by status etc.), and searching (by name etc.) for relevant endpoints (Users, Assigned Tasks, History).
-- [ ] Integrate Frontend with Backend:
-    - [ ] Replace mock data context (`useData`) simulation functions with actual API calls.
-    - [ ] Update custom pagination hooks (`usePaginated*`) to fetch data from API endpoints, handle loading/error states.
-    - [ ] Implement real authentication flow using backend endpoints.
-    - [ ] Use a server state management library (e.g., React Query/TanStack Query) to handle caching, refetching, mutations.
+- [ ] Set up Supabase project.
+- [ ] Define database schema in Supabase based on Data Models (Sec 6 in SPECIFICATION.md).
+- [ ] Develop Supabase Edge Functions for complex business logic (Task Verification, Reward Redemption, Manual Adjustments, Cascading Deletes/Deactivations from Sec 8).
+- [ ] Integrate Frontend with Supabase:
+    - [ ] Install and configure `supabase-js` client.
+    - [ ] Replace `msw` handlers/API client functions with `supabase-js` calls (`supabase.from(...)`, `supabase.functions.invoke(...)`) within the TQ `queryFn`/`mutationFn`.
+    - [ ] Implement real authentication flow (QR Code, Teacher/Admin login) using Supabase Auth.
+    - [ ] Update pagination hooks to pass Supabase query parameters (range, filters).
+    - [ ] Ensure TQ `queryKeys` and `invalidateQueries` calls align with Supabase data structure.
+- [ ] Potentially remove `DataContext` entirely if all state is managed by TQ or component state.
 
 ### [ ] 3. Implementing Core Feature Logic
 
-- [ ] Connect UI actions to backend API calls via mutations (using server state library).
-- [ ] Implement real-time updates (optional V1 enhancement - e.g., WebSockets).
-- [ ] Implement push notifications (optional V1 enhancement).
+- [ ] Connect remaining UI actions to Supabase backend via TQ mutations.
+- [ ] Implement real-time updates (optional - using Supabase Realtime).
+- [ ] Implement push notifications (optional - using external service + Supabase Edge Functions).
 
 ### [ ] 4. Supporting Features & Refinements
 
 - [ ] Implement secure QR code generation and scanning logic (using appropriate libraries).
-- [ ] Implement QR code revocation/expiry on backend.
-- [ ] Implement robust frontend error handling (displaying API errors) and loading states.
+- [ ] Implement QR code revocation/expiry on backend (possibly via Edge Functions or database logic).
+- [ ] Refine frontend error handling (displaying API errors gracefully).
 - [ ] Refine UI/UX based on testing with real data flows.
-- [ ] Add unit and integration tests.
+- [ ] Add unit and integration tests (using tools like Jest, React Native Testing Library, potentially mocking with `msw`).
 
 ## [ ] Android Release Steps
 

@@ -3,11 +3,9 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Button, FlatList, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Contexts
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 
-// Components
 import { AdminDashboardSection } from '../components/admin/AdminDashboardSection';
 import { AdminUsersSection } from '../components/admin/AdminUsersSection';
 import { AdminTasksSection } from '../components/admin/AdminTasksSection';
@@ -20,29 +18,23 @@ import AssignTaskModal from '../components/common/AssignTaskModal';
 import CreateUserModal from '../components/admin/modals/CreateUserModal';
 import ViewAllAssignedTasksModal from '../components/admin/modals/ViewAllAssignedTasksModal';
 
-// Hooks
 import { usePaginatedStudents } from '../hooks/usePaginatedStudents';
 import { usePaginatedTeachers } from '../hooks/usePaginatedTeachers';
 import { usePaginatedParents } from '../hooks/usePaginatedParents';
 
-// Types
-import { User, UserRole, UserStatus } from '../types/userTypes';
+import { User, UserRole } from '../types/userTypes';
 import { AssignedTask } from '../mocks/mockAssignedTasks';
-import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
 import { SimplifiedStudent } from '../types/dataTypes';
 
-// Utils & Styles
 import { getUserDisplayName } from '../utils/helpers';
 import { adminSharedStyles } from '../components/admin/adminSharedStyles';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 
-// --- Type Definitions ---
 type AdminSection = | 'dashboard' | 'dashboard-pending-verification' | 'users' | 'tasks' | 'rewards' | 'history' | 'announcements' | 'instruments';
 type UserTab = 'students' | 'teachers' | 'parents';
 interface AdminViewProps { onInitiateVerificationModal?: (task: AssignedTask) => void; }
 
-// --- STYLES ---
 const adminPendingListStyles = StyleSheet.create({
     pendingItem: { backgroundColor: colors.backgroundPrimary, padding: 12, marginBottom: 10, borderRadius: 8, borderWidth: 1, borderColor: colors.borderWarning, },
     pendingTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 5, color: colors.textPrimary },
@@ -54,7 +46,6 @@ const styles = StyleSheet.create({
     headerSideContainer: { minWidth: 60, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', },
     headerTitle: { flex: 1, fontSize: 22, fontWeight: 'bold', color: colors.textPrimary, textAlign: 'center', marginHorizontal: 5, },
 });
-// --- END STYLES ---
 
 
 export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModal }) => {
@@ -62,13 +53,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const {
     currentMockUsers, assignedTasks, ticketBalances, taskLibrary, rewardsCatalog, ticketHistory,
     announcements, mockInstruments, simulateManualTicketAdjustment, simulateRedeemReward, simulateAssignTask,
-    simulateCreateUser, simulateEditUser, simulateDeleteUser, simulateToggleUserStatus, simulateCreateTaskLibraryItem,
+    // simulateCreateUser, // Can remove if no longer used elsewhere
+    simulateEditUser, simulateDeleteUser, simulateToggleUserStatus, simulateCreateTaskLibraryItem,
     simulateEditTaskLibraryItem, simulateDeleteTaskLibraryItem, simulateCreateReward, simulateEditReward, simulateDeleteReward,
     simulateCreateAnnouncement, simulateEditAnnouncement, simulateDeleteAnnouncement, simulateCreateInstrument,
     simulateEditInstrument, simulateDeleteInstrument, getMockStudentData, simulateDeleteAssignedTask,
   } = useData();
 
-  // State definitions
   const [viewingSection, setViewingSection] = useState<AdminSection>('dashboard');
   const [viewingStudentId, setViewingStudentId] = useState<string | null>(null);
   const [activeUserTab, setActiveUserTab] = useState<UserTab>('students');
@@ -77,12 +68,22 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const [assignTaskTargetStudentId, setAssignTaskTargetStudentId] = useState<string | null>(null);
   const [isViewAllAssignedTasksModalVisible, setIsViewAllAssignedTasksModalVisible] = useState(false);
 
-  // Hooks usage
-  const { students, currentPage: studentPage, totalPages: studentTotalPages, setPage: setStudentPage, currentFilter: studentFilter, setFilter: setStudentFilter, } = usePaginatedStudents();
-  const { teachers, currentPage: teacherPage, totalPages: teacherTotalPages, setPage: setTeacherPage, } = usePaginatedTeachers();
-  const { parents, currentPage: parentPage, totalPages: parentTotalPages, setPage: setParentPage, } = usePaginatedParents();
+  const {
+    students, currentPage: studentPage, totalPages: studentTotalPages, totalItems: studentTotalItems, setPage: setStudentPage,
+    currentFilter: studentFilter, setFilter: setStudentFilter, searchTerm: studentSearchTerm, setSearchTerm: setStudentSearchTerm,
+    isLoading: isStudentListLoading, isFetching: isStudentListFetching, isError: isStudentListError, error: studentListError,
+ } = usePaginatedStudents();
 
-  // Memos
+  const {
+    teachers, currentPage: teacherPage, totalPages: teacherTotalPages, totalItems: teacherTotalItems, setPage: setTeacherPage,
+    isLoading: isTeacherListLoading, isFetching: isTeacherListFetching, isError: isTeacherListError, error: teacherListError,
+  } = usePaginatedTeachers();
+
+  const {
+    parents, currentPage: parentPage, totalPages: parentTotalPages, totalItems: parentTotalItems, setPage: setParentPage,
+    isLoading: isParentListLoading, isFetching: isParentListFetching, isError: isParentListError, error: parentListError,
+  } = usePaginatedParents();
+
   const adminUser = currentUserId ? currentMockUsers[currentUserId] : null;
   const allUsers = useMemo(() => Object.values(currentMockUsers), [currentMockUsers]);
   const allTeachersForModal = useMemo(() => allUsers.filter(u => u.role === 'teacher'), [allUsers]);
@@ -93,7 +94,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const dashboardTeachers = useMemo( () => allUsers .filter(u => u.role === 'teacher') .map(t => ({ id: t.id, name: getUserDisplayName(t), role: t.role })), [allUsers] );
   const dashboardParents = useMemo( () => allUsers .filter(u => u.role === 'parent') .map(p => ({ id: p.id, name: getUserDisplayName(p), role: p.role })), [allUsers] );
 
-  // Handlers
+  // Remove handleCreateUser if no longer needed
+  // const handleCreateUser = (newUserData: Omit<User, 'id'>) => {
+  //     simulateCreateUser(newUserData); // No longer needed here
+  //     setIsCreateUserModalVisible(false);
+  // };
+
   const handleViewManageUser = (userId: string, role: UserRole) => {
       if (role === 'student') {
           setViewingStudentId(userId);
@@ -114,10 +120,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           alert(`Mock Verify: ${task.taskTitle} for ${getUserDisplayName(currentMockUsers[task.studentId])}`);
       }
   };
-  const handleCreateUser = (newUserData: Omit<User, 'id'>) => {
-      simulateCreateUser(newUserData);
-      setIsCreateUserModalVisible(false);
-  };
+
   const handleInitiateAssignTaskForStudent = (studentId: string) => {
       console.log(`[AdminView] Initiating assign task flow for student: ${studentId}`);
       setAssignTaskTargetStudentId(studentId);
@@ -142,7 +145,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
       setIsViewAllAssignedTasksModalVisible(false);
   };
 
-  // --- Render Logic ---
+
   if (!adminUser) {
       return ( <SafeAreaView style={appSharedStyles.safeArea}><Text>Loading Admin Data...</Text></SafeAreaView> );
   }
@@ -158,7 +161,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
               onManualTicketAdjust={simulateManualTicketAdjustment}
               onRedeemReward={simulateRedeemReward}
               onAssignTask={() => handleInitiateAssignTaskForStudent(viewingStudentId)}
-              onEditUser={simulateEditUser}
+              onEditUser={simulateEditUser} // Keep simulate functions for detail view for now
               onToggleUserStatus={simulateToggleUserStatus}
               onPermanentDeleteUser={simulateDeleteUser}
               onBack={handleBackFromStudentDetail}
@@ -172,7 +175,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      {/* Header */}
       <View style={styles.headerContainer}>
           <View style={styles.headerSideContainer}>
               {showBackButton && (
@@ -193,9 +195,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
       </View>
 
       <ScrollView style={appSharedStyles.container}>
-        {/* Main Nav */}
         {viewingSection !== 'dashboard-pending-verification' && (
-          <View style={adminSharedStyles.adminNav}>
+           <View style={adminSharedStyles.adminNav}>
               <Button title="Dashboard" onPress={() => setViewingSection('dashboard')} color={viewingSection === 'dashboard' ? colors.primary : colors.secondary}/>
               <Button title="Users" onPress={() => setViewingSection('users')} color={viewingSection === 'users' ? colors.primary : colors.secondary}/>
               <Button title="Tasks" onPress={() => setViewingSection('tasks')} color={viewingSection === 'tasks' ? colors.primary : colors.secondary}/>
@@ -206,7 +207,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           </View>
         )}
 
-        {/* Section Rendering */}
         {viewingSection === 'dashboard' && (
             <AdminDashboardSection
                 allStudents={dashboardStudents}
@@ -217,37 +217,37 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             />
         )}
         {viewingSection === 'dashboard-pending-verification' && (
-          <View>
-            <Text style={appSharedStyles.sectionTitle}> Pending Verifications ({pendingVerifications.length}) </Text>
-             {pendingVerifications.length > 0 ? (
-                <FlatList
-                    data={pendingVerifications.sort( (a, b) => new Date(a.completedDate || a.assignedDate).getTime() - new Date(b.completedDate || b.assignedDate).getTime() )}
-                    keyExtractor={item => item.id}
-                    renderItem={({ item }) => {
-                        const student = currentMockUsers[item.studentId];
-                        const taskTitle = item.taskTitle;
-                        const baseTickets = item.taskBasePoints;
-                        const completedDateTime = item.completedDate ? new Date(item.completedDate).toLocaleString() : 'N/A';
-                        return (
-                            <View style={adminPendingListStyles.pendingItem}>
-                                <Text style={adminPendingListStyles.pendingTitle}>Task: {taskTitle}</Text>
-                                <Text style={adminPendingListStyles.pendingDetail}>Student: {student ? getUserDisplayName(student) : 'Unknown Student'}</Text>
-                                <Text style={adminPendingListStyles.pendingDetail}>Potential Tickets: {baseTickets}</Text>
-                                <Text style={adminPendingListStyles.pendingDetail}>Completed: {completedDateTime}</Text>
-                                <View style={{ marginTop: 10 }}>
-                                    <Button title="Verify Task" onPress={() => handleInternalInitiateVerificationModal(item)} />
+             <View>
+                <Text style={appSharedStyles.sectionTitle}> Pending Verifications ({pendingVerifications.length}) </Text>
+                {pendingVerifications.length > 0 ? (
+                    <FlatList
+                        data={pendingVerifications.sort( (a, b) => new Date(a.completedDate || a.assignedDate).getTime() - new Date(b.completedDate || b.assignedDate).getTime() )}
+                        keyExtractor={item => item.id}
+                        renderItem={({ item }) => {
+                            const student = currentMockUsers[item.studentId];
+                            const taskTitle = item.taskTitle;
+                            const baseTickets = item.taskBasePoints;
+                            const completedDateTime = item.completedDate ? new Date(item.completedDate).toLocaleString() : 'N/A';
+                            return (
+                                <View style={adminPendingListStyles.pendingItem}>
+                                    <Text style={adminPendingListStyles.pendingTitle}>Task: {taskTitle}</Text>
+                                    <Text style={adminPendingListStyles.pendingDetail}>Student: {student ? getUserDisplayName(student) : 'Unknown Student'}</Text>
+                                    <Text style={adminPendingListStyles.pendingDetail}>Potential Tickets: {baseTickets}</Text>
+                                    <Text style={adminPendingListStyles.pendingDetail}>Completed: {completedDateTime}</Text>
+                                    <View style={{ marginTop: 10 }}>
+                                        <Button title="Verify Task" onPress={() => handleInternalInitiateVerificationModal(item)} />
+                                    </View>
                                 </View>
-                            </View>
-                        );
-                    }}
-                    scrollEnabled={false}
-                    ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-                    ListEmptyComponent={() => ( <Text style={appSharedStyles.emptyListText}>No tasks pending verification.</Text> )}
-                />
-             ) : (
-                <Text style={appSharedStyles.emptyListText}>No tasks pending verification.</Text>
-             )}
-          </View>
+                            );
+                        }}
+                        scrollEnabled={false}
+                        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+                        ListEmptyComponent={() => ( <Text style={appSharedStyles.emptyListText}>No tasks pending verification.</Text> )}
+                    />
+                ) : (
+                    <Text style={appSharedStyles.emptyListText}>No tasks pending verification.</Text>
+                )}
+            </View>
         )}
         {viewingSection === 'users' && (
             <AdminUsersSection
@@ -259,6 +259,26 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
                 setActiveTab={setActiveUserTab}
                 studentFilter={studentFilter}
                 setStudentFilter={setStudentFilter}
+                studentSearchTerm={studentSearchTerm}
+                setStudentSearchTerm={setStudentSearchTerm}
+                isLoading={
+                    activeUserTab === 'students' ? (isStudentListLoading || isStudentListFetching) :
+                    activeUserTab === 'teachers' ? (isTeacherListLoading || isTeacherListFetching) :
+                    activeUserTab === 'parents' ? (isParentListLoading || isParentListFetching) :
+                    false
+                }
+                isError={
+                    activeUserTab === 'students' ? isStudentListError :
+                    activeUserTab === 'teachers' ? isTeacherListError :
+                    activeUserTab === 'parents' ? isParentListError :
+                    false
+                }
+                error={
+                    activeUserTab === 'students' ? studentListError :
+                    activeUserTab === 'teachers' ? teacherListError :
+                    activeUserTab === 'parents' ? parentListError :
+                    null
+                }
                 mockInstruments={mockInstruments}
                 onViewManageUser={handleViewManageUser}
                 onInitiateAssignTaskForStudent={handleInitiateAssignTaskForStudent}
@@ -302,11 +322,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         )}
       </ScrollView>
 
-      {/* --- Render Modals --- */}
       <CreateUserModal
           visible={isCreateUserModalVisible}
           onClose={() => setIsCreateUserModalVisible(false)}
-          onCreateUser={handleCreateUser}
+          // Remove onCreateUser prop below
+          // onCreateUser={handleCreateUser}
           allTeachers={allTeachersForModal}
           mockInstruments={mockInstruments}
       />
@@ -326,7 +346,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           onDeleteAssignment={simulateDeleteAssignedTask}
       />
 
-       {/* Button to open View All Tasks Modal */}
        {viewingSection === 'tasks' && (
            <View style={{ alignItems: 'flex-start', paddingHorizontal: 15, paddingBottom: 20 }}>
                <Button title="View All Assigned Tasks" onPress={handleViewAllAssignedTasks} />

@@ -1,51 +1,83 @@
+// src/components/common/EditUserModal.tsx
+
 import React, { useState, useEffect } from 'react';
 import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  Button,
-  TextInput,
-  Platform,
-  ScrollView,
+  Modal, View, Text, StyleSheet, Button, TextInput, ScrollView, ActivityIndicator, Alert // Added ActivityIndicator, Alert
 } from 'react-native';
+import { useMutation, useQueryClient } from '@tanstack/react-query'; // Added TQ imports
+
+// Types & API
 import { User } from '../../types/userTypes';
 import { Instrument } from '../../mocks/mockInstruments';
+import { updateUser } from '../../api/students'; // Import the update API function
+
+// Utils & Styles
 import { colors } from '../../styles/colors';
 import { appSharedStyles } from '../../styles/appSharedStyles';
-import { getUserDisplayName, getInstrumentNames } from '../../utils/helpers';
+import { getUserDisplayName } from '../../utils/helpers'; // Removed getInstrumentNames (not used here)
 
 interface EditUserModalProps {
   visible: boolean;
   userToEdit: User | null;
   onClose: () => void;
-  onEditUser: (userId: string, updatedData: Partial<Omit<User, 'id'>>) => void;
-
-  mockInstruments: Instrument[];
-  allTeachers: User[];
+  // Removed: onEditUser: (userId: string, updatedData: Partial<Omit<User, 'id'>>) => void;
+  mockInstruments: Instrument[]; // Still needed for display
+  allTeachers: User[]; // Still needed for display
 }
 
 const EditUserModal: React.FC<EditUserModalProps> = ({
   visible,
   userToEdit,
   onClose,
-  onEditUser,
+  // onEditUser, // Removed
   mockInstruments,
   allTeachers,
 }) => {
+  // Form state
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [nickname, setNickname] = useState('');
-  const [originalHadNickname, setOriginalHadNickname] = useState(false);
   const [instrumentIds, setInstrumentIds] = useState<string[]>([]);
   const [linkedTeacherIds, setLinkedTeacherIds] = useState<string[]>([]);
 
+  // Get QueryClient instance
+  const queryClient = useQueryClient();
+
+  // Setup the mutation for updating the user
+  const mutation = useMutation({
+    mutationFn: updateUser, // The API function: expects { userId, updates }
+    onSuccess: (updatedUser) => { // 'updatedUser' is returned by the API
+      console.log('User updated successfully via mutation:', updatedUser);
+
+      // --- Invalidate Queries ---
+      // 1. Invalidate the specific user query if you have one (good practice)
+      queryClient.invalidateQueries({ queryKey: ['user', updatedUser.id] }); // Example key
+
+      // 2. Invalidate the list query the user belongs to
+      if (updatedUser.role === 'student') {
+        queryClient.invalidateQueries({ queryKey: ['students'] });
+      } else if (updatedUser.role === 'teacher') {
+        queryClient.invalidateQueries({ queryKey: ['teachers'] });
+      }
+      // Could also invalidate a general 'users' query
+
+      Alert.alert('Success', `User "${getUserDisplayName(updatedUser)}" updated successfully!`);
+      onClose(); // Close the modal on success
+    },
+    onError: (error) => {
+      console.error('Error updating user via mutation:', error);
+      Alert.alert('Error', `Failed to update user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // Keep modal open on error
+    },
+  });
+
+
+  // Effect to populate form when userToEdit changes or modal opens
   useEffect(() => {
     if (visible && userToEdit && userToEdit.role !== 'parent') {
       setFirstName(userToEdit.firstName);
       setLastName(userToEdit.lastName);
       setNickname(userToEdit.nickname || '');
-      setOriginalHadNickname(!!userToEdit.nickname);
       if (userToEdit.role === 'student') {
         setInstrumentIds(userToEdit.instrumentIds || []);
         setLinkedTeacherIds(userToEdit.linkedTeacherIds || []);
@@ -53,62 +85,74 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
         setInstrumentIds([]);
         setLinkedTeacherIds([]);
       }
-    } else if (!visible) {
-      setFirstName('');
-      setLastName('');
-      setNickname('');
-      setOriginalHadNickname(false);
-      setInstrumentIds([]);
-      setLinkedTeacherIds([]);
+      mutation.reset(); // Reset mutation state when modal opens/user changes
     }
-  }, [visible, userToEdit]);
+     // Reset fields when modal closes (optional, but good practice)
+    // else if (!visible) {
+    //   setFirstName('');
+    //   setLastName('');
+    //   setNickname('');
+    //   setInstrumentIds([]);
+    //   setLinkedTeacherIds([]);
+    // }
+  }, [visible, userToEdit]); // Removed mutation from deps array
 
   const handleSaveChanges = () => {
-    if (!userToEdit) {
-      alert('Error: No user data to save.');
+    if (!userToEdit || userToEdit.role === 'parent') {
+      Alert.alert('Error', 'Cannot edit this user.');
       return;
     }
-    if (userToEdit.role === 'parent') {
-      alert('Error - Cannot edit parent users.');
-      return;
-    }
-    if (!firstName || !lastName) {
-      alert('Error - First Name and Last Name cannot be empty.');
+    if (!firstName.trim() || !lastName.trim()) {
+      Alert.alert('Error', 'First Name and Last Name cannot be empty.');
       return;
     }
 
-    const updatedUserData: Partial<Omit<User, 'id'>> = {
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      nickname: nickname.trim() ? nickname.trim() : undefined,
-    };
+    // Construct the updates object - only include changed fields
+    const updates: Partial<Omit<User, 'id' | 'role' | 'status'>> = {};
+    if (firstName.trim() !== userToEdit.firstName) updates.firstName = firstName.trim();
+    if (lastName.trim() !== userToEdit.lastName) updates.lastName = lastName.trim();
+
+    // Handle nickname update/removal carefully
+    const trimmedNickname = nickname.trim();
+    if (trimmedNickname !== (userToEdit.nickname || '')) {
+        updates.nickname = trimmedNickname ? trimmedNickname : undefined; // Send empty string or undefined to clear
+    }
+
 
     if (userToEdit.role === 'student') {
-      updatedUserData.instrumentIds = instrumentIds;
-      updatedUserData.linkedTeacherIds = linkedTeacherIds;
+      // Basic comparison, more robust needed for array order independence if required
+      if (JSON.stringify(instrumentIds.sort()) !== JSON.stringify((userToEdit.instrumentIds || []).sort())) {
+        updates.instrumentIds = instrumentIds;
+      }
+      if (JSON.stringify(linkedTeacherIds.sort()) !== JSON.stringify((userToEdit.linkedTeacherIds || []).sort())) {
+        updates.linkedTeacherIds = linkedTeacherIds;
+      }
     }
 
-    onEditUser(userToEdit.id, updatedUserData);
+    // Only mutate if there are actual changes
+    if (Object.keys(updates).length === 0) {
+        Alert.alert('No Changes', 'No changes were detected.');
+        onClose(); // Close if no changes
+        return;
+    }
+
+    // Trigger the mutation with userId and the updates object
+    mutation.mutate({ userId: userToEdit.id, updates });
   };
 
-  const handleAddInstrument = () => {
-    alert('Mock Add Instrument');
-  };
-  const handleRemoveInstrument = (idToRemove: string) => {
-    setInstrumentIds(prev => prev.filter(id => id !== idToRemove));
-  };
-  const handleAddTeacher = () => {
-    alert('Mock Link Teacher');
-  };
-  const handleRemoveTeacher = (idToRemove: string) => {
-    setLinkedTeacherIds(prev => prev.filter(id => id !== idToRemove));
-  };
+  // Mock handlers for linking (keep as is for now)
+  const handleAddInstrument = () => { Alert.alert('Mock Add Instrument'); };
+  const handleRemoveInstrument = (idToRemove: string) => { setInstrumentIds(prev => prev.filter(id => id !== idToRemove)); };
+  const handleAddTeacher = () => { Alert.alert('Mock Link Teacher'); };
+  const handleRemoveTeacher = (idToRemove: string) => { setLinkedTeacherIds(prev => prev.filter(id => id !== idToRemove)); };
 
+  // Don't render if not visible or user is invalid/parent
   if (!visible || !userToEdit || userToEdit.role === 'parent') {
     return null;
   }
 
   const currentUserDisplayName = getUserDisplayName(userToEdit);
+
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
       <View style={modalStyles.centeredView}>
@@ -119,7 +163,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
           </Text>
 
           <ScrollView style={modalStyles.scrollView}>
-            {}
             <Text style={modalStyles.label}>First Name:</Text>
             <TextInput
               style={modalStyles.input}
@@ -127,6 +170,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
               onChangeText={setFirstName}
               placeholder="Enter First Name"
               placeholderTextColor={colors.textLight}
+              editable={!mutation.isPending} // Disable while mutating
             />
             <Text style={modalStyles.label}>Last Name:</Text>
             <TextInput
@@ -135,24 +179,21 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
               onChangeText={setLastName}
               placeholder="Enter Last Name"
               placeholderTextColor={colors.textLight}
+              editable={!mutation.isPending}
             />
-            {originalHadNickname && (
-              <>
-                {' '}
-                <Text style={modalStyles.label}>Nickname:</Text>{' '}
-                <TextInput
-                  style={modalStyles.input}
-                  value={nickname}
-                  onChangeText={setNickname}
-                  placeholderTextColor={colors.textLight}
-                />{' '}
-              </>
-            )}
 
-            {}
+            <Text style={modalStyles.label}>Nickname:</Text>
+            <TextInput
+              style={modalStyles.input}
+              value={nickname}
+              onChangeText={setNickname}
+              placeholder="Optional Nickname"
+              placeholderTextColor={colors.textLight}
+              editable={!mutation.isPending}
+            />
+
             {userToEdit.role === 'student' && (
               <>
-                {}
                 <View style={modalStyles.roleSpecificSection}>
                   <Text style={modalStyles.roleSectionTitle}>Instruments</Text>
                   {instrumentIds.length > 0 ? (
@@ -165,16 +206,16 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
                           title="Remove (Mock)"
                           onPress={() => handleRemoveInstrument(id)}
                           color={colors.danger}
+                          disabled={mutation.isPending}
                         />
                       </View>
                     ))
                   ) : (
                     <Text style={appSharedStyles.emptyListText}>No instruments linked.</Text>
                   )}
-                  <Button title="Add Instrument (Mock)" onPress={handleAddInstrument} />
+                  <Button title="Add Instrument (Mock)" onPress={handleAddInstrument} disabled={mutation.isPending} />
                 </View>
 
-                {}
                 <View style={modalStyles.roleSpecificSection}>
                   <Text style={modalStyles.roleSectionTitle}>Linked Teachers</Text>
                   {linkedTeacherIds.length > 0 ? (
@@ -189,6 +230,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
                             title="Remove (Mock)"
                             onPress={() => handleRemoveTeacher(id)}
                             color={colors.danger}
+                            disabled={mutation.isPending}
                           />
                         </View>
                       );
@@ -196,19 +238,30 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
                   ) : (
                     <Text style={appSharedStyles.emptyListText}>No teachers linked.</Text>
                   )}
-                  <Button title="Link Teacher (Mock)" onPress={handleAddTeacher} />
+                  <Button title="Link Teacher (Mock)" onPress={handleAddTeacher} disabled={mutation.isPending} />
                 </View>
               </>
             )}
-            {}
           </ScrollView>
 
-          {}
+          {mutation.isPending && (
+             <View style={modalStyles.loadingContainer}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={modalStyles.loadingText}>Saving Changes...</Text>
+            </View>
+          )}
+
+          {mutation.isError && (
+            <Text style={modalStyles.errorText}>
+                Error: {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
+            </Text>
+          )}
+
           <View style={modalStyles.buttonContainer}>
-            <Button title="Save Changes" onPress={handleSaveChanges} />
+            <Button title="Save Changes" onPress={handleSaveChanges} disabled={mutation.isPending} />
           </View>
           <View style={modalStyles.footerButton}>
-            <Button title="Cancel" onPress={onClose} color={colors.secondary} />
+            <Button title="Cancel" onPress={onClose} color={colors.secondary} disabled={mutation.isPending}/>
           </View>
         </View>
       </View>
@@ -216,6 +269,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   );
 };
 
+// --- Styles ---
 const modalStyles = StyleSheet.create({
   centeredView: {
     flex: 1,
@@ -276,7 +330,6 @@ const modalStyles = StyleSheet.create({
     backgroundColor: colors.backgroundPrimary,
     marginBottom: 5,
   },
-
   roleSpecificSection: {
     marginTop: 15,
     paddingTop: 15,
@@ -308,8 +361,35 @@ const modalStyles = StyleSheet.create({
     fontSize: 15,
     color: colors.textPrimary,
   },
-  buttonContainer: { flexDirection: 'column', width: '100%', marginTop: 10, gap: 10 },
-  footerButton: { width: '100%', marginTop: 10 },
+   loadingContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 10,
+      marginBottom: 5,
+  },
+  loadingText: {
+      marginLeft: 10,
+      fontSize: 14,
+      color: colors.textSecondary,
+  },
+   errorText: {
+      color: colors.danger,
+      textAlign: 'center',
+      marginTop: 10,
+      marginBottom: 5,
+      fontSize: 14,
+  },
+  buttonContainer: {
+      flexDirection: 'column',
+      width: '100%',
+      marginTop: 10,
+      gap: 10
+   },
+  footerButton: {
+      width: '100%',
+      marginTop: 10
+   },
 });
 
 export default EditUserModal;
