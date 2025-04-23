@@ -14,18 +14,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Import context and hooks
 import { fetchAssignedTasks, createAssignedTask, deleteAssignedTask } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
 import { fetchTaskLibrary } from '../api/taskLibrary';
 import { fetchStudentBalance } from '../api/tickets';
 import { fetchStudents } from '../api/users';
-import { adminSharedStyles } from '../components/admin/adminSharedStyles'; // Styles can be reused
+import { adminSharedStyles } from '../components/admin/adminSharedStyles';
 import PaginationControls from '../components/admin/PaginationControls';
 import AssignTaskModal from '../components/common/AssignTaskModal';
 import { useAuth } from '../contexts/AuthContext';
-
-// Import types
 import { usePaginatedStudentHistory } from '../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../hooks/usePaginatedStudentTasks';
 import { AssignedTask } from '../mocks/mockAssignedTasks';
@@ -34,17 +31,11 @@ import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
 import { TicketTransaction } from '../mocks/mockTickets';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
+import { TeacherViewProps } from '../types/componentProps';
 import { SimplifiedStudent } from '../types/dataTypes';
 import { User } from '../types/userTypes';
-
-// Import common components (if needed)
-
-// Import utils and styles
 import { getUserDisplayName, getInstrumentNames } from '../utils/helpers';
-import { TeacherViewProps } from '../types/componentProps';
 
-// Reusable Components defined locally or imported from common/admin
-// Component to display a pending verification item
 export const PendingVerificationItem = ({
   task,
   studentName,
@@ -67,7 +58,6 @@ export const PendingVerificationItem = ({
   </View>
 );
 
-// Component to display a student list item
 export const StudentListItem = ({
   student,
   mockInstruments,
@@ -102,7 +92,6 @@ export const StudentListItem = ({
   </View>
 );
 
-// Component to display a task library item
 export const TaskLibraryItemTeacher = ({ item }: { item: TaskLibraryItem }) => (
   <View style={appSharedStyles.itemContainer}>
     <Text style={appSharedStyles.itemTitle}>{item.title}</Text>
@@ -113,7 +102,6 @@ export const TaskLibraryItemTeacher = ({ item }: { item: TaskLibraryItem }) => (
   </View>
 );
 
-// Reusable TicketHistoryItem Component
 const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
   <View style={historyStyles.historyItemContainer}>
     <Text style={historyStyles.historyItemTimestamp}>
@@ -143,19 +131,16 @@ const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
   </View>
 );
 
-// The main TeacherView component
 export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId } = useAuth();
   const queryClient = useQueryClient();
 
-  // --- State ---
-  type TeacherSection = 'dashboard' | 'students' | 'tasks' | 'studentProfile'; // Keep type local
+  type TeacherSection = 'dashboard' | 'students' | 'tasks' | 'studentProfile';
   const [viewingSection, setViewingSection] = useState<TeacherSection>('dashboard');
   const [viewingStudentId, setViewingStudentId] = useState<string | null>(null);
   const [isAssignTaskModalVisible, setIsAssignTaskModalVisible] = useState(false);
   const [assignTaskTargetStudentId, setAssignTaskTargetStudentId] = useState<string | null>(null);
 
-  // --- TQ Queries ---
   const { data: teacherUser, isLoading: teacherLoading } = useQuery<User, Error>({
     queryKey: ['user', currentUserId],
     queryFn: async () => {
@@ -224,7 +209,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     staleTime: 1 * 60 * 1000,
   });
 
-  // --- Custom Hooks for Paginated Data (Student Profile) ---
   const {
     tasks: paginatedTasks,
     currentPage: tasksCurrentPage,
@@ -242,7 +226,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     totalItems: totalHistoryCount,
   } = usePaginatedStudentHistory(viewingStudentId);
 
-  // --- TQ Mutations ---
   const assignTaskMutation = useMutation({
     mutationFn: createAssignedTask,
     onSuccess: createdAssignment => {
@@ -285,22 +268,18 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     },
   });
 
-  // --- Derived Data ---
-  // ** TODO: Fix filtering logic **
   const studentsLinkedToTeacher = useMemo(() => {
     if (!teacherUser || !allStudentsSimple) return [];
     console.warn('[TeacherView] Filtering students based on placeholder logic. Needs fixing.');
     return allStudentsSimple;
   }, [teacherUser, allStudentsSimple]);
 
-  // ** TODO: Fix filtering logic **
   const pendingVerifications = useMemo(() => {
     if (!teacherUser) return [];
     console.warn('[TeacherView] Filtering pending tasks based on placeholder logic. Needs fixing.');
     return assignedTasks.filter(task => task.isComplete && task.verificationStatus === 'pending');
   }, [assignedTasks, teacherUser]);
 
-  // --- Event Handlers ---
   const handleViewProfile = (studentId: string) => {
     setViewingStudentId(studentId);
     setViewingSection('studentProfile');
@@ -332,7 +311,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     ]);
   };
 
-  // --- Loading / Error Handling ---
   const isLoadingInitialData =
     teacherLoading ||
     studentsLoading ||
@@ -359,7 +337,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     );
   }
 
-  // --- Render Student Profile ---
   if (viewingSection === 'studentProfile' && viewingStudentId) {
     const isLoadingProfile =
       viewingStudentUserLoading ||
@@ -529,7 +506,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     );
   }
 
-  // --- Render Main Teacher View ---
   const teacherDisplayName = getUserDisplayName(teacherUser);
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
@@ -666,7 +642,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   );
 };
 
-// Styles for TeacherView
 const styles = StyleSheet.create({
   teacherNav: {
     flexDirection: 'row',
@@ -685,7 +660,6 @@ const styles = StyleSheet.create({
   inactiveItemStyle: { borderColor: colors.secondary, opacity: 0.7 },
 });
 
-// Styles for TicketHistoryItem (copied from previous correction)
 const historyStyles = StyleSheet.create({
   historyItemContainer: {
     backgroundColor: colors.backgroundGrey,

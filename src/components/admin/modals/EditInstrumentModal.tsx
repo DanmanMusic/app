@@ -17,8 +17,8 @@ import {
 import { updateInstrument } from '../../../api/instruments';
 import { Instrument } from '../../../mocks/mockInstruments';
 import { colors } from '../../../styles/colors';
-import { getInstrumentIconSource } from '../../../utils/helpers';
 import { EditInstrumentModalProps } from '../../../types/componentProps';
+import { getInstrumentIconSource } from '../../../utils/helpers';
 
 const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
   visible,

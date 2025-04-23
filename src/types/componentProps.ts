@@ -1,4 +1,3 @@
-// src/types/componentProps.ts
 import { Announcement } from '../mocks/mockAnnouncements';
 import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
 import { Instrument } from '../mocks/mockInstruments';
@@ -7,8 +6,6 @@ import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
 
 import { SimplifiedStudent } from './dataTypes';
 import { User, UserRole, UserStatus } from './userTypes';
-
-// --- View Props ---
 
 export interface AdminViewProps {
   onInitiateVerificationModal?: (task: AssignedTask) => void;
@@ -22,33 +19,26 @@ export interface StudentViewProps {
   studentIdToView?: string;
 }
 
-export interface ParentViewProps {
-  // Currently empty, but could add props if needed
-}
+export interface ParentViewProps {}
 
-export interface PublicViewProps {
-  // Currently empty
-}
-
-// --- Modal Props ---
+export interface PublicViewProps {}
 
 export interface TaskVerificationModalProps {
   visible: boolean;
   task: AssignedTask | null;
   onClose: () => void;
-  // Removed onVerifyTask, onReassignTaskMock
 }
 
 export interface AssignTaskModalProps {
   visible: boolean;
   onClose: () => void;
-  preselectedStudentId?: string | null; // Optional pre-selection
+  preselectedStudentId?: string | null;
 }
 
 export interface CreateUserModalProps {
   visible: boolean;
   onClose: () => void;
-  mockInstruments: Instrument[]; // List of available instruments
+  mockInstruments: Instrument[];
 }
 
 export interface EditUserModalProps {
@@ -60,7 +50,7 @@ export interface EditUserModalProps {
 
 export interface DeactivateOrDeleteUserModalProps {
   visible: boolean;
-  user: User | null; // User being managed
+  user: User | null;
   onClose: () => void;
 }
 
@@ -137,13 +127,11 @@ export interface ManualTicketAdjustmentModalProps {
 export interface ViewAllAssignedTasksModalProps {
   visible: boolean;
   onClose: () => void;
-  // Removed allUsers - modal fetches if needed
+
   onInitiateVerification?: (task: AssignedTask) => void;
 }
 
-// --- Admin Section Props ---
-
-type UserTab = 'students' | 'teachers' | 'parents'; // Keep local types with components or move here too
+type UserTab = 'students' | 'teachers' | 'parents';
 type StudentFilter = UserStatus | 'all';
 
 export interface AdminUsersSectionProps {
@@ -172,9 +160,9 @@ export interface AdminDashboardSectionProps {
 
 export interface AdminTasksSectionProps {
   taskLibrary: TaskLibraryItem[];
-  isLoading: boolean; // Loading state for task library query
-  isError: boolean; // Error state for task library query
-  onInitiateAssignTask: () => void; // Callback to open the general assign task modal
+  isLoading: boolean;
+  isError: boolean;
+  onInitiateAssignTask: () => void;
   onInitiateVerification?: (task: AssignedTask) => void;
 }
 
@@ -214,9 +202,9 @@ export interface TeacherDashboardSectionProps {
 }
 
 export interface TeacherStudentsSectionProps {
-  mockInstruments: Instrument[]; // Keep instruments list passed down
-  onViewProfile: (studentId: string) => void; // Callback for navigation
-  onAssignTask: (studentId: string) => void; // Callback to trigger assign task modal
+  mockInstruments: Instrument[];
+  onViewProfile: (studentId: string) => void;
+  onAssignTask: (studentId: string) => void;
 }
 
 export interface TeacherTasksSectionProps {

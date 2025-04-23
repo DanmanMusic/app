@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Import Auth context for user ID and role
 import { fetchAnnouncements } from '../api/announcements';
 import { updateAssignedTask } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
@@ -24,18 +23,8 @@ import { fetchStudentBalance } from '../api/tickets';
 import PaginationControls from '../components/admin/PaginationControls';
 import SetGoalModal from '../components/student/modals/SetGoalModal';
 import { useAuth } from '../contexts/AuthContext';
-
-// Import common components
-
-// Import hooks for paginated data
 import { usePaginatedStudentHistory } from '../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../hooks/usePaginatedStudentTasks';
-
-// Import API functions
-// Import user fetching function (assuming /api/users/:id exists)
-// import { fetchUserById } from '../api/users';
-
-// Import types
 import { Announcement } from '../mocks/mockAnnouncements';
 import { AssignedTask } from '../mocks/mockAssignedTasks';
 import { Instrument } from '../mocks/mockInstruments';
@@ -43,14 +32,9 @@ import { RewardItem } from '../mocks/mockRewards';
 import { TicketTransaction } from '../mocks/mockTickets';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
-import { StudentViewProps } from '../types/componentProps'; // Adjust path if needed
-import { User } from '../types/userTypes'; // Import User type
-// Import the Prop Type definition
-
-// Import utils and styles
+import { StudentViewProps } from '../types/componentProps';
+import { User } from '../types/userTypes';
 import { getInstrumentNames, getUserDisplayName } from '../utils/helpers';
-
-// --- Sub-Components ---
 
 const AssignedTaskItem = ({
   task,
@@ -183,30 +167,23 @@ export const AnnouncementListItemStudent = ({ item }: { item: Announcement }) =>
     <Text style={styles.announcementDate}>{new Date(item.date).toLocaleDateString()}</Text>
   </View>
 );
-// --- End Sub-Components ---
 
-// Define the possible tabs locally
 type StudentTab = 'dashboard' | 'tasks' | 'rewards' | 'announcements';
 
-// The main StudentView component using the imported Props type
 export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => {
-  // Get authentication context
   const { currentUserId: loggedInUserId, currentUserRole } = useAuth();
-  // Get query client for invalidations
+
   const queryClient = useQueryClient();
-  // Determine the ID of the student whose data should be displayed
+
   const targetStudentId = studentIdToView ?? loggedInUserId;
 
-  // --- TQ Queries ---
-
-  // Fetch user data for the target student
   const {
     data: user,
     isLoading: userLoading,
     isError: userError,
     error: userErrorMsg,
   } = useQuery<User, Error>({
-    queryKey: ['user', targetStudentId], // Query key includes the student ID
+    queryKey: ['user', targetStudentId],
     queryFn: async () => {
       console.log(`[StudentView] TQ fetching user ${targetStudentId}`);
       if (!targetStudentId) throw new Error('No target student ID provided');
@@ -220,24 +197,22 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
         throw new Error('Fetched user is not a student');
       return userData;
     },
-    enabled: !!targetStudentId, // Only run if targetStudentId is valid
-    staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
+    enabled: !!targetStudentId,
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch student's balance
   const {
     data: balance = 0,
     isLoading: balanceLoading,
     isError: balanceError,
     error: balanceErrorMsg,
   } = useQuery<number, Error>({
-    queryKey: ['balance', targetStudentId], // Query key includes the student ID
+    queryKey: ['balance', targetStudentId],
     queryFn: () => fetchStudentBalance(targetStudentId!),
-    enabled: !!targetStudentId && !userError, // Only run if targetStudentId is valid and user query didn't fail
-    staleTime: 1 * 60 * 1000, // Cache balance for 1 minute
+    enabled: !!targetStudentId && !userError,
+    staleTime: 1 * 60 * 1000,
   });
 
-  // Fetch rewards catalog (shared data)
   const {
     data: rewardsCatalog = [],
     isLoading: rewardsLoading,
@@ -246,10 +221,9 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   } = useQuery<RewardItem[], Error>({
     queryKey: ['rewards'],
     queryFn: fetchRewards,
-    staleTime: 10 * 60 * 1000, // Cache rewards for 10 minutes
+    staleTime: 10 * 60 * 1000,
   });
 
-  // Fetch announcements (shared data)
   const {
     data: allAnnouncements = [],
     isLoading: announcementsLoading,
@@ -258,10 +232,9 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   } = useQuery<Announcement[], Error>({
     queryKey: ['announcements'],
     queryFn: fetchAnnouncements,
-    staleTime: 5 * 60 * 1000, // Cache announcements for 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch instruments (shared data, cached longer)
   const {
     data: mockInstruments = [],
     isLoading: instrumentsLoading,
@@ -270,10 +243,9 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   } = useQuery<Instrument[], Error>({
     queryKey: ['instruments'],
     queryFn: fetchInstruments,
-    staleTime: Infinity, // Cache instruments "forever"
+    staleTime: Infinity,
   });
 
-  // --- Custom Hooks for Paginated Data ---
   const {
     tasks: paginatedTasks,
     currentPage: tasksCurrentPage,
@@ -295,7 +267,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     totalItems: totalHistoryCount,
   } = usePaginatedStudentHistory(targetStudentId);
 
-  // --- TQ Mutations ---
   const markCompleteMutation = useMutation({
     mutationFn: (assignmentId: string) =>
       updateAssignedTask({ assignmentId, updates: { isComplete: true } }),
@@ -316,7 +287,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     },
   });
 
-  // --- Derived Data & State ---
   const studentAnnouncements = useMemo(
     () =>
       [...allAnnouncements].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
@@ -331,7 +301,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   const clampedProgress = Math.min(rawProgressTowardGoal, 100);
   const goalMet = rawProgressTowardGoal >= 100;
 
-  // --- Event Handlers ---
   const handleSetGoalPress = () => setIsSetGoalModalVisible(true);
   const handleGoalSelected = (newGoalId: string | null) => {
     setGoalRewardId(newGoalId);
@@ -341,11 +310,9 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     markCompleteMutation.mutate(assignmentId);
   };
 
-  // Determine if the current user can mark tasks complete
   const canMarkComplete = loggedInUserId === targetStudentId || currentUserRole === 'parent';
 
-  // --- Loading and Error States ---
-  const isLoading = userLoading || instrumentsLoading; // Check core data loading
+  const isLoading = userLoading || instrumentsLoading;
   if (isLoading) {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
@@ -356,7 +323,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     );
   }
 
-  // Handle error fetching the user specifically
   if (userError) {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
@@ -364,13 +330,12 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           <Text style={appSharedStyles.textDanger}>
             Error loading student data: {userErrorMsg?.message}
           </Text>
-          {/* Optionally add a back button if viewed by Parent/Admin */}
+          {}
         </View>
       </SafeAreaView>
     );
   }
 
-  // This case should theoretically be caught by the queryFn error, but good failsafe
   if (!user) {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
@@ -381,7 +346,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     );
   }
 
-  // Display message for inactive students
   if (user.status === 'inactive') {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
@@ -393,14 +357,12 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     );
   }
 
-  // Get display name now that user is loaded
   const studentDisplayName = getUserDisplayName(user);
 
-  // --- Render Component ---
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
       <View style={appSharedStyles.container}>
-        {/* Header */}
+        {}
         {!studentIdToView && (
           <Text style={appSharedStyles.header}>Welcome, {studentDisplayName}!</Text>
         )}
@@ -408,7 +370,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           {' '}
           Instrument(s): {getInstrumentNames(user.instrumentIds, mockInstruments)}{' '}
         </Text>
-        {/* Balance Display */}
+        {}
         {balanceLoading ? (
           <Text style={[styles.balance, appSharedStyles.textGold]}>Loading balance...</Text>
         ) : balanceError ? (
@@ -419,7 +381,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           <Text style={[styles.balance, appSharedStyles.textGold]}>Current Tickets: {balance}</Text>
         )}
 
-        {/* Navigation Tabs */}
+        {}
         <View style={styles.tabContainer}>
           <Button
             title="Dashboard"
@@ -443,12 +405,12 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           />
         </View>
 
-        {/* Tab Content Area */}
+        {}
         <View style={styles.contentArea}>
-          {/* Dashboard Tab */}
+          {}
           {activeTab === 'dashboard' && (
             <ScrollView>
-              {/* Goal Section */}
+              {}
               <Text style={appSharedStyles.sectionTitle}>My Goal</Text>
               {rewardsLoading && <ActivityIndicator color={colors.primary} />}
               {rewardsError && (
@@ -505,7 +467,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                   </View>
                 ))}
 
-              {/* Recent History Section */}
+              {}
               <Text style={appSharedStyles.sectionTitle}>Recent History</Text>
               {historyLoading && (
                 <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
@@ -540,7 +502,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
             </ScrollView>
           )}
 
-          {/* Tasks Tab */}
+          {}
           {activeTab === 'tasks' && (
             <>
               {tasksLoading && (
@@ -584,7 +546,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
             </>
           )}
 
-          {/* Rewards Tab */}
+          {}
           {activeTab === 'rewards' && (
             <>
               {rewardsLoading && (
@@ -617,7 +579,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
             </>
           )}
 
-          {/* Announcements Tab */}
+          {}
           {activeTab === 'announcements' && (
             <>
               {announcementsLoading && (
@@ -646,12 +608,12 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
         </View>
       </View>
 
-      {/* Goal Setting Modal */}
+      {}
       <SetGoalModal
         visible={isSetGoalModalVisible}
         onClose={() => setIsSetGoalModalVisible(false)}
-        rewardsCatalog={rewardsCatalog} // Pass fetched rewards
-        currentBalance={balance} // Pass fetched balance
+        rewardsCatalog={rewardsCatalog}
+        currentBalance={balance}
         currentGoalId={goalRewardId}
         onSetGoal={handleGoalSelected}
       />
@@ -659,7 +621,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   );
 };
 
-// Styles for the StudentView (remain the same)
 const styles = StyleSheet.create({
   instrumentText: { fontSize: 16, color: colors.textSecondary, marginBottom: 5 },
   balance: { fontSize: 28, fontWeight: 'bold', marginBottom: 15 },

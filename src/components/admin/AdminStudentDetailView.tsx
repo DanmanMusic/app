@@ -14,7 +14,6 @@ import {
   Alert,
 } from 'react-native';
 
-// Hooks & API Functions
 import { deleteAssignedTask } from '../../api/assignedTasks';
 import { fetchInstruments } from '../../api/instruments';
 import { fetchTaskLibrary } from '../../api/taskLibrary';
@@ -25,23 +24,18 @@ import {
   deleteUser,
   toggleUserStatus,
   updateUser,
-} from '../../api/users'; // Assuming fetchUsers exists
+} from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePaginatedStudentHistory } from '../../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../../hooks/usePaginatedStudentTasks';
-// API functions needed for data and mutations within this component
-
-// Types
 import { AssignedTask } from '../../mocks/mockAssignedTasks';
 import { Instrument } from '../../mocks/mockInstruments';
 import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
 import { TicketTransaction } from '../../mocks/mockTickets';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
-import { AdminStudentDetailViewProps } from '../../types/componentProps'; // Use imported type
+import { AdminStudentDetailViewProps } from '../../types/componentProps';
 import { User, UserRole } from '../../types/userTypes';
-
-// Components
 import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
 import { TicketHistoryItem } from '../../views/StudentView';
 import ConfirmationModal from '../common/ConfirmationModal';
@@ -52,29 +46,22 @@ import { adminSharedStyles } from './adminSharedStyles';
 import ManualTicketAdjustmentModal from './modals/ManualTicketAdjustmentModal';
 import PaginationControls from './PaginationControls';
 
-// Utils & Styles
-
-// --- Main Component ---
 export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
-  // Destructure props defined in componentProps.ts
   viewingStudentId,
-  adminUserName, // Keep for display/context if needed
-  onBack, // Callback to navigate back
-  onInitiateVerification, // Callback to open App-level verification modal
-  onAssignTask, // Callback to open AdminView-level assign task modal
+  adminUserName,
+  onBack,
+  onInitiateVerification,
+  onAssignTask,
 }) => {
   const queryClient = useQueryClient();
-  const { currentUserId: adminUserId } = useAuth(); // Get admin ID if needed for actions
+  const { currentUserId: adminUserId } = useAuth();
 
-  // --- State for Modals triggered within this view ---
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isStatusModalVisible, setIsStatusModalVisible] = useState(false);
   const [isAdjustmentModalVisible, setIsAdjustmentModalVisible] = useState(false);
   const [isDeleteTaskConfirmVisible, setIsDeleteTaskConfirmVisible] = useState(false);
   const [taskToDeleteId, setTaskToDeleteId] = useState<string | null>(null);
-  // Add state for Redeem Reward Modal if implemented here
 
-  // --- TQ Queries for Data Needed by this View ---
   const {
     data: student,
     isLoading: studentLoading,
@@ -84,7 +71,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
     queryKey: ['user', viewingStudentId],
     queryFn: async () => {
       if (!viewingStudentId) throw new Error('No student ID');
-      const response = await fetch(`/api/users/${viewingStudentId}`); // Use fetch or fetchUserById
+      const response = await fetch(`/api/users/${viewingStudentId}`);
       if (!response.ok) throw new Error(`Failed to fetch student ${viewingStudentId}`);
       const data = await response.json();
       if (data.role !== 'student') throw new Error('User is not a student');
@@ -101,7 +88,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   } = useQuery({
     queryKey: ['balance', viewingStudentId],
     queryFn: () => fetchStudentBalance(viewingStudentId),
-    enabled: !!student, // Enable after student data is loaded
+    enabled: !!student,
     staleTime: 1 * 60 * 1000,
   });
 
@@ -111,20 +98,18 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   >({
     queryKey: ['instruments'],
     queryFn: fetchInstruments,
-    staleTime: Infinity, // Assumes instruments don't change often
+    staleTime: Infinity,
   });
 
   const { data: allTeachers = [], isLoading: teachersLoading } = useQuery<User[], Error>({
-    // Expect User[] as final data
-    queryKey: ['teachers', { page: 1, limit: 1000, status: 'active' }], // Include params in key
+    queryKey: ['teachers', { page: 1, limit: 1000, status: 'active' }],
     queryFn: async () => {
       const response = await fetchTeachers({ page: 1 });
       return response.items.filter(t => t.status === 'active');
     },
-    staleTime: 10 * 60 * 1000, // Cache teachers for a while
+    staleTime: 10 * 60 * 1000,
   });
 
-  // Paginated hooks for tasks and history
   const {
     tasks: paginatedTasks,
     currentPage: tasksCurrentPage,
@@ -146,8 +131,6 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
     error: studentHistoryErrorObject,
   } = usePaginatedStudentHistory(viewingStudentId);
 
-  // --- TQ Mutations handled internally or by modals ---
-  // Delete Assigned Task Mutation (handled here via confirmation modal)
   const deleteTaskMutation = useMutation({
     mutationFn: deleteAssignedTask,
     onSuccess: (_, deletedAssignmentId) => {
@@ -166,13 +149,10 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
       closeDeleteConfirmModal();
     },
   });
-  // Note: Edit/Status/Adjust/Redeem mutations assumed to be inside their respective modals.
 
-  // --- Derived data ---
   const studentDisplayName = student ? getUserDisplayName(student) : 'Loading...';
   const isStudentActive = student?.status === 'active';
 
-  // --- Event Handlers ---
   const handleEditStudent = () => {
     if (student) setIsEditModalVisible(true);
   };
@@ -184,7 +164,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   };
   const handleBackClick = () => {
     onBack();
-  }; // Use prop callback
+  };
   const closeEditModal = () => {
     setIsEditModalVisible(false);
   };
@@ -195,7 +175,6 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
     setIsAdjustmentModalVisible(false);
   };
 
-  // Delete Task Confirmation Flow
   const handleDeleteAssignmentClick = (assignmentId: string) => {
     setTaskToDeleteId(assignmentId);
     setIsDeleteTaskConfirmVisible(true);
@@ -211,7 +190,6 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
     }
   };
 
-  // Trigger parent-managed modals/actions
   const handleVerifyTaskClick = (task: AssignedTask) => {
     if (student && onInitiateVerification) onInitiateVerification(task);
   };
@@ -225,10 +203,8 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   const handleRedeemRewardClick = (rewardId: string) => {
     if (!student) return;
     Alert.alert('TODO', `Implement Redeem Reward flow for ${rewardId} for student ${student.id}`);
-    // This action likely needs its own modal and mutation trigger.
   };
 
-  // --- Loading / Error States ---
   const isLoading =
     studentLoading ||
     balanceLoading ||
@@ -256,7 +232,6 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
     );
   }
   if (!student) {
-    // This case might indicate the ID was invalid or user was deleted
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
         <View style={appSharedStyles.container}>
@@ -267,11 +242,10 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
     );
   }
 
-  // --- Main Render ---
   return (
     <>
       <SafeAreaView style={appSharedStyles.safeArea}>
-        {/* Header */}
+        {}
         <View style={styles.headerContainer}>
           <Button title="← Back to Admin" onPress={handleBackClick} />
           <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
@@ -289,9 +263,9 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
           </View>
         </View>
 
-        {/* Content */}
+        {}
         <ScrollView style={appSharedStyles.container}>
-          {/* Student Info Section */}
+          {}
           <Text style={appSharedStyles.sectionTitle}>Viewing Student: {studentDisplayName}</Text>
           <Text style={appSharedStyles.itemDetailText}>ID: {student.id}</Text>
           <Text style={appSharedStyles.itemDetailText}>
@@ -332,7 +306,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
             </Text>
           )}
 
-          {/* Action Buttons */}
+          {}
           <View style={adminSharedStyles.adminStudentActions}>
             <Button
               title="Adjust Tickets"
@@ -351,7 +325,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
             />
           </View>
 
-          {/* Task List */}
+          {}
           <Text style={appSharedStyles.sectionTitle}>Assigned Tasks ({totalTasksCount})</Text>
           {studentTasksLoading && <ActivityIndicator />}
           {studentTasksError && (
@@ -438,7 +412,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
             />
           )}
 
-          {/* History List */}
+          {}
           <Text style={appSharedStyles.sectionTitle}>History ({totalHistoryCount})</Text>
           {studentHistoryLoading && <ActivityIndicator />}
           {studentHistoryError && (
@@ -471,8 +445,8 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
         </ScrollView>
       </SafeAreaView>
 
-      {/* Modals */}
-      {/* Render modals conditionally based on student data being loaded */}
+      {}
+      {}
       {student && (
         <>
           <DeactivateOrDeleteUserModal
@@ -480,7 +454,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
             user={student}
             onClose={closeStatusModal}
           />
-          {/* Pass fetched teachers to Edit modal */}
+          {}
           <EditUserModal
             visible={isEditModalVisible}
             userToEdit={student}
@@ -504,14 +478,13 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
             onCancel={closeDeleteConfirmModal}
             confirmDisabled={deleteTaskMutation.isPending}
           />
-          {/* TODO: Add Redeem Reward Modal */}
+          {}
         </>
       )}
     </>
   );
 };
 
-// --- Styles ---
 const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
@@ -534,7 +507,6 @@ const styles = StyleSheet.create({
   headerActions: { flexDirection: 'row', gap: 10 },
 });
 
-// Add history styles if TicketHistoryItem is defined here
 const historyStyles = StyleSheet.create({
   historyItemContainer: {
     backgroundColor: colors.backgroundGrey,

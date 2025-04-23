@@ -6,11 +6,11 @@ import { Modal, View, Text, StyleSheet, Button, ActivityIndicator } from 'react-
 
 import { deleteUser, toggleUserStatus } from '../../api/users';
 import { colors } from '../../styles/colors';
+import { DeactivateOrDeleteUserModalProps } from '../../types/componentProps';
 import { User, UserStatus } from '../../types/userTypes';
 import { getUserDisplayName } from '../../utils/helpers';
 
 import ConfirmationModal from './ConfirmationModal';
-import { DeactivateOrDeleteUserModalProps } from '../../types/componentProps';
 
 const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = ({
   visible,

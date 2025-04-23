@@ -5,21 +5,14 @@ import { useQuery } from '@tanstack/react-query';
 import { View, Text, StyleSheet, FlatList, Image, Button, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Import API functions
 import { fetchAnnouncements } from '../api/announcements';
 import { fetchRewards } from '../api/rewards';
-
-// Import types
 import { Announcement } from '../mocks/mockAnnouncements';
 import { RewardItem } from '../mocks/mockRewards';
-// --- Import the Prop Type ---
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
-import { PublicViewProps } from '../types/componentProps'; // Adjust path if needed
+import { PublicViewProps } from '../types/componentProps';
 
-// Import styles
-
-// RewardItemPublic component (remains the same)
 const RewardItemPublic = ({ item }: { item: RewardItem }) => (
   <View style={appSharedStyles.itemContainer}>
     <View style={styles.rewardItemContent}>
@@ -35,7 +28,6 @@ const RewardItemPublic = ({ item }: { item: RewardItem }) => (
   </View>
 );
 
-// AnnouncementListItem component (remains the same)
 const AnnouncementListItem = ({ item }: { item: Announcement }) => (
   <View style={appSharedStyles.itemContainer}>
     <Text style={styles.announcementTitle}>{item.title}</Text>
@@ -44,25 +36,20 @@ const AnnouncementListItem = ({ item }: { item: Announcement }) => (
   </View>
 );
 
-// Define the possible tabs
 type PublicTab = 'welcome' | 'rewards' | 'announcements';
 
-// --- Use the imported Prop Type ---
 export const PublicView: React.FC<PublicViewProps> = () => {
-  // No props destructured as interface is empty
-  // State for the active tab
   const [activeTab, setActiveTab] = useState<PublicTab>('welcome');
 
-  // --- TQ Queries ---
   const {
     data: rewardsCatalog = [],
     isLoading: isLoadingRewards,
     isError: isErrorRewards,
     error: errorRewards,
   } = useQuery<RewardItem[], Error>({
-    queryKey: ['rewards'], // Unique key for rewards data
-    queryFn: fetchRewards, // API function to call
-    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    queryKey: ['rewards'],
+    queryFn: fetchRewards,
+    staleTime: 10 * 60 * 1000,
   });
 
   const {
@@ -71,13 +58,11 @@ export const PublicView: React.FC<PublicViewProps> = () => {
     isError: isErrorAnnouncements,
     error: errorAnnouncements,
   } = useQuery<Announcement[], Error>({
-    queryKey: ['announcements'], // Unique key for announcements data
-    queryFn: fetchAnnouncements, // API function to call
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    queryKey: ['announcements'],
+    queryFn: fetchAnnouncements,
+    staleTime: 5 * 60 * 1000,
   });
-  // --- End TQ Queries ---
 
-  // Helper to get error message
   const getErrorMessage = (error: Error | null) => {
     if (!error) return 'An unknown error occurred.';
     return error.message;
@@ -89,7 +74,7 @@ export const PublicView: React.FC<PublicViewProps> = () => {
         <Text style={[appSharedStyles.header, styles.publicHeader]}>Danmans Music School</Text>
         <Text style={styles.subheader}>Virtual Ticket Rewards Program</Text>
 
-        {/* Tab Navigation */}
+        {}
         <View style={styles.tabContainer}>
           <Button
             title="Welcome"
@@ -108,9 +93,9 @@ export const PublicView: React.FC<PublicViewProps> = () => {
           />
         </View>
 
-        {/* Tab Content Area */}
+        {}
         <View style={styles.contentArea}>
-          {/* Welcome Tab */}
+          {}
           {activeTab === 'welcome' && (
             <View style={styles.tabContentPlaceholder}>
               <Text style={{ textAlign: 'center', padding: 20 }}>
@@ -119,20 +104,20 @@ export const PublicView: React.FC<PublicViewProps> = () => {
             </View>
           )}
 
-          {/* Rewards Tab */}
+          {}
           {activeTab === 'rewards' && (
             <>
-              {/* Loading State */}
+              {}
               {isLoadingRewards && (
                 <ActivityIndicator style={{ marginTop: 20 }} size="large" color={colors.primary} />
               )}
-              {/* Error State */}
+              {}
               {isErrorRewards && (
                 <Text style={[appSharedStyles.textDanger, { textAlign: 'center', marginTop: 10 }]}>
                   Error loading rewards: {getErrorMessage(errorRewards)}
                 </Text>
               )}
-              {/* Data Loaded State */}
+              {}
               {!isLoadingRewards && !isErrorRewards && (
                 <FlatList
                   data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
@@ -149,24 +134,23 @@ export const PublicView: React.FC<PublicViewProps> = () => {
             </>
           )}
 
-          {/* Announcements Tab */}
+          {}
           {activeTab === 'announcements' && (
             <>
-              {/* Loading State */}
+              {}
               {isLoadingAnnouncements && (
                 <ActivityIndicator style={{ marginTop: 20 }} size="large" color={colors.primary} />
               )}
-              {/* Error State */}
+              {}
               {isErrorAnnouncements && (
                 <Text style={[appSharedStyles.textDanger, { textAlign: 'center', marginTop: 10 }]}>
                   Error loading announcements: {getErrorMessage(errorAnnouncements)}
                 </Text>
               )}
-              {/* Data Loaded State */}
+              {}
               {!isLoadingAnnouncements && !isErrorAnnouncements && (
                 <FlatList
                   data={announcements.sort(
-                    // Sort by date using fetched data
                     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
                   )}
                   keyExtractor={item => `announcement-${item.id}`}
@@ -189,7 +173,6 @@ export const PublicView: React.FC<PublicViewProps> = () => {
   );
 };
 
-// Styles (fully inflated)
 const styles = StyleSheet.create({
   publicHeader: {
     fontSize: 28,
@@ -216,7 +199,7 @@ const styles = StyleSheet.create({
   },
   tabContentPlaceholder: {
     flex: 1,
-    justifyContent: 'center', // Center welcome message
+    justifyContent: 'center',
     alignItems: 'center',
   },
   rewardItemContent: {

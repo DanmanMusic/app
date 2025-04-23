@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'; // Added useMemo
+import React, { useState, useMemo } from 'react';
 
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 
@@ -14,7 +14,6 @@ import {
 } from 'react-native';
 
 import { deleteAssignedTask } from '../../../api/assignedTasks';
-// --- Import existing fetch functions ---
 import { fetchStudents, fetchTeachers, fetchParents } from '../../../api/users';
 import {
   usePaginatedAssignedTasks,
@@ -25,13 +24,12 @@ import { AssignedTask } from '../../../mocks/mockAssignedTasks';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
 import { ViewAllAssignedTasksModalProps } from '../../../types/componentProps';
-import { User } from '../../../types/userTypes'; // Include SimplifiedStudent
+import { User } from '../../../types/userTypes';
 import { getUserDisplayName } from '../../../utils/helpers';
 import ConfirmationModal from '../../common/ConfirmationModal';
 import { adminSharedStyles } from '../adminSharedStyles';
 import PaginationControls from '../PaginationControls';
 
-// --- Sub-Component: AssignedTaskDetailItem (Needs allUsers prop) ---
 const AssignedTaskDetailItem = ({
   item,
   allUsers,
@@ -48,9 +46,7 @@ const AssignedTaskDetailItem = ({
   const student = allUsers.find(u => u.id === item.studentId);
   const assigner = allUsers.find(u => u.id === item.assignedById);
   const verifier = item.verifiedById ? allUsers.find(u => u.id === item.verifiedById) : null;
-  const getStatusText = () => {
-    /* ... status logic ... */
-  };
+  const getStatusText = () => {};
   const allowDelete =
     (!item.isComplete || item.verificationStatus === 'pending') && student?.status === 'active';
   const allowVerify =
@@ -110,9 +106,7 @@ const AssignedTaskDetailItem = ({
     </View>
   );
 };
-// --- End Sub-Component ---
 
-// --- Main Modal Component ---
 export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps> = ({
   visible,
   onClose,
@@ -123,7 +117,6 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
   const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
   const [taskToDeleteId, setTaskToDeleteId] = useState<string | null>(null);
 
-  // --- Hook for Paginated Tasks (Existing) ---
   const {
     tasks,
     currentPage,
@@ -140,95 +133,66 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
     error: errorTasks,
   } = usePaginatedAssignedTasks('pending', 'active');
 
-  // --- Queries to Fetch Users for Lookups ---
-  // Fetch Students (page 1, large limit) - note: returns SimplifiedStudent
   const { data: studentData, isLoading: isLoadingStudents } = useQuery({
     queryKey: ['students', { page: 1, limit: 1000, filter: 'all' }],
-    queryFn: () => fetchStudents({ page: 1, filter: 'all' }), // Assuming fetchStudents takes limit
+    queryFn: () => fetchStudents({ page: 1, filter: 'all' }),
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch Teachers (page 1, large limit)
   const { data: teacherData, isLoading: isLoadingTeachers } = useQuery({
     queryKey: ['teachers', { page: 1, limit: 1000 }],
-    queryFn: () => fetchTeachers({ page: 1 }), // Assuming fetchTeachers takes limit
+    queryFn: () => fetchTeachers({ page: 1 }),
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch Parents (page 1, large limit)
   const { data: parentData, isLoading: isLoadingParents } = useQuery({
     queryKey: ['parents', { page: 1, limit: 1000 }],
-    queryFn: () => fetchParents({ page: 1 }), // Assuming fetchParents takes limit
+    queryFn: () => fetchParents({ page: 1 }),
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch Admins (assuming few, fetch all) - TODO: Need fetchAdmins or use fetchUsers({role: 'admin'})
   const { data: adminData, isLoading: isLoadingAdmins } = useQuery({
-    queryKey: ['users', { role: 'admin' }], // Or specific key ['admins']
+    queryKey: ['users', { role: 'admin' }],
     queryFn: async () => {
-      // Example using fetch directly if fetchUsers isn't ready
-      const response = await fetch('/api/users?role=admin&limit=100'); // Fetch admins
+      const response = await fetch('/api/users?role=admin&limit=100');
       if (!response.ok) return [];
       const result = await response.json();
       return result.items || [];
     },
-    staleTime: 15 * 60 * 1000, // Cache admins longer
+    staleTime: 15 * 60 * 1000,
   });
 
-  // --- Combine fetched users into one list for lookups ---
   const allUsers = useMemo(() => {
-    // Important: fetchStudents returns SimplifiedStudent, others return User.
-    // We need to reconcile this or ensure fetchStudents returns User for lookups.
-    // Assuming for now we only need ID/Name from students for lookup, which SimplifiedStudent has.
-    // Ideally, all fetch functions return the full User object for consistency here.
     const studentsForLookup = (studentData?.students ?? []).map(
       s => ({ ...s, role: 'student' }) as unknown as User
-    ); // Map Simplified to User-like structure
+    );
     const teachersForLookup = teacherData?.items ?? [];
     const parentsForLookup = parentData?.items ?? [];
     const adminsForLookup = adminData ?? [];
 
-    // Combine all into a single array
     return [...studentsForLookup, ...teachersForLookup, ...parentsForLookup, ...adminsForLookup];
-    // Add dependencies on all the raw data results
   }, [studentData, teacherData, parentData, adminData]);
 
-  // Overall loading state for users needed for lookups
   const isLoadingUsers =
     isLoadingStudents || isLoadingTeachers || isLoadingParents || isLoadingAdmins;
-  // --- End User Fetching ---
 
-  // --- Delete Mutation (Existing) ---
-  const deleteMutation = useMutation({
-    /* ... mutation options ... */
-  });
+  const deleteMutation = useMutation({});
 
-  // --- Event Handlers (Existing) ---
-  const handleDeleteTask = (assignmentId: string) => {
-    /* ... */
-  };
-  const handleConfirmDeleteAction = () => {
-    /* ... */
-  };
-  const closeDeleteConfirmModal = () => {
-    /* ... */
-  };
-  const getErrorMessage = () => {
-    /* ... error message logic ... */
-  };
+  const handleDeleteTask = (assignmentId: string) => {};
+  const handleConfirmDeleteAction = () => {};
+  const closeDeleteConfirmModal = () => {};
+  const getErrorMessage = () => {};
 
-  // Find the task object for the confirmation modal message
   const taskToDeleteObject = tasks.find(task => task.id === taskToDeleteId);
 
-  // Combine loading states
-  const isDataLoading = isLoadingTasks || isLoadingUsers; // Check both tasks and users loading
+  const isDataLoading = isLoadingTasks || isLoadingUsers;
 
   return (
     <>
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
         <View style={modalStyles.centeredView}>
           <View style={modalStyles.modalView}>
-            {/* Header */}
+            {}
             <View style={modalStyles.modalHeader}>
               <Text style={modalStyles.modalTitle}>Assigned Tasks ({totalItems})</Text>
               {isFetchingTasks && !isLoadingTasks && (
@@ -240,9 +204,9 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
               )}
             </View>
 
-            {/* Filters */}
+            {}
             <View style={modalStyles.filterSection}>
-              {/* Filter Rows JSX */}
+              {}
               <View style={modalStyles.filterRow}>
                 {' '}
                 <Text style={modalStyles.filterLabel}>Task Status:</Text>{' '}
@@ -288,8 +252,8 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
               </View>
             </View>
 
-            {/* Content Area */}
-            {/* Show loading if tasks OR user lookups are loading */}
+            {}
+            {}
             {isDataLoading && (
               <ActivityIndicator
                 size="large"
@@ -302,7 +266,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                 <Text style={modalStyles.errorText}>Error</Text>
               </View>
             )}
-            {/* TODO: Add error handling for user fetch errors */}
+            {}
 
             {!isDataLoading && !isErrorTasks && (
               <FlatList
@@ -312,7 +276,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                 renderItem={({ item }) => (
                   <AssignedTaskDetailItem
                     item={item}
-                    allUsers={allUsers} // Pass the combined user list
+                    allUsers={allUsers}
                     onInitiateVerification={onInitiateVerification}
                     onDelete={handleDeleteTask}
                     disabled={deleteMutation.isPending && taskToDeleteId === item.id}
@@ -329,7 +293,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
               />
             )}
 
-            {/* Footer */}
+            {}
             <View style={modalStyles.footer}>
               {!isDataLoading && !isErrorTasks && totalPages > 1 && (
                 <PaginationControls
@@ -351,7 +315,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
         </View>
       </Modal>
 
-      {/* Confirmation Modal */}
+      {}
       <ConfirmationModal
         visible={isDeleteConfirmVisible}
         title="Confirm Removal"
@@ -365,7 +329,6 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
   );
 };
 
-// --- Styles ---
 const modalStyles = StyleSheet.create({
   centeredView: {
     flex: 1,

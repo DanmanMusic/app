@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { fetchAssignedTasks } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
-import { fetchTaskLibrary } from '../api/taskLibrary'; // Ensure this is imported
+import { fetchTaskLibrary } from '../api/taskLibrary';
 import { AdminAnnouncementsSection } from '../components/admin/AdminAnnouncementsSection';
 import { AdminDashboardSection } from '../components/admin/AdminDashboardSection';
 import { AdminHistorySection } from '../components/admin/AdminHistorySection';
@@ -30,21 +30,18 @@ import CreateUserModal from '../components/admin/modals/CreateUserModal';
 import { ViewAllAssignedTasksModal } from '../components/admin/modals/ViewAllAssignedTasksModal';
 import AssignTaskModal from '../components/common/AssignTaskModal';
 import { useAuth } from '../contexts/AuthContext';
-// Removed useData
 import { usePaginatedParents } from '../hooks/usePaginatedParents';
 import { usePaginatedStudents } from '../hooks/usePaginatedStudents';
 import { usePaginatedTeachers } from '../hooks/usePaginatedTeachers';
 import { AssignedTask } from '../mocks/mockAssignedTasks';
 import { Instrument } from '../mocks/mockInstruments';
-import { TaskLibraryItem } from '../mocks/mockTaskLibrary'; // Ensure this is imported
+import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 import { AdminViewProps } from '../types/componentProps';
-import { User, UserRole } from '../types/userTypes'; // Combined User types import
+import { User, UserRole } from '../types/userTypes';
 import { getUserDisplayName } from '../utils/helpers';
 
-// --- Define Styles needed specifically in AdminView ---
-// Styles for the Pending Verification items list
 const adminPendingListStyles = StyleSheet.create({
   pendingItem: {
     backgroundColor: colors.backgroundPrimary,
@@ -52,7 +49,7 @@ const adminPendingListStyles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.borderWarning, // Highlight pending items
+    borderColor: colors.borderWarning,
   },
   pendingTitle: {
     fontSize: 16,
@@ -67,7 +64,6 @@ const adminPendingListStyles = StyleSheet.create({
   },
 });
 
-// General styles for AdminView layout (like header)
 const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
@@ -80,7 +76,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundPrimary,
   },
   headerSideContainer: {
-    minWidth: 60, // Ensure space even if button isn't there
+    minWidth: 60,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
@@ -104,16 +100,13 @@ type AdminSection =
   | 'history'
   | 'announcements'
   | 'instruments';
-// ---> END ADDITION <---
 
 type UserTab = 'students' | 'teachers' | 'parents';
 
-// Use the imported AdminViewProps type
 export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId } = useAuth();
   const queryClient = useQueryClient();
 
-  // --- State ---
   const [viewingSection, setViewingSection] = useState<AdminSection>('dashboard');
   const [viewingStudentId, setViewingStudentId] = useState<string | null>(null);
   const [activeUserTab, setActiveUserTab] = useState<UserTab>('students');
@@ -123,11 +116,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const [isViewAllAssignedTasksModalVisible, setIsViewAllAssignedTasksModalVisible] =
     useState(false);
 
-  // --- TQ Queries ---
   const { data: adminUser, isLoading: adminLoading } = useQuery<User, Error>({
     queryKey: ['user', currentUserId],
     queryFn: async () => {
-      /* ... fetch admin user ... */
       if (!currentUserId) throw new Error('No admin user ID');
       const response = await fetch(`/api/users/${currentUserId}`);
       if (!response.ok) throw new Error('Failed to fetch admin user data');
@@ -140,25 +131,24 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   });
 
   const {
-    data: taskLibrary = [], // Default to empty array
+    data: taskLibrary = [],
     isLoading: libraryLoading,
-    isError: libraryError, // Boolean error flag from TQ
-    // error: libraryErrorObject // Optional: get the full error object if needed
+    isError: libraryError,
   } = useQuery<TaskLibraryItem[], Error>({
-    queryKey: ['task-library'], // Unique key for the task library data
-    queryFn: fetchTaskLibrary, // The API function to fetch the data
-    staleTime: 10 * 60 * 1000, // Cache library data for 10 minutes
+    queryKey: ['task-library'],
+    queryFn: fetchTaskLibrary,
+    staleTime: 10 * 60 * 1000,
   });
 
   const {
     students,
-    currentPage: studentPage, // <<< ADDED
-    totalPages: studentTotalPages, // <<< ADDED
-    setPage: setStudentPage, // <<< ADDED
-    currentFilter: studentFilter, // <<< Use the correct name from the hook
-    setFilter: setStudentFilter, // <<< Use the correct name from the hook
-    searchTerm: studentSearchTerm, // <<< Use the correct name from the hook
-    setSearchTerm: setStudentSearchTerm, // <<< Use the correct name from the hook
+    currentPage: studentPage,
+    totalPages: studentTotalPages,
+    setPage: setStudentPage,
+    currentFilter: studentFilter,
+    setFilter: setStudentFilter,
+    searchTerm: studentSearchTerm,
+    setSearchTerm: setStudentSearchTerm,
     isLoading: isStudentListLoading,
     isFetching: isStudentListFetching,
     isError: isStudentListError,
@@ -167,9 +157,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
 
   const {
     teachers,
-    currentPage: teacherPage, // <<< ADDED
-    totalPages: teacherTotalPages, // <<< ADDED
-    setPage: setTeacherPage, // <<< ADDED
+    currentPage: teacherPage,
+    totalPages: teacherTotalPages,
+    setPage: setTeacherPage,
     isLoading: isTeacherListLoading,
     isFetching: isTeacherListFetching,
     isError: isTeacherListError,
@@ -178,9 +168,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
 
   const {
     parents,
-    currentPage: parentPage, // <<< ADDED
-    totalPages: parentTotalPages, // <<< ADDED
-    setPage: setParentPage, // <<< ADDED
+    currentPage: parentPage,
+    totalPages: parentTotalPages,
+    setPage: setParentPage,
     isLoading: isParentListLoading,
     isFetching: isParentListFetching,
     isError: isParentListError,
@@ -210,49 +200,27 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   });
   const pendingTasks = assignedTasksResult?.items ?? [];
 
-  // --- Memos / Derived State ---
   const allTeachersForModal = useMemo(
     () => teachers.filter(t => t.status === 'active'),
     [teachers]
   );
   const pendingVerifications = pendingTasks;
 
-  // --- Event Handlers ---
-  const handleViewManageUser = (userId: string, role: UserRole) => {
-    /* ... */
-  };
-  const handleBackFromStudentDetail = () => {
-    /* ... */
-  };
-  const handleInternalInitiateVerificationModal = (task: AssignedTask) => {
-    /* ... */
-  };
-  const handleInitiateAssignTaskForStudent = (studentId: string) => {
-    /* ... */
-  };
-  const handleInitiateAssignTaskGeneral = () => {
-    /* ... */
-  };
-  const handleAssignTaskModalClose = () => {
-    /* ... */
-  };
-  const handleViewAllAssignedTasks = () => {
-    /* ... */
-  };
-  const handleViewAllAssignedTasksModalClose = () => {
-    /* ... */
-  };
+  const handleViewManageUser = (userId: string, role: UserRole) => {};
+  const handleBackFromStudentDetail = () => {};
+  const handleInternalInitiateVerificationModal = (task: AssignedTask) => {};
+  const handleInitiateAssignTaskForStudent = (studentId: string) => {};
+  const handleInitiateAssignTaskGeneral = () => {};
+  const handleAssignTaskModalClose = () => {};
+  const handleViewAllAssignedTasks = () => {};
+  const handleViewAllAssignedTasksModalClose = () => {};
 
-  // --- Render Logic ---
   const isLoadingCoreData = adminLoading || instrumentsLoading;
   if (isLoadingCoreData) {
-    /* ... loading indicator ... */
   }
   if (!adminUser) {
-    /* ... error display ... */
   }
 
-  // Student Detail View Render
   if (viewingStudentId) {
     return (
       <AdminStudentDetailView
@@ -265,13 +233,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     );
   }
 
-  // Main Admin View Render
   const showBackButton = viewingSection !== 'dashboard';
   const isUsersLoading = isStudentListLoading || isTeacherListLoading || isParentListLoading;
 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      {/* Header - uses `styles` */}
+      {}
       <View style={styles.headerContainer}>
         <View style={styles.headerSideContainer}>
           {showBackButton ? (
@@ -292,12 +259,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         </View>
       </View>
 
-      {/* Scrollable Content - uses `appSharedStyles` */}
+      {}
       <ScrollView style={appSharedStyles.container}>
-        {/* Nav - uses `adminSharedStyles` */}
+        {}
         {viewingSection !== 'dashboard-pending-verification' && (
           <View style={adminSharedStyles.adminNav}>
-            {/* Nav Buttons... */}
+            {}
             <Button
               title="Dashboard"
               onPress={() => setViewingSection('dashboard')}
@@ -336,13 +303,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           </View>
         )}
 
-        {/* Dashboard Section */}
+        {}
         {viewingSection === 'dashboard' && (
           <AdminDashboardSection
             onViewPendingVerifications={() => setViewingSection('dashboard-pending-verification')}
           />
         )}
-        {/* Pending Verification Section - uses `appSharedStyles` and `adminPendingListStyles` */}
+        {}
         {viewingSection === 'dashboard-pending-verification' && (
           <View>
             <Text style={appSharedStyles.sectionTitle}>
@@ -370,7 +337,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
                     renderItem={({ item }) => {
                       const studentSimple = students.find(s => s.id === item.studentId);
                       return (
-                        // Uses adminPendingListStyles
                         <View style={adminPendingListStyles.pendingItem}>
                           <Text style={adminPendingListStyles.pendingTitle}>
                             Task: {item.taskTitle}
@@ -411,7 +377,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             )}
           </View>
         )}
-        {/* Users Section - Uses imported component which uses its own/shared styles */}
+        {}
         {viewingSection === 'users' && (
           <AdminUsersSection
             displayData={
@@ -475,7 +441,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             onInitiateAssignTaskForStudent={handleInitiateAssignTaskForStudent}
           />
         )}
-        {/* Other Sections - Use imported components */}
+        {}
         {viewingSection === 'tasks' && (
           <AdminTasksSection
             taskLibrary={taskLibrary}
@@ -490,7 +456,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         {viewingSection === 'instruments' && <AdminInstrumentsSection />}
       </ScrollView>
 
-      {/* Modals */}
+      {}
       <CreateUserModal
         visible={isCreateUserModalVisible}
         onClose={() => setIsCreateUserModalVisible(false)}

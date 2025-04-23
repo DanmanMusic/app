@@ -10,27 +10,20 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-// Import types
 import { Instrument } from '../../mocks/mockInstruments';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
+import { AdminUsersSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';
 import { UserRole, User, UserStatus } from '../../types/userTypes';
-
-// Import utils and styles
 import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
 
 import { adminSharedStyles } from './adminSharedStyles';
-
-// Import common components
 import PaginationControls from './PaginationControls';
-import { AdminUsersSectionProps } from '../../types/componentProps';
 
-// Define filter/tab types used locally
 type UserTab = 'students' | 'teachers' | 'parents';
 type StudentFilter = UserStatus | 'all';
 
-// Component for rendering a generic User item (Teacher/Parent/Admin)
 const AdminUserItem = ({
   user,
   onViewManage,
@@ -38,7 +31,6 @@ const AdminUserItem = ({
   user: User;
   onViewManage: (userId: string, role: UserRole) => void;
 }) => (
-  // Apply inactive styling if needed
   <View
     style={[appSharedStyles.itemContainer, user.status === 'inactive' ? styles.inactiveItem : {}]}
   >
@@ -51,34 +43,32 @@ const AdminUserItem = ({
     >
       Status: {user.status}
     </Text>
-    {/* Display linked student count for parents */}
+    {}
     {user.role === 'parent' && user.linkedStudentIds && (
       <Text style={appSharedStyles.itemDetailText}>
         Linked Students: {user.linkedStudentIds.length}
       </Text>
     )}
-    {/* Action button */}
+    {}
     <View style={adminSharedStyles.itemActions}>
       <Button title="View/Edit Details" onPress={() => onViewManage(user.id, user.role)} />
     </View>
   </View>
 );
 
-// Component for rendering a Student item
 const AdminStudentItem = ({
   student,
   mockInstruments,
   onViewManage,
   onInitiateAssignTask,
 }: {
-  student: SimplifiedStudent; // Uses the simplified type
+  student: SimplifiedStudent;
   mockInstruments: Instrument[];
   onViewManage: (studentId: string, role: UserRole) => void;
   onInitiateAssignTask: (studentId: string) => void;
 }) => {
-  console.log('[AdminStudentItem] Received student prop:', JSON.stringify(student, null, 2)); // Log the received prop
+  console.log('[AdminStudentItem] Received student prop:', JSON.stringify(student, null, 2));
   return (
-    // Apply inactive styling if needed
     <View style={[appSharedStyles.itemContainer, !student.isActive ? styles.inactiveItem : {}]}>
       <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
       <Text style={appSharedStyles.itemDetailText}>
@@ -95,7 +85,7 @@ const AdminStudentItem = ({
       >
         Status: {student.isActive ? 'Active' : 'Inactive'}
       </Text>
-      {/* Action buttons */}
+      {}
       <View style={adminSharedStyles.itemActions}>
         <Button
           title="View Details"
@@ -104,7 +94,7 @@ const AdminStudentItem = ({
             onViewManage(student.id, 'student');
           }}
         />
-        {/* Only show Assign Task button for active students */}
+        {}
         {student.isActive && (
           <Button title="Assign Task" onPress={() => onInitiateAssignTask(student.id)} />
         )}
@@ -113,9 +103,7 @@ const AdminStudentItem = ({
   );
 };
 
-// The main AdminUsersSection component
 export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
-  // Destructure all expected props
   displayData,
   currentPage,
   totalPages,
@@ -124,7 +112,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   setActiveTab,
   studentFilter,
   setStudentFilter,
-  // setFilter, // Commented out the seemingly redundant prop
+
   studentSearchTerm,
   setStudentSearchTerm,
   isLoading,
@@ -135,13 +123,11 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   onViewManageUser,
   onInitiateAssignTaskForStudent,
 }) => {
-  // Function to render the correct item component based on the active tab
   const renderUserItem = ({ item }: { item: User | SimplifiedStudent }) => {
-    console.log('[AdminUsersSection] Rendering item:', JSON.stringify(item)); // Log the whole item
+    console.log('[AdminUsersSection] Rendering item:', JSON.stringify(item));
     const role =
       activeTab === 'students' ? 'student' : activeTab === 'teachers' ? 'teacher' : 'parent';
     if (role === 'student') {
-      // Render student item, passing necessary props/callbacks
       return (
         <AdminStudentItem
           student={item as SimplifiedStudent}
@@ -151,12 +137,10 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
         />
       );
     } else {
-      // Render generic user item (teacher/parent), passing necessary props/callbacks
       return <AdminUserItem user={item as User} onViewManage={onViewManageUser} />;
     }
   };
 
-  // Helper function to format error messages
   const getErrorMessage = () => {
     if (!error) return 'An unknown error occurred.';
     const resource =
@@ -164,7 +148,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     return `Error loading ${resource}: ${error.message}`;
   };
 
-  // Handler for filter change (ensures the correct setter is called)
   const handleFilterChange = (filter: StudentFilter) => {
     if (setStudentFilter) {
       setStudentFilter(filter);
@@ -173,7 +156,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
 
   return (
     <View>
-      {/* Tab Navigation Buttons */}
+      {}
       <View style={styles.tabContainer}>
         <Button
           title={`Students`}
@@ -192,10 +175,10 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
         />
       </View>
 
-      {/* Student Filter and Search Section (only shown for 'students' tab) */}
+      {}
       {activeTab === 'students' && studentFilter && setStudentFilter && setStudentSearchTerm && (
         <View style={styles.filterAndSearchContainer}>
-          {/* Filter Buttons */}
+          {}
           <View style={styles.filterContainer}>
             <Text style={styles.filterLabel}>Show:</Text>
             <Button
@@ -214,45 +197,43 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
               color={studentFilter === 'all' ? colors.info : colors.secondary}
             />
           </View>
-          {/* Search Input */}
+          {}
           <TextInput
             style={styles.searchInput}
             placeholder="Search Students by Name..."
             placeholderTextColor={colors.textLight}
             value={studentSearchTerm}
-            onChangeText={setStudentSearchTerm} // Use the setter prop
+            onChangeText={setStudentSearchTerm}
             autoCapitalize="none"
             autoCorrect={false}
           />
         </View>
       )}
 
-      {/* Spacer for non-student tabs */}
+      {}
       {activeTab !== 'students' && <View style={{ height: 5 }} />}
 
-      {/* Main List Area */}
+      {}
       <View style={styles.listArea}>
-        {/* Loading Indicator: Show if isLoading OR if fetching subsequent pages */}
+        {}
         {(isLoading || (isFetching && displayData.length > 0)) && (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
         )}
-        {/* Error Display */}
-        {isError &&
-          !isLoading && ( // Only show error if not initially loading
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{getErrorMessage()}</Text>
-            </View>
-          )}
-        {/* List Display: Show only if NOT initially loading and NO error */}
+        {}
+        {isError && !isLoading && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{getErrorMessage()}</Text>
+          </View>
+        )}
+        {}
         {!isLoading && !isError && (
           <FlatList
-            data={displayData} // Use the data passed via props
+            data={displayData}
             keyExtractor={item => item.id}
-            renderItem={renderUserItem} // Use the item renderer function
-            scrollEnabled={false} // Typically disable scroll if parent is ScrollView
+            renderItem={renderUserItem}
+            scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
             ListEmptyComponent={() => (
-              // Message for empty list/filters
               <Text style={appSharedStyles.emptyListText}>
                 {activeTab === 'students'
                   ? 'No students match filters/search.'
@@ -261,13 +242,12 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
                     : 'No parents found.'}
               </Text>
             )}
-            // Pagination controls shown only if needed
             ListFooterComponent={
               totalPages > 1 ? (
                 <PaginationControls
                   currentPage={currentPage}
                   totalPages={totalPages}
-                  onPageChange={setPage} // Use the page change handler prop
+                  onPageChange={setPage}
                 />
               ) : null
             }
@@ -279,7 +259,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   );
 };
 
-// Styles for the component
 const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
@@ -312,7 +291,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   listArea: { marginTop: 10 },
-  inactiveItem: { borderColor: colors.secondary, opacity: 0.7 }, // Style for inactive users
+  inactiveItem: { borderColor: colors.secondary, opacity: 0.7 },
   errorContainer: {
     marginVertical: 20,
     padding: 15,

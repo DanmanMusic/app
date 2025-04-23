@@ -118,8 +118,8 @@ export const handlers = [
         id: i,
         status: 'active',
         ...(d.role === 'student' && {
-          instrumentIds: d.instrumentIds || [], // Ensure instrumentIds exists, default to empty array
-          linkedTeacherIds: d.linkedTeacherIds || [], // Also ensure linkedTeacherIds exists
+          instrumentIds: d.instrumentIds || [],
+          linkedTeacherIds: d.linkedTeacherIds || [],
         }),
       };
       currentMockUsers[i] = n;
@@ -130,7 +130,7 @@ export const handlers = [
   }),
   http.get('/api/users/:id', ({ params }) => {
     const { id } = params;
-    console.log(`[MSW] Intercepted GET /api/users/${id}`); // Add/Confirm this log
+    console.log(`[MSW] Intercepted GET /api/users/${id}`);
     if (typeof id !== 'string') {
       console.error('[MSW] Invalid ID type received:', typeof id);
       return new HttpResponse('Invalid ID', { status: 400 });
@@ -138,7 +138,7 @@ export const handlers = [
     const user = currentMockUsers[id];
     if (user) {
       console.log(`[MSW] Found user for ID ${id}:`, user.firstName);
-      return HttpResponse.json(user); // <<< MUST return JSON
+      return HttpResponse.json(user);
     } else {
       console.warn(`[MSW] User not found for ID ${id}`);
       return HttpResponse.json({ message: 'User not found' }, { status: 404 });
@@ -642,7 +642,6 @@ export const handlers = [
     }
   }),
 
-  // Handler for User Counts
   http.get('/api/stats/user-counts', () => {
     const users = Object.values(currentMockUsers);
     const counts = {
@@ -650,18 +649,14 @@ export const handlers = [
       teacherCount: users.filter(u => u.role === 'teacher').length,
       parentCount: users.filter(u => u.role === 'parent').length,
       activeStudentCount: users.filter(u => u.role === 'student' && u.status === 'active').length,
-      // Add other counts if needed
     };
     console.log('[MSW] Returning user counts:', counts);
     return HttpResponse.json(counts);
   }),
 
-  // Handler for Pending Task Count
   http.get('/api/assigned-tasks/stats', () => {
     const pendingCount = mockAssignedTasksData.filter(
       task => task.isComplete && task.verificationStatus === 'pending'
-      // Optionally add student active check if needed for dashboard count
-      // && currentMockUsers[task.studentId]?.status === 'active'
     ).length;
     const stats = {
       pendingVerificationCount: pendingCount,

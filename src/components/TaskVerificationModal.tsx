@@ -1,200 +1,148 @@
-// Import necessary React and React Native components
 import React, { useState, useEffect } from 'react';
 
 import Slider from '@react-native-community/slider';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  Button,
-  ActivityIndicator,
-  Alert, // Keep Alert for now, or replace with a better feedback mechanism later
-} from 'react-native';
-// Import the slider component
-// Import TanStack Query mutation hook and query client hook
+import { Modal, View, Text, StyleSheet, Button, ActivityIndicator, Alert } from 'react-native';
 
-// Import API functions for updating and creating tasks
 import { updateAssignedTask, createAssignedTask } from '../api/assignedTasks';
-// Import data types
 import { useAuth } from '../contexts/AuthContext';
 import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
 import { colors } from '../styles/colors';
-import { User } from '../types/userTypes';
-
-// Import authentication context to get the current user ID (verifier/assigner)
-
-// Import utils and styles
-import { getUserDisplayName } from '../utils/helpers';
 import { TaskVerificationModalProps } from '../types/componentProps';
+import { User } from '../types/userTypes';
+import { getUserDisplayName } from '../utils/helpers';
 
-// Define the props for the component
-
-
-// The TaskVerificationModal component
 const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   visible,
   task,
   onClose,
 }) => {
-  // Get the current user's ID from the Auth context
   const { currentUserId } = useAuth();
 
   const studentId = task?.studentId;
-  // Get the Query Client instance to invalidate queries on success
+
   const queryClient = useQueryClient();
 
   const { data: student, isLoading: isLoadingStudent } = useQuery<User, Error>({
-    queryKey: ['user', studentId], // Query depends on studentId
+    queryKey: ['user', studentId],
     queryFn: async () => {
-        if (!studentId) throw new Error("No student ID for verification modal");
-        // Replace with fetchUserById if available
-        const response = await fetch(`/api/users/${studentId}`);
-        if (!response.ok) throw new Error("Failed to fetch student for modal");
-        return response.json();
+      if (!studentId) throw new Error('No student ID for verification modal');
+
+      const response = await fetch(`/api/users/${studentId}`);
+      if (!response.ok) throw new Error('Failed to fetch student for modal');
+      return response.json();
     },
-    enabled: !!visible && !!studentId, // Only fetch when modal is visible and ID exists
+    enabled: !!visible && !!studentId,
     staleTime: 5 * 60 * 1000,
-});
+  });
 
-  // --- State Management ---
-  const [currentStep, setCurrentStep] = useState(1); // Controls the modal step (1: Status, 2: Points, 3: Re-assign?)
-  const [selectedStatus, setSelectedStatus] = useState<TaskVerificationStatus>(undefined); // Status chosen in Step 1
-  const [awardedPoints, setAwardedPoints] = useState<number>(0); // Points awarded (used in Step 2)
-  const [baseTickets, setBaseTickets] = useState<number>(0); // Base points from the original task
+  const [currentStep, setCurrentStep] = useState(1);
+  const [selectedStatus, setSelectedStatus] = useState<TaskVerificationStatus>(undefined);
+  const [awardedPoints, setAwardedPoints] = useState<number>(0);
+  const [baseTickets, setBaseTickets] = useState<number>(0);
 
-  // --- Mutations ---
-
-  // Mutation hook for handling the task verification/update API call
   const verifyMutation = useMutation({
-    mutationFn: updateAssignedTask, // The API function to call
+    mutationFn: updateAssignedTask,
     onSuccess: updatedTask => {
-      // Function to run on successful mutation
       console.log(`Task ${updatedTask.id} verified successfully via mutation.`);
 
-      // Invalidate relevant queries to refetch data
-      // Invalidate the general list of assigned tasks
       queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
-      // Invalidate tasks specific to the student involved
+
       queryClient.invalidateQueries({
         queryKey: ['assigned-tasks', { studentId: updatedTask.studentId }],
       });
-      // Invalidate the student's balance as it might have changed
+
       queryClient.invalidateQueries({ queryKey: ['balance', updatedTask.studentId] });
-      // Invalidate the student's history (and potentially global history)
+
       queryClient.invalidateQueries({
         queryKey: ['ticket-history', { studentId: updatedTask.studentId }],
       });
-      queryClient.invalidateQueries({ queryKey: ['ticket-history'] }); // Global history
+      queryClient.invalidateQueries({ queryKey: ['ticket-history'] });
 
-      // Move to the next step in the modal (confirmation/re-assign step)
       setCurrentStep(3);
     },
     onError: (error, variables) => {
-      // Function to run on mutation error
       console.error(`Error verifying task ${variables.assignmentId} via mutation:`, error);
       Alert.alert(
         'Error',
         `Failed to verify task: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
-      // Optionally reset state or keep the user on the current step
     },
   });
 
-  // Mutation hook for handling the task re-assignment API call
   const reassignMutation = useMutation({
-    mutationFn: createAssignedTask, // Use the standard create task API function
+    mutationFn: createAssignedTask,
     onSuccess: createdAssignment => {
-      // Function to run on successful re-assignment
       console.log(`Task re-assigned successfully via mutation (New ID: ${createdAssignment.id})`);
       Alert.alert('Success', `Task "${createdAssignment.taskTitle}" re-assigned successfully.`);
 
-      // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
       queryClient.invalidateQueries({
         queryKey: ['assigned-tasks', { studentId: createdAssignment.studentId }],
       });
 
-      // Close the modal after successful re-assignment
       onClose();
     },
     onError: error => {
-      // Function to run on re-assignment error
       console.error('Error re-assigning task via mutation:', error);
       Alert.alert(
         'Error',
         `Failed to re-assign task: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
-      // Keep the modal open or handle as appropriate
     },
   });
 
-  // --- Effects ---
-
-  // Effect to reset the modal state when it becomes visible or the task changes
   useEffect(() => {
     if (visible && task) {
-      setCurrentStep(1); // Start at Step 1
-      setSelectedStatus(undefined); // Clear previous status
+      setCurrentStep(1);
+      setSelectedStatus(undefined);
       const taskBasePoints = task.taskBasePoints || 0;
-      setBaseTickets(taskBasePoints); // Store original base points
-      setAwardedPoints(0); // Reset awarded points
-      verifyMutation.reset(); // Reset verification mutation state
-      reassignMutation.reset(); // Reset re-assign mutation state
+      setBaseTickets(taskBasePoints);
+      setAwardedPoints(0);
+      verifyMutation.reset();
+      reassignMutation.reset();
     }
-  }, [visible, task]); // Dependencies: run when modal visibility or task changes
+  }, [visible, task]);
 
-  // --- Render Logic ---
-
-  // Don't render anything if modal is not visible or no task is provided
   if (!visible || !task) {
     return null;
   }
 
-  // Helper variables for display
   const taskTitle = task.taskTitle;
   const studentName = student ? getUserDisplayName(student) : task.studentId;
   const completedDateTime = task.completedDate
     ? new Date(task.completedDate).toLocaleString()
     : 'N/A';
 
-  // --- Event Handlers ---
-
-  // Handle selection of verification status in Step 1
   const handleStatusSelect = (status: TaskVerificationStatus) => {
     let initialPoints = 0;
     switch (status) {
       case 'verified':
-        initialPoints = baseTickets; // Default to full points
+        initialPoints = baseTickets;
         break;
       case 'partial':
-        initialPoints = Math.round(baseTickets * 0.5); // Default to half points
+        initialPoints = Math.round(baseTickets * 0.5);
         break;
       case 'incomplete':
-        initialPoints = 0; // Default to zero points
+        initialPoints = 0;
         break;
     }
     setSelectedStatus(status);
-    setAwardedPoints(initialPoints); // Set initial points based on status
-    setCurrentStep(2); // Move to Step 2 (Points Adjustment)
+    setAwardedPoints(initialPoints);
+    setCurrentStep(2);
   };
 
-  // Handle confirmation of points in Step 2, triggering the verification mutation
   const handleConfirmTickets = () => {
-    // Basic validation
     if (!selectedStatus || !currentUserId) {
       Alert.alert('Error', 'Status or Verifier ID missing.');
       return;
     }
-    // Prevent double submission
+
     if (verifyMutation.isPending) return;
 
-    // Ensure points are within valid range (0 to baseTickets)
     const finalPoints = Math.min(baseTickets, Math.max(0, awardedPoints));
 
-    // Prepare the payload for the PATCH request
     const updates: Partial<
       Pick<
         AssignedTask,
@@ -202,44 +150,34 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
       >
     > = {
       verificationStatus: selectedStatus,
-      verifiedById: currentUserId, // Set the verifier ID
-      // MSW handler will add verifiedDate, but you could add it here too:
-      // verifiedDate: new Date().toISOString(),
-      // Award points only if status is 'verified' or 'partial'
+      verifiedById: currentUserId,
+
       actualPointsAwarded:
         selectedStatus === 'verified' || selectedStatus === 'partial' ? finalPoints : undefined,
     };
 
-    // Execute the mutation
     verifyMutation.mutate({ assignmentId: task.id, updates });
   };
 
-  // Handle the "Re-assign Task" button click in Step 3
   const handleReassignTask = () => {
-    // Basic validation
     if (!task || !currentUserId) {
       Alert.alert('Error', 'Original task data or Assigner ID missing.');
       return;
     }
-    // Prevent double submission
+
     if (reassignMutation.isPending) return;
 
-    // Prepare payload for the POST request (creating a new task)
     const assignmentData = {
       studentId: task.studentId,
-      assignedById: currentUserId, // Current user re-assigns
-      taskTitle: task.taskTitle, // Use original details
+      assignedById: currentUserId,
+      taskTitle: task.taskTitle,
       taskDescription: task.taskDescription,
       taskBasePoints: task.taskBasePoints,
     };
 
-    // Execute the re-assignment mutation
     reassignMutation.mutate(assignmentData);
   };
 
-  // --- Conditional Rendering for Steps ---
-
-  // Step 1: Select Status
   if (currentStep === 1) {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -273,11 +211,9 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     );
   }
 
-  // Step 2: Adjust/Confirm Points
   if (currentStep === 2 && selectedStatus) {
-    // Ensure slider max value is at least 0 (or 1 for visual representation if 0)
     const sliderMaxValue = baseTickets >= 0 ? baseTickets : 0;
-    // Slider component might have issues with max=0, so set to 1 if base is 0
+
     const effectiveSliderMaxValue = sliderMaxValue === 0 ? 1 : sliderMaxValue;
 
     return (
@@ -291,7 +227,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               Status Selected:{' '}
               <Text
                 style={{
-                  /* Status color styling */ fontWeight: 'bold',
+                  fontWeight: 'bold',
                   color:
                     selectedStatus === 'verified'
                       ? colors.success
@@ -306,35 +242,32 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
 
             <Text style={modalStyles.stepTitle}>Step 2: Award Tickets</Text>
 
-            {/* Display current awarded points */}
+            {}
             <View style={modalStyles.pointsInputContainer}>
               <Text style={{ fontSize: 16 }}>Tickets Awarded:</Text>
               <Text style={modalStyles.awardedPointsText}>{awardedPoints}</Text>
             </View>
 
-            {/* Slider for points adjustment */}
+            {}
             <Slider
               style={modalStyles.slider}
               minimumValue={0}
-              maximumValue={effectiveSliderMaxValue} // Use effective max value
+              maximumValue={effectiveSliderMaxValue}
               step={1}
-              // Ensure slider value stays within bounds
               value={Math.min(effectiveSliderMaxValue, Math.max(0, awardedPoints))}
-              // Update awardedPoints state when slider changes
               onValueChange={value => setAwardedPoints(Math.round(value))}
               minimumTrackTintColor={colors.gold}
               maximumTrackTintColor={colors.borderPrimary}
               thumbTintColor={colors.primary}
-              // Disable slider while mutation is pending
               disabled={verifyMutation.isPending}
             />
-            {/* Display slider range */}
+            {}
             <View style={modalStyles.rangeText}>
               <Text>0</Text>
               <Text>Max: {baseTickets}</Text>
             </View>
 
-            {/* Loading and Error indicators for verification mutation */}
+            {}
             {verifyMutation.isPending && (
               <View style={modalStyles.loadingContainer}>
                 <ActivityIndicator size="small" color={colors.primary} />
@@ -350,22 +283,22 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               </Text>
             )}
 
-            {/* Action Buttons */}
+            {}
             <View style={modalStyles.buttonContainer}>
               <Button
                 title={verifyMutation.isPending ? 'Confirming...' : 'Confirm Tickets'}
                 onPress={handleConfirmTickets}
-                disabled={verifyMutation.isPending} // Disable while mutation is running
+                disabled={verifyMutation.isPending}
               />
               <Button
                 title="Back to Status"
-                onPress={() => setCurrentStep(1)} // Go back to Step 1
+                onPress={() => setCurrentStep(1)}
                 color={colors.secondary}
                 disabled={verifyMutation.isPending}
               />
             </View>
 
-            {/* Cancel Button */}
+            {}
             <View style={modalStyles.footerButton}>
               <Button
                 title="Cancel Verification"
@@ -380,7 +313,6 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     );
   }
 
-  // Step 3: Confirmation & Re-assign Option
   if (currentStep === 3) {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -395,7 +327,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               Tickets Awarded:{' '}
               <Text
                 style={{
-                  /* Points awarded styling */ fontWeight: 'bold',
+                  fontWeight: 'bold',
                   color: awardedPoints > 0 ? colors.success : colors.danger,
                 }}
               >
@@ -405,7 +337,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
 
             <Text style={modalStyles.stepTitle}>Step 3: Re-assign?</Text>
 
-            {/* Loading/Error indicator for re-assign mutation */}
+            {}
             {reassignMutation.isPending && (
               <View style={modalStyles.loadingContainer}>
                 <ActivityIndicator size="small" color={colors.primary} />
@@ -421,20 +353,16 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               </Text>
             )}
 
-            {/* Action Buttons */}
+            {}
             <View style={modalStyles.buttonContainer}>
               <Button
                 title={reassignMutation.isPending ? 'Re-assigning...' : 'Re-assign Task'}
-                onPress={handleReassignTask} // Trigger re-assignment mutation
-                disabled={reassignMutation.isPending} // Disable while pending
+                onPress={handleReassignTask}
+                disabled={reassignMutation.isPending}
               />
             </View>
             <View style={modalStyles.buttonContainer}>
-              <Button
-                title="Done"
-                onPress={onClose} // Close the modal
-                disabled={reassignMutation.isPending} // Disable if re-assign is happening
-              />
+              <Button title="Done" onPress={onClose} disabled={reassignMutation.isPending} />
             </View>
           </View>
         </View>
@@ -442,11 +370,9 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     );
   }
 
-  // Fallback if state is somehow invalid
   return null;
 };
 
-// Styles for the modal (assuming these are mostly unchanged)
 const modalStyles = StyleSheet.create({
   centeredView: {
     flex: 1,
