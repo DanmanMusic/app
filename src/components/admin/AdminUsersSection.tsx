@@ -20,7 +20,7 @@ import PaginationControls from './PaginationControls';
 type UserTab = 'students' | 'teachers' | 'parents';
 type StudentFilter = UserStatus | 'all';
 
-// Interface updated to accept isFetching and setFilter
+// Interface updated to accept isFetching, setFilter, and setSearchTerm
 interface AdminUsersSectionProps {
   displayData: Array<User | SimplifiedStudent>;
   currentPage: number;
@@ -30,10 +30,10 @@ interface AdminUsersSectionProps {
   setActiveTab: (tab: UserTab) => void;
   // Student-specific props
   studentFilter?: StudentFilter;
-  setStudentFilter?: (filter: StudentFilter) => void; // Kept this one
-  setFilter?: (filter: UserStatus | 'all') => void; // ADDED setFilter prop
+  setStudentFilter?: (filter: StudentFilter) => void; // Keep this name as it's used internally
+  setFilter?: (filter: UserStatus | 'all') => void; // Keep for completeness, though setStudentFilter is used
   studentSearchTerm?: string;
-  setStudentSearchTerm?: (term: string) => void;
+  setStudentSearchTerm?: (term: string) => void; // ADDED setSearchTerm prop definition
   // Loading/Error states
   isLoading: boolean;
   isFetching?: boolean;
@@ -60,10 +60,10 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   activeTab,
   setActiveTab,
   studentFilter,
-  setStudentFilter, // Keep receiving this prop
-  // setFilter, // We actually use setStudentFilter, so we don't need to destructure setFilter
+  setStudentFilter,
+  // setFilter, // Not explicitly used if setStudentFilter is preferred
   studentSearchTerm,
-  setStudentSearchTerm,
+  setStudentSearchTerm, // Destructure the correctly named prop
   isLoading,
   isFetching,
   isError,
@@ -73,15 +73,10 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   onInitiateAssignTaskForStudent,
 }) => {
 
-  const renderUserItem = ({ item }: { item: User | SimplifiedStudent }) => { /* ... */ const role = activeTab === 'students' ? 'student' : activeTab === 'teachers' ? 'teacher' : 'parent'; if (role === 'student') { return ( <AdminStudentItem student={item as SimplifiedStudent} mockInstruments={mockInstruments} onViewManage={onViewManageUser} onInitiateAssignTask={onInitiateAssignTaskForStudent} /> ); } else { return ( <AdminUserItem user={item as User} onViewManage={onViewManageUser} /> ); } };
-  const getErrorMessage = () => { /* ... */ if (!error) return 'An unknown error occurred.'; let resource = activeTab === 'students' ? 'students' : activeTab === 'teachers' ? 'teachers' : 'parents'; return `Error loading ${resource}: ${error.message}`; };
+  const renderUserItem = ({ item }: { item: User | SimplifiedStudent }) => { const role = activeTab === 'students' ? 'student' : activeTab === 'teachers' ? 'teacher' : 'parent'; if (role === 'student') { return ( <AdminStudentItem student={item as SimplifiedStudent} mockInstruments={mockInstruments} onViewManage={onViewManageUser} onInitiateAssignTask={onInitiateAssignTaskForStudent} /> ); } else { return ( <AdminUserItem user={item as User} onViewManage={onViewManageUser} /> ); } };
+  const getErrorMessage = () => { if (!error) return 'An unknown error occurred.'; let resource = activeTab === 'students' ? 'students' : activeTab === 'teachers' ? 'teachers' : 'parents'; return `Error loading ${resource}: ${error.message}`; };
 
-  // Use the passed setStudentFilter prop for the buttons
-  const handleFilterChange = (filter: StudentFilter) => {
-      if (setStudentFilter) {
-          setStudentFilter(filter);
-      }
-  };
+  const handleFilterChange = (filter: StudentFilter) => { if (setStudentFilter) { setStudentFilter(filter); } };
 
   return (
     <View>
@@ -91,11 +86,10 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
             <Button title={`Parents`} onPress={() => setActiveTab('parents')} color={activeTab === 'parents' ? colors.primary : colors.secondary}/>
         </View>
 
-        {activeTab === 'students' && studentFilter && setStudentFilter && (
+        {activeTab === 'students' && studentFilter && setStudentFilter && setStudentSearchTerm && ( // Check setStudentSearchTerm exists
              <View style={styles.filterAndSearchContainer}>
                 <View style={styles.filterContainer}>
                     <Text style={styles.filterLabel}>Show:</Text>
-                    {/* Use handleFilterChange which calls the passed setStudentFilter */}
                     <Button title="Active" onPress={() => handleFilterChange('active')} color={studentFilter === 'active' ? colors.success : colors.secondary}/>
                     <Button title="Inactive" onPress={() => handleFilterChange('inactive')} color={studentFilter === 'inactive' ? colors.warning : colors.secondary}/>
                     <Button title="All" onPress={() => handleFilterChange('all')} color={studentFilter === 'all' ? colors.info : colors.secondary}/>
@@ -105,7 +99,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
                     placeholder="Search Students by Name..."
                     placeholderTextColor={colors.textLight}
                     value={studentSearchTerm}
-                    onChangeText={setStudentSearchTerm}
+                    onChangeText={setStudentSearchTerm} // Use the prop directly
                     autoCapitalize="none"
                     autoCorrect={false}
                   />
