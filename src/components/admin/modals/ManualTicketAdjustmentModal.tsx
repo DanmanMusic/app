@@ -15,7 +15,6 @@ import {
 
 import { adjustTickets } from '../../../api/tickets';
 import { useAuth } from '../../../contexts/AuthContext';
-import { TicketTransaction } from '../../../mocks/mockTickets';
 import { colors } from '../../../styles/colors';
 import { ManualTicketAdjustmentModalProps } from '../../../types/componentProps';
 
@@ -60,7 +59,7 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
       setIsSubtracting(false);
       mutation.reset();
     }
-  }, [visible, studentId]);
+  }, [visible, studentId, mutation]);
 
   const handleAdjust = () => {
     if (!currentUserId) {

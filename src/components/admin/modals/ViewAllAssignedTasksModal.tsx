@@ -17,8 +17,6 @@ import { deleteAssignedTask } from '../../../api/assignedTasks';
 import { fetchStudents, fetchTeachers, fetchParents } from '../../../api/users';
 import {
   usePaginatedAssignedTasks,
-  TaskAssignmentFilterStatus,
-  StudentTaskFilterStatus,
 } from '../../../hooks/usePaginatedAssignedTasks';
 import { AssignedTask } from '../../../mocks/mockAssignedTasks';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
@@ -46,7 +44,6 @@ const AssignedTaskDetailItem = ({
   const student = allUsers.find(u => u.id === item.studentId);
   const assigner = allUsers.find(u => u.id === item.assignedById);
   const verifier = item.verifiedById ? allUsers.find(u => u.id === item.verifiedById) : null;
-  const getStatusText = () => {};
   const allowDelete =
     (!item.isComplete || item.verificationStatus === 'pending') && student?.status === 'active';
   const allowVerify =
@@ -54,46 +51,39 @@ const AssignedTaskDetailItem = ({
 
   return (
     <View style={adminSharedStyles.taskItem}>
-      {' '}
-      <Text style={adminSharedStyles.taskItemTitle}>{item.taskTitle}</Text>{' '}
+      <Text style={adminSharedStyles.taskItemTitle}>{item.taskTitle}</Text>
       <Text style={appSharedStyles.itemDetailText}>
-        {' '}
         Student: {student ? getUserDisplayName(student) : item.studentId}{' '}
-        {student && ` (${student.status})`}{' '}
-      </Text>{' '}
-      <Text style={adminSharedStyles.taskItemStatus}>Status: Status</Text>{' '}
+        {student && ` (${student.status})`}
+      </Text>
+      <Text style={adminSharedStyles.taskItemStatus}>Status: Status</Text>
       <Text style={appSharedStyles.itemDetailText}>
-        {' '}
         Assigned: {new Date(item.assignedDate).toLocaleDateString()} by{' '}
-        {assigner ? getUserDisplayName(assigner) : item.assignedById}{' '}
-      </Text>{' '}
+        {assigner ? getUserDisplayName(assigner) : item.assignedById}
+      </Text>
       {item.completedDate && (
         <Text style={appSharedStyles.itemDetailText}>
-          {' '}
-          Completed: {new Date(item.completedDate).toLocaleDateString()}{' '}
+          Completed: {new Date(item.completedDate).toLocaleDateString()}
         </Text>
-      )}{' '}
+      )}
       {item.verifiedDate && item.verificationStatus !== 'pending' && (
         <Text style={appSharedStyles.itemDetailText}>
-          {' '}
           Verified: {new Date(item.verifiedDate).toLocaleDateString()} by{' '}
-          {verifier ? getUserDisplayName(verifier) : item.verifiedById}{' '}
+          {verifier ? getUserDisplayName(verifier) : item.verifiedById}
         </Text>
-      )}{' '}
+      )}
       {item.actualPointsAwarded !== undefined && item.verificationStatus !== 'pending' && (
-        <Text style={adminSharedStyles.taskItemTickets}>
-          {' '}
+        <Text style={adminSharedStyles.taskItemTickets}>          
           Awarded: {item.actualPointsAwarded ?? 0} Tickets{' '}
         </Text>
-      )}{' '}
+      )}
       {item.isComplete && item.verificationStatus === 'pending' && (
         <Text style={adminSharedStyles.pendingNote}>Awaiting verification...</Text>
-      )}{' '}
+      )}
       <View style={adminSharedStyles.assignedTaskActions}>
-        {' '}
         {allowVerify && onInitiateVerification && (
           <Button title="Verify" onPress={() => onInitiateVerification(item)} disabled={disabled} />
-        )}{' '}
+        )}
         {allowDelete && (
           <Button
             title="Remove"
@@ -101,8 +91,8 @@ const AssignedTaskDetailItem = ({
             color={colors.danger}
             disabled={!allowDelete || disabled}
           />
-        )}{' '}
-      </View>{' '}
+        )}
+      </View>
     </View>
   );
 };
@@ -203,57 +193,49 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                 />
               )}
             </View>
-
-            {}
             <View style={modalStyles.filterSection}>
-              {}
               <View style={modalStyles.filterRow}>
-                {' '}
-                <Text style={modalStyles.filterLabel}>Task Status:</Text>{' '}
+                <Text style={modalStyles.filterLabel}>Task Status:</Text>
                 <Button
                   title="All"
                   onPress={() => setAssignmentFilter('all')}
                   color={assignmentFilter === 'all' ? colors.primary : colors.secondary}
-                />{' '}
+                />
                 <Button
                   title="Assigned"
                   onPress={() => setAssignmentFilter('assigned')}
                   color={assignmentFilter === 'assigned' ? colors.primary : colors.secondary}
-                />{' '}
+                />
                 <Button
                   title="Pending"
                   onPress={() => setAssignmentFilter('pending')}
                   color={assignmentFilter === 'pending' ? colors.warning : colors.secondary}
-                />{' '}
+                />
                 <Button
                   title="Completed"
                   onPress={() => setAssignmentFilter('completed')}
                   color={assignmentFilter === 'completed' ? colors.success : colors.secondary}
-                />{' '}
+                />
               </View>
               <View style={modalStyles.filterRow}>
-                {' '}
-                <Text style={modalStyles.filterLabel}>Student Status:</Text>{' '}
+                <Text style={modalStyles.filterLabel}>Student Status:</Text>
                 <Button
                   title="Active"
                   onPress={() => setStudentStatusFilter('active')}
                   color={studentStatusFilter === 'active' ? colors.success : colors.secondary}
-                />{' '}
+                />
                 <Button
                   title="Inactive"
                   onPress={() => setStudentStatusFilter('inactive')}
                   color={studentStatusFilter === 'inactive' ? colors.secondary : colors.secondary}
-                />{' '}
+                />
                 <Button
                   title="All"
                   onPress={() => setStudentStatusFilter('all')}
                   color={studentStatusFilter === 'all' ? colors.info : colors.secondary}
-                />{' '}
+                />
               </View>
             </View>
-
-            {}
-            {}
             {isDataLoading && (
               <ActivityIndicator
                 size="large"
@@ -266,8 +248,6 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                 <Text style={modalStyles.errorText}>Error</Text>
               </View>
             )}
-            {}
-
             {!isDataLoading && !isErrorTasks && (
               <FlatList
                 style={modalStyles.listContainer}
@@ -285,15 +265,12 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                 ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
                 ListEmptyComponent={
                   <Text style={[appSharedStyles.emptyListText, { padding: 20 }]}>
-                    {' '}
                     No tasks match the current filters.{' '}
                   </Text>
                 }
                 contentContainerStyle={{ paddingBottom: 10 }}
               />
             )}
-
-            {}
             <View style={modalStyles.footer}>
               {!isDataLoading && !isErrorTasks && totalPages > 1 && (
                 <PaginationControls
@@ -315,7 +292,6 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
         </View>
       </Modal>
 
-      {}
       <ConfirmationModal
         visible={isDeleteConfirmVisible}
         title="Confirm Removal"

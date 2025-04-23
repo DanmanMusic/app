@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 
 import { createUser, fetchTeachers } from '../../../api/users';
-import { Instrument } from '../../../mocks/mockInstruments';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
 import { CreateUserModalProps } from '../../../types/componentProps';
@@ -81,7 +80,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       setSelectedTeacherIds([]);
       mutation.reset();
     }
-  }, [visible]);
+  }, [visible, mutation]);
 
   const toggleInstrumentSelection = (id: string) => {
     setSelectedInstrumentIds(prev =>

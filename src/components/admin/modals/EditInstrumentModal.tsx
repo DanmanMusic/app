@@ -11,7 +11,6 @@ import {
   TextInput,
   Image,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 
 import { updateInstrument } from '../../../api/instruments';
@@ -46,7 +45,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
       setName(instrumentToEdit.name);
       mutation.reset();
     }
-  }, [visible, instrumentToEdit]);
+  }, [visible, instrumentToEdit, mutation]);
 
   const handleSave = () => {
     if (!instrumentToEdit) return;

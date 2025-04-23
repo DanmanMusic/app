@@ -11,7 +11,6 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 
 import { updateReward } from '../../../api/rewards';
@@ -47,7 +46,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
       setImageUrl(rewardToEdit.imageUrl);
       mutation.reset();
     }
-  }, [visible, rewardToEdit]);
+  }, [visible, rewardToEdit, mutation]);
 
   const handleSave = () => {
     if (!rewardToEdit) return;

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -16,26 +16,16 @@ import {
 
 import { deleteAssignedTask } from '../../api/assignedTasks';
 import { fetchInstruments } from '../../api/instruments';
-import { fetchTaskLibrary } from '../../api/taskLibrary';
-import { fetchStudentBalance, adjustTickets, redeemReward } from '../../api/tickets';
-import {
-  fetchStudents,
-  fetchTeachers,
-  deleteUser,
-  toggleUserStatus,
-  updateUser,
-} from '../../api/users';
-import { useAuth } from '../../contexts/AuthContext';
+import { fetchStudentBalance } from '../../api/tickets';
+import { fetchTeachers } from '../../api/users';
 import { usePaginatedStudentHistory } from '../../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../../hooks/usePaginatedStudentTasks';
 import { AssignedTask } from '../../mocks/mockAssignedTasks';
 import { Instrument } from '../../mocks/mockInstruments';
-import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
-import { TicketTransaction } from '../../mocks/mockTickets';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminStudentDetailViewProps } from '../../types/componentProps';
-import { User, UserRole } from '../../types/userTypes';
+import { User } from '../../types/userTypes';
 import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
 import { TicketHistoryItem } from '../../views/StudentView';
 import ConfirmationModal from '../common/ConfirmationModal';
@@ -48,13 +38,11 @@ import PaginationControls from './PaginationControls';
 
 export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   viewingStudentId,
-  adminUserName,
   onBack,
   onInitiateVerification,
   onAssignTask,
 }) => {
   const queryClient = useQueryClient();
-  const { currentUserId: adminUserId } = useAuth();
 
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isStatusModalVisible, setIsStatusModalVisible] = useState(false);
@@ -133,7 +121,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
 
   const deleteTaskMutation = useMutation({
     mutationFn: deleteAssignedTask,
-    onSuccess: (_, deletedAssignmentId) => {
+    onSuccess: (_, _deletedAssignmentId) => {
       Alert.alert('Success', 'Task assignment removed.');
       queryClient.invalidateQueries({
         queryKey: ['assigned-tasks', { studentId: viewingStudentId }],
@@ -249,7 +237,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
         <View style={styles.headerContainer}>
           <Button title="← Back to Admin" onPress={handleBackClick} />
           <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
-            {studentDisplayName}'s Details
+            {studentDisplayName}&apos;s Details
           </Text>
           <View style={styles.headerActions}>
             <Button
@@ -505,19 +493,4 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   headerActions: { flexDirection: 'row', gap: 10 },
-});
-
-const historyStyles = StyleSheet.create({
-  historyItemContainer: {
-    backgroundColor: colors.backgroundGrey,
-    padding: 10,
-    marginBottom: 5,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: colors.borderSecondary,
-  },
-  historyItemTimestamp: { fontSize: 12, color: colors.textVeryLight, marginBottom: 4 },
-  historyItemDetails: { fontSize: 14, color: colors.textSecondary },
-  historyItemAmount: { fontWeight: 'bold' },
-  historyItemNotes: { fontSize: 13, color: colors.textLight, marginTop: 4, fontStyle: 'italic' },
 });

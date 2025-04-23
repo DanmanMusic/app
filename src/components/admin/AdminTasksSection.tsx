@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-import { View, Text, Button, FlatList, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, Text, Button, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 
-import { AssignedTask } from '../../mocks/mockAssignedTasks';
 import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
@@ -43,12 +42,9 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
   return (
     <View>
       <Text style={appSharedStyles.sectionTitle}>Task Management</Text>
-      {}
       <View style={{ alignItems: 'flex-start', marginBottom: 20, gap: 5 }}>
         <Button title="Assign Task to Student" onPress={onInitiateAssignTask} />
       </View>
-
-      {}
       <Text style={adminSharedStyles.sectionSubTitle}>Task Library ({taskLibrary.length})</Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         {}
@@ -58,20 +54,14 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
           onPress={() => alert('TODO: Open Create Task Modal')}
         />
       </View>
-
-      {}
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
       )}
-
-      {}
       {isError && !isLoading && (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{getErrorMessage()}</Text>
         </View>
       )}
-
-      {}
       {!isLoading && !isError && (
         <FlatList
           data={taskLibrary}
@@ -84,11 +74,6 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
           )}
         />
       )}
-
-      {}
-      {}
-      {}
-      {}
     </View>
   );
 };

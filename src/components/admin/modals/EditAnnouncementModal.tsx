@@ -2,16 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  Button,
-  TextInput,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { Modal, View, Text, StyleSheet, Button, TextInput, ActivityIndicator } from 'react-native';
 
 import { updateAnnouncement } from '../../../api/announcements';
 import { Announcement, AnnouncementType } from '../../../mocks/mockAnnouncements';
@@ -48,7 +39,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
       setType(announcementToEdit.type);
       mutation.reset();
     }
-  }, [visible, announcementToEdit]);
+  }, [visible, announcementToEdit, mutation]);
 
   const handleSave = () => {
     if (!announcementToEdit) return;

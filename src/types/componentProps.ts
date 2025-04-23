@@ -176,7 +176,6 @@ export interface AdminInstrumentsSectionProps {}
 
 export interface AdminStudentDetailViewProps {
   viewingStudentId: string;
-  adminUserName: string;
   onAssignTask: () => void;
   onBack: () => void;
   onInitiateVerification?: (task: AssignedTask) => void;

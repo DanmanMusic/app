@@ -21,7 +21,6 @@ import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
 import { adminSharedStyles } from './adminSharedStyles';
 import PaginationControls from './PaginationControls';
 
-type UserTab = 'students' | 'teachers' | 'parents';
 type StudentFilter = UserStatus | 'all';
 
 const AdminUserItem = ({

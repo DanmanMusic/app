@@ -4,12 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { View, Text, StyleSheet, Button, FlatList, Image, ActivityIndicator } from 'react-native';
 
-import {
-  fetchInstruments,
-  createInstrument,
-  updateInstrument,
-  deleteInstrument,
-} from '../../api/instruments';
+import { fetchInstruments, deleteInstrument } from '../../api/instruments';
 import { Instrument } from '../../mocks/mockInstruments';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';

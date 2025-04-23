@@ -1,4 +1,4 @@
-import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
+import { AssignedTask } from '../mocks/mockAssignedTasks';
 import { UserStatus } from '../types/userTypes';
 
 export type TaskAssignmentFilterStatusAPI = 'all' | 'assigned' | 'pending' | 'completed';
@@ -88,7 +88,9 @@ export const createAssignedTask = async (
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] assignedTasks try/catch error:', e);
+    }
     console.error(`[API] Create Assigned Task failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -135,7 +137,9 @@ export const updateAssignedTask = async ({
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] assignedTasks try/catch error:', e);
+    }
     console.error(`[API] Update Assigned Task failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -159,7 +163,9 @@ export const deleteAssignedTask = async (assignmentId: string): Promise<void> =>
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] assignedTasks try/catch error:', e);
+    }
     console.error(`[API] Delete Assigned Task failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }

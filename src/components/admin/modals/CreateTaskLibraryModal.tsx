@@ -11,7 +11,6 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 
 import { createTaskLibraryItem } from '../../../api/taskLibrary';
@@ -46,7 +45,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
       setBaseTickets('');
       mutation.reset();
     }
-  }, [visible]);
+  }, [visible, mutation]);
 
   const handleCreate = () => {
     const numericTickets =

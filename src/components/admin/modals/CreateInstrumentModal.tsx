@@ -2,16 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  Button,
-  TextInput,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { Modal, View, Text, StyleSheet, Button, TextInput, ActivityIndicator } from 'react-native';
 
 import { createInstrument } from '../../../api/instruments';
 import { Instrument } from '../../../mocks/mockInstruments';
@@ -40,7 +31,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
       setName('');
       mutation.reset();
     }
-  }, [visible]);
+  }, [visible, mutation]);
 
   const handleCreate = () => {
     if (!name.trim()) {

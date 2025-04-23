@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { View, Text, StyleSheet, Button, FlatList, Image, ActivityIndicator } from 'react-native';
 
-import { fetchRewards, createReward, updateReward, deleteReward } from '../../api/rewards';
+import { fetchRewards, deleteReward } from '../../api/rewards';
 import { RewardItem } from '../../mocks/mockRewards';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';

@@ -11,7 +11,6 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 
 import { createReward } from '../../../api/rewards';
@@ -47,7 +46,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
       setImageUrl('');
       mutation.reset();
     }
-  }, [visible]);
+  }, [visible, mutation]);
 
   const handleCreate = () => {
     const numericCost = typeof cost === 'number' ? cost : parseInt(String(cost || '0'), 10);

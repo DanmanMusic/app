@@ -88,7 +88,9 @@ export const adjustTickets = async ({
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] tickets try/catch error:', e);
+    }
     console.error(`[API] Adjust Tickets failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -121,7 +123,9 @@ export const redeemReward = async ({
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] tickets try/catch error:', e);
+    }
     console.error(`[API] Redeem Reward failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }

@@ -11,7 +11,6 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 
 import { updateTaskLibraryItem } from '../../../api/taskLibrary';
@@ -50,7 +49,7 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       setBaseTickets(taskToEdit.baseTickets);
       mutation.reset();
     }
-  }, [visible, taskToEdit]);
+  }, [visible, taskToEdit, mutation]);
 
   const handleSave = () => {
     if (!taskToEdit) return;

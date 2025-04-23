@@ -1,9 +1,5 @@
 import { Instrument } from '../mocks/mockInstruments';
 
-interface InstrumentsListResponse {
-  items: Instrument[];
-}
-
 /**
  * Fetches all instruments.
  */
@@ -39,7 +35,9 @@ export const createInstrument = async (
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] instruments try/catch error:', e);
+    }
     console.error(`[API] Create Instrument failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -70,7 +68,9 @@ export const updateInstrument = async ({
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] instruments try/catch error:', e);
+    }
     console.error(`[API] Update Instrument failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -93,7 +93,9 @@ export const deleteInstrument = async (instrumentId: string): Promise<void> => {
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] instruments try/catch error:', e);
+    }
     console.error(`[API] Delete Instrument failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }

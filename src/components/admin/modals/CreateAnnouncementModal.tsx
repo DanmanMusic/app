@@ -2,16 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  Button,
-  TextInput,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { Modal, View, Text, StyleSheet, Button, TextInput, ActivityIndicator } from 'react-native';
 
 import { createAnnouncement } from '../../../api/announcements';
 import { Announcement, AnnouncementType } from '../../../mocks/mockAnnouncements';
@@ -45,7 +36,7 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
       setType('announcement');
       mutation.reset();
     }
-  }, [visible]);
+  }, [visible, mutation]);
 
   const handleCreate = () => {
     if (!title.trim()) {
@@ -92,23 +83,12 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
             numberOfLines={4}
             editable={!mutation.isPending}
           />
-
-          {}
-          {}
-          {/* <Picker selectedValue={type} onValueChange={(itemValue) => setType(itemValue)}>
-              <Picker.Item label="General Announcement" value="announcement" />
-              <Picker.Item label="Challenge" value="challenge" />
-              </Picker> */}
-
-          {}
           {mutation.isPending && (
             <View style={modalStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={modalStyles.loadingText}>Creating Announcement...</Text>
             </View>
           )}
-
-          {}
           {mutation.isError && (
             <Text style={modalStyles.errorText}>
               Error:{' '}
@@ -117,7 +97,6 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
                 : 'Failed to create announcement'}
             </Text>
           )}
-
           <View style={modalStyles.buttonContainer}>
             <Button
               title="Create Announcement"

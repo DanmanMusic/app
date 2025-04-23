@@ -118,7 +118,9 @@ export const createUser = async (userData: Omit<User, 'id' | 'status'>): Promise
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] users try/catch error:', e);
+    }
     console.error(`[API] Create User failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -149,7 +151,9 @@ export const updateUser = async ({
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] users try/catch error:', e);
+    }
     console.error(`[API] Update User failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -167,7 +171,9 @@ export const deleteUser = async (userId: string): Promise<void> => {
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] users try/catch error:', e);
+    }
     console.error(`[API] Delete User failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -195,7 +201,9 @@ export const toggleUserStatus = async (userId: string): Promise<User> => {
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] users try/catch error:', e);
+    }
     console.error(`[API] Toggle Status failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }

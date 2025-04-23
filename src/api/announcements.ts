@@ -1,9 +1,5 @@
 import { Announcement } from '../mocks/mockAnnouncements';
 
-interface AnnouncementsListResponse {
-  items: Announcement[];
-}
-
 /**
  * Fetches all announcements.
  * TODO: Add pagination/filtering parameters if needed.
@@ -47,7 +43,9 @@ export const createAnnouncement = async (
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] announcements try/catch error:', e);
+    }
     console.error(`[API] Create Announcement failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -78,7 +76,9 @@ export const updateAnnouncement = async ({
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] announcements try/catch error:', e);
+    }
     console.error(`[API] Update Announcement failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -101,7 +101,9 @@ export const deleteAnnouncement = async (announcementId: string): Promise<void> 
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] announcements try/catch error:', e);
+    }
     console.error(`[API] Delete Announcement failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }

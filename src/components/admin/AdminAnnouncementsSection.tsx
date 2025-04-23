@@ -4,12 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { View, Text, Button, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 
-import {
-  fetchAnnouncements,
-  createAnnouncement,
-  updateAnnouncement,
-  deleteAnnouncement,
-} from '../../api/announcements';
+import { fetchAnnouncements, deleteAnnouncement } from '../../api/announcements';
 import { Announcement } from '../../mocks/mockAnnouncements';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';

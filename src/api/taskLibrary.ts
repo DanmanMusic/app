@@ -1,9 +1,5 @@
 import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
 
-interface TaskLibraryListResponse {
-  items: TaskLibraryItem[];
-}
-
 /**
  * Fetches the entire task library.
  * TODO: Add pagination/filtering parameters if needed.
@@ -16,7 +12,6 @@ export const fetchTaskLibrary = async (): Promise<TaskLibraryItem[]> => {
     console.error(`[API] Task Library Network response was not ok: ${response.statusText}`);
     throw new Error(`Failed to fetch task library: ${response.statusText}`);
   }
-
   const data: TaskLibraryItem[] = await response.json();
   console.log(`[API] Received ${data?.length} task library items from API mock.`);
   return data;
@@ -40,7 +35,9 @@ export const createTaskLibraryItem = async (
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] taskLibrary try/catch error:', e);
+    }
     console.error(`[API] Create Task Library Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -71,7 +68,9 @@ export const updateTaskLibraryItem = async ({
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] taskLibrary try/catch error:', e);
+    }
     console.error(`[API] Update Task Library Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -94,7 +93,9 @@ export const deleteTaskLibraryItem = async (taskId: string): Promise<void> => {
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] taskLibrary try/catch error:', e);
+    }
     console.error(`[API] Delete Task Library Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }

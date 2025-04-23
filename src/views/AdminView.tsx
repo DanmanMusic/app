@@ -1,7 +1,6 @@
-import React, { useState, useMemo } from 'react';
-
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
+import React, { useState } from 'react';
+// Import necessary hooks and components
+import { useQuery } from '@tanstack/react-query'; // Removed useMutation as it's not used directly here
 import {
   View,
   Text,
@@ -9,39 +8,52 @@ import {
   Button,
   FlatList,
   StyleSheet,
-  ActivityIndicator,
-  Alert,
+  ActivityIndicator, // Removed Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+// Import API functions used by queries in this view
 import { fetchAssignedTasks } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
 import { fetchTaskLibrary } from '../api/taskLibrary';
+// Import API functions (assuming fetchUserById exists or is handled by fetch)
+// import { fetchUserById } from '../api/users'; // If using a specific function
+
+// Import Child Components (Sections)
 import { AdminAnnouncementsSection } from '../components/admin/AdminAnnouncementsSection';
 import { AdminDashboardSection } from '../components/admin/AdminDashboardSection';
 import { AdminHistorySection } from '../components/admin/AdminHistorySection';
 import { AdminInstrumentsSection } from '../components/admin/AdminInstrumentsSection';
 import { AdminRewardsSection } from '../components/admin/AdminRewardsSection';
-import { adminSharedStyles } from '../components/admin/adminSharedStyles';
 import { AdminStudentDetailView } from '../components/admin/AdminStudentDetailView';
 import { AdminTasksSection } from '../components/admin/AdminTasksSection';
 import { AdminUsersSection } from '../components/admin/AdminUsersSection';
+
+// Import Modals triggered by this view
 import CreateUserModal from '../components/admin/modals/CreateUserModal';
 import { ViewAllAssignedTasksModal } from '../components/admin/modals/ViewAllAssignedTasksModal';
 import AssignTaskModal from '../components/common/AssignTaskModal';
+
+// Import Contexts and Hooks
 import { useAuth } from '../contexts/AuthContext';
 import { usePaginatedParents } from '../hooks/usePaginatedParents';
 import { usePaginatedStudents } from '../hooks/usePaginatedStudents';
 import { usePaginatedTeachers } from '../hooks/usePaginatedTeachers';
+
+// Import Types
 import { AssignedTask } from '../mocks/mockAssignedTasks';
 import { Instrument } from '../mocks/mockInstruments';
 import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
+import { AdminViewProps } from '../types/componentProps'; // Use imported props type
+import { User, UserRole } from '../types/userTypes';
+
+// Import Utils and Styles
+import { getUserDisplayName } from '../utils/helpers';
+import { adminSharedStyles } from '../components/admin/adminSharedStyles';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
-import { AdminViewProps } from '../types/componentProps';
-import { User, UserRole } from '../types/userTypes';
-import { getUserDisplayName } from '../utils/helpers';
 
+// --- Style Definitions ---
 const adminPendingListStyles = StyleSheet.create({
   pendingItem: {
     backgroundColor: colors.backgroundPrimary,
@@ -90,7 +102,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
 });
+// --- End Style Definitions ---
 
+// --- Type Definitions ---
 type AdminSection =
   | 'dashboard'
   | 'dashboard-pending-verification'
@@ -102,13 +116,16 @@ type AdminSection =
   | 'instruments';
 
 type UserTab = 'students' | 'teachers' | 'parents';
+// --- End Type Definitions ---
 
 export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId } = useAuth();
-  const queryClient = useQueryClient();
+  // Removed queryClient as it wasn't used directly here
+  // const queryClient = useQueryClient();
 
+  // --- State ---
   const [viewingSection, setViewingSection] = useState<AdminSection>('dashboard');
-  const [viewingStudentId, setViewingStudentId] = useState<string | null>(null);
+  const [viewingStudentId, setViewingStudentId] = useState<string | null>(null); // ID for detail view
   const [activeUserTab, setActiveUserTab] = useState<UserTab>('students');
   const [isCreateUserModalVisible, setIsCreateUserModalVisible] = useState(false);
   const [isAssignTaskModalVisible, setIsAssignTaskModalVisible] = useState(false);
@@ -116,7 +133,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const [isViewAllAssignedTasksModalVisible, setIsViewAllAssignedTasksModalVisible] =
     useState(false);
 
-  const { data: adminUser, isLoading: adminLoading } = useQuery<User, Error>({
+  // --- TQ Queries ---
+  // Fetch Admin User Data
+  const {
+    data: adminUser,
+    isLoading: adminLoading,
+    isError: adminError,
+  } = useQuery<User, Error>({
     queryKey: ['user', currentUserId],
     queryFn: async () => {
       if (!currentUserId) throw new Error('No admin user ID');
@@ -130,6 +153,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     staleTime: 15 * 60 * 1000,
   });
 
+  // Fetch Task Library (needed for AdminTasksSection props)
   const {
     data: taskLibrary = [],
     isLoading: libraryLoading,
@@ -140,6 +164,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     staleTime: 10 * 60 * 1000,
   });
 
+  // Fetch Paginated User Lists
   const {
     students,
     currentPage: studentPage,
@@ -154,7 +179,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     isError: isStudentListError,
     error: studentListError,
   } = usePaginatedStudents();
-
   const {
     teachers,
     currentPage: teacherPage,
@@ -165,7 +189,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     isError: isTeacherListError,
     error: teacherListError,
   } = usePaginatedTeachers();
-
   const {
     parents,
     currentPage: parentPage,
@@ -177,6 +200,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     error: parentListError,
   } = usePaginatedParents();
 
+  // Fetch Instruments
   const { data: fetchedInstruments = [], isLoading: instrumentsLoading } = useQuery<
     Instrument[],
     Error
@@ -184,9 +208,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     queryKey: ['instruments'],
     queryFn: fetchInstruments,
     staleTime: Infinity,
-    gcTime: Infinity,
   });
 
+  // Fetch Pending Tasks for Dashboard/List
   const {
     data: assignedTasksResult,
     isLoading: assignedTasksLoading,
@@ -200,45 +224,105 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   });
   const pendingTasks = assignedTasksResult?.items ?? [];
 
-  const allTeachersForModal = useMemo(
-    () => teachers.filter(t => t.status === 'active'),
-    [teachers]
-  );
   const pendingVerifications = pendingTasks;
 
-  const handleViewManageUser = (userId: string, role: UserRole) => {};
-  const handleBackFromStudentDetail = () => {};
-  const handleInternalInitiateVerificationModal = (task: AssignedTask) => {};
-  const handleInitiateAssignTaskForStudent = (studentId: string) => {};
-  const handleInitiateAssignTaskGeneral = () => {};
-  const handleAssignTaskModalClose = () => {};
-  const handleViewAllAssignedTasks = () => {};
-  const handleViewAllAssignedTasksModalClose = () => {};
+  // --- Event Handlers ---
+  const handleViewManageUser = (userId: string, role: UserRole) => {
+    console.log(`[AdminView] handleViewManageUser called with ID: ${userId}, Role: ${role}`);
+    if (role === 'student') {
+      setViewingStudentId(userId); // Set state to trigger detail view render
+    } else {
+      // Placeholder for viewing other user types (could open a simpler modal)
+      const userList = role === 'teacher' ? teachers : role === 'parent' ? parents : [];
+      const user = userList.find(u => u.id === userId);
+      alert(
+        `TODO: Implement viewing/managing for ${role}: ${user ? getUserDisplayName(user) : userId}`
+      );
+    }
+  };
 
+  const handleBackFromStudentDetail = () => {
+    setViewingStudentId(null); // Clear student ID to return to list view
+    setViewingSection('users'); // Optionally switch back to users tab
+  };
+
+  // Use the prop directly if it exists
+  const handleInternalInitiateVerificationModal = (task: AssignedTask) => {
+    if (onInitiateVerificationModal) {
+      onInitiateVerificationModal(task); // Call the passed-in function
+    } else {
+      console.warn('onInitiateVerificationModal prop not provided to AdminView');
+    }
+  };
+
+  const handleInitiateAssignTaskForStudent = (studentId: string) => {
+    setAssignTaskTargetStudentId(studentId); // Pre-select student
+    setIsAssignTaskModalVisible(true); // Open modal
+  };
+
+  const handleInitiateAssignTaskGeneral = () => {
+    setAssignTaskTargetStudentId(null); // No pre-selection
+    setIsAssignTaskModalVisible(true); // Open modal
+  };
+
+  const handleAssignTaskModalClose = () => {
+    setIsAssignTaskModalVisible(false);
+    setAssignTaskTargetStudentId(null);
+  };
+
+  const handleViewAllAssignedTasks = () => {
+    setIsViewAllAssignedTasksModalVisible(true);
+  };
+
+  const handleViewAllAssignedTasksModalClose = () => {
+    setIsViewAllAssignedTasksModalVisible(false);
+  };
+
+  // --- Render Logic ---
   const isLoadingCoreData = adminLoading || instrumentsLoading;
   if (isLoadingCoreData) {
+    // Render loading state while essential admin/instrument data loads
+    return (
+      <SafeAreaView style={appSharedStyles.safeArea}>
+        <View style={appSharedStyles.container}>
+          <ActivityIndicator size="large" />
+        </View>
+      </SafeAreaView>
+    );
   }
-  if (!adminUser) {
+  if (!adminUser || adminError) {
+    // Render error state if admin data failed
+    return (
+      <SafeAreaView style={appSharedStyles.safeArea}>
+        <View style={appSharedStyles.container}>
+          <Text style={appSharedStyles.textDanger}>Error loading Admin user data.</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
+  // Render Student Detail View if an ID is set
   if (viewingStudentId) {
     return (
       <AdminStudentDetailView
-        viewingStudentId={viewingStudentId}
-        adminUserName={adminUser ? getUserDisplayName(adminUser) : 'Admin'}
+        viewingStudentId={viewingStudentId} // Pass the ID
+        adminUserName={getUserDisplayName(adminUser)} // Pass admin name
         onBack={handleBackFromStudentDetail}
+        // Let detail view fetch its own users if needed for lookups like teacher names
+        // Pass callbacks for actions managed/triggered at App level or AdminView level
         onInitiateVerification={handleInternalInitiateVerificationModal}
-        onAssignTask={() => handleInitiateAssignTaskForStudent(viewingStudentId)}
+        onAssignTask={() => handleInitiateAssignTaskForStudent(viewingStudentId)} // Opens modal managed here
+        // Removed onRedeemReward, onDeleteAssignment - should be handled via TQ/modals internally
       />
     );
   }
 
+  // Render Main Admin View Content
   const showBackButton = viewingSection !== 'dashboard';
   const isUsersLoading = isStudentListLoading || isTeacherListLoading || isParentListLoading;
 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      {}
       <View style={styles.headerContainer}>
         <View style={styles.headerSideContainer}>
           {showBackButton ? (
@@ -259,12 +343,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         </View>
       </View>
 
-      {}
       <ScrollView style={appSharedStyles.container}>
-        {}
         {viewingSection !== 'dashboard-pending-verification' && (
           <View style={adminSharedStyles.adminNav}>
-            {}
             <Button
               title="Dashboard"
               onPress={() => setViewingSection('dashboard')}
@@ -303,13 +384,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           </View>
         )}
 
-        {}
         {viewingSection === 'dashboard' && (
           <AdminDashboardSection
             onViewPendingVerifications={() => setViewingSection('dashboard-pending-verification')}
           />
         )}
-        {}
         {viewingSection === 'dashboard-pending-verification' && (
           <View>
             <Text style={appSharedStyles.sectionTitle}>
@@ -377,7 +456,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             )}
           </View>
         )}
-        {}
         {viewingSection === 'users' && (
           <AdminUsersSection
             displayData={
@@ -441,13 +519,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             onInitiateAssignTaskForStudent={handleInitiateAssignTaskForStudent}
           />
         )}
-        {}
         {viewingSection === 'tasks' && (
           <AdminTasksSection
             taskLibrary={taskLibrary}
             isLoading={libraryLoading}
             isError={libraryError ?? false}
             onInitiateAssignTask={handleInitiateAssignTaskGeneral}
+            // Removed onInitiateVerification - it's triggered from other lists
           />
         )}
         {viewingSection === 'rewards' && <AdminRewardsSection />}
@@ -456,7 +534,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         {viewingSection === 'instruments' && <AdminInstrumentsSection />}
       </ScrollView>
 
-      {}
       <CreateUserModal
         visible={isCreateUserModalVisible}
         onClose={() => setIsCreateUserModalVisible(false)}
@@ -472,6 +549,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         onClose={handleViewAllAssignedTasksModalClose}
         onInitiateVerification={handleInternalInitiateVerificationModal}
       />
+
       {viewingSection === 'tasks' && (
         <View style={{ alignItems: 'flex-start', paddingHorizontal: 15, paddingBottom: 20 }}>
           <Button title="View All Assigned Tasks" onPress={handleViewAllAssignedTasks} />

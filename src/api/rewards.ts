@@ -1,9 +1,5 @@
 import { RewardItem } from '../mocks/mockRewards';
 
-interface RewardsListResponse {
-  items: RewardItem[];
-}
-
 /**
  * Fetches the entire rewards catalog.
  * TODO: Add pagination/filtering parameters if needed.
@@ -38,7 +34,9 @@ export const createReward = async (rewardData: Omit<RewardItem, 'id'>): Promise<
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] rewards try/catch error:', e);
+    }
     console.error(`[API] Create Reward Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -69,7 +67,9 @@ export const updateReward = async ({
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] rewards try/catch error:', e);
+    }
     console.error(`[API] Update Reward Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
@@ -92,7 +92,9 @@ export const deleteReward = async (rewardId: string): Promise<void> => {
     try {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {}
+    } catch (e) {
+      console.log('[API] rewards try/catch error:', e);
+    }
     console.error(`[API] Delete Reward Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
   }
