@@ -1,54 +1,54 @@
-// src/hooks/usePaginatedTicketHistory.ts
+
 import { useState, useCallback } from 'react';
-import { useQuery, keepPreviousData } from '@tanstack/react-query'; // Import TQ hooks
+import { useQuery, keepPreviousData } from '@tanstack/react-query'; 
 
-// API Client & Types
-import { fetchTicketHistory } from '../api/tickets'; // Import API function
+
+import { fetchTicketHistory } from '../api/tickets'; 
 import { TicketTransaction } from '../mocks/mockTickets';
-// Removed: useData context import
 
-// Define the shape of the return value, adding TQ flags
+
+
 export interface UsePaginatedTicketHistoryReturn {
-  history: TicketTransaction[]; // Transactions for the current page
+  history: TicketTransaction[]; 
   currentPage: number;
   totalPages: number;
-  totalItems: number; // Added total count
+  totalItems: number; 
   setPage: (page: number) => void;
-  isLoading: boolean; // From TQ
-  isFetching: boolean; // From TQ
-  isPlaceholderData: boolean; // From TQ
-  isError: boolean; // From TQ
-  error: Error | null; // From TQ
+  isLoading: boolean; 
+  isFetching: boolean; 
+  isPlaceholderData: boolean; 
+  isError: boolean; 
+  error: Error | null; 
 }
 
-const ITEMS_PER_PAGE = 15; // Page size for global history view
+const ITEMS_PER_PAGE = 15; 
 
 export const usePaginatedTicketHistory = (): UsePaginatedTicketHistoryReturn => {
-  // Removed: useData hook call
+  
 
-  // State for pagination
+  
   const [currentPage, setCurrentPage] = useState(1);
 
-  // --- TanStack Query ---
+  
   const queryResult = useQuery({
-    // Query key for global history includes page and limit
+    
     queryKey: ['ticket-history', { page: currentPage, limit: ITEMS_PER_PAGE }],
-    // Query function calls the API client without studentId for global view
+    
     queryFn: () => fetchTicketHistory({ page: currentPage, limit: ITEMS_PER_PAGE }),
-    placeholderData: keepPreviousData, // Show previous data while fetching
-    staleTime: 1 * 60 * 1000, // History might update frequently
+    placeholderData: keepPreviousData, 
+    staleTime: 1 * 60 * 1000, 
     gcTime: 5 * 60 * 1000,
   });
 
-  // Extract data and state from queryResult
+  
   const { data, isLoading, isFetching, isError, error, isPlaceholderData } = queryResult;
 
-  // Memoized values from data or defaults
+  
   const history = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
   const totalItems = data?.totalItems ?? 0;
 
-  // Function to change the current page
+  
   const setPage = useCallback(
     (page: number) => {
       console.log(`[usePaginatedTicketHistory] setPage called with: ${page}`);
@@ -65,12 +65,12 @@ export const usePaginatedTicketHistory = (): UsePaginatedTicketHistoryReturn => 
     [totalPages]
   );
 
-  // Return the state and functions needed by components
+  
   return {
     history,
     currentPage,
     totalPages,
-    totalItems, // Return total count
+    totalItems, 
     setPage,
     isLoading,
     isFetching,

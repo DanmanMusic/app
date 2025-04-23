@@ -1,16 +1,16 @@
-// src/api/taskLibrary.ts
-import { TaskLibraryItem } from '../mocks/mockTaskLibrary'; // Assuming this is still the source for the type
 
-// --- API Response Interfaces (Adjust if backend differs) ---
+import { TaskLibraryItem } from '../mocks/mockTaskLibrary'; 
+
+
 interface TaskLibraryListResponse {
   items: TaskLibraryItem[];
-  // Add pagination fields if needed later
-  // totalPages: number;
-  // currentPage: number;
-  // totalItems: number;
+  
+  
+  
+  
 }
 
-// --- Fetch Functions ---
+
 
 /**
  * Fetches the entire task library.
@@ -18,22 +18,22 @@ interface TaskLibraryListResponse {
  */
 export const fetchTaskLibrary = async (): Promise<TaskLibraryItem[]> => {
   console.log(`[API] Fetching Task Library`);
-  const response = await fetch('/api/task-library'); // Using simple endpoint for now
+  const response = await fetch('/api/task-library'); 
   console.log(`[API] Task Library Response status: ${response.status}`);
   if (!response.ok) {
     console.error(`[API] Task Library Network response was not ok: ${response.statusText}`);
     throw new Error(`Failed to fetch task library: ${response.statusText}`);
   }
-  // Assuming the API returns the full list directly for now
-  // If it returns an object like { items: [...] }, adjust accordingly:
-  // const data: TaskLibraryListResponse = await response.json();
-  // return data.items;
+  
+  
+  
+  
   const data: TaskLibraryItem[] = await response.json();
   console.log(`[API] Received ${data?.length} task library items from API mock.`);
   return data;
 };
 
-// --- Mutation Functions ---
+
 
 /**
  * Creates a new task library item.
@@ -54,7 +54,7 @@ export const createTaskLibraryItem = async (
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
     } catch (e) {
-      /* Ignore */
+      
     }
     console.error(`[API] Create Task Library Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
@@ -87,7 +87,7 @@ export const updateTaskLibraryItem = async ({
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
     } catch (e) {
-      /* Ignore */
+      
     }
     console.error(`[API] Update Task Library Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
@@ -112,7 +112,7 @@ export const deleteTaskLibraryItem = async (taskId: string): Promise<void> => {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
     } catch (e) {
-      /* Ignore */
+      
     }
     console.error(`[API] Delete Task Library Item failed: ${errorMsg}`);
     throw new Error(errorMsg);

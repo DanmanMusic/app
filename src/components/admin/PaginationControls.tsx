@@ -1,4 +1,4 @@
-// src/components/admin/PaginationControls.tsx
+
 import React from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 import { colors } from '../../styles/colors';
@@ -26,7 +26,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
     }
   };
 
-  // Don't render if there's only one page or less
+  
   if (totalPages <= 1) {
     return null;
   }
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.textSecondary,
-    marginHorizontal: 15, // Add some space around the text
+    marginHorizontal: 15, 
   },
 });
 

@@ -1,15 +1,12 @@
-// src/api/assignedTasks.ts
-import {
-  AssignedTask,
-  TaskVerificationStatus,
-} from '../mocks/mockAssignedTasks'; // Assuming type source
-import { UserStatus } from '../types/userTypes'; // For filtering
 
-// Type definitions matching the hook filters
+import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks'; 
+import { UserStatus } from '../types/userTypes'; 
+
+
 export type TaskAssignmentFilterStatusAPI = 'all' | 'assigned' | 'pending' | 'completed';
 export type StudentTaskFilterStatusAPI = UserStatus | 'all';
 
-// --- API Response Interfaces (Adjust if backend differs) ---
+
 interface AssignedTasksListResponse {
   items: AssignedTask[];
   totalPages: number;
@@ -17,17 +14,17 @@ interface AssignedTasksListResponse {
   totalItems: number;
 }
 
-// --- Fetch Functions ---
+
 
 /**
  * Fetches assigned tasks with pagination and filtering.
  */
 export const fetchAssignedTasks = async ({
   page = 1,
-  limit = 10, // Default limit
+  limit = 10, 
   assignmentStatus = 'all',
   studentStatus = 'all',
-  studentId, // Optional: Filter by specific student
+  studentId, 
 }: {
   page?: number;
   limit?: number;
@@ -64,16 +61,19 @@ export const fetchAssignedTasks = async ({
   return data;
 };
 
-// --- Mutation Functions ---
+
 
 /**
  * Creates a new assigned task.
  * Corresponds to Admin/Teacher assigning a task.
  */
 export const createAssignedTask = async (
-  // --- FIX: Expect assignedById in the input type ---
-  assignmentData: Omit<AssignedTask, 'id' | 'isComplete' | 'verificationStatus' | 'assignedDate'> & {
-    assignedById: string; // Expect assignedById to match the type
+  
+  assignmentData: Omit<
+    AssignedTask,
+    'id' | 'isComplete' | 'verificationStatus' | 'assignedDate'
+  > & {
+    assignedById: string; 
   }
 ): Promise<AssignedTask> => {
   console.log(
@@ -82,17 +82,17 @@ export const createAssignedTask = async (
     'to student',
     assignmentData.studentId
   );
-  // --- FIX: Ensure the payload sent matches backend expectation if needed ---
-  // If backend *strictly* expects 'assignerId', map it here:
-  // const payload = { ...assignmentData, assignerId: assignmentData.assignedById };
-  // delete (payload as any).assignedById;
-  // Otherwise, send assignmentData directly if backend expects assignedById
+  
+  
+  
+  
+  
   const payload = assignmentData;
 
   const response = await fetch('/api/assigned-tasks', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload), // Send the correct payload
+    body: JSON.stringify(payload), 
   });
   console.log(`[API] Create Assigned Task Response status: ${response.status}`);
   if (!response.ok) {
@@ -101,7 +101,7 @@ export const createAssignedTask = async (
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
     } catch (e) {
-      /* Ignore */
+      
     }
     console.error(`[API] Create Assigned Task failed: ${errorMsg}`);
     throw new Error(errorMsg);
@@ -130,12 +130,12 @@ export const updateAssignedTask = async ({
       | 'verifiedDate'
       | 'actualPointsAwarded'
     >
-  >; // Only allow updating specific fields
+  >; 
 }): Promise<AssignedTask> => {
   console.log(`[API] Updating assigned task ${assignmentId}:`, updates);
-  // Basic validation on updates client-side?
+  
   if (updates.actualPointsAwarded != null && updates.actualPointsAwarded < 0) {
-     throw new Error("Awarded points cannot be negative.");
+    throw new Error('Awarded points cannot be negative.');
   }
 
   const response = await fetch(`/api/assigned-tasks/${assignmentId}`, {
@@ -150,7 +150,7 @@ export const updateAssignedTask = async ({
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
     } catch (e) {
-      /* Ignore */
+      
     }
     console.error(`[API] Update Assigned Task failed: ${errorMsg}`);
     throw new Error(errorMsg);
@@ -176,7 +176,7 @@ export const deleteAssignedTask = async (assignmentId: string): Promise<void> =>
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
     } catch (e) {
-      /* Ignore */
+      
     }
     console.error(`[API] Delete Assigned Task failed: ${errorMsg}`);
     throw new Error(errorMsg);

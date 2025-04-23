@@ -1,32 +1,32 @@
-// src/api/instruments.ts
-import { Instrument } from '../mocks/mockInstruments'; // Assuming type source
 
-// --- API Response Interfaces (Adjust if backend differs) ---
+import { Instrument } from '../mocks/mockInstruments'; 
+
+
 interface InstrumentsListResponse {
   items: Instrument[];
-  // Add pagination fields if needed later
+  
 }
 
-// --- Fetch Functions ---
+
 
 /**
  * Fetches all instruments.
  */
 export const fetchInstruments = async (): Promise<Instrument[]> => {
   console.log(`[API] Fetching Instruments`);
-  const response = await fetch('/api/instruments'); // Simple endpoint
+  const response = await fetch('/api/instruments'); 
   console.log(`[API] Instruments Response status: ${response.status}`);
   if (!response.ok) {
     console.error(`[API] Instruments Network response was not ok: ${response.statusText}`);
     throw new Error(`Failed to fetch instruments: ${response.statusText}`);
   }
-  // Assuming direct list return for now
+  
   const data: Instrument[] = await response.json();
   console.log(`[API] Received ${data?.length} instrument items from API mock.`);
   return data;
 };
 
-// --- Mutation Functions ---
+
 
 /**
  * Creates a new instrument item.
@@ -47,7 +47,7 @@ export const createInstrument = async (
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
     } catch (e) {
-      /* Ignore */
+      
     }
     console.error(`[API] Create Instrument failed: ${errorMsg}`);
     throw new Error(errorMsg);
@@ -80,7 +80,7 @@ export const updateInstrument = async ({
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
     } catch (e) {
-      /* Ignore */
+      
     }
     console.error(`[API] Update Instrument failed: ${errorMsg}`);
     throw new Error(errorMsg);
@@ -105,7 +105,7 @@ export const deleteInstrument = async (instrumentId: string): Promise<void> => {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
     } catch (e) {
-      /* Ignore */
+      
     }
     console.error(`[API] Delete Instrument failed: ${errorMsg}`);
     throw new Error(errorMsg);
@@ -113,6 +113,8 @@ export const deleteInstrument = async (instrumentId: string): Promise<void> => {
   if (response.status === 204) {
     console.log(`[API] Instrument ${instrumentId} deleted successfully (204 No Content).`);
   } else {
-    console.log(`[API] Instrument ${instrumentId} deleted successfully (Status: ${response.status}).`);
+    console.log(
+      `[API] Instrument ${instrumentId} deleted successfully (Status: ${response.status}).`
+    );
   }
 };

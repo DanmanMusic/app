@@ -1,4 +1,4 @@
-// src/types/dataTypes.ts
+
 import { User } from './userTypes';
 import { AssignedTask } from '../mocks/mockAssignedTasks';
 import { TicketTransaction } from '../mocks/mockTickets';

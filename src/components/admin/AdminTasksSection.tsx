@@ -1,4 +1,4 @@
-// src/components/admin/AdminTasksSection.tsx
+
 import React, { useState } from 'react';
 import {
   View,
@@ -7,19 +7,19 @@ import {
   FlatList,
   ActivityIndicator,
   StyleSheet,
-  Alert, // Added Alert
+  Alert, 
 } from 'react-native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; // Added TQ imports
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; 
 
-// API & Types
+
 import {
   fetchTaskLibrary,
-  deleteTaskLibraryItem, // Import delete function
-} from '../../api/taskLibrary'; // Use new API file
+  deleteTaskLibraryItem, 
+} from '../../api/taskLibrary'; 
 import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
-import { AssignedTask } from '../../mocks/mockAssignedTasks'; // Keep if needed for other props
+import { AssignedTask } from '../../mocks/mockAssignedTasks'; 
 
-// Components & Styles
+
 import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
@@ -27,25 +27,25 @@ import CreateTaskLibraryModal from './modals/CreateTaskLibraryModal';
 import EditTaskLibraryModal from './modals/EditTaskLibraryModal';
 import ConfirmationModal from '../common/ConfirmationModal';
 
-// Interface updated: Removed taskLibrary and CRUD props
+
 interface AdminTasksSectionProps {
-  onInitiateAssignTask: () => void; // General assign task button trigger
-  // Props related to Assigned Tasks (kept for now)
+  onInitiateAssignTask: () => void; 
+  
   onInitiateVerification?: (task: AssignedTask) => void;
   onDeleteAssignment?: (taskId: string) => void;
 }
 
-// Task Library Item Component (No changes needed structurally, but remove assign button logic if not already done)
+
 const AdminTaskLibraryItem = ({
   item,
   onEdit,
   onDelete,
-  disabled, // Added disabled prop
+  disabled, 
 }: {
   item: TaskLibraryItem;
   onEdit: (task: TaskLibraryItem) => void;
   onDelete: (task: TaskLibraryItem) => void;
-  disabled?: boolean; // Disable buttons during delete
+  disabled?: boolean; 
 }) => (
   <View style={appSharedStyles.itemContainer}>
     <Text style={appSharedStyles.itemTitle}>
@@ -54,19 +54,24 @@ const AdminTaskLibraryItem = ({
     <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
     <View style={adminSharedStyles.itemActions}>
       <Button title="Edit" onPress={() => onEdit(item)} disabled={disabled} />
-      <Button title="Delete" onPress={() => onDelete(item)} color={colors.danger} disabled={disabled} />
-      {/* Removed Assign button previously */}
+      <Button
+        title="Delete"
+        onPress={() => onDelete(item)}
+        color={colors.danger}
+        disabled={disabled}
+      />
+      {}
     </View>
   </View>
 );
 
-// Main component updated to use useQuery and useMutation for delete
+
 export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
-  onInitiateAssignTask, // General trigger remains
-  onInitiateVerification, // Keep if needed
-  onDeleteAssignment, // Keep if needed
+  onInitiateAssignTask, 
+  onInitiateVerification, 
+  onDeleteAssignment, 
 }) => {
-  // State for Modals (Create, Edit, Delete Confirmation)
+  
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
@@ -75,36 +80,36 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
 
   const queryClient = useQueryClient();
 
-  // --- TanStack Query Hook for fetching data ---
+  
   const {
-    data: taskLibrary = [], // Default to empty array
+    data: taskLibrary = [], 
     isLoading,
     isError,
     error,
   } = useQuery<TaskLibraryItem[], Error>({
-    queryKey: ['task-library'], // Unique key for this query
-    queryFn: fetchTaskLibrary, // Function to fetch data
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    queryKey: ['task-library'], 
+    queryFn: fetchTaskLibrary, 
+    staleTime: 5 * 60 * 1000, 
     gcTime: 10 * 60 * 1000,
   });
 
-  // --- TanStack Mutation Hook for Deleting ---
+  
   const deleteMutation = useMutation({
-    mutationFn: deleteTaskLibraryItem, // API function: expects taskId
+    mutationFn: deleteTaskLibraryItem, 
     onSuccess: (_, deletedTaskId) => {
       console.log(`Task library item ${deletedTaskId} deleted successfully via mutation.`);
-      // Invalidate the query to refetch the list
+      
       queryClient.invalidateQueries({ queryKey: ['task-library'] });
-      closeDeleteModal(); // Close confirmation modal on success
+      closeDeleteModal(); 
     },
     onError: (err, deletedTaskId) => {
       console.error(`Error deleting task library item ${deletedTaskId}:`, err);
-      // Keep delete confirmation modal open on error? Or close? Closing for now.
+      
       closeDeleteModal();
     },
   });
 
-  // Handlers for Modals
+  
   const handleAddPress = () => setIsCreateModalVisible(true);
   const handleEditPress = (task: TaskLibraryItem) => {
     setTaskToEdit(task);
@@ -122,10 +127,10 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
   const closeDeleteModal = () => {
     setIsDeleteModalVisible(false);
     setTaskToDelete(null);
-    deleteMutation.reset(); // Reset mutation state when closing
+    deleteMutation.reset(); 
   };
 
-  // Confirmation handler calls the mutation
+  
   const handleDeleteConfirm = () => {
     if (taskToDelete && !deleteMutation.isPending) {
       deleteMutation.mutate(taskToDelete.id);
@@ -140,40 +145,40 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
   return (
     <View>
       <Text style={appSharedStyles.sectionTitle}>Task Management</Text>
-      {/* General Assign Task Button */}
+      {}
       <View style={{ alignItems: 'flex-start', marginBottom: 20, gap: 5 }}>
         <Button title="Assign Task to Student" onPress={onInitiateAssignTask} />
       </View>
 
-      {/* Task Library Section */}
+      {}
       <Text style={adminSharedStyles.sectionSubTitle}>Task Library ({taskLibrary.length})</Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button title="Create New Task Library Item" onPress={handleAddPress} />
       </View>
 
-      {/* Loading State */}
+      {}
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
       )}
 
-      {/* Error State */}
+      {}
       {isError && !isLoading && (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{getErrorMessage()}</Text>
         </View>
       )}
 
-      {/* Data List */}
+      {}
       {!isLoading && !isError && (
         <FlatList
-          data={taskLibrary} // Use data from useQuery
+          data={taskLibrary} 
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <AdminTaskLibraryItem
               item={item}
               onEdit={handleEditPress}
               onDelete={handleDeletePress}
-              disabled={deleteMutation.isPending} // Disable row buttons if delete is happening
+              disabled={deleteMutation.isPending} 
             />
           )}
           scrollEnabled={false}
@@ -184,7 +189,7 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
         />
       )}
 
-      {/* Modals (Pass only necessary props) */}
+      {}
       <CreateTaskLibraryModal visible={isCreateModalVisible} onClose={closeCreateModal} />
       <EditTaskLibraryModal
         visible={isEditModalVisible}
@@ -200,20 +205,20 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
         confirmText={deleteMutation.isPending ? 'Deleting...' : 'Delete Task'}
         onConfirm={handleDeleteConfirm}
         onCancel={closeDeleteModal}
-        // Disable confirm button while deleting
+        
         confirmDisabled={deleteMutation.isPending}
       />
     </View>
   );
 };
 
-// Add local styles if needed, e.g., for error display
+
 const styles = StyleSheet.create({
   errorContainer: {
     marginVertical: 20,
     padding: 15,
     alignItems: 'center',
-    backgroundColor: '#ffebee', // Light red background
+    backgroundColor: '#ffebee', 
     borderColor: colors.danger,
     borderWidth: 1,
     borderRadius: 5,

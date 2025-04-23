@@ -1,4 +1,4 @@
-// src/components/admin/AdminRewardsSection.tsx
+
 import React, { useState } from 'react';
 import {
   View,
@@ -7,16 +7,16 @@ import {
   Button,
   FlatList,
   Image,
-  ActivityIndicator, // Added
-  Alert, // Added
+  ActivityIndicator, 
+  Alert, 
 } from 'react-native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; // Added
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; 
 
-// API & Types
-import { fetchRewards, deleteReward } from '../../api/rewards'; // Use new API file
+
+import { fetchRewards, deleteReward } from '../../api/rewards'; 
 import { RewardItem } from '../../mocks/mockRewards';
 
-// Components & Styles
+
 import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
@@ -24,22 +24,22 @@ import CreateRewardModal from './modals/CreateRewardModal';
 import EditRewardModal from './modals/EditRewardModal';
 import ConfirmationModal from '../common/ConfirmationModal';
 
-// Interface updated: Removed rewardsCatalog and CRUD props
+
 interface AdminRewardsSectionProps {
-  // No props needed for data/CRUD anymore
+  
 }
 
-// Reward Item Component (Add disabled prop)
+
 const AdminRewardItem = ({
   item,
   onEdit,
   onDelete,
-  disabled, // Added disabled prop
+  disabled, 
 }: {
   item: RewardItem;
   onEdit: (reward: RewardItem) => void;
   onDelete: (reward: RewardItem) => void;
-  disabled?: boolean; // Disable buttons during delete
+  disabled?: boolean; 
 }) => (
   <View style={appSharedStyles.itemContainer}>
     <View style={styles.rewardItemContent}>
@@ -54,13 +54,18 @@ const AdminRewardItem = ({
     </View>
     <View style={adminSharedStyles.itemActions}>
       <Button title="Edit" onPress={() => onEdit(item)} disabled={disabled} />
-      <Button title="Delete" onPress={() => onDelete(item)} color={colors.danger} disabled={disabled} />
+      <Button
+        title="Delete"
+        onPress={() => onDelete(item)}
+        color={colors.danger}
+        disabled={disabled}
+      />
     </View>
   </View>
 );
 
-export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = (/* props removed */) => {
-  // State for Modals
+export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = () => {
+  
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
@@ -69,27 +74,27 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = (/* props
 
   const queryClient = useQueryClient();
 
-  // --- TanStack Query Hook for fetching rewards ---
+  
   const {
-    data: rewardsCatalog = [], // Default to empty array
+    data: rewardsCatalog = [], 
     isLoading,
     isError,
     error,
   } = useQuery<RewardItem[], Error>({
-    queryKey: ['rewards'], // Unique key for rewards query
-    queryFn: fetchRewards, // Function to fetch data
+    queryKey: ['rewards'], 
+    queryFn: fetchRewards, 
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    // Rewards are sorted by cost in the API handler
+    
   });
 
-  // --- TanStack Mutation Hook for Deleting ---
+  
   const deleteMutation = useMutation({
-    mutationFn: deleteReward, // API function: expects rewardId
+    mutationFn: deleteReward, 
     onSuccess: (_, deletedRewardId) => {
       console.log(`Reward item ${deletedRewardId} deleted successfully via mutation.`);
       queryClient.invalidateQueries({ queryKey: ['rewards'] });
-      closeDeleteModal(); // Close confirmation modal
+      closeDeleteModal(); 
     },
     onError: (err, deletedRewardId) => {
       console.error(`Error deleting reward item ${deletedRewardId}:`, err);
@@ -97,7 +102,7 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = (/* props
     },
   });
 
-  // Handlers for Modals
+  
   const handleAddPress = () => setIsCreateModalVisible(true);
   const handleEditPress = (reward: RewardItem) => {
     setRewardToEdit(reward);
@@ -118,7 +123,7 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = (/* props
     deleteMutation.reset();
   };
 
-  // Confirmation handler calls the mutation
+  
   const handleDeleteConfirm = () => {
     if (rewardToDelete && !deleteMutation.isPending) {
       deleteMutation.mutate(rewardToDelete.id);
@@ -137,29 +142,29 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = (/* props
         <Button title="Add New Reward" onPress={handleAddPress} />
       </View>
 
-      {/* Loading State */}
+      {}
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
       )}
 
-      {/* Error State */}
+      {}
       {isError && !isLoading && (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{getErrorMessage()}</Text>
         </View>
       )}
 
-      {/* Data List */}
+      {}
       {!isLoading && !isError && (
         <FlatList
-          data={rewardsCatalog} // Use data from useQuery
+          data={rewardsCatalog} 
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <AdminRewardItem
               item={item}
               onEdit={handleEditPress}
               onDelete={handleDeletePress}
-              disabled={deleteMutation.isPending} // Disable row buttons if delete is happening
+              disabled={deleteMutation.isPending} 
             />
           )}
           scrollEnabled={false}
@@ -170,7 +175,7 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = (/* props
         />
       )}
 
-      {/* Modals (Create/Edit will handle their own mutations) */}
+      {}
       <CreateRewardModal visible={isCreateModalVisible} onClose={closeCreateModal} />
       <EditRewardModal
         visible={isEditModalVisible}
@@ -192,7 +197,7 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = (/* props
   );
 };
 
-// --- Styles ---
+
 const styles = StyleSheet.create({
   rewardItemContent: {
     flexDirection: 'row',

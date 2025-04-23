@@ -1,12 +1,12 @@
-// src/contexts/DataContext.tsx
-import React, { createContext, useState, useContext, useMemo, ReactNode, useCallback } from 'react';
-// Removed Alert import as it's no longer used
-// import { Alert } from 'react-native';
 
-// Contexts
+import React, { createContext, useState, useContext, useMemo, ReactNode, useCallback } from 'react';
+
+
+
+
 import { useAuth } from './AuthContext';
 
-// Types
+
 import { StudentProfileData } from '../types/dataTypes';
 import { User } from '../types/userTypes';
 import {
@@ -21,10 +21,10 @@ import {
   TicketTransaction,
 } from '../mocks/mockTickets';
 
-// Utils
+
 import { getUserDisplayName } from '../utils/helpers';
 
-// Interface Definition (remains the same as the previous cleanup step)
+
 interface DataContextType {
   currentMockUsers: Record<string, User>;
   assignedTasks: AssignedTask[];
@@ -67,17 +67,16 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
-  // State
+  
   const [currentMockUsers, setCurrentMockUsers] = useState<Record<string, User>>(mockUsers);
   const [assignedTasks, setAssignedTasks] = useState<AssignedTask[]>(mockAllAssignedTasks);
-  const [ticketBalances, setTicketBalances] = useState<Record<string, number>>(
-    initialMockTicketBalances
-  );
+  const [ticketBalances, setTicketBalances] =
+    useState<Record<string, number>>(initialMockTicketBalances);
   const [ticketHistory, setTicketHistory] = useState<TicketTransaction[]>(initialMockTicketHistory);
 
-  const { currentUserId } = useAuth(); // Removed setMockAuthState as it wasn't used here
+  const { currentUserId } = useAuth(); 
 
-  // --- Simulation Functions ---
+  
 
   const simulateMarkTaskComplete = useCallback((assignmentId: string) => {
     setAssignedTasks(prevTasks =>
@@ -126,7 +125,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
           verificationStatus: status,
           verifiedById: verifierId,
           verifiedDate: new Date().toISOString(),
-          actualPointsAwarded: status === 'verified' || status === 'partial' ? actualTickets : undefined,
+          actualPointsAwarded:
+            status === 'verified' || status === 'partial' ? actualTickets : undefined,
         };
         const updatedTasks = [...prevTasks];
         updatedTasks[taskIndex] = updatedTask;
@@ -191,7 +191,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         },
         ...prevHistory,
       ]);
-      console.log(`Balance Adjusted - Adjusted ${amount} tickets for student ${getUserDisplayName(student)}.`);
+      console.log(
+        `Balance Adjusted - Adjusted ${amount} tickets for student ${getUserDisplayName(student)}.`
+      );
     },
     [currentMockUsers]
   );
@@ -199,8 +201,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const simulateRedeemReward = useCallback(
     (studentId: string, rewardId: string) => {
       const student = currentMockUsers[studentId];
-      const rewardCost = 100; // Placeholder cost
-      const rewardName = `Reward ${rewardId}`; // Placeholder name
+      const rewardCost = 100; 
+      const rewardName = `Reward ${rewardId}`; 
 
       console.warn(
         `[DataContext] simulateRedeemReward needs refactoring. Rewards data not available. Using placeholders.`
@@ -239,7 +241,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         },
         ...prevHistory,
       ]);
-      console.log(`Reward Redeemed (Placeholder) - ${rewardName} redeemed for ${studentName}! ${cost} tickets deducted.`);
+      console.log(
+        `Reward Redeemed (Placeholder) - ${rewardName} redeemed for ${studentName}! ${cost} tickets deducted.`
+      );
     },
     [currentMockUsers, ticketBalances]
   );
@@ -353,7 +357,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     [currentMockUsers, ticketBalances, assignedTasks, ticketHistory, simulateMarkTaskComplete]
   );
 
-  // Context Value Memoization
+  
   const value = useMemo(
     () => ({
       currentMockUsers,
@@ -382,14 +386,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       simulateReassignTask,
       simulateDeleteAssignedTask,
       getMockStudentData,
-      currentUserId, // Keep auth dependency if needed by future simulations
+      currentUserId, 
     ]
   );
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 };
 
-// useData hook remains the same
+
 export const useData = (): DataContextType => {
   const context = useContext(DataContext);
   if (context === undefined) {

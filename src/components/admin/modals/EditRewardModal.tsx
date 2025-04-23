@@ -1,4 +1,4 @@
-// src/components/admin/modals/EditRewardModal.tsx
+
 import React, { useState, useEffect } from 'react';
 import {
   Modal,
@@ -8,26 +8,26 @@ import {
   Button,
   TextInput,
   ScrollView,
-  ActivityIndicator, // Added
-  Alert, // Added
+  ActivityIndicator, 
+  Alert, 
 } from 'react-native';
-import { useMutation, useQueryClient } from '@tanstack/react-query'; // Added
+import { useMutation, useQueryClient } from '@tanstack/react-query'; 
 
-// API & Types
-import { updateReward } from '../../../api/rewards'; // Use new API file
+
+import { updateReward } from '../../../api/rewards'; 
 import { RewardItem } from '../../../mocks/mockRewards';
 import { colors } from '../../../styles/colors';
 
-// Interface updated: removed onEditConfirm prop
+
 interface EditRewardModalProps {
   visible: boolean;
   rewardToEdit: RewardItem | null;
   onClose: () => void;
-  // Removed: onEditConfirm: (rewardId: string, rewardData: Partial<Omit<RewardItem, 'id'>>) => void;
+  
 }
 
 const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit, onClose }) => {
-  // Form State
+  
   const [name, setName] = useState('');
   const [cost, setCost] = useState<number | ''>('');
   const [description, setDescription] = useState('');
@@ -35,34 +35,34 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
 
   const queryClient = useQueryClient();
 
-  // --- TanStack Mutation ---
+  
   const mutation = useMutation({
-    mutationFn: updateReward, // API function: expects { rewardId, updates }
+    mutationFn: updateReward, 
     onSuccess: updatedReward => {
       console.log('Reward updated successfully via mutation:', updatedReward);
-      queryClient.invalidateQueries({ queryKey: ['rewards'] }); // Refetch rewards list
-      onClose(); // Close modal on success
+      queryClient.invalidateQueries({ queryKey: ['rewards'] }); 
+      onClose(); 
     },
     onError: (error, variables) => {
       console.error(`Error updating reward ${variables.rewardId} via mutation:`, error);
     },
   });
 
-  // Effect to populate form when rewardToEdit changes or modal opens
+  
   useEffect(() => {
     if (visible && rewardToEdit) {
       setName(rewardToEdit.name);
       setCost(rewardToEdit.cost);
       setDescription(rewardToEdit.description || '');
       setImageUrl(rewardToEdit.imageUrl);
-      mutation.reset(); // Reset mutation state
+      mutation.reset(); 
     }
   }, [visible, rewardToEdit]);
 
   const handleSave = () => {
     if (!rewardToEdit) return;
 
-    // Validate input
+    
     const numericCost = typeof cost === 'number' ? cost : parseInt(String(cost || '0'), 10);
     if (!name.trim()) {
       return;
@@ -76,27 +76,27 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
       return;
     }
 
-    // Construct the updates object - only include changed fields
+    
     const updates: Partial<Omit<RewardItem, 'id'>> = {};
     if (name.trim() !== rewardToEdit.name) updates.name = name.trim();
     if (numericCost !== rewardToEdit.cost) updates.cost = numericCost;
     const trimmedDescription = description.trim();
     if (trimmedDescription !== (rewardToEdit.description || '')) {
-        updates.description = trimmedDescription ? trimmedDescription : undefined; // Handle clearing
+      updates.description = trimmedDescription ? trimmedDescription : undefined; 
     }
     if (imageUrl.trim() !== rewardToEdit.imageUrl) updates.imageUrl = imageUrl.trim();
 
-    // Only mutate if there are actual changes
+    
     if (Object.keys(updates).length === 0) {
-      onClose(); // Close if no changes
+      onClose(); 
       return;
     }
 
-    // Trigger the mutation
+    
     mutation.mutate({ rewardId: rewardToEdit.id, updates });
   };
 
-  // Don't render if no reward is selected
+  
   if (!rewardToEdit) return null;
 
   return (
@@ -113,7 +113,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
               onChangeText={setName}
               placeholderTextColor={colors.textLight}
               maxLength={100}
-              editable={!mutation.isPending} // Disable while loading
+              editable={!mutation.isPending} 
             />
             <Text style={modalStyles.label}>Ticket Cost:</Text>
             <TextInput
@@ -148,7 +148,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
             />
           </ScrollView>
 
-          {/* Loading Indicator */}
+          {}
           {mutation.isPending && (
             <View style={modalStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -156,10 +156,11 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
             </View>
           )}
 
-          {/* Error Message */}
+          {}
           {mutation.isError && (
             <Text style={modalStyles.errorText}>
-              Error: {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
+              Error:{' '}
+              {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
             </Text>
           )}
 
@@ -167,7 +168,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
             <Button
               title="Save Changes"
               onPress={handleSave}
-              disabled={mutation.isPending} // Disable button while loading
+              disabled={mutation.isPending} 
             />
           </View>
           <View style={modalStyles.footerButton}>
@@ -184,7 +185,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
   );
 };
 
-// --- Styles ---
+
 const modalStyles = StyleSheet.create({
   centeredView: {
     flex: 1,

@@ -11,7 +11,7 @@ const mockHttpCommonPath = path.resolve(__dirname, 'src', 'mocks', '_http_common
 // Customize the resolver
 defaultConfig.resolver.extraNodeModules = {
   ...(defaultConfig.resolver.extraNodeModules || {}), // Preserve existing extraNodeModules if any
-  '_http_common': mockHttpCommonPath,
+  _http_common: mockHttpCommonPath,
   // Add other node built-ins here if they cause issues later
   // e.g., 'url': require.resolve('url/'), // Use browser polyfill if needed
 };
@@ -21,6 +21,5 @@ defaultConfig.resolver.extraNodeModules = {
 defaultConfig.resolver.sourceExts = defaultConfig.resolver.sourceExts
   ? [...defaultConfig.resolver.sourceExts, 'mjs', 'cjs'] // Add mjs and cjs
   : ['jsx', 'js', 'ts', 'tsx', 'json', 'mjs', 'cjs']; // Default + mjs/cjs
-
 
 module.exports = defaultConfig;

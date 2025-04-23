@@ -1,13 +1,13 @@
-// src/api/rewards.ts
-import { RewardItem } from '../mocks/mockRewards'; // Assuming type source
 
-// --- API Response Interfaces (Adjust if backend differs) ---
+import { RewardItem } from '../mocks/mockRewards'; 
+
+
 interface RewardsListResponse {
   items: RewardItem[];
-  // Add pagination fields if needed later
+  
 }
 
-// --- Fetch Functions ---
+
 
 /**
  * Fetches the entire rewards catalog.
@@ -15,19 +15,19 @@ interface RewardsListResponse {
  */
 export const fetchRewards = async (): Promise<RewardItem[]> => {
   console.log(`[API] Fetching Rewards Catalog`);
-  const response = await fetch('/api/rewards'); // Simple endpoint
+  const response = await fetch('/api/rewards'); 
   console.log(`[API] Rewards Catalog Response status: ${response.status}`);
   if (!response.ok) {
     console.error(`[API] Rewards Catalog Network response was not ok: ${response.statusText}`);
     throw new Error(`Failed to fetch rewards catalog: ${response.statusText}`);
   }
-  // Assuming direct list return for now
+  
   const data: RewardItem[] = await response.json();
   console.log(`[API] Received ${data?.length} reward items from API mock.`);
   return data;
 };
 
-// --- Mutation Functions ---
+
 
 /**
  * Creates a new reward item.
@@ -46,7 +46,7 @@ export const createReward = async (rewardData: Omit<RewardItem, 'id'>): Promise<
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
     } catch (e) {
-      /* Ignore */
+      
     }
     console.error(`[API] Create Reward Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
@@ -79,7 +79,7 @@ export const updateReward = async ({
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
     } catch (e) {
-      /* Ignore */
+      
     }
     console.error(`[API] Update Reward Item failed: ${errorMsg}`);
     throw new Error(errorMsg);
@@ -104,7 +104,7 @@ export const deleteReward = async (rewardId: string): Promise<void> => {
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
     } catch (e) {
-      /* Ignore */
+      
     }
     console.error(`[API] Delete Reward Item failed: ${errorMsg}`);
     throw new Error(errorMsg);

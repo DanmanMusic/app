@@ -1,4 +1,4 @@
-// src/components/admin/modals/CreateAnnouncementModal.tsx
+
 import React, { useState, useEffect } from 'react';
 import {
   Modal,
@@ -7,57 +7,57 @@ import {
   StyleSheet,
   Button,
   TextInput,
-  ActivityIndicator, // Added
-  Alert, // Added
+  ActivityIndicator, 
+  Alert, 
 } from 'react-native';
-import { useMutation, useQueryClient } from '@tanstack/react-query'; // Added
+import { useMutation, useQueryClient } from '@tanstack/react-query'; 
 
-// API & Types
-import { createAnnouncement } from '../../../api/announcements'; // Use API file
+
+import { createAnnouncement } from '../../../api/announcements'; 
 import { Announcement, AnnouncementType } from '../../../mocks/mockAnnouncements';
 import { colors } from '../../../styles/colors';
 
-// Interface updated: removed onCreateConfirm prop
+
 interface CreateAnnouncementModalProps {
   visible: boolean;
   onClose: () => void;
-  // Removed: onCreateConfirm: (announcementData: Omit<Announcement, 'id' | 'date'>) => void;
+  
 }
 
 const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visible, onClose }) => {
-  // Form State
+  
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  // Default type could be 'announcement'
+  
   const [type, setType] = useState<AnnouncementType>('announcement');
 
   const queryClient = useQueryClient();
 
-  // --- TanStack Mutation ---
+  
   const mutation = useMutation({
-    mutationFn: createAnnouncement, // API function to call
+    mutationFn: createAnnouncement, 
     onSuccess: createdAnnouncement => {
       console.log('Announcement created successfully via mutation:', createdAnnouncement);
-      queryClient.invalidateQueries({ queryKey: ['announcements'] }); // Refetch list
-      onClose(); // Close modal on success
+      queryClient.invalidateQueries({ queryKey: ['announcements'] }); 
+      onClose(); 
     },
     onError: error => {
       console.error('Error creating announcement via mutation:', error);
     },
   });
 
-  // Effect to reset form when modal visibility changes
+  
   useEffect(() => {
     if (visible) {
       setTitle('');
       setMessage('');
-      setType('announcement'); // Reset type
+      setType('announcement'); 
       mutation.reset();
     }
   }, [visible]);
 
   const handleCreate = () => {
-    // Validate input
+    
     if (!title.trim()) {
       return;
     }
@@ -68,10 +68,10 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
     const newAnnouncementData: Omit<Announcement, 'id' | 'date'> = {
       title: title.trim(),
       message: message.trim(),
-      type: type, // Use selected type
+      type: type, 
     };
 
-    // Trigger the mutation
+    
     mutation.mutate(newAnnouncementData);
   };
 
@@ -89,7 +89,7 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
             placeholder="Announcement Title"
             placeholderTextColor={colors.textLight}
             maxLength={100}
-            editable={!mutation.isPending} // Disable while loading
+            editable={!mutation.isPending} 
           />
 
           <Text style={modalStyles.label}>Message:</Text>
@@ -104,14 +104,14 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
             editable={!mutation.isPending}
           />
 
-          {/* Optional: Add controls to select 'type' if needed */}
-          {/* <Text style={modalStyles.label}>Type:</Text> */}
+          {}
+          {}
           {/* <Picker selectedValue={type} onValueChange={(itemValue) => setType(itemValue)}>
               <Picker.Item label="General Announcement" value="announcement" />
               <Picker.Item label="Challenge" value="challenge" />
               </Picker> */}
 
-          {/* Loading Indicator */}
+          {}
           {mutation.isPending && (
             <View style={modalStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -119,10 +119,13 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
             </View>
           )}
 
-          {/* Error Message */}
+          {}
           {mutation.isError && (
             <Text style={modalStyles.errorText}>
-              Error: {mutation.error instanceof Error ? mutation.error.message : 'Failed to create announcement'}
+              Error:{' '}
+              {mutation.error instanceof Error
+                ? mutation.error.message
+                : 'Failed to create announcement'}
             </Text>
           )}
 
@@ -130,7 +133,7 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
             <Button
               title="Create Announcement"
               onPress={handleCreate}
-              disabled={mutation.isPending} // Disable button while loading
+              disabled={mutation.isPending} 
             />
           </View>
           <View style={modalStyles.footerButton}>
@@ -147,7 +150,7 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
   );
 };
 
-// --- Styles ---
+
 const modalStyles = StyleSheet.create({
   centeredView: {
     flex: 1,

@@ -1,4 +1,4 @@
-// src/components/admin/modals/EditAnnouncementModal.tsx
+
 import React, { useState, useEffect } from 'react';
 import {
   Modal,
@@ -7,22 +7,22 @@ import {
   StyleSheet,
   Button,
   TextInput,
-  ActivityIndicator, // Added
-  Alert, // Added
+  ActivityIndicator, 
+  Alert, 
 } from 'react-native';
-import { useMutation, useQueryClient } from '@tanstack/react-query'; // Added
+import { useMutation, useQueryClient } from '@tanstack/react-query'; 
 
-// API & Types
-import { updateAnnouncement } from '../../../api/announcements'; // Use API file
+
+import { updateAnnouncement } from '../../../api/announcements'; 
 import { Announcement, AnnouncementType } from '../../../mocks/mockAnnouncements';
 import { colors } from '../../../styles/colors';
 
-// Interface updated: removed onEditConfirm prop
+
 interface EditAnnouncementModalProps {
   visible: boolean;
   announcementToEdit: Announcement | null;
   onClose: () => void;
-  // Removed: onEditConfirm: ( announcementId: string, announcementData: Partial<Omit<Announcement, 'id' | 'date'>> ) => void;
+  
 }
 
 const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
@@ -30,32 +30,32 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
   announcementToEdit,
   onClose,
 }) => {
-  // Form State
+  
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [type, setType] = useState<AnnouncementType>('announcement'); // Keep track of type
+  const [type, setType] = useState<AnnouncementType>('announcement'); 
 
   const queryClient = useQueryClient();
 
-  // --- TanStack Mutation ---
+  
   const mutation = useMutation({
-    mutationFn: updateAnnouncement, // API function: expects { announcementId, updates }
+    mutationFn: updateAnnouncement, 
     onSuccess: updatedAnnouncement => {
       console.log('Announcement updated successfully via mutation:', updatedAnnouncement);
-      queryClient.invalidateQueries({ queryKey: ['announcements'] }); // Refetch list
-      onClose(); // Close modal on success
+      queryClient.invalidateQueries({ queryKey: ['announcements'] }); 
+      onClose(); 
     },
     onError: (error, variables) => {
       console.error(`Error updating announcement ${variables.announcementId} via mutation:`, error);
     },
   });
 
-  // Effect to populate form when announcementToEdit changes or modal opens
+  
   useEffect(() => {
     if (visible && announcementToEdit) {
       setTitle(announcementToEdit.title);
       setMessage(announcementToEdit.message);
-      setType(announcementToEdit.type); // Set type from original
+      setType(announcementToEdit.type); 
       mutation.reset();
     }
   }, [visible, announcementToEdit]);
@@ -63,7 +63,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
   const handleSave = () => {
     if (!announcementToEdit) return;
 
-    // Validate input
+    
     if (!title.trim()) {
       return;
     }
@@ -71,24 +71,24 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
       return;
     }
 
-    // Construct the updates object - only include changed fields
+    
     const updates: Partial<Omit<Announcement, 'id' | 'date'>> = {};
     if (title.trim() !== announcementToEdit.title) updates.title = title.trim();
     if (message.trim() !== announcementToEdit.message) updates.message = message.trim();
     if (type !== announcementToEdit.type) updates.type = type;
-    // relatedStudentId could be updated here if needed
+    
 
-    // Only mutate if there are actual changes
+    
     if (Object.keys(updates).length === 0) {
-      onClose(); // Close if no changes
+      onClose(); 
       return;
     }
 
-    // Trigger the mutation
+    
     mutation.mutate({ announcementId: announcementToEdit.id, updates });
   };
 
-  // Don't render if no announcement is selected
+  
   if (!announcementToEdit) return null;
 
   return (
@@ -106,7 +106,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
             placeholder="Announcement Title"
             placeholderTextColor={colors.textLight}
             maxLength={100}
-            editable={!mutation.isPending} // Disable while loading
+            editable={!mutation.isPending} 
           />
 
           <Text style={modalStyles.label}>Message:</Text>
@@ -121,9 +121,9 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
             editable={!mutation.isPending}
           />
 
-          {/* Optional: Add controls to change 'type' if needed */}
+          {}
 
-          {/* Loading Indicator */}
+          {}
           {mutation.isPending && (
             <View style={modalStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -131,10 +131,11 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
             </View>
           )}
 
-          {/* Error Message */}
+          {}
           {mutation.isError && (
             <Text style={modalStyles.errorText}>
-              Error: {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
+              Error:{' '}
+              {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
             </Text>
           )}
 
@@ -142,7 +143,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
             <Button
               title="Save Changes"
               onPress={handleSave}
-              disabled={mutation.isPending} // Disable button while loading
+              disabled={mutation.isPending} 
             />
           </View>
           <View style={modalStyles.footerButton}>
@@ -159,7 +160,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
   );
 };
 
-// --- Styles ---
+
 const modalStyles = StyleSheet.create({
   centeredView: {
     flex: 1,

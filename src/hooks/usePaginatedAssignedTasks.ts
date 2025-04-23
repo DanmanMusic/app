@@ -1,22 +1,22 @@
-// src/hooks/usePaginatedAssignedTasks.ts
-import { useState, useCallback, useEffect } from 'react';
-import { useQuery, keepPreviousData } from '@tanstack/react-query'; // Import TQ hooks
 
-// API Client & Types
+import { useState, useCallback, useEffect } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query'; 
+
+
 import {
   fetchAssignedTasks,
-  TaskAssignmentFilterStatusAPI, // Use API types for filters
+  TaskAssignmentFilterStatusAPI, 
   StudentTaskFilterStatusAPI,
 } from '../api/assignedTasks';
 import { AssignedTask } from '../mocks/mockAssignedTasks';
-// Removed: useData context import
-// Removed: UserStatus type (using API type now)
 
-// Type definitions for filters remain the same for the hook's interface
+
+
+
 export type TaskAssignmentFilterStatus = 'all' | 'assigned' | 'pending' | 'completed';
-export type StudentTaskFilterStatus = 'active' | 'inactive' | 'all'; // Keep UserStatus 'active'/'inactive' for hook interface clarity if preferred
+export type StudentTaskFilterStatus = 'active' | 'inactive' | 'all'; 
 
-// Define the shape of the return value, adding TQ flags
+
 export interface UsePaginatedAssignedTasksReturn {
   tasks: AssignedTask[];
   currentPage: number;
@@ -27,81 +27,83 @@ export interface UsePaginatedAssignedTasksReturn {
   setAssignmentFilter: (filter: TaskAssignmentFilterStatus) => void;
   studentStatusFilter: StudentTaskFilterStatus;
   setStudentStatusFilter: (filter: StudentTaskFilterStatus) => void;
-  isLoading: boolean; // From TQ
-  isFetching: boolean; // From TQ
-  isPlaceholderData: boolean; // From TQ
-  isError: boolean; // From TQ
-  error: Error | null; // From TQ
-  // Added studentId prop for filtering
+  isLoading: boolean; 
+  isFetching: boolean; 
+  isPlaceholderData: boolean; 
+  isError: boolean; 
+  error: Error | null; 
+  
   studentId?: string | null;
-  setStudentId?: (id: string | null) => void; // Optional setter
+  setStudentId?: (id: string | null) => void; 
 }
 
-const ITEMS_PER_PAGE = 10; // Default page size for tasks
+const ITEMS_PER_PAGE = 10; 
 
 export const usePaginatedAssignedTasks = (
   initialAssignmentFilter: TaskAssignmentFilterStatus = 'pending',
   initialStudentStatusFilter: StudentTaskFilterStatus = 'active',
-  initialStudentId: string | null = null // Accept optional initial student ID
+  initialStudentId: string | null = null 
 ): UsePaginatedAssignedTasksReturn => {
-  // Removed: useData hook call
+  
 
-  // State for filters and pagination
+  
   const [assignmentFilter, setAssignmentFilter] =
     useState<TaskAssignmentFilterStatus>(initialAssignmentFilter);
-  const [studentStatusFilter, setStudentStatusFilter] =
-    useState<StudentTaskFilterStatus>(initialStudentStatusFilter);
-  const [studentId, setStudentId] = useState<string | null>(initialStudentId); // State for student ID filter
+  const [studentStatusFilter, setStudentStatusFilter] = useState<StudentTaskFilterStatus>(
+    initialStudentStatusFilter
+  );
+  const [studentId, setStudentId] = useState<string | null>(initialStudentId); 
   const [currentPage, setCurrentPage] = useState(1);
 
-  // --- TanStack Query ---
+  
   const queryResult = useQuery({
-    // Query key includes all parameters that affect the query
+    
     queryKey: [
       'assigned-tasks',
       {
         page: currentPage,
         limit: ITEMS_PER_PAGE,
-        assignmentStatus: assignmentFilter as TaskAssignmentFilterStatusAPI, // Cast for API call
-        studentStatus: studentStatusFilter as StudentTaskFilterStatusAPI, // Cast for API call
-        studentId: studentId, // Include studentId in key
+        assignmentStatus: assignmentFilter as TaskAssignmentFilterStatusAPI, 
+        studentStatus: studentStatusFilter as StudentTaskFilterStatusAPI, 
+        studentId: studentId, 
       },
     ],
-    // Query function calls the API client
+    
     queryFn: () =>
       fetchAssignedTasks({
         page: currentPage,
         limit: ITEMS_PER_PAGE,
         assignmentStatus: assignmentFilter as TaskAssignmentFilterStatusAPI,
         studentStatus: studentStatusFilter as StudentTaskFilterStatusAPI,
-        studentId: studentId ?? undefined, // Pass undefined if null
+        studentId: studentId ?? undefined, 
       }),
-    placeholderData: keepPreviousData, // Show previous data while fetching
-    staleTime: 1 * 60 * 1000, // Consider data fresh for 1 minute
+    placeholderData: keepPreviousData, 
+    staleTime: 1 * 60 * 1000, 
     gcTime: 5 * 60 * 1000,
   });
 
-  // Extract data and state from queryResult
+  
   const { data, isLoading, isFetching, isError, error, isPlaceholderData } = queryResult;
 
-  // Memoized values from data or defaults
+  
   const tasks = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
   const totalItems = data?.totalItems ?? 0;
 
-  // Reset to page 1 when filters or studentId change
+  
   useEffect(() => {
-    console.log(
-      `[usePaginatedAssignedTasks] Filters/StudentId changed, resetting page to 1.`,
-      { assignmentFilter, studentStatusFilter, studentId }
-    );
-    // Check if currentPage is already 1 to avoid unnecessary state update/refetch
+    console.log(`[usePaginatedAssignedTasks] Filters/StudentId changed, resetting page to 1.`, {
+      assignmentFilter,
+      studentStatusFilter,
+      studentId,
+    });
+    
     if (currentPage !== 1) {
       setCurrentPage(1);
     }
-  }, [assignmentFilter, studentStatusFilter, studentId]); // Removed currentPage dependency
+  }, [assignmentFilter, studentStatusFilter, studentId]); 
 
-  // Function to change the current page
+  
   const setPage = useCallback(
     (page: number) => {
       console.log(`[usePaginatedAssignedTasks] setPage called with: ${page}`);
@@ -118,7 +120,7 @@ export const usePaginatedAssignedTasks = (
     [totalPages]
   );
 
-  // Return the state and functions needed by components
+  
   return {
     tasks,
     currentPage,
@@ -130,7 +132,7 @@ export const usePaginatedAssignedTasks = (
     studentStatusFilter,
     setStudentStatusFilter,
     studentId,
-    setStudentId, // Expose setter for studentId if needed outside
+    setStudentId, 
     isLoading,
     isFetching,
     isPlaceholderData,

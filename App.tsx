@@ -23,29 +23,30 @@ import { colors } from './src/styles/colors';
 import { getUserDisplayName } from './src/utils/helpers';
 
 // MSW Initialization - START
-if (__DEV__) { // Only run MSW in development
+if (__DEV__) {
+  // Only run MSW in development
   console.log('[MSW] Development mode detected. Initializing MSW...');
   // Conditional import based on platform
   if (Platform.OS === 'web') {
-      import('./src/mocks/browser') // Adjusted path
-        .then(({ worker }) => {
-          console.log('[MSW] Starting worker for web...');
-          worker.start({
-            onUnhandledRequest: 'bypass', // Allow unhandled requests (like static assets)
-          });
-          console.log('[MSW] Web worker started.');
-        })
-        .catch(err => console.error('[MSW] Web worker failed to start:', err));
+    import('./src/mocks/browser') // Adjusted path
+      .then(({ worker }) => {
+        console.log('[MSW] Starting worker for web...');
+        worker.start({
+          onUnhandledRequest: 'bypass', // Allow unhandled requests (like static assets)
+        });
+        console.log('[MSW] Web worker started.');
+      })
+      .catch(err => console.error('[MSW] Web worker failed to start:', err));
   } else {
-       import('./src/mocks/server') // Adjusted path
-        .then(({ server }) => {
-          console.log('[MSW] Starting server for native...');
-          server.listen({
-             onUnhandledRequest: 'bypass',
-          });
-          console.log('[MSW] Native server started.');
-        })
-        .catch(err => console.error('[MSW] Native server failed to start:', err));
+    import('./src/mocks/server') // Adjusted path
+      .then(({ server }) => {
+        console.log('[MSW] Starting server for native...');
+        server.listen({
+          onUnhandledRequest: 'bypass',
+        });
+        console.log('[MSW] Native server started.');
+      })
+      .catch(err => console.error('[MSW] Native server failed to start:', err));
   }
 }
 // MSW Initialization - END
@@ -85,17 +86,24 @@ const DevelopmentViewSelector = () => {
             } else if (user.role === 'teacher') {
               // Find *any* active student linked to this teacher for initial view
               viewingStudentId = Object.values(currentMockUsers).find(
-                u => u.role === 'student' && u.status === 'active' && u.linkedTeacherIds?.includes(user.id)
+                u =>
+                  u.role === 'student' &&
+                  u.status === 'active' &&
+                  u.linkedTeacherIds?.includes(user.id)
               )?.id;
             }
             setMockAuthState({ role: user.role, userId: user.id, viewingStudentId });
           }}
           color={
-            user.role === 'admin' ? colors.danger :
-            user.role === 'teacher' ? colors.primary :
-            user.role === 'parent' ? colors.success :
-            user.role === 'student' ? colors.gold :
-            colors.secondary
+            user.role === 'admin'
+              ? colors.danger
+              : user.role === 'teacher'
+                ? colors.primary
+                : user.role === 'parent'
+                  ? colors.success
+                  : user.role === 'student'
+                    ? colors.gold
+                    : colors.secondary
           }
         />
       ))}
@@ -138,18 +146,17 @@ const AppContent = () => {
 
   // Updated to accept the full original task object
   const handleReassignTask = (originalTask: AssignedTask) => {
-      console.log("[App.tsx] Reassigning task based on:", originalTask);
-      // Use snapshot data from the original task for re-assignment
-      simulateReassignTask(
-          originalTask.studentId, // Ensure studentId is correct
-          originalTask.taskTitle,
-          originalTask.taskDescription,
-          originalTask.taskBasePoints,
-          currentUserId // Pass current user as assigner
-       );
-      handleCloseVerificationModal(); // Close modal after reassigning
+    console.log('[App.tsx] Reassigning task based on:', originalTask);
+    // Use snapshot data from the original task for re-assignment
+    simulateReassignTask(
+      originalTask.studentId, // Ensure studentId is correct
+      originalTask.taskTitle,
+      originalTask.taskDescription,
+      originalTask.taskBasePoints,
+      currentUserId // Pass current user as assigner
+    );
+    handleCloseVerificationModal(); // Close modal after reassigning
   };
-
 
   const renderMainView = () => {
     switch (currentUserRole) {
@@ -194,13 +201,16 @@ const AppContent = () => {
       {/* Reset Button (Dev Only) */}
       {__DEV__ && mockAuthState && (
         <View style={styles.resetButtonContainer}>
-          <Button title="Reset Mock View" onPress={() => setMockAuthState(null)} color={colors.secondary}/>
+          <Button
+            title="Reset Mock View"
+            onPress={() => setMockAuthState(null)}
+            color={colors.secondary}
+          />
         </View>
       )}
     </View>
   );
 };
-
 
 export default function App() {
   return (
@@ -220,7 +230,19 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.backgroundPrimary },
-  selectorContainer: { flex: 1, padding: 20, justifyContent: 'center', gap: 10, backgroundColor: colors.backgroundPrimary },
-  selectorTitle: { fontSize: 18, marginBottom: 20, textAlign: 'center', fontWeight: 'bold', color: colors.textPrimary },
+  selectorContainer: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: colors.backgroundPrimary,
+  },
+  selectorTitle: {
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+  },
   resetButtonContainer: { position: 'absolute', bottom: 20, left: 20, right: 20 },
 });

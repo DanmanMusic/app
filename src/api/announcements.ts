@@ -1,13 +1,13 @@
-// src/api/announcements.ts
-import { Announcement } from '../mocks/mockAnnouncements'; // Assuming type source
 
-// --- API Response Interfaces (Adjust if backend differs) ---
+import { Announcement } from '../mocks/mockAnnouncements'; 
+
+
 interface AnnouncementsListResponse {
   items: Announcement[];
-  // Add pagination fields if needed later
+  
 }
 
-// --- Fetch Functions ---
+
 
 /**
  * Fetches all announcements.
@@ -15,21 +15,21 @@ interface AnnouncementsListResponse {
  */
 export const fetchAnnouncements = async (): Promise<Announcement[]> => {
   console.log(`[API] Fetching Announcements`);
-  const response = await fetch('/api/announcements'); // Simple endpoint
+  const response = await fetch('/api/announcements'); 
   console.log(`[API] Announcements Response status: ${response.status}`);
   if (!response.ok) {
     console.error(`[API] Announcements Network response was not ok: ${response.statusText}`);
     throw new Error(`Failed to fetch announcements: ${response.statusText}`);
   }
-  // Assuming direct list return for now
+  
   const data: Announcement[] = await response.json();
   console.log(`[API] Received ${data?.length} announcement items from API mock.`);
-  // Optional: Sort here if backend doesn't, or let frontend sort
-  // data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  
+  
   return data;
 };
 
-// --- Mutation Functions ---
+
 
 /**
  * Creates a new announcement item.
@@ -38,7 +38,7 @@ export const createAnnouncement = async (
   announcementData: Omit<Announcement, 'id' | 'date'>
 ): Promise<Announcement> => {
   console.log('[API] Creating announcement:', announcementData.title);
-  // Ensure date is not sent, backend should set it
+  
   const payload = { ...announcementData };
   if ('date' in payload) {
     delete (payload as any).date;
@@ -56,7 +56,7 @@ export const createAnnouncement = async (
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
     } catch (e) {
-      /* Ignore */
+      
     }
     console.error(`[API] Create Announcement failed: ${errorMsg}`);
     throw new Error(errorMsg);
@@ -74,7 +74,7 @@ export const updateAnnouncement = async ({
   updates,
 }: {
   announcementId: string;
-  updates: Partial<Omit<Announcement, 'id' | 'date'>>; // Don't allow changing date via PATCH
+  updates: Partial<Omit<Announcement, 'id' | 'date'>>; 
 }): Promise<Announcement> => {
   console.log(`[API] Updating announcement ${announcementId}:`, updates);
   const response = await fetch(`/api/announcements/${announcementId}`, {
@@ -89,7 +89,7 @@ export const updateAnnouncement = async ({
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
     } catch (e) {
-      /* Ignore */
+      
     }
     console.error(`[API] Update Announcement failed: ${errorMsg}`);
     throw new Error(errorMsg);
@@ -114,7 +114,7 @@ export const deleteAnnouncement = async (announcementId: string): Promise<void> 
       const errorBody = await response.json();
       errorMsg = errorBody.message || errorBody.error || errorMsg;
     } catch (e) {
-      /* Ignore */
+      
     }
     console.error(`[API] Delete Announcement failed: ${errorMsg}`);
     throw new Error(errorMsg);

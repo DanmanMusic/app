@@ -1,4 +1,4 @@
-// src/components/admin/modals/CreateInstrumentModal.tsx
+
 import React, { useState, useEffect } from 'react';
 import {
   Modal,
@@ -7,43 +7,43 @@ import {
   StyleSheet,
   Button,
   TextInput,
-  ActivityIndicator, // Added
-  Alert, // Added
+  ActivityIndicator, 
+  Alert, 
 } from 'react-native';
-import { useMutation, useQueryClient } from '@tanstack/react-query'; // Added
+import { useMutation, useQueryClient } from '@tanstack/react-query'; 
 
-// API & Types
-import { createInstrument } from '../../../api/instruments'; // Use API file
+
+import { createInstrument } from '../../../api/instruments'; 
 import { Instrument } from '../../../mocks/mockInstruments';
 import { colors } from '../../../styles/colors';
 
-// Interface updated: removed onCreateConfirm prop
+
 interface CreateInstrumentModalProps {
   visible: boolean;
   onClose: () => void;
-  // Removed: onCreateConfirm: (instrumentData: Omit<Instrument, 'id'>) => void;
+  
 }
 
 const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, onClose }) => {
-  // Form State
+  
   const [name, setName] = useState('');
 
   const queryClient = useQueryClient();
 
-  // --- TanStack Mutation ---
+  
   const mutation = useMutation({
-    mutationFn: createInstrument, // API function to call
+    mutationFn: createInstrument, 
     onSuccess: createdInstrument => {
       console.log('Instrument created successfully via mutation:', createdInstrument);
-      queryClient.invalidateQueries({ queryKey: ['instruments'] }); // Refetch list
-      onClose(); // Close modal on success
+      queryClient.invalidateQueries({ queryKey: ['instruments'] }); 
+      onClose(); 
     },
     onError: error => {
       console.error('Error creating instrument via mutation:', error);
     },
   });
 
-  // Effect to reset form when modal visibility changes
+  
   useEffect(() => {
     if (visible) {
       setName('');
@@ -52,7 +52,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
   }, [visible]);
 
   const handleCreate = () => {
-    // Validate input
+    
     if (!name.trim()) {
       return;
     }
@@ -61,7 +61,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
       name: name.trim(),
     };
 
-    // Trigger the mutation
+    
     mutation.mutate(newInstrumentData);
   };
 
@@ -79,10 +79,10 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             placeholder="e.g., Saxophone"
             placeholderTextColor={colors.textLight}
             autoCapitalize="words"
-            editable={!mutation.isPending} // Disable while loading
+            editable={!mutation.isPending} 
           />
 
-          {/* Loading Indicator */}
+          {}
           {mutation.isPending && (
             <View style={modalStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -90,10 +90,13 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             </View>
           )}
 
-          {/* Error Message */}
+          {}
           {mutation.isError && (
             <Text style={modalStyles.errorText}>
-              Error: {mutation.error instanceof Error ? mutation.error.message : 'Failed to create instrument'}
+              Error:{' '}
+              {mutation.error instanceof Error
+                ? mutation.error.message
+                : 'Failed to create instrument'}
             </Text>
           )}
 
@@ -101,7 +104,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             <Button
               title="Create Instrument"
               onPress={handleCreate}
-              disabled={mutation.isPending} // Disable button while loading
+              disabled={mutation.isPending} 
             />
           </View>
           <View style={modalStyles.footerButton}>
@@ -118,7 +121,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
   );
 };
 
-// --- Styles ---
+
 const modalStyles = StyleSheet.create({
   centeredView: {
     flex: 1,
