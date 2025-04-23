@@ -130,17 +130,41 @@ export const handlers = [
       if (!d || !d.firstName || !d.lastName || !d.role)
         return new HttpResponse('Invalid data', { status: 400 });
       const i = `user-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-      const n: User = { ...d, id: i, status: 'active' };
+      const n: User = { ...d, id: i, 
+        status: 'active', 
+        ...(d.role === 'student' && {
+          instrumentIds: d.instrumentIds || [], // Ensure instrumentIds exists, default to empty array
+          linkedTeacherIds: d.linkedTeacherIds || [], // Also ensure linkedTeacherIds exists
+        })        
+      };
       currentMockUsers[i] = n;
       return HttpResponse.json(n, { status: 201 });
     } catch (e) {
       return new HttpResponse('Bad request', { status: 400 });
     }
   }),
+  http.get('/api/users/:id', ({ params }) => {
+    const { id } = params;
+    console.log(`[MSW] Intercepted GET /api/users/${id}`); // Add/Confirm this log
+    if (typeof id !== 'string') {
+        console.error('[MSW] Invalid ID type received:', typeof id);
+        return new HttpResponse('Invalid ID', { status: 400 });
+    }
+    const user = currentMockUsers[id];
+    if (user) {
+        console.log(`[MSW] Found user for ID ${id}:`, user.firstName);
+        return HttpResponse.json(user); // <<< MUST return JSON
+    } else {
+        console.warn(`[MSW] User not found for ID ${id}`);
+        return HttpResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+  }),  
   http.patch('/api/users/:id', async ({ request, params }) => {
     const { id } = params;
+    console.log('got here:', id)
     if (typeof id !== 'string') return new HttpResponse('Invalid ID', { status: 400 });
     const u = currentMockUsers[id];
+    console.log('got here 2:', u)
     if (!u) return new HttpResponse('Not found', { status: 404 });
     try {
       const upd = (await request.json()) as Partial<Omit<User, 'id' | 'role' | 'status'>>;
@@ -150,6 +174,7 @@ export const handlers = [
         delete (v as any).status;
       }
       currentMockUsers[id] = { ...u, ...v };
+      console.log('got here 3:', currentMockUsers[id])
       return HttpResponse.json(currentMockUsers[id]);
     } catch (e) {
       return new HttpResponse('Bad request', { status: 400 });
@@ -646,4 +671,33 @@ export const handlers = [
       return new HttpResponse('Failed to process request', { status: 400 });
     }
   }),
+
+      // Handler for User Counts
+      http.get('/api/stats/user-counts', () => {
+        const users = Object.values(currentMockUsers);
+        const counts = {
+            studentCount: users.filter(u => u.role === 'student').length,
+            teacherCount: users.filter(u => u.role === 'teacher').length,
+            parentCount: users.filter(u => u.role === 'parent').length,
+            activeStudentCount: users.filter(u => u.role === 'student' && u.status === 'active').length,
+            // Add other counts if needed
+        };
+        console.log('[MSW] Returning user counts:', counts);
+        return HttpResponse.json(counts);
+    }),
+
+    // Handler for Pending Task Count
+    http.get('/api/assigned-tasks/stats', () => {
+        const pendingCount = mockAssignedTasksData.filter(
+            task => task.isComplete && task.verificationStatus === 'pending'
+                    // Optionally add student active check if needed for dashboard count
+                    // && currentMockUsers[task.studentId]?.status === 'active'
+        ).length;
+        const stats = {
+            pendingVerificationCount: pendingCount,
+        };
+        console.log('[MSW] Returning task stats:', stats);
+        return HttpResponse.json(stats);
+    }),
+
 ];

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   View,
@@ -7,50 +6,53 @@ import {
   Button,
   FlatList,
   Image,
-  ActivityIndicator, 
-  Alert, 
+  ActivityIndicator,
+  // Alert, // Keep or remove depending on feedback preference
 } from 'react-native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; 
+// Import TQ hooks
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-
-import { fetchInstruments, deleteInstrument } from '../../api/instruments'; 
+// Import API functions
+import { fetchInstruments, createInstrument, updateInstrument, deleteInstrument } from '../../api/instruments';
+// Import Type
 import { Instrument } from '../../mocks/mockInstruments';
+// Import Prop Type
+import { AdminInstrumentsSectionProps } from '../../types/componentProps'; // Adjust path
 
-
+// Import Styles and Utils
 import { adminSharedStyles } from './adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
-import { getInstrumentIconSource } from '../../utils/helpers';
+import { getInstrumentIconSource } from '../../utils/helpers'; // For displaying icons
+
+// Import Modals used by this section
 import CreateInstrumentModal from './modals/CreateInstrumentModal';
 import EditInstrumentModal from './modals/EditInstrumentModal';
-import ConfirmationModal from '../common/ConfirmationModal';
+import ConfirmationModal from '../common/ConfirmationModal'; // For delete confirmation
 
-
-interface AdminInstrumentsSectionProps {
-  
-}
-
-
+// --- Sub-Component: AdminInstrumentItem ---
+// Renders a single instrument item with Edit/Delete buttons
 const AdminInstrumentItem = ({
   item,
   onEdit,
   onDelete,
-  disabled, 
+  disabled, // To disable buttons during delete mutation
 }: {
   item: Instrument;
   onEdit: (instrument: Instrument) => void;
   onDelete: (instrument: Instrument) => void;
-  disabled?: boolean; 
+  disabled?: boolean;
 }) => (
   <View style={appSharedStyles.itemContainer}>
     <View style={styles.itemContent}>
       <Image
-        source={getInstrumentIconSource(item.name)}
+        source={getInstrumentIconSource(item.name)} // Use helper to get icon
         style={styles.instrumentIcon}
         resizeMode="contain"
       />
       <Text style={[appSharedStyles.itemTitle, styles.itemTitleText]}>{item.name}</Text>
     </View>
+    {/* Action Buttons */}
     <View style={adminSharedStyles.itemActions}>
       <Button title="Edit" onPress={() => onEdit(item)} disabled={disabled} />
       <Button
@@ -62,9 +64,13 @@ const AdminInstrumentItem = ({
     </View>
   </View>
 );
+// --- End Sub-Component ---
 
-export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = () => {
-  
+
+// --- Main Section Component ---
+export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = () => { // Uses the imported prop type
+
+  // --- State for Modals ---
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
@@ -73,35 +79,40 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
 
   const queryClient = useQueryClient();
 
-  
+  // --- TQ Query for fetching instruments ---
   const {
-    data: instruments = [], 
+    data: instruments = [], // Default to empty array
     isLoading,
     isError,
     error,
   } = useQuery<Instrument[], Error>({
-    queryKey: ['instruments'], 
-    queryFn: fetchInstruments, 
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    
+    queryKey: ['instruments'], // Unique key for instruments data
+    queryFn: fetchInstruments, // API function
+    staleTime: Infinity, // Instruments change infrequently, cache longer
+    gcTime: Infinity,
   });
 
-  
+  // --- TQ Mutations for CRUD operations ---
+  // Delete mutation handled here for confirmation modal trigger.
+  // Create/Edit mutations handled within their respective modals.
+
   const deleteMutation = useMutation({
-    mutationFn: deleteInstrument, 
+    mutationFn: deleteInstrument, // API function for deleting
     onSuccess: (_, deletedInstrumentId) => {
       console.log(`Instrument ${deletedInstrumentId} deleted successfully via mutation.`);
+      // Invalidate the query to refetch the list
       queryClient.invalidateQueries({ queryKey: ['instruments'] });
-      closeDeleteModal();
+      closeDeleteModal(); // Close the confirmation modal
     },
     onError: (err, deletedInstrumentId) => {
       console.error(`Error deleting instrument ${deletedInstrumentId}:`, err);
+      alert(`Failed to delete instrument: ${err instanceof Error ? err.message : 'Unknown error'}`);
       closeDeleteModal();
     },
   });
 
-  
+  // --- Event Handlers ---
+  // Open Modals
   const handleAddPress = () => setIsCreateModalVisible(true);
   const handleEditPress = (instrument: Instrument) => {
     setInstrumentToEdit(instrument);
@@ -111,6 +122,8 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
     setInstrumentToDelete(instrument);
     setIsDeleteModalVisible(true);
   };
+
+  // Close Modals
   const closeCreateModal = () => setIsCreateModalVisible(false);
   const closeEditModal = () => {
     setIsEditModalVisible(false);
@@ -119,16 +132,17 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
   const closeDeleteModal = () => {
     setIsDeleteModalVisible(false);
     setInstrumentToDelete(null);
-    deleteMutation.reset();
+    deleteMutation.reset(); // Reset mutation state
   };
 
-  
+  // Confirm Delete Action
   const handleDeleteConfirm = () => {
     if (instrumentToDelete && !deleteMutation.isPending) {
-      deleteMutation.mutate(instrumentToDelete.id);
+      deleteMutation.mutate(instrumentToDelete.id); // Trigger the mutation
     }
   };
 
+  // Helper for error display
   const getErrorMessage = () => {
     if (!error) return 'An unknown error occurred.';
     return `Error loading instruments: ${error.message}`;
@@ -136,34 +150,36 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
 
   return (
     <View>
+      {/* Section Title */}
       <Text style={appSharedStyles.sectionTitle}>Instruments ({instruments.length})</Text>
+      {/* Add Button */}
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button title="Add New Instrument" onPress={handleAddPress} />
       </View>
 
-      {}
+      {/* Loading State */}
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
       )}
 
-      {}
+      {/* Error State */}
       {isError && !isLoading && (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{getErrorMessage()}</Text>
         </View>
       )}
 
-      {}
+      {/* Instruments List */}
       {!isLoading && !isError && (
         <FlatList
-          data={instruments} 
+          data={instruments} // Use fetched data (API handler sorts it)
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <AdminInstrumentItem
               item={item}
-              onEdit={handleEditPress}
-              onDelete={handleDeletePress}
-              disabled={deleteMutation.isPending} 
+              onEdit={handleEditPress} // Trigger edit modal
+              onDelete={handleDeletePress} // Trigger delete confirmation modal
+              disabled={deleteMutation.isPending} // Disable buttons while deleting
             />
           )}
           scrollEnabled={false}
@@ -174,34 +190,48 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
         />
       )}
 
-      {}
-      <CreateInstrumentModal visible={isCreateModalVisible} onClose={closeCreateModal} />
+      {/* Modals Rendered Here */}
+      <CreateInstrumentModal
+        visible={isCreateModalVisible}
+        onClose={closeCreateModal}
+        // Handles own create mutation
+      />
       <EditInstrumentModal
         visible={isEditModalVisible}
         instrumentToEdit={instrumentToEdit}
         onClose={closeEditModal}
+        // Handles own update mutation
       />
       <ConfirmationModal
         visible={isDeleteModalVisible}
         title="Confirm Delete"
-        
-        message={`Are you sure you want to delete the instrument "${
-          instrumentToDelete?.name || ''
-        }"? This cannot be undone.`}
+        message={`Are you sure you want to delete the instrument "${instrumentToDelete?.name || ''}"? This cannot be undone.`}
         confirmText={deleteMutation.isPending ? 'Deleting...' : 'Delete Instrument'}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={handleDeleteConfirm} // Trigger delete mutation
         onCancel={closeDeleteModal}
-        confirmDisabled={deleteMutation.isPending}
+        confirmDisabled={deleteMutation.isPending} // Disable confirm while deleting
       />
     </View>
   );
 };
 
 
+// Styles for this section
 const styles = StyleSheet.create({
-  itemContent: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  instrumentIcon: { width: 40, height: 40, marginRight: 15 },
-  itemTitleText: { flexShrink: 1, marginBottom: 0 }, 
+  itemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10
+  },
+  instrumentIcon: {
+    width: 40,
+    height: 40,
+    marginRight: 15
+  },
+  itemTitleText: {
+    flexShrink: 1, // Allow text to wrap if needed
+    marginBottom: 0 // Remove bottom margin from default itemTitle style
+  },
   errorContainer: {
     marginVertical: 20,
     padding: 15,
