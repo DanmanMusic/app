@@ -265,8 +265,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       return (
         <>
           <Text style={modalSharedStyles.stepTitle}>
-            {' '}
-            Step {preselectedStudentId ? 1 : 2}: Assign Task to {studentName}{' '}
+            Step {preselectedStudentId ? 1 : 2}: Assign Task to {studentName}
           </Text>
           <View style={modalSharedStyles.modeSwitchContainer}>
             <Text style={commonSharedStyles.label}>Select from Library</Text>
@@ -366,12 +365,10 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       return (
         <>
           <Text style={modalSharedStyles.stepTitle}>
-            {' '}
-            Step {preselectedStudentId ? 2 : 3}: Confirm Assignment{' '}
+            Step {preselectedStudentId ? 2 : 3}: Confirm Assignment
           </Text>
           <Text style={modalSharedStyles.confirmationText}>
-            {' '}
-            Assign task "{taskTitle || 'N/A'}" ({taskPoints ?? '?'} points) to "{studentName}"?{' '}
+            Assign task "{taskTitle || 'N/A'}" ({taskPoints ?? '?'} points) to "{studentName}"?
           </Text>
         </>
       );
@@ -387,14 +384,13 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           {renderStepContent()}
           {mutation.isPending && (
             <View style={modalSharedStyles.loadingContainer}>
-              {' '}
-              <ActivityIndicator size="small" color={colors.primary} />{' '}
-              <Text style={modalSharedStyles.loadingText}>Assigning Task...</Text>{' '}
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={modalSharedStyles.loadingText}>Assigning Task...</Text>
             </View>
           )}
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
-              Error:{' '}
+              Error:
               {mutation.error instanceof Error
                 ? mutation.error.message
                 : 'Failed to assign task'}

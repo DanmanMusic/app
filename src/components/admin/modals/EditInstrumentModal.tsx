@@ -100,7 +100,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
           )}
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
-              Error:{' '}
+              Error:
               {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
             </Text>
           )}

@@ -60,25 +60,20 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             autoCapitalize="words"
             editable={!mutation.isPending}
           />
-
-          {}
           {mutation.isPending && (
             <View style={modalSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={modalSharedStyles.loadingText}>Creating Instrument...</Text>
             </View>
           )}
-
-          {}
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
-              Error:{' '}
+              Error:
               {mutation.error instanceof Error
                 ? mutation.error.message
                 : 'Failed to create instrument'}
             </Text>
           )}
-
           <View style={modalSharedStyles.buttonContainer}>
             <Button
               title="Create Instrument"

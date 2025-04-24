@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import Slider from '@react-native-community/slider';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Modal, View, Text, Button, ActivityIndicator, Alert } from 'react-native';
-import { updateAssignedTask, createAssignedTask } from '../api/assignedTasks';
-import { useAuth } from '../contexts/AuthContext';
-import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
-import { colors } from '../styles/colors';
-import { TaskVerificationModalProps } from '../types/componentProps';
-import { User } from '../types/userTypes';
-import { getUserDisplayName } from '../utils/helpers';
-import { modalSharedStyles } from '../styles/modalSharedStyles';
-import { commonSharedStyles } from '../styles/commonSharedStyles';
+import { updateAssignedTask, createAssignedTask } from '../../api/assignedTasks';
+import { useAuth } from '../../contexts/AuthContext';
+import { AssignedTask, TaskVerificationStatus } from '../../mocks/mockAssignedTasks';
+import { colors } from '../../styles/colors';
+import { TaskVerificationModalProps } from '../../types/componentProps';
+import { User } from '../../types/userTypes';
+import { getUserDisplayName } from '../../utils/helpers';
+import { modalSharedStyles } from '../../styles/modalSharedStyles';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   visible,

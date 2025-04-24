@@ -156,7 +156,7 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
           )}
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
-              Error:{' '}
+              Error:
               {mutation.error instanceof Error
                 ? mutation.error.message
                 : 'Failed to adjust tickets'}

@@ -139,7 +139,6 @@ export const ParentView: React.FC<ParentViewProps> = () => {
           <Text style={appSharedStyles.textDanger}>
             Error: Could not load parent data. {errorParent?.message}
           </Text>
-          {}
         </View>
       </SafeAreaView>
     );

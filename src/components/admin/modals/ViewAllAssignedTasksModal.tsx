@@ -49,12 +49,12 @@ const AssignedTaskDetailItem = ({
     <View style={adminSharedStyles.taskItem}>
       <Text style={adminSharedStyles.taskItemTitle}>{item.taskTitle}</Text>
       <Text style={appSharedStyles.itemDetailText}>
-        Student: {student ? getUserDisplayName(student) : item.studentId}{' '}
+        Student: {student ? getUserDisplayName(student) : item.studentId}
         {student && ` (${student.status})`}
       </Text>
       <Text style={adminSharedStyles.taskItemStatus}>Status: Status</Text>
       <Text style={appSharedStyles.itemDetailText}>
-        Assigned: {new Date(item.assignedDate).toLocaleDateString()} by{' '}
+        Assigned: {new Date(item.assignedDate).toLocaleDateString()} by
         {assigner ? getUserDisplayName(assigner) : item.assignedById}
       </Text>
       {item.completedDate && (
@@ -64,13 +64,13 @@ const AssignedTaskDetailItem = ({
       )}
       {item.verifiedDate && item.verificationStatus !== 'pending' && (
         <Text style={appSharedStyles.itemDetailText}>
-          Verified: {new Date(item.verifiedDate).toLocaleDateString()} by{' '}
+          Verified: {new Date(item.verifiedDate).toLocaleDateString()} by
           {verifier ? getUserDisplayName(verifier) : item.verifiedById}
         </Text>
       )}
       {item.actualPointsAwarded !== undefined && item.verificationStatus !== 'pending' && (
         <Text style={adminSharedStyles.taskItemTickets}>          
-          Awarded: {item.actualPointsAwarded ?? 0} Tickets{' '}
+          Awarded: {item.actualPointsAwarded ?? 0} Tickets
         </Text>
       )}
       {item.isComplete && item.verificationStatus === 'pending' && (
@@ -178,7 +178,6 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
         <View style={modalSharedStyles.centeredView}>
           <View style={modalSharedStyles.modalView}>
-            {}
             <View style={modalSharedStyles.modalHeader}>
               <Text style={modalSharedStyles.modalTitle}>Assigned Tasks ({totalItems})</Text>
               {isFetchingTasks && !isLoadingTasks && (
@@ -261,7 +260,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                 ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
                 ListEmptyComponent={
                   <Text style={[appSharedStyles.emptyListText, { padding: 20 }]}>
-                    No tasks match the current filters.{' '}
+                    No tasks match the current filters.
                   </Text>
                 }
                 contentContainerStyle={{ paddingBottom: 10 }}

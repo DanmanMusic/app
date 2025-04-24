@@ -13,44 +13,13 @@ import { colors } from '../../styles/colors';
 import { AdminUsersSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';
 import { UserRole, User, UserStatus } from '../../types/userTypes';
-import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
+import { getInstrumentNames } from '../../utils/helpers';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import PaginationControls from './PaginationControls';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { AdminUserItem } from '../common/AdminUserItem';
 
 type StudentFilter = UserStatus | 'all';
-
-const AdminUserItem = ({
-  user,
-  onViewManage,
-}: {
-  user: User;
-  onViewManage: (userId: string, role: UserRole) => void;
-}) => (
-  <View
-    style={[appSharedStyles.itemContainer, user.status === 'inactive' ? appSharedStyles.inactiveItem : {}]}
-  >
-    <Text style={appSharedStyles.itemTitle}>{getUserDisplayName(user)}</Text>
-    <Text
-      style={[
-        appSharedStyles.itemDetailText,
-        { fontWeight: 'bold', color: user.status === 'active' ? colors.success : colors.secondary },
-      ]}
-    >
-      Status: {user.status}
-    </Text>
-    {}
-    {user.role === 'parent' && user.linkedStudentIds && (
-      <Text style={appSharedStyles.itemDetailText}>
-        Linked Students: {user.linkedStudentIds.length}
-      </Text>
-    )}
-    {}
-    <View style={adminSharedStyles.itemActions}>
-      <Button title="View/Edit Details" onPress={() => onViewManage(user.id, user.role)} />
-    </View>
-  </View>
-);
 
 const AdminStudentItem = ({
   student,

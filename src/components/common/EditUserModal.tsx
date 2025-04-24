@@ -157,10 +157,8 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         <View style={modalSharedStyles.modalView}>
           <Text style={modalSharedStyles.modalTitle}>Edit User: {currentUserDisplayName}</Text>
           <Text style={modalSharedStyles.subTitle}>
-            {' '}
-            Role: {userToEdit.role.toUpperCase()} (ID: {userToEdit.id}){' '}
+            Role: {userToEdit.role.toUpperCase()} (ID: {userToEdit.id})
           </Text>
-
           <ScrollView style={modalSharedStyles.scrollView}>
             <Text style={commonSharedStyles.label}>First Name:</Text>
             <TextInput
@@ -251,7 +249,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
           )}
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
-              Error:{' '}
+              Error:
               {mutation.error instanceof Error
                 ? mutation.error.message
                 : 'Failed to save changes'}

@@ -1,50 +1,16 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { View, Text, Button, FlatList, Image, ActivityIndicator } from 'react-native';
+import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 import { fetchInstruments, deleteInstrument } from '../../api/instruments';
 import { Instrument } from '../../mocks/mockInstruments';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminInstrumentsSectionProps } from '../../types/componentProps';
-import { getInstrumentIconSource } from '../../utils/helpers';
 import ConfirmationModal from '../common/ConfirmationModal';
-import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import CreateInstrumentModal from './modals/CreateInstrumentModal';
 import EditInstrumentModal from './modals/EditInstrumentModal';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-
-const AdminInstrumentItem = ({
-  item,
-  onEdit,
-  onDelete,
-  disabled,
-}: {
-  item: Instrument;
-  onEdit: (instrument: Instrument) => void;
-  onDelete: (instrument: Instrument) => void;
-  disabled?: boolean;
-}) => (
-  <View style={appSharedStyles.itemContainer}>
-    <View style={commonSharedStyles.itemContentRow}>
-      <Image
-        source={getInstrumentIconSource(item.name)}
-        style={adminSharedStyles.instrumentIcon}
-        resizeMode="contain"
-      />
-      <Text style={[appSharedStyles.itemTitle, adminSharedStyles.itemTitleText]}>{item.name}</Text>
-    </View>
-    {}
-    <View style={adminSharedStyles.itemActions}>
-      <Button title="Edit" onPress={() => onEdit(item)} disabled={disabled} />
-      <Button
-        title="Delete"
-        onPress={() => onDelete(item)}
-        color={colors.danger}
-        disabled={disabled}
-      />
-    </View>
-  </View>
-);
+import { AdminInstrumentItem } from '../common/AdminInstrumentItem';
 
 export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);

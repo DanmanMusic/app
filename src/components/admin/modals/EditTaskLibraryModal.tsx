@@ -119,23 +119,18 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
               editable={!mutation.isPending}
             />
           </ScrollView>
-
-          {}
           {mutation.isPending && (
             <View style={modalSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={modalSharedStyles.loadingText}>Saving Changes...</Text>
             </View>
           )}
-
-          {}
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
-              Error:{' '}
+              Error:
               {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
             </Text>
           )}
-
           <View style={modalSharedStyles.buttonContainer}>
             <Button title="Save Changes" onPress={handleSave} disabled={mutation.isPending} />
           </View>

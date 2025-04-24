@@ -327,7 +327,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           <Text style={appSharedStyles.textDanger}>
             Error loading student data: {userErrorMsg?.message}
           </Text>
-          {}
         </View>
       </SafeAreaView>
     );
@@ -365,7 +364,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
         <Text style={appSharedStyles.instrumentText}>
           Instrument(s): {getInstrumentNames(user.instrumentIds, mockInstruments)}
         </Text>
-        {}
         {balanceLoading ? (
           <Text style={[appSharedStyles.balance, appSharedStyles.textGold]}>Loading balance...</Text>
         ) : balanceError ? (
@@ -375,8 +373,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
         ) : (
           <Text style={[appSharedStyles.balance, appSharedStyles.textGold]}>Current Tickets: {balance}</Text>
         )}
-
-        {}
         <View style={appSharedStyles.tabContainer}>
           <Button
             title="Dashboard"
@@ -399,13 +395,9 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
             color={activeTab === 'announcements' ? colors.primary : colors.secondary}
           />
         </View>
-
-        {}
         <View style={appSharedStyles.contentArea}>
-          {}
           {activeTab === 'dashboard' && (
             <ScrollView>
-              {}
               <Text style={appSharedStyles.sectionTitle}>My Goal</Text>
               {rewardsLoading && <ActivityIndicator color={colors.primary} />}
               {rewardsError && (
@@ -424,22 +416,19 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                       <View style={{ flex: 1, marginLeft: 10 }}>
                         <Text style={appSharedStyles.goalText}>Saving for: {goalReward.name}</Text>
                         <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
-                          {' '}
-                          {goalReward.cost} Tickets{' '}
+                          {goalReward.cost} Tickets
                         </Text>
                       </View>
                     </View>
                     {goalMet ? (
                       <Text style={appSharedStyles.progressText}>
-                        {' '}
-                        Progress: {goalReward.cost} / {goalReward.cost} (100.0%){' '}
+                        Progress: {goalReward.cost} / {goalReward.cost} (100.0%)
                         {balance > goalReward.cost &&
-                          ` with ${balance - goalReward.cost} remaining`}{' '}
+                          ` with ${balance - goalReward.cost} remaining`}
                       </Text>
                     ) : (
                       <Text style={appSharedStyles.progressText}>
-                        {' '}
-                        Progress: {balance} / {goalReward.cost} ({clampedProgress.toFixed(1)}%){' '}
+                        Progress: {balance} / {goalReward.cost} ({clampedProgress.toFixed(1)}%)
                       </Text>
                     )}
                     <View style={appSharedStyles.progressBarBackground}>
@@ -461,8 +450,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                     <Button title="Set a Goal" onPress={handleSetGoalPress} />
                   </View>
                 ))}
-
-              {}
               <Text style={appSharedStyles.sectionTitle}>Recent History</Text>
               {historyLoading && (
                 <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
@@ -539,7 +526,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
             </>
           )}
 
-          {}
           {activeTab === 'rewards' && (
             <>
               {rewardsLoading && (

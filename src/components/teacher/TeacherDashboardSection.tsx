@@ -8,7 +8,7 @@ import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { TeacherDashboardSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';
-import { PendingVerificationItem } from '../../views/TeacherView';
+import { PendingVerificationItem } from '../common/PendingVerificationItem';
 
 export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = ({
   onInitiateVerificationModal,

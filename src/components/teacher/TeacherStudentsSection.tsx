@@ -7,7 +7,7 @@ import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { TeacherStudentsSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';
-import { StudentListItem } from '../../views/TeacherView';
+import { StudentListItem } from '../common/StudentListItem';
 
 export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
   mockInstruments,
@@ -67,7 +67,6 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
         ) : (
           <Text style={appSharedStyles.emptyListText}> No students linked to you. </Text>
         ))}
-      {}
       <View style={{ marginTop: 20, alignItems: 'flex-start' }}>
         <Button
           title="View All Students (TODO)"

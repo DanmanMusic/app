@@ -144,7 +144,7 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
             )}
             {toggleStatusMutation.isError && (
               <Text style={commonSharedStyles.errorText}>
-                Status update failed:{' '}
+                Status update failed:
                 {toggleStatusMutation.error instanceof Error
                   ? toggleStatusMutation.error.message
                   : 'Unknown error'}
@@ -152,7 +152,7 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
             )}
             {deleteMutation.isError && (
               <Text style={commonSharedStyles.errorText}>
-                Delete failed:{' '}
+                Delete failed:
                 {deleteMutation.error instanceof Error
                   ? deleteMutation.error.message
                   : 'Unknown error'}

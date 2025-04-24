@@ -22,9 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePaginatedStudentHistory } from '../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../hooks/usePaginatedStudentTasks';
 import { AssignedTask } from '../mocks/mockAssignedTasks';
-import { Instrument } from '../mocks/mockInstruments';
 import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
-import { TicketTransaction } from '../mocks/mockTickets';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 import { TeacherViewProps } from '../types/componentProps';
@@ -32,62 +30,9 @@ import { SimplifiedStudent } from '../types/dataTypes';
 import { User } from '../types/userTypes';
 import { getUserDisplayName, getInstrumentNames } from '../utils/helpers';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
-
-export const PendingVerificationItem = ({
-  task,
-  studentName,
-  onInitiateVerification,
-}: {
-  task: AssignedTask;
-  studentName: string;
-  onInitiateVerification: (task: AssignedTask) => void;
-}) => (
-  <View style={appSharedStyles.pendingItem}>
-    <Text style={adminSharedStyles.pendingTitle}>Task: {task.taskTitle}</Text>
-    <Text style={adminSharedStyles.pendingDetail}>Student: {studentName}</Text>
-    <Text style={adminSharedStyles.pendingDetail}>Potential Tickets: {task.taskBasePoints}</Text>
-    <Text style={adminSharedStyles.pendingDetail}>
-      Completed: {task.completedDate ? new Date(task.completedDate).toLocaleString() : 'N/A'}
-    </Text>
-    <View style={{ marginTop: 10 }}>
-      <Button title="Verify Task" onPress={() => onInitiateVerification(task)} />
-    </View>
-  </View>
-);
-
-export const StudentListItem = ({
-  student,
-  mockInstruments,
-  onViewProfile,
-  onAssignTask,
-}: {
-  student: SimplifiedStudent;
-  mockInstruments: Instrument[];
-  onViewProfile: (studentId: string) => void;
-  onAssignTask: (studentId: string) => void;
-}) => (
-  <View style={[appSharedStyles.itemContainer, !student.isActive ? appSharedStyles.inactiveItemStyle : {}]}>
-    <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
-    <Text style={appSharedStyles.itemDetailText}>
-      Instrument(s): {getInstrumentNames(student.instrumentIds, mockInstruments)}
-    </Text>
-    <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
-      Balance: {student.balance} Tickets
-    </Text>
-    <Text
-      style={[
-        appSharedStyles.itemDetailText,
-        { fontWeight: 'bold', color: student.isActive ? colors.success : colors.secondary },
-      ]}
-    >
-      Status: {student.isActive ? 'Active' : 'Inactive'}
-    </Text>
-    <View style={appSharedStyles.studentActions}>
-      <Button title="View Profile" onPress={() => onViewProfile(student.id)} />
-      {student.isActive && <Button title="Assign Task" onPress={() => onAssignTask(student.id)} />}
-    </View>
-  </View>
-);
+import { PendingVerificationItem } from '../components/common/PendingVerificationItem';
+import { StudentListItem } from '../components/common/StudentListItem';
+import { TicketHistoryItem } from './StudentView';
 
 export const TaskLibraryItemTeacher = ({ item }: { item: TaskLibraryItem }) => (
   <View style={appSharedStyles.itemContainer}>
@@ -96,35 +41,6 @@ export const TaskLibraryItemTeacher = ({ item }: { item: TaskLibraryItem }) => (
     <Text style={[appSharedStyles.itemDetailText, appSharedStyles.taskLibraryItemTickets]}>
       {item.baseTickets} Base Tickets
     </Text>
-  </View>
-);
-
-const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
-  <View style={commonSharedStyles.historyItemContainer}>
-    <Text style={commonSharedStyles.historyItemTimestamp}>
-      {new Date(item.timestamp).toLocaleString()}
-    </Text>
-    <Text style={commonSharedStyles.historyItemDetails}>
-      {item.type === 'task_award'
-        ? 'Task Award'
-        : item.type === 'manual_add'
-          ? 'Manual Add'
-          : item.type === 'manual_subtract'
-            ? 'Manual Subtract'
-            : item.type === 'redemption'
-              ? 'Redemption'
-              : item.type}
-      :
-      <Text
-        style={[
-          commonSharedStyles.historyItemAmount,
-          item.amount > 0 ? { color: colors.success } : { color: colors.danger },
-        ]}
-      >
-        {item.amount > 0 ? `+${item.amount}` : item.amount} Tickets
-      </Text>
-    </Text>
-    {item.notes && <Text style={commonSharedStyles.historyItemNotes}>{item.notes}</Text>}
   </View>
 );
 
@@ -532,8 +448,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
         {viewingSection === 'dashboard' && (
           <View>
             <Text style={appSharedStyles.sectionTitle}>
-              {' '}
-              Pending Verifications ({pendingVerifications.length}){' '}
+              Pending Verifications ({pendingVerifications.length})
             </Text>
             {assignedTasksLoading && (
               <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />

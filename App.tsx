@@ -9,7 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 // Import TanStack Query client and provider
 
 // Import Contexts & Views
-import TaskVerificationModal from './src/components/TaskVerificationModal';
+import TaskVerificationModal from './src/components/common/TaskVerificationModal';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 // DataProvider is likely removable soon, but keep for now if other parts still use it
 import { DataProvider, useData } from './src/contexts/DataContext';

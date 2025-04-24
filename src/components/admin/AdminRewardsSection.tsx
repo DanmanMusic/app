@@ -1,51 +1,16 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { View, Text, Button, FlatList, Image, ActivityIndicator } from 'react-native';
+import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 import { fetchRewards, deleteReward } from '../../api/rewards';
 import { RewardItem } from '../../mocks/mockRewards';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminRewardsSectionProps } from '../../types/componentProps';
 import ConfirmationModal from '../common/ConfirmationModal';
-import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import CreateRewardModal from './modals/CreateRewardModal';
 import EditRewardModal from './modals/EditRewardModal';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-
-const AdminRewardItem = ({
-  item,
-  onEdit,
-  onDelete,
-  disabled,
-}: {
-  item: RewardItem;
-  onEdit: (reward: RewardItem) => void;
-  onDelete: (reward: RewardItem) => void;
-  disabled?: boolean;
-}) => (
-  <View style={appSharedStyles.itemContainer}>
-    <View style={commonSharedStyles.itemContentRow}>
-      <Image source={{ uri: item.imageUrl }} style={commonSharedStyles.itemImageMedium} resizeMode="contain" />
-      <View style={commonSharedStyles.itemDetailsContainer}>
-        <Text style={appSharedStyles.itemTitle}>{item.name}</Text>
-        <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
-          {item.cost} Tickets
-        </Text>
-        {item.description && <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>}
-      </View>
-    </View>
-    {}
-    <View style={adminSharedStyles.itemActions}>
-      <Button title="Edit" onPress={() => onEdit(item)} disabled={disabled} />
-      <Button
-        title="Delete"
-        onPress={() => onDelete(item)}
-        color={colors.danger}
-        disabled={disabled}
-      />
-    </View>
-  </View>
-);
+import { AdminRewardItem } from '../common/AdminRewardItem';
 
 export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
