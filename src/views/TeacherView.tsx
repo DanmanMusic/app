@@ -42,7 +42,7 @@ export const PendingVerificationItem = ({
   studentName: string;
   onInitiateVerification: (task: AssignedTask) => void;
 }) => (
-  <View style={adminSharedStyles.pendingItem}>
+  <View style={appSharedStyles.pendingItem}>
     <Text style={adminSharedStyles.pendingTitle}>Task: {task.taskTitle}</Text>
     <Text style={adminSharedStyles.pendingDetail}>Student: {studentName}</Text>
     <Text style={adminSharedStyles.pendingDetail}>Potential Tickets: {task.taskBasePoints}</Text>

@@ -66,11 +66,6 @@ export const adminSharedStyles = StyleSheet.create({
     gap: 5,
   },
 
-  pendingItem: {
-    ...appSharedStyles.itemContainer,
-    borderColor: colors.borderWarning,
-  },
-
   pendingTitle: {
     fontSize: 16,
     fontWeight: 'bold',
