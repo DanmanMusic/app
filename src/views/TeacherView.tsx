@@ -1,14 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  View,
-  Text,
-  ScrollView,
-  Button,
-  FlatList,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, Button, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchAssignedTasks, createAssignedTask, deleteAssignedTask } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
@@ -192,7 +184,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     setViewingSection('students');
   };
   const handleInitiateAssignTaskForStudent = (studentId: string) => {
-    console.log('yo2')
+    console.log('yo2');
     setAssignTaskTargetStudentId(studentId);
     setIsAssignTaskModalVisible(true);
   };

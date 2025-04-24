@@ -47,7 +47,9 @@ export const PublicView: React.FC<PublicViewProps> = () => {
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
       <View style={appSharedStyles.container}>
-        <Text style={[appSharedStyles.header, appSharedStyles.publicHeader]}>Danmans Music School</Text>
+        <Text style={[appSharedStyles.header, appSharedStyles.publicHeader]}>
+          Danmans Music School
+        </Text>
         <Text style={appSharedStyles.subheader}>Virtual Ticket Rewards Program</Text>
         <View style={appSharedStyles.tabContainer}>
           <Button

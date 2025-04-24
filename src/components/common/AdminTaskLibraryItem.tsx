@@ -1,8 +1,8 @@
-import { Button, Text, View } from "react-native";
-import { TaskLibraryItem } from "../../mocks";
-import { colors } from "../../styles/colors";
-import { appSharedStyles } from "../../styles/appSharedStyles";
-import { adminSharedStyles } from "../../styles/adminSharedStyles";
+import { Button, Text, View } from 'react-native';
+import { TaskLibraryItem } from '../../mocks';
+import { colors } from '../../styles/colors';
+import { appSharedStyles } from '../../styles/appSharedStyles';
+import { adminSharedStyles } from '../../styles/adminSharedStyles';
 
 export const AdminTaskLibraryItem = ({ item }: { item: TaskLibraryItem }) => (
   <View style={appSharedStyles.itemContainer}>

@@ -234,13 +234,17 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           Instrument(s): {getInstrumentNames(user.instrumentIds, mockInstruments)}
         </Text>
         {balanceLoading ? (
-          <Text style={[appSharedStyles.balance, appSharedStyles.textGold]}>Loading balance...</Text>
+          <Text style={[appSharedStyles.balance, appSharedStyles.textGold]}>
+            Loading balance...
+          </Text>
         ) : balanceError ? (
           <Text style={[appSharedStyles.balance, appSharedStyles.textDanger]}>
             Error loading balance: {balanceErrorMsg?.message}
           </Text>
         ) : (
-          <Text style={[appSharedStyles.balance, appSharedStyles.textGold]}>Current Tickets: {balance}</Text>
+          <Text style={[appSharedStyles.balance, appSharedStyles.textGold]}>
+            Current Tickets: {balance}
+          </Text>
         )}
         <View style={appSharedStyles.tabContainer}>
           <Button

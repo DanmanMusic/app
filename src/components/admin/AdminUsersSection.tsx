@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  Button,
-  FlatList,
-  TextInput,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, Button, FlatList, TextInput, ActivityIndicator } from 'react-native';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminUsersSectionProps } from '../../types/componentProps';

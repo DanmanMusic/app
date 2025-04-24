@@ -250,9 +250,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
               Error:
-              {mutation.error instanceof Error
-                ? mutation.error.message
-                : 'Failed to save changes'}
+              {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
             </Text>
           )}
           <View style={modalSharedStyles.buttonContainer}>

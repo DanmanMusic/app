@@ -1,7 +1,7 @@
-import { Button, Text, View } from "react-native";
-import { AssignedTask } from "../../mocks";
-import { appSharedStyles } from "../../styles/appSharedStyles";
-import { adminSharedStyles } from "../../styles/adminSharedStyles";
+import { Button, Text, View } from 'react-native';
+import { AssignedTask } from '../../mocks';
+import { appSharedStyles } from '../../styles/appSharedStyles';
+import { adminSharedStyles } from '../../styles/adminSharedStyles';
 
 export const PendingVerificationItem = ({
   task,

@@ -49,7 +49,7 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
   // Redeem Mutation
   const redeemMutation = useMutation({
     mutationFn: redeemReward,
-    onSuccess: (transaction) => {
+    onSuccess: transaction => {
       console.log('Reward redeemed successfully via mutation:', transaction);
       // Invalidate queries to update UI
       queryClient.invalidateQueries({ queryKey: ['balance', studentId] });
@@ -63,7 +63,7 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
       );
       onClose(); // Close modal on success
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Error redeeming reward via mutation:', error);
       Alert.alert(
         'Redemption Failed',
@@ -97,13 +97,13 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
     }
     const selectedReward = rewardsCatalog.find(r => r.id === selectedRewardId);
     if (!selectedReward) {
-        Alert.alert('Error', 'Selected reward not found.');
-        return;
+      Alert.alert('Error', 'Selected reward not found.');
+      return;
     }
     // Double-check affordability before mutation (though API should also check)
     if (currentBalance < selectedReward.cost) {
-       Alert.alert('Insufficient Tickets', `Cannot redeem ${selectedReward.name}.`);
-       return;
+      Alert.alert('Insufficient Tickets', `Cannot redeem ${selectedReward.name}.`);
+      return;
     }
 
     redeemMutation.mutate({
@@ -138,7 +138,7 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
               {item.cost} Tickets
             </Text>
             {!canAfford && (
-                <Text style={styles.cannotAffordText}>(Need {item.cost - currentBalance} more)</Text>
+              <Text style={styles.cannotAffordText}>(Need {item.cost - currentBalance} more)</Text>
             )}
           </View>
           {isSelected && <Text style={styles.checkmark}>✓</Text>}
@@ -170,7 +170,7 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
               style={modalSharedStyles.modalListContainer}
               data={rewardsCatalog.sort((a, b) => a.cost - b.cost)} // Sort by cost
               renderItem={renderRewardItem}
-              keyExtractor={(item) => item.id}
+              keyExtractor={item => item.id}
               ItemSeparatorComponent={() => <View style={styles.separator} />}
               ListEmptyComponent={
                 <Text style={appSharedStyles.emptyListText}>No rewards available.</Text>
@@ -178,19 +178,24 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
             />
           )}
           {redeemMutation.isPending && (
-             <View style={modalSharedStyles.loadingContainer}>
-                <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={modalSharedStyles.loadingText}>Redeeming...</Text>
-             </View>
+            <View style={modalSharedStyles.loadingContainer}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={modalSharedStyles.loadingText}>Redeeming...</Text>
+            </View>
           )}
-           {redeemMutation.isError && (
-             <Text style={[commonSharedStyles.errorText, {marginTop: 5}]}>
-                Redemption Failed: {redeemMutation.error instanceof Error ? redeemMutation.error.message : 'Error'}
-             </Text>
+          {redeemMutation.isError && (
+            <Text style={[commonSharedStyles.errorText, { marginTop: 5 }]}>
+              Redemption Failed:{' '}
+              {redeemMutation.error instanceof Error ? redeemMutation.error.message : 'Error'}
+            </Text>
           )}
           <View style={modalSharedStyles.buttonContainer}>
             <Button
-              title={redeemMutation.isPending ? 'Processing...' : `Redeem Selected (${selectedReward?.cost ?? 0} Tickets)`}
+              title={
+                redeemMutation.isPending
+                  ? 'Processing...'
+                  : `Redeem Selected (${selectedReward?.cost ?? 0} Tickets)`
+              }
               onPress={handleConfirmRedemption}
               disabled={!selectedRewardId || isLoadingRewards || redeemMutation.isPending}
               color={colors.success}
@@ -210,14 +215,33 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
 
 // Reward Item Specific Styling
 const styles = StyleSheet.create({
-    rewardItemBase: { flexDirection: 'row', alignItems: 'center', padding: 10, borderWidth: 1, borderColor: colors.borderSecondary, borderRadius: 6, backgroundColor: colors.backgroundPrimary, },
-    rewardItemUnaffordable: { opacity: 0.6, backgroundColor: colors.backgroundGrey, },
-    rewardItemSelected: { borderColor: colors.primary, borderWidth: 2, backgroundColor: colors.backgroundHighlight, },
-    rewardImage: { width: 50, height: 50, marginRight: 12, borderRadius: 4, borderWidth: 1, borderColor: colors.borderSecondary, },
-    rewardName: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
-    cannotAffordText: { fontSize: 12, color: colors.textLight, fontStyle: 'italic', marginTop: 2 },
-    checkmark: { fontSize: 24, color: colors.primary, marginLeft: 10 },
-    separator: { height: 8, },
+  rewardItemBase: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+    borderRadius: 6,
+    backgroundColor: colors.backgroundPrimary,
+  },
+  rewardItemUnaffordable: { opacity: 0.6, backgroundColor: colors.backgroundGrey },
+  rewardItemSelected: {
+    borderColor: colors.primary,
+    borderWidth: 2,
+    backgroundColor: colors.backgroundHighlight,
+  },
+  rewardImage: {
+    width: 50,
+    height: 50,
+    marginRight: 12,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+  },
+  rewardName: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
+  cannotAffordText: { fontSize: 12, color: colors.textLight, fontStyle: 'italic', marginTop: 2 },
+  checkmark: { fontSize: 24, color: colors.primary, marginLeft: 10 },
+  separator: { height: 8 },
 });
 
 export default RedeemRewardModal;

@@ -35,14 +35,15 @@ export const modalSharedStyles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.borderPrimary,
   },
-  modalSectionTitle: { // For sub-sections within a modal
-      fontSize: 16,
-      fontWeight: '600',
-      marginTop: 15,
-      marginBottom: 10,
-      color: colors.textSecondary,
-      width: '100%',
-      textAlign: 'center',
+  modalSectionTitle: {
+    // For sub-sections within a modal
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 15,
+    marginBottom: 10,
+    color: colors.textSecondary,
+    width: '100%',
+    textAlign: 'center',
   },
   // Combined button container styles
   buttonContainer: {
@@ -53,26 +54,26 @@ export const modalSharedStyles = StyleSheet.create({
     borderTopColor: colors.borderSecondary,
     paddingTop: 15, // Space below the border
   },
-   // Maybe a separate style for the final cancel/close button
-   footerButton: {
-     width: '100%',
-     marginTop: 10, // Add slight space if primary buttons exist
-   },
-   // Keep loading/error styles potentially in commonSharedStyles instead? Or here? Let's put them here for now as they are often modal-related.
-   loadingContainer: {
-     flexDirection: 'row',
-     alignItems: 'center',
-     justifyContent: 'center',
-     height: 20, // Consistent height
-     marginVertical: 10, // Consistent spacing
-   },
-   loadingText: {
-     marginLeft: 10,
-     fontSize: 14,
-     color: colors.textSecondary,
-   },
-   scrollView: { width: '100%', marginBottom: 15 },
-   modalSubSection: {
+  // Maybe a separate style for the final cancel/close button
+  footerButton: {
+    width: '100%',
+    marginTop: 10, // Add slight space if primary buttons exist
+  },
+  // Keep loading/error styles potentially in commonSharedStyles instead? Or here? Let's put them here for now as they are often modal-related.
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 20, // Consistent height
+    marginVertical: 10, // Consistent spacing
+  },
+  loadingText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  scrollView: { width: '100%', marginBottom: 15 },
+  modalSubSection: {
     marginTop: 20,
     paddingTop: 15,
     borderTopWidth: 1,
@@ -102,14 +103,16 @@ export const modalSharedStyles = StyleSheet.create({
     height: 60,
     marginBottom: 5,
   },
-  modalContextInfo: { // New style for studentInfo
+  modalContextInfo: {
+    // New style for studentInfo
     fontSize: 15, // Standardize size? or keep 16? Let's try 15
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 10, // Standard margin below context info
     width: '100%', // Ensure it takes full width for centering
   },
-  modalToggleContainer: { // New style for toggleContainer
+  modalToggleContainer: {
+    // New style for toggleContainer
     flexDirection: 'row',
     justifyContent: 'space-around', // Distribute space
     alignItems: 'center', // Vertically center items if they have different heights
@@ -124,7 +127,8 @@ export const modalSharedStyles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 15,
   },
-  modalListContainer: { // New style for lists inside modals
+  modalListContainer: {
+    // New style for lists inside modals
     flexGrow: 0, // Don't allow list to push content out infinitely
     width: '100%',
     maxHeight: '60%', // Sensible default max height (adjust if needed)
@@ -281,5 +285,5 @@ export const modalSharedStyles = StyleSheet.create({
   goalSelectDetails: { flex: 1, justifyContent: 'center' },
   goalSelectName: { fontSize: 15, fontWeight: '600', color: colors.textPrimary, marginBottom: 2 },
   cannotAffordText: { fontSize: 12, color: colors.textLight, fontStyle: 'italic', marginTop: 2 },
-  checkmark: { fontSize: 24, color: colors.primary, marginLeft: 10 },  
+  checkmark: { fontSize: 24, color: colors.primary, marginLeft: 10 },
 });

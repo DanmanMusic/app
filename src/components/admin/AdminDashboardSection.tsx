@@ -59,7 +59,9 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
             Tasks Pending Verification: {isErrorTaskStats ? 'Error' : pendingVerificationsCount}
           </Text>
           {isErrorCounts && (
-            <Text style={commonSharedStyles.errorText}>Failed to load user counts: {errorCounts?.message}</Text>
+            <Text style={commonSharedStyles.errorText}>
+              Failed to load user counts: {errorCounts?.message}
+            </Text>
           )}
           {isErrorTaskStats && (
             <Text style={commonSharedStyles.errorText}>

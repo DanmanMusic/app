@@ -38,9 +38,9 @@ export const commonSharedStyles = StyleSheet.create({
     marginBottom: 15,
   },
   separator: {
-      height: 1,
-      backgroundColor: colors.borderSecondary,
-      marginVertical: 10,
+    height: 1,
+    backgroundColor: colors.borderSecondary,
+    marginVertical: 10,
   },
   selectionContainer: {
     flexDirection: 'row',
@@ -63,7 +63,7 @@ export const commonSharedStyles = StyleSheet.create({
     color: colors.danger,
     fontSize: 14,
     textAlign: 'center',
-  },  
+  },
   itemContentRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -87,7 +87,7 @@ export const commonSharedStyles = StyleSheet.create({
     gap: 10,
     marginTop: 15,
     marginBottom: 15,
-  },    
+  },
   searchInput: {
     height: 40,
     borderColor: colors.borderPrimary,

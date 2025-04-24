@@ -300,9 +300,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             <Text style={modalSharedStyles.taskTitle}>{taskTitle}</Text>
             <Text>Student: {studentNameDisplay}</Text>
             <Text style={{ marginBottom: 20 }}>
-              Status: <Text style={{ fontWeight: 'bold' }}>
-                {selectedStatus?.toUpperCase()}
-              </Text>
+              Status: <Text style={{ fontWeight: 'bold' }}>{selectedStatus?.toUpperCase()}</Text>
               {' - '} Tickets Awarded:
               <Text
                 style={{

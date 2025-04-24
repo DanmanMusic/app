@@ -143,7 +143,9 @@ export const ParentView: React.FC<ParentViewProps> = () => {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
         <View style={appSharedStyles.parentHeader}>
-          <Text style={appSharedStyles.parentHeaderText}>Viewing: {getUserDisplayName(studentToView)}</Text>
+          <Text style={appSharedStyles.parentHeaderText}>
+            Viewing: {getUserDisplayName(studentToView)}
+          </Text>
           {hasMultipleStudents && (
             <Button title="Select Student" onPress={() => setViewingStudentId(null)} />
           )}

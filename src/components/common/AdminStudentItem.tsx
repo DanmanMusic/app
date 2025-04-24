@@ -1,11 +1,11 @@
-import { Button, Text, View } from "react-native";
-import { Instrument } from "../../mocks";
-import { SimplifiedStudent } from "../../types/dataTypes";
-import { UserRole } from "../../types/userTypes";
-import { appSharedStyles } from "../../styles/appSharedStyles";
-import { getInstrumentNames } from "../../utils/helpers";
-import { adminSharedStyles } from "../../styles/adminSharedStyles";
-import { colors } from "../../styles/colors";
+import { Button, Text, View } from 'react-native';
+import { Instrument } from '../../mocks';
+import { SimplifiedStudent } from '../../types/dataTypes';
+import { UserRole } from '../../types/userTypes';
+import { appSharedStyles } from '../../styles/appSharedStyles';
+import { getInstrumentNames } from '../../utils/helpers';
+import { adminSharedStyles } from '../../styles/adminSharedStyles';
+import { colors } from '../../styles/colors';
 
 export const AdminStudentItem = ({
   student,
@@ -19,7 +19,9 @@ export const AdminStudentItem = ({
   onInitiateAssignTask: (studentId: string) => void;
 }) => {
   return (
-    <View style={[appSharedStyles.itemContainer, !student.isActive ? appSharedStyles.inactiveItem : {}]}>
+    <View
+      style={[appSharedStyles.itemContainer, !student.isActive ? appSharedStyles.inactiveItem : {}]}
+    >
       <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
       <Text style={appSharedStyles.itemDetailText}>
         Instrument(s): {getInstrumentNames(student.instrumentIds, mockInstruments)}

@@ -5,8 +5,8 @@ import { createInstrument } from '../../../api/instruments';
 import { Instrument } from '../../../mocks/mockInstruments';
 import { colors } from '../../../styles/colors';
 import { CreateInstrumentModalProps } from '../../../types/componentProps';
-import { modalSharedStyles } from '../../../styles/modalSharedStyles'
-import { commonSharedStyles } from '../../../styles/commonSharedStyles'
+import { modalSharedStyles } from '../../../styles/modalSharedStyles';
+import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
 const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');

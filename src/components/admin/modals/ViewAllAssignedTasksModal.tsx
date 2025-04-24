@@ -1,17 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import {
-  Modal,
-  View,
-  Text,
-  Button,
-  FlatList,
-  ActivityIndicator,
-} from 'react-native';
+import { Modal, View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 import { fetchStudents, fetchTeachers, fetchParents } from '../../../api/users';
-import {
-  usePaginatedAssignedTasks,
-} from '../../../hooks/usePaginatedAssignedTasks';
+import { usePaginatedAssignedTasks } from '../../../hooks/usePaginatedAssignedTasks';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
 import { ViewAllAssignedTasksModalProps } from '../../../types/componentProps';

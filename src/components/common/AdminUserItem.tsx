@@ -1,9 +1,9 @@
-import { Button, Text, View } from "react-native";
-import { appSharedStyles } from "../../styles/appSharedStyles";
-import { User, UserRole } from "../../types/userTypes";
-import { adminSharedStyles } from "../../styles/adminSharedStyles";
-import { getUserDisplayName } from "../../utils/helpers";
-import { colors } from "../../styles/colors";
+import { Button, Text, View } from 'react-native';
+import { appSharedStyles } from '../../styles/appSharedStyles';
+import { User, UserRole } from '../../types/userTypes';
+import { adminSharedStyles } from '../../styles/adminSharedStyles';
+import { getUserDisplayName } from '../../utils/helpers';
+import { colors } from '../../styles/colors';
 
 export const AdminUserItem = ({
   user,
@@ -13,7 +13,10 @@ export const AdminUserItem = ({
   onViewManage: (userId: string, role: UserRole) => void;
 }) => (
   <View
-    style={[appSharedStyles.itemContainer, user.status === 'inactive' ? appSharedStyles.inactiveItem : {}]}
+    style={[
+      appSharedStyles.itemContainer,
+      user.status === 'inactive' ? appSharedStyles.inactiveItem : {},
+    ]}
   >
     <Text style={appSharedStyles.itemTitle}>{getUserDisplayName(user)}</Text>
     <Text

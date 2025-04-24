@@ -391,9 +391,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
               Error:
-              {mutation.error instanceof Error
-                ? mutation.error.message
-                : 'Failed to assign task'}
+              {mutation.error instanceof Error ? mutation.error.message : 'Failed to assign task'}
             </Text>
           )}
           {step === 3 && (

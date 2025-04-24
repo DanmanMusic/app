@@ -5,8 +5,8 @@ import { createAnnouncement } from '../../../api/announcements';
 import { Announcement, AnnouncementType } from '../../../mocks/mockAnnouncements';
 import { colors } from '../../../styles/colors';
 import { CreateAnnouncementModalProps } from '../../../types/componentProps';
-import { modalSharedStyles } from '../../../styles/modalSharedStyles'
-import { commonSharedStyles } from '../../../styles/commonSharedStyles'
+import { modalSharedStyles } from '../../../styles/modalSharedStyles';
+import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
 const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visible, onClose }) => {
   const [title, setTitle] = useState('');

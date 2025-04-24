@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  Modal,
-  View,
-  Text,
-  Button,
-  TextInput,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { Modal, View, Text, Button, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { adjustTickets } from '../../../api/tickets';
 import { useAuth } from '../../../contexts/AuthContext';
 import { colors } from '../../../styles/colors';
@@ -105,7 +97,9 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
         <View style={modalSharedStyles.modalView}>
           <Text style={modalSharedStyles.modalTitle}>Manual Ticket Adjustment</Text>
           <Text style={modalSharedStyles.modalContextInfo}>Student: {studentName}</Text>
-          <Text style={modalSharedStyles.modalContextInfo}>Current Balance: {currentBalance} Tickets</Text>
+          <Text style={modalSharedStyles.modalContextInfo}>
+            Current Balance: {currentBalance} Tickets
+          </Text>
 
           <View style={modalSharedStyles.modalToggleContainer}>
             <Button
