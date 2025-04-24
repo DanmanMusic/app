@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { View, Text, FlatList, Button, ActivityIndicator } from 'react-native';
 import { fetchStudents } from '../../api/users';
@@ -17,26 +17,18 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
   const { currentUserId: teacherId } = useAuth();
 
   const {
-    data: allStudentsResult,
+    data: studentsResult,
     isLoading,
     isError,
     error,
   } = useQuery({
-    queryKey: ['students', { filter: 'all', context: 'teacherStudentsSection' }],
-    queryFn: () => fetchStudents({ filter: 'all', page: 1 }),
+    queryKey: ['students', { context: 'teacherStudentsSection', teacherId }],
+    queryFn: () => fetchStudents({ page: 1, filter: 'all', teacherId: teacherId ?? undefined }),
     enabled: !!teacherId,
     staleTime: 5 * 60 * 1000,
   });
-  const allStudentsSimple: SimplifiedStudent[] = allStudentsResult?.students ?? [];
 
-  const studentsLinkedToTeacher = useMemo(() => {
-    if (!teacherId || !allStudentsSimple) return [];
-    console.warn(
-      '[TeacherStudentsSection] Filtering students client-side. Inefficient/Inaccurate.'
-    );
-
-    return allStudentsSimple.sort((a, b) => a.name.localeCompare(b.name));
-  }, [teacherId, allStudentsSimple]);
+  const studentsLinkedToTeacher: SimplifiedStudent[] = studentsResult?.students ?? [];
 
   return (
     <View>
@@ -51,7 +43,7 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
         !isError &&
         (studentsLinkedToTeacher.length > 0 ? (
           <FlatList
-            data={studentsLinkedToTeacher}
+            data={studentsLinkedToTeacher.sort((a, b) => a.name.localeCompare(b.name))}
             keyExtractor={item => item.id}
             renderItem={({ item }) => (
               <StudentListItem

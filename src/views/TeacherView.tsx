@@ -1,6 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { View, Text, ScrollView, Button, FlatList, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Button,
+  FlatList,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchAssignedTasks, createAssignedTask, deleteAssignedTask } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
@@ -8,7 +16,6 @@ import { fetchTaskLibrary } from '../api/taskLibrary';
 import { fetchStudentBalance } from '../api/tickets';
 import { fetchStudents } from '../api/users';
 import { adminSharedStyles } from '../styles/adminSharedStyles';
-import PaginationControls from '../components/admin/PaginationControls';
 import AssignTaskModal from '../components/common/AssignTaskModal';
 import { useAuth } from '../contexts/AuthContext';
 import { usePaginatedStudentHistory } from '../hooks/usePaginatedStudentHistory';
@@ -19,12 +26,13 @@ import { colors } from '../styles/colors';
 import { TeacherViewProps } from '../types/componentProps';
 import { SimplifiedStudent } from '../types/dataTypes';
 import { User } from '../types/userTypes';
-import { getUserDisplayName, getInstrumentNames } from '../utils/helpers';
-import { commonSharedStyles } from '../styles/commonSharedStyles';
+import { getUserDisplayName } from '../utils/helpers';
 import { PendingVerificationItem } from '../components/common/PendingVerificationItem';
 import { StudentListItem } from '../components/common/StudentListItem';
-import { TicketHistoryItem } from '../components/common/TicketHistoryItem';
 import { TaskLibraryItemTeacher } from '../components/common/TaskLibraryItemTeacher';
+import { AdminStudentDetailView } from '../components/admin/AdminStudentDetailView';
+import EditUserModal from '../components/common/EditUserModal';
+import { Instrument } from '../mocks';
 
 export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId } = useAuth();
@@ -35,6 +43,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   const [viewingStudentId, setViewingStudentId] = useState<string | null>(null);
   const [isAssignTaskModalVisible, setIsAssignTaskModalVisible] = useState(false);
   const [assignTaskTargetStudentId, setAssignTaskTargetStudentId] = useState<string | null>(null);
+  const [isEditStudentModalVisible, setIsEditStudentModalVisible] = useState(false);
 
   const { data: teacherUser, isLoading: teacherLoading } = useQuery<User, Error>({
     queryKey: ['user', currentUserId],
@@ -55,15 +64,17 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   });
 
   const { data: allStudentsResult, isLoading: studentsLoading } = useQuery({
-    queryKey: ['students', { page: 1, filter: 'all' }],
-    queryFn: () => fetchStudents({ page: 1, filter: 'all' }),
+    queryKey: ['students', { filter: 'all', teacherId: currentUserId, context: 'teacherViewLookup' }],
+    queryFn: () => fetchStudents({ page: 1, filter: 'all', teacherId: currentUserId ?? undefined }),
+    enabled: !!currentUserId,
     staleTime: 5 * 60 * 1000,
   });
   const allStudentsSimple: SimplifiedStudent[] = allStudentsResult?.students ?? [];
 
   const { data: allAssignedTasksResult, isLoading: assignedTasksLoading } = useQuery({
-    queryKey: ['assigned-tasks', { assignmentStatus: 'pending', studentStatus: 'active' }],
-    queryFn: () => fetchAssignedTasks({ assignmentStatus: 'pending', studentStatus: 'active' }),
+    queryKey: ['assigned-tasks', { assignmentStatus: 'pending', studentStatus: 'active', teacherId: currentUserId }],
+    queryFn: () => fetchAssignedTasks({ assignmentStatus: 'pending', studentStatus: 'active', teacherId: currentUserId ?? undefined }),
+    enabled: !!currentUserId,
     staleTime: 1 * 60 * 1000,
   });
   const assignedTasks: AssignedTask[] = allAssignedTasksResult?.items ?? [];
@@ -72,12 +83,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     queryKey: ['task-library'],
     queryFn: fetchTaskLibrary,
     staleTime: 10 * 60 * 1000,
-  });
-
-  const { data: instruments = [], isLoading: instrumentsLoading } = useQuery({
-    queryKey: ['instruments'],
-    queryFn: fetchInstruments,
-    staleTime: Infinity,
   });
 
   const { data: viewingStudentUser, isLoading: viewingStudentUserLoading } = useQuery<User, Error>({
@@ -104,6 +109,15 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     staleTime: 1 * 60 * 1000,
   });
 
+  const { data: fetchedInstruments = [], isLoading: instrumentsLoading } = useQuery<
+    Instrument[],
+    Error
+  >({
+    queryKey: ['instruments'],
+    queryFn: fetchInstruments,
+    staleTime: Infinity,
+  });
+
   const {
     tasks: paginatedTasks,
     currentPage: tasksCurrentPage,
@@ -114,6 +128,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     error: studentTasksErrorObject,
     totalTasksCount,
   } = usePaginatedStudentTasks(viewingStudentId);
+
   const {
     history: paginatedHistory,
     isLoading: studentHistoryLoading,
@@ -164,16 +179,12 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   });
 
   const studentsLinkedToTeacher = useMemo(() => {
-    if (!teacherUser || !allStudentsSimple) return [];
-    console.warn('[TeacherView] Filtering students based on placeholder logic. Needs fixing.');
     return allStudentsSimple;
-  }, [teacherUser, allStudentsSimple]);
+  }, [allStudentsSimple]);
 
   const pendingVerifications = useMemo(() => {
-    if (!teacherUser) return [];
-    console.warn('[TeacherView] Filtering pending tasks based on placeholder logic. Needs fixing.');
-    return assignedTasks.filter(task => task.isComplete && task.verificationStatus === 'pending');
-  }, [assignedTasks, teacherUser]);
+    return assignedTasks;
+  }, [assignedTasks]);
 
   const handleViewProfile = (studentId: string) => {
     setViewingStudentId(studentId);
@@ -184,10 +195,12 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     setViewingSection('students');
   };
   const handleInitiateAssignTaskForStudent = (studentId: string) => {
-    console.log('yo2');
     setAssignTaskTargetStudentId(studentId);
     setIsAssignTaskModalVisible(true);
   };
+  const handleEditStudentClick = () => {
+    if (viewingStudentId) setIsEditStudentModalVisible(true);
+  };  
   const handleInitiateAssignTaskGeneral = () => {
     setAssignTaskTargetStudentId(null);
     setIsAssignTaskModalVisible(true);
@@ -213,204 +226,36 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     assignedTasksLoading ||
     libraryLoading ||
     instrumentsLoading;
+
   if (isLoadingInitialData) {
-    return (
-      <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.container}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text>Loading Teacher Data...</Text>
-        </View>
-      </SafeAreaView>
-    );
+      return <SafeAreaView style={appSharedStyles.safeArea}><View style={appSharedStyles.container}><ActivityIndicator size="large" color={colors.primary} /><Text>Loading Teacher Data...</Text></View></SafeAreaView>;
   }
   if (!teacherUser) {
-    return (
-      <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.container}>
-          <Text style={appSharedStyles.textDanger}>Error: Could not load teacher data.</Text>
-        </View>
-      </SafeAreaView>
-    );
+      return <SafeAreaView style={appSharedStyles.safeArea}><View style={appSharedStyles.container}><Text style={appSharedStyles.textDanger}>Error: Could not load teacher data.</Text></View></SafeAreaView>;
   }
 
-  if (viewingSection === 'studentProfile' && viewingStudentId) {
-    const isLoadingProfile =
-      viewingStudentUserLoading ||
-      viewingStudentBalanceLoading ||
-      studentTasksLoading ||
-      studentHistoryLoading;
+  const renderMainContent = () => {
+    if (viewingSection === 'studentProfile' && viewingStudentId) {
+      const isLoadingProfile =
+        viewingStudentUserLoading ||
+        viewingStudentBalanceLoading ||
+        studentTasksLoading ||
+        studentHistoryLoading;
+
+      return (
+        <AdminStudentDetailView
+            viewingStudentId={viewingStudentId}
+            onInitiateVerification={onInitiateVerificationModal}
+            onInitiateAssignTaskForStudent={handleInitiateAssignTaskForStudent}
+            onInitiateEditStudent={handleEditStudentClick}
+        />
+      );
+    }
+
     return (
-      <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.headerContainer}>
-          <Button title="← Back" onPress={handleBackFromProfile} />
-          <Text style={appSharedStyles.header} numberOfLines={1} ellipsizeMode="tail">
-            {viewingStudentUser ? getUserDisplayName(viewingStudentUser) : 'Loading...'}
-          </Text>
-          <View style={{ width: 50 }} />
-        </View>
-        {isLoadingProfile && (
-          <View style={appSharedStyles.container}>
-            <ActivityIndicator size="large" color={colors.primary} />
-          </View>
-        )}
-        {!isLoadingProfile && viewingStudentUser && (
-          <ScrollView style={appSharedStyles.container}>
-            <Text style={appSharedStyles.sectionTitle}>Student Details</Text>
-            <Text>Name: {getUserDisplayName(viewingStudentUser)}</Text>
-            <Text>Status: {viewingStudentUser.status}</Text>
-            <Text>
-              Instrument(s): {getInstrumentNames(viewingStudentUser.instrumentIds, instruments)}
-            </Text>
-            <Text>Balance: {viewingStudentBalance} Tickets</Text>
-            <View style={{ marginTop: 20, marginBottom: 20, alignItems: 'flex-start' }}>
-              <Button
-                title={`Assign Task to ${getUserDisplayName(viewingStudentUser)}`}
-                onPress={() => handleInitiateAssignTaskForStudent(viewingStudentUser.id)}
-                disabled={viewingStudentUser.status !== 'active' || assignTaskMutation.isPending}
-              />
-            </View>
-
-            <Text style={appSharedStyles.sectionTitle}> Assigned Tasks ({totalTasksCount}) </Text>
-            {studentTasksError && (
-              <Text style={appSharedStyles.textDanger}>
-                Error loading tasks: {studentTasksErrorObject?.message}
-              </Text>
-            )}
-            {!studentTasksError && (
-              <FlatList
-                data={paginatedTasks}
-                keyExtractor={item => item.id}
-                renderItem={({ item }) => {
-                  const isStudentActive = viewingStudentUser.status === 'active';
-                  const allowDelete =
-                    (!item.isComplete || item.verificationStatus === 'pending') && isStudentActive;
-                  const allowVerify =
-                    item.isComplete && item.verificationStatus === 'pending' && isStudentActive;
-                  const taskStatus = item.isComplete
-                    ? item.verificationStatus === 'pending'
-                      ? 'Complete (Pending)'
-                      : `Verified (${item.verificationStatus})`
-                    : 'Assigned';
-                  return (
-                    <View style={adminSharedStyles.taskItem}>
-                      <Text>
-                        {item.taskTitle} ({taskStatus})
-                      </Text>
-                      {item.completedDate && (
-                        <Text style={appSharedStyles.itemDetailText}>
-                          Completed: {new Date(item.completedDate).toLocaleDateString()}
-                        </Text>
-                      )}
-                      {item.verifiedDate && item.verificationStatus !== 'pending' && (
-                        <Text style={appSharedStyles.itemDetailText}>
-                          Verified: {new Date(item.verifiedDate).toLocaleDateString()}
-                        </Text>
-                      )}
-                      {item.actualPointsAwarded !== undefined &&
-                        item.verificationStatus !== 'pending' && (
-                          <Text style={adminSharedStyles.taskItemTickets}>
-                            Awarded: {item.actualPointsAwarded ?? 0} Tickets
-                          </Text>
-                        )}
-                      {item.isComplete && item.verificationStatus === 'pending' && (
-                        <Text style={commonSharedStyles.pendingNote}>Awaiting verification...</Text>
-                      )}
-                      <View style={adminSharedStyles.assignedTaskActions}>
-                        {allowVerify && (
-                          <Button
-                            title="Verify Task"
-                            onPress={() => onInitiateVerificationModal(item)}
-                            disabled={
-                              deleteTaskMutation.isPending &&
-                              deleteTaskMutation.variables === item.id
-                            }
-                          />
-                        )}
-                        {allowDelete && (
-                          <Button
-                            title={
-                              deleteTaskMutation.isPending &&
-                              deleteTaskMutation.variables === item.id
-                                ? 'Removing...'
-                                : 'Remove'
-                            }
-                            onPress={() => handleRemoveAssignedTask(item.id)}
-                            color={colors.danger}
-                            disabled={deleteTaskMutation.isPending}
-                          />
-                        )}
-                      </View>
-                    </View>
-                  );
-                }}
-                scrollEnabled={false}
-                ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-                ListEmptyComponent={
-                  <Text style={appSharedStyles.emptyListText}>No tasks assigned.</Text>
-                }
-                ListFooterComponent={
-                  tasksTotalPages > 1 ? (
-                    <PaginationControls
-                      currentPage={tasksCurrentPage}
-                      totalPages={tasksTotalPages}
-                      onPageChange={setTasksPage}
-                    />
-                  ) : null
-                }
-                contentContainerStyle={{ paddingBottom: 10 }}
-              />
-            )}
-
-            <Text style={appSharedStyles.sectionTitle}>
-              History (Recent - {totalHistoryCount} Total)
-            </Text>
-            {studentHistoryError && (
-              <Text style={appSharedStyles.textDanger}>Error loading history.</Text>
-            )}
-            {!studentHistoryError && paginatedHistory.length > 0 ? (
-              <FlatList
-                data={paginatedHistory}
-                keyExtractor={item => `hist-${item.id}`}
-                renderItem={({ item }) => <TicketHistoryItem item={item} />}
-                scrollEnabled={false}
-                ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
-              />
-            ) : !studentHistoryError ? (
-              <Text style={appSharedStyles.emptyListText}>No history found.</Text>
-            ) : null}
-            {!studentHistoryError && totalHistoryCount > paginatedHistory.length && (
-              <Button
-                title="View Full History (TODO)"
-                onPress={() => alert('Implement full history view')}
-              />
-            )}
-
-            <View style={{ marginTop: 20, marginBottom: 20 }}>
-              <Button
-                title="View Rewards Catalog (TODO)"
-                onPress={() => alert('Implement rewards view')}
-              />
-            </View>
-          </ScrollView>
-        )}
-        {!isLoadingProfile && !viewingStudentUser && (
-          <View style={appSharedStyles.container}>
-            <Text style={appSharedStyles.textDanger}>Error loading student profile.</Text>
-          </View>
-        )}
-      </SafeAreaView>
-    );
-  }
-
-  const teacherDisplayName = getUserDisplayName(teacherUser);
-  return (
-    <SafeAreaView style={appSharedStyles.safeArea}>
-      <View style={appSharedStyles.headerContainer}>
-        <Text style={appSharedStyles.header}>Teacher: {teacherDisplayName}</Text>
-      </View>
       <ScrollView style={appSharedStyles.container}>
         <View style={appSharedStyles.teacherNav}>
-          <Button
+           <Button
             title="Dashboard"
             onPress={() => setViewingSection('dashboard')}
             color={viewingSection === 'dashboard' ? colors.primary : colors.secondary}
@@ -428,7 +273,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
         </View>
 
         {viewingSection === 'dashboard' && (
-          <View>
+            <View>
             <Text style={appSharedStyles.sectionTitle}>
               Pending Verifications ({pendingVerifications.length})
             </Text>
@@ -444,7 +289,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
                 )}
                 keyExtractor={item => item.id}
                 renderItem={({ item }) => {
-                  const studentInfo = studentsLinkedToTeacher.find(s => s.id === item.studentId);
+                  const studentInfo = allStudentsSimple.find(s => s.id === item.studentId);
                   return (
                     <PendingVerificationItem
                       task={item}
@@ -462,7 +307,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
           </View>
         )}
         {viewingSection === 'students' && (
-          <View>
+           <View>
             <Text style={appSharedStyles.sectionTitle}>
               My Students ({studentsLinkedToTeacher.length})
             </Text>
@@ -476,7 +321,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
                 renderItem={({ item }) => (
                   <StudentListItem
                     student={item}
-                    mockInstruments={instruments}
+                    mockInstruments={fetchedInstruments}
                     onViewProfile={handleViewProfile}
                     onAssignTask={handleInitiateAssignTaskForStudent}
                   />
@@ -496,7 +341,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
           </View>
         )}
         {viewingSection === 'tasks' && (
-          <View>
+           <View>
             <Text style={appSharedStyles.sectionTitle}>Task Management</Text>
             <View style={{ alignItems: 'flex-start', marginBottom: 20 }}>
               <Button
@@ -525,12 +370,47 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
           </View>
         )}
       </ScrollView>
+    );
+  };
+
+  const teacherDisplayName = getUserDisplayName(teacherUser);
+  const showBackButton = viewingSection === 'studentProfile';
+
+  return (
+    <SafeAreaView style={appSharedStyles.safeArea}>
+      <View style={appSharedStyles.headerContainer}>
+        {showBackButton ? (
+            <View style={appSharedStyles.headerSideContainer}>
+                 <Button title="← Back" onPress={handleBackFromProfile} />
+            </View>
+        ) : (
+            <View style={appSharedStyles.headerSideContainer} />
+        )}
+        <Text style={appSharedStyles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+          {viewingSection === 'studentProfile'
+            ? (viewingStudentUser ? getUserDisplayName(viewingStudentUser) : 'Loading...')
+            : `Teacher: ${teacherDisplayName}`
+          }
+        </Text>
+         <View style={appSharedStyles.headerSideContainer} />
+      </View>
+
+      {renderMainContent()}
 
       <AssignTaskModal
         visible={isAssignTaskModalVisible}
         onClose={handleAssignTaskModalClose}
         preselectedStudentId={assignTaskTargetStudentId}
       />
+      {viewingStudentUser && (
+        <EditUserModal
+          visible={isEditStudentModalVisible}
+          userToEdit={viewingStudentUser}
+          onClose={() => setIsEditStudentModalVisible(false)}
+          mockInstruments={fetchedInstruments}
+        />
+      )}      
+
     </SafeAreaView>
   );
 };

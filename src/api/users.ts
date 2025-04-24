@@ -32,17 +32,26 @@ export const fetchStudents = async ({
   page = 1,
   filter = 'active',
   searchTerm = '',
+  teacherId, // <-- Add teacherId here
 }: {
   page?: number;
   filter?: UserStatus | 'all';
   searchTerm?: string;
+  teacherId?: string; // <-- Define the optional parameter type
 }): Promise<FetchStudentsResult> => {
-  console.log(`[API] Fetching students: page=${page}, filter=${filter}, search='${searchTerm}'`);
+  // Update console log to include teacherId if present
+  console.log(
+    `[API] Fetching students: page=${page}, filter=${filter}, search='${searchTerm}'${teacherId ? `, teacherId=${teacherId}` : ''}`
+  );
   const params = new URLSearchParams();
   params.append('page', String(page));
   params.append('filter', filter);
   if (searchTerm) {
     params.append('search', searchTerm);
+  }
+  // Add teacherId to params if provided
+  if (teacherId) {
+    params.append('teacherId', teacherId);
   }
   const response = await fetch(`/api/students?${params.toString()}`);
   console.log(`[API] Students Response status: ${response.status}`);
@@ -52,11 +61,12 @@ export const fetchStudents = async ({
   }
   const data: StudentsApiResponse = await response.json();
   console.log(`[API] Received ${data.items?.length} raw students from API mock.`);
+  // Keep the mapping logic as is - balance might need adjustment later if API provides it
   const simplifiedStudents = (data.items || []).map(student => ({
     id: student.id,
     name: getUserDisplayName(student),
     instrumentIds: student.instrumentIds,
-    balance: 0,
+    balance: 0, // Placeholder - might need updating if API returns balance
     isActive: student.status === 'active',
   }));
   return {

@@ -24,7 +24,6 @@ import CreateUserModal from '../components/admin/modals/CreateUserModal';
 import { ViewAllAssignedTasksModal } from '../components/admin/modals/ViewAllAssignedTasksModal';
 import AssignTaskModal from '../components/common/AssignTaskModal';
 import EditUserModal from '../components/common/EditUserModal';
-import DeactivateOrDeleteUserModal from '../components/common/DeactivateOrDeleteUserModal';
 
 // Import Contexts and Hooks
 import { useAuth } from '../contexts/AuthContext';
@@ -71,7 +70,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const [isViewAllAssignedTasksModalVisible, setIsViewAllAssignedTasksModalVisible] =
     useState(false);
   const [isEditStudentModalVisible, setIsEditStudentModalVisible] = useState(false);
-  const [isStatusStudentModalVisible, setIsStatusStudentModalVisible] = useState(false);
 
   // --- TQ Queries ---
   const {
@@ -208,6 +206,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     setAssignTaskTargetStudentId(studentId);
     setIsAssignTaskModalVisible(true);
   };
+  const handleInitiateCreateUser = () => {
+    console.log('[AdminView] handleInitiateCreateUser called');
+    setIsCreateUserModalVisible(true);
+  };  
   const handleInitiateAssignTaskGeneral = () => {
     console.log('[AdminView] handleInitiateAssignTaskGeneral called');
     setAssignTaskTargetStudentId(null);
@@ -225,13 +227,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   };
   const handleEditStudentClick = () => {
     if (viewingStudentId) setIsEditStudentModalVisible(true);
-  };
-  const handleStatusStudentClick = () => {
-    if (viewingStudentId) setIsStatusStudentModalVisible(true);
-  };
-  const handleLoginQRClick = () => {
-    if (viewingStudentUser)
-      alert(`Simulating QR Code for ${getUserDisplayName(viewingStudentUser)}...`);
   };
 
   // --- Render Logic ---
@@ -267,6 +262,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           onInitiateAssignTaskForStudent={() =>
             handleInitiateAssignTaskForStudent(viewingStudentId)
           }
+          onInitiateEditStudent={handleEditStudentClick}          
         />
       );
     }
@@ -433,6 +429,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             mockInstruments={fetchedInstruments}
             onViewManageUser={handleViewManageUser}
             onInitiateAssignTaskForStudent={handleInitiateAssignTaskForStudent}
+            onInitiateCreateUser={handleInitiateCreateUser}
           />
         )}
         {viewingSection === 'tasks' && (
@@ -488,24 +485,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
               : 'Loading...'
             : `Admin: ${getUserDisplayName(adminUser)}`}
         </Text>
-        <View style={[appSharedStyles.headerSideContainer, { justifyContent: 'flex-end', gap: 5 }]}>
-          {viewingStudentId && (
-            <>
-              <Button
-                title="Login (QR)"
-                onPress={handleLoginQRClick}
-                color={colors.info}
-                disabled={!isStudentActive}
-              />
-              <Button title="Edit" onPress={handleEditStudentClick} color={colors.warning} />
-              <Button title="Status" onPress={handleStatusStudentClick} color={colors.secondary} />
-            </>
-          )}
-          {viewingSection === 'users' && !viewingStudentId && (
-            <Button title="+ User" onPress={() => setIsCreateUserModalVisible(true)} />
-          )}
-          {!viewingStudentId && viewingSection !== 'users' && <View style={{ width: 60 }} />}
-        </View>
       </View>
 
       {/* Main Content */}
@@ -528,19 +507,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         onInitiateVerification={handleInternalInitiateVerificationModal}
       />
       {viewingStudentUser && (
-        <>
-          <EditUserModal
-            visible={isEditStudentModalVisible}
-            userToEdit={viewingStudentUser}
-            onClose={() => setIsEditStudentModalVisible(false)}
-            mockInstruments={fetchedInstruments}
-          />
-          <DeactivateOrDeleteUserModal
-            visible={isStatusStudentModalVisible}
-            user={viewingStudentUser}
-            onClose={() => setIsStatusStudentModalVisible(false)}
-          />
-        </>
+        <EditUserModal
+          visible={isEditStudentModalVisible}
+          userToEdit={viewingStudentUser}
+          onClose={() => setIsEditStudentModalVisible(false)}
+          mockInstruments={fetchedInstruments}
+        />
       )}
     </SafeAreaView>
   );

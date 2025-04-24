@@ -30,6 +30,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   mockInstruments,
   onViewManageUser,
   onInitiateAssignTaskForStudent,
+  onInitiateCreateUser,
 }) => {
   const renderUserItem = ({ item }: { item: User | SimplifiedStudent }) => {
     const role =
@@ -79,6 +80,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
           onPress={() => setActiveTab('parents')}
           color={activeTab === 'parents' ? colors.primary : colors.secondary}
         />
+        <Button title="Create User" onPress={() => onInitiateCreateUser()} />
       </View>
 
       {activeTab === 'students' && studentFilter && setStudentFilter && setStudentSearchTerm && (

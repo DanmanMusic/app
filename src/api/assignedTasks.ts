@@ -11,24 +11,23 @@ interface AssignedTasksListResponse {
   totalItems: number;
 }
 
-/**
- * Fetches assigned tasks with pagination and filtering.
- */
 export const fetchAssignedTasks = async ({
   page = 1,
   limit = 10,
   assignmentStatus = 'all',
   studentStatus = 'all',
   studentId,
+  teacherId,
 }: {
   page?: number;
   limit?: number;
   assignmentStatus?: TaskAssignmentFilterStatusAPI;
   studentStatus?: StudentTaskFilterStatusAPI;
   studentId?: string;
+  teacherId?: string;
 }): Promise<AssignedTasksListResponse> => {
   console.log(
-    `[API] Fetching Assigned Tasks: page=${page}, limit=${limit}, assignmentStatus=${assignmentStatus}, studentStatus=${studentStatus}${studentId ? `, studentId=${studentId}` : ''}`
+    `[API] Fetching Assigned Tasks: page=${page}, limit=${limit}, assignmentStatus=${assignmentStatus}, studentStatus=${studentStatus}${studentId ? `, studentId=${studentId}` : ''}${teacherId ? `, teacherId=${teacherId}` : ''}`
   );
   const params = new URLSearchParams();
   params.append('page', String(page));
@@ -41,6 +40,10 @@ export const fetchAssignedTasks = async ({
   }
   if (studentId) {
     params.append('studentId', studentId);
+  }
+  // Add teacherId to params if provided
+  if (teacherId) {
+    params.append('teacherId', teacherId);
   }
 
   const response = await fetch(`/api/assigned-tasks?${params.toString()}`);
@@ -56,10 +59,6 @@ export const fetchAssignedTasks = async ({
   return data;
 };
 
-/**
- * Creates a new assigned task.
- * Corresponds to Admin/Teacher assigning a task.
- */
 export const createAssignedTask = async (
   assignmentData: Omit<
     AssignedTask,
@@ -99,10 +98,6 @@ export const createAssignedTask = async (
   return createdAssignment;
 };
 
-/**
- * Updates an existing assigned task.
- * Used for marking complete and verification.
- */
 export const updateAssignedTask = async ({
   assignmentId,
   updates,
@@ -148,10 +143,6 @@ export const updateAssignedTask = async ({
   return updatedAssignment;
 };
 
-/**
- * Deletes an assigned task.
- * Used by Admin/Teacher to remove an assignment.
- */
 export const deleteAssignedTask = async (assignmentId: string): Promise<void> => {
   console.log(`[API] Deleting assigned task ${assignmentId}`);
   const response = await fetch(`/api/assigned-tasks/${assignmentId}`, {

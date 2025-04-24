@@ -30,7 +30,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   onClose,
   preselectedStudentId,
 }) => {
-  const { currentUserId } = useAuth();
+  const { currentUserId } = useAuth()
   const queryClient = useQueryClient();
 
   const [step, setStep] = useState(1);
@@ -51,15 +51,21 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     enabled: visible && step === 2 && !isAdHocMode,
   });
 
+  // Fetch students ONLY if no student is preselected AND it's step 1
+  // **Crucially, add teacherId to the query key and function call**
   const {
     data: studentListResult,
     isLoading: isLoadingStudents,
     isError: isErrorStudents,
     error: errorStudents,
   } = useQuery({
-    queryKey: ['students', { filter: 'active', context: 'assignTaskModal' }],
-    queryFn: () => fetchStudents({ filter: 'active', page: 1 }),
-    enabled: visible && step === 1 && !preselectedStudentId,
+    queryKey: ['students', { filter: 'active', context: 'assignTaskModal', teacherId: currentUserId }],
+    queryFn: () => fetchStudents({
+      filter: 'active',
+      page: 1, // Fetch first page, assuming linking doesn't exceed one page often for a teacher
+      teacherId: currentUserId ?? undefined // Pass teacherId here
+    }),
+    enabled: visible && step === 1 && !preselectedStudentId && !!currentUserId, // Only enable if needed and teacherId is available
     staleTime: 5 * 60 * 1000,
   });
 
@@ -87,6 +93,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     [taskLibrary]
   );
 
+  // Use the fetched students, which should now be filtered by teacherId if applicable
   const availableStudents = studentListResult?.students ?? [];
   const filteredStudents = useMemo(() => {
     const searchTermLower = studentSearchTerm.toLowerCase().trim();
@@ -219,7 +226,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           <Text style={modalSharedStyles.stepTitle}>Step 1: Select Student</Text>
           <TextInput
             style={modalSharedStyles.searchInput}
-            placeholder="Search Active Students..."
+            placeholder="Search Your Students..." // Updated placeholder
             value={studentSearchTerm}
             onChangeText={setStudentSearchTerm}
             placeholderTextColor={colors.textLight}
@@ -237,7 +244,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           {!isLoadingStudents && !isErrorStudents && (
             <FlatList
               style={modalSharedStyles.contentScrollView}
-              data={filteredStudents}
+              data={filteredStudents} // Already filtered by teacher and search term
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
                 <TouchableOpacity onPress={() => handleStudentSelect(item.id)}>
@@ -248,7 +255,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
               )}
               ListEmptyComponent={
                 <Text style={appSharedStyles.emptyListText}>
-                  {studentSearchTerm ? 'No students match search.' : 'No active students found.'}
+                  {studentSearchTerm ? 'No students match search.' : 'No active students linked to you.'}
                 </Text>
               }
             />
@@ -391,7 +398,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
               Error:
-              {mutation.error instanceof Error ? mutation.error.message : 'Failed to assign task'}
+              {mutation.error instanceof Error
+                ? mutation.error.message
+                : 'Failed to assign task'}
             </Text>
           )}
           {step === 3 && (

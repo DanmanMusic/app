@@ -152,6 +152,7 @@ export interface AdminUsersSectionProps {
   setStudentSearchTerm?: (term: string) => void;
   onViewManageUser: (userId: string, role: UserRole) => void;
   onInitiateAssignTaskForStudent: (studentId: string) => void;
+  onInitiateCreateUser: () => void;
 }
 
 export interface AdminDashboardSectionProps {
@@ -178,6 +179,7 @@ export interface AdminStudentDetailViewProps {
   viewingStudentId: string;
   onInitiateVerification?: (task: AssignedTask) => void;
   onInitiateAssignTaskForStudent: (studentId: string) => void;
+  onInitiateEditStudent: () => void;
 }
 
 export interface ViewAllAssignedTasksModalProps {

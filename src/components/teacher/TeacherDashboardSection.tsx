@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 import { fetchAssignedTasks } from '../../api/assignedTasks';
@@ -16,21 +16,27 @@ export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = (
   const { currentUserId: teacherId } = useAuth();
 
   const {
-    data: assignedTasksResult,
+    data: pendingTasksResult,
     isLoading: isLoadingTasks,
     isError: isErrorTasks,
     error: errorTasks,
   } = useQuery({
     queryKey: [
       'assigned-tasks',
-      { assignmentStatus: 'pending', studentStatus: 'active', context: 'teacherDashboard' },
+      { assignmentStatus: 'pending', studentStatus: 'active', teacherId, context: 'teacherDashboard' },
     ],
     queryFn: () =>
-      fetchAssignedTasks({ assignmentStatus: 'pending', studentStatus: 'active', limit: 1000 }),
+      fetchAssignedTasks({
+        assignmentStatus: 'pending',
+        studentStatus: 'active',
+        teacherId: teacherId ?? undefined,
+        limit: 1000,
+      }),
     enabled: !!teacherId,
     staleTime: 1 * 60 * 1000,
   });
-  const allPendingTasks = assignedTasksResult?.items ?? [];
+
+  const pendingVerifications = pendingTasksResult?.items ?? [];
 
   const { data: allStudentsResult, isLoading: isLoadingStudents } = useQuery({
     queryKey: ['students', { filter: 'all', context: 'teacherDashboardLookup' }],
@@ -39,13 +45,6 @@ export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = (
     staleTime: 5 * 60 * 1000,
   });
   const allStudentsSimple: SimplifiedStudent[] = allStudentsResult?.students ?? [];
-
-  const pendingVerifications = useMemo(() => {
-    if (!teacherId || !allPendingTasks || !allStudentsSimple) return [];
-    console.warn('[TeacherDashboard] Filtering pending tasks client-side. Inefficient.');
-
-    return allPendingTasks;
-  }, [teacherId, allPendingTasks, allStudentsSimple]);
 
   const isLoading = isLoadingTasks || isLoadingStudents;
 

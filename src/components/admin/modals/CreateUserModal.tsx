@@ -78,7 +78,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       setSelectedTeacherIds([]);
       mutation.reset();
     }
-  }, [visible, mutation]);
+  }, [visible]);
 
   const toggleInstrumentSelection = (id: string) => {
     setSelectedInstrumentIds(prev =>

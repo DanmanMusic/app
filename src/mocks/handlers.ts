@@ -30,11 +30,18 @@ const mockAssignedTasksData: AssignedTask[] = [...mockAllAssignedTasks];
 const mockTicketBalancesData = { ...mockTicketBalances };
 const mockTicketHistoryData: TicketTransaction[] = [...mockTicketHistory];
 
-const getFilteredStudents = (filter: UserStatus | 'all', searchTerm: string): User[] => {
+const getFilteredStudents = (
+  filter: UserStatus | 'all',
+  searchTerm: string,
+  teacherId?: string | null
+): User[] => {
   const termLower = searchTerm.toLowerCase();
   return Object.values(currentMockUsers)
     .filter(user => user.role === 'student')
     .filter(student => {
+      if (teacherId && !student.linkedTeacherIds?.includes(teacherId)) {
+        return false;
+      }
       if (filter !== 'all' && student.status !== filter) {
         return false;
       }
@@ -80,7 +87,8 @@ export const handlers = [
     const page = parseInt(url.searchParams.get('page') || '1', 10);
     const filter = (url.searchParams.get('filter') as UserStatus | 'all') || 'all';
     const searchTerm = url.searchParams.get('search') || '';
-    const filteredStudents = getFilteredStudents(filter, searchTerm);
+    const teacherId = url.searchParams.get('teacherId');
+    const filteredStudents = getFilteredStudents(filter, searchTerm, teacherId);
     const totalItems = filteredStudents.length;
     const totalPages = totalItems > 0 ? Math.ceil(totalItems / ITEMS_PER_PAGE) : 1;
     const startIndex = (page - 1) * ITEMS_PER_PAGE;
@@ -146,10 +154,8 @@ export const handlers = [
   }),
   http.patch('/api/users/:id', async ({ request, params }) => {
     const { id } = params;
-    console.log('got here:', id);
     if (typeof id !== 'string') return new HttpResponse('Invalid ID', { status: 400 });
     const u = currentMockUsers[id];
-    console.log('got here 2:', u);
     if (!u) return new HttpResponse('Not found', { status: 404 });
     try {
       const upd = (await request.json()) as Partial<Omit<User, 'id' | 'role' | 'status'>>;
@@ -159,7 +165,6 @@ export const handlers = [
         delete (v as any).status;
       }
       currentMockUsers[id] = { ...u, ...v };
-      console.log('got here 3:', currentMockUsers[id]);
       return HttpResponse.json(currentMockUsers[id]);
     } catch (e) {
       return new HttpResponse('Bad request', { status: 400 });
@@ -375,43 +380,53 @@ export const handlers = [
     const studentStatus =
       (url.searchParams.get('studentStatus') as StudentTaskFilterStatusAPI) || 'all';
     const studentIdParam = url.searchParams.get('studentId');
+    const teacherIdParam = url.searchParams.get('teacherId');
+
     const filtered = mockAssignedTasksData.filter(t => {
       if (studentIdParam && t.studentId !== studentIdParam) return false;
-      let aM = false;
+
+      const student = currentMockUsers[t.studentId];
+      if (!student) return false;
+
+      if (teacherIdParam && !student.linkedTeacherIds?.includes(teacherIdParam)) {
+        return false;
+      }
+
+      let assignmentMatch = false;
       switch (assignmentStatus) {
         case 'assigned':
-          aM = !t.isComplete;
+          assignmentMatch = !t.isComplete;
           break;
         case 'pending':
-          aM = t.isComplete && t.verificationStatus === 'pending';
+          assignmentMatch = t.isComplete && t.verificationStatus === 'pending';
           break;
         case 'completed':
-          aM =
+          assignmentMatch =
             t.isComplete &&
             t.verificationStatus !== 'pending' &&
             t.verificationStatus !== undefined;
           break;
         default:
-          aM = true;
+          assignmentMatch = true;
           break;
       }
-      if (!aM) return false;
-      const s = currentMockUsers[t.studentId];
-      if (!s) return false;
-      let sM = false;
+      if (!assignmentMatch) return false;
+
+      let studentStatusMatch = false;
       switch (studentStatus) {
         case 'active':
-          sM = s.status === 'active';
+          studentStatusMatch = student.status === 'active';
           break;
         case 'inactive':
-          sM = s.status === 'inactive';
+          studentStatusMatch = student.status === 'inactive';
           break;
         default:
-          sM = true;
+          studentStatusMatch = true;
           break;
       }
-      return sM;
+      return studentStatusMatch;
     });
+
     const sorted = filtered.sort(
       (a, b) => new Date(b.assignedDate).getTime() - new Date(a.assignedDate).getTime()
     );
