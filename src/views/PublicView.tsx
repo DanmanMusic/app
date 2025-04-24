@@ -9,30 +9,8 @@ import { RewardItem } from '../mocks/mockRewards';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 import { PublicViewProps } from '../types/componentProps';
-import { commonSharedStyles } from '../styles/commonSharedStyles';
-
-const RewardItemPublic = ({ item }: { item: RewardItem }) => (
-  <View style={appSharedStyles.itemContainer}>
-    <View style={commonSharedStyles.itemContentRow}>
-      <Image source={{ uri: item.imageUrl }} style={commonSharedStyles.itemImageMedium} resizeMode="contain" />
-      <View style={commonSharedStyles.itemDetailsContainer}>
-        <Text style={commonSharedStyles.rewardName}>{item.name}</Text>
-        <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
-          {item.cost} Tickets
-        </Text>
-        {item.description && <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>}
-      </View>
-    </View>
-  </View>
-);
-
-const AnnouncementListItem = ({ item }: { item: Announcement }) => (
-  <View style={appSharedStyles.itemContainer}>
-    <Text style={commonSharedStyles.announcementTitle}>{item.title}</Text>
-    <Text style={appSharedStyles.itemDetailText}>{item.message}</Text>
-    <Text style={commonSharedStyles.announcementDate}>{new Date(item.date).toLocaleDateString()}</Text>
-  </View>
-);
+import { AnnouncementListItem } from '../components/common/AnnouncementListItem';
+import { RewardItemPublic } from '../components/common/RewardItemPublic';
 
 type PublicTab = 'welcome' | 'rewards' | 'announcements';
 

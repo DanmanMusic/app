@@ -22,7 +22,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePaginatedStudentHistory } from '../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../hooks/usePaginatedStudentTasks';
 import { AssignedTask } from '../mocks/mockAssignedTasks';
-import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 import { TeacherViewProps } from '../types/componentProps';
@@ -32,17 +31,8 @@ import { getUserDisplayName, getInstrumentNames } from '../utils/helpers';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { PendingVerificationItem } from '../components/common/PendingVerificationItem';
 import { StudentListItem } from '../components/common/StudentListItem';
-import { TicketHistoryItem } from './StudentView';
-
-export const TaskLibraryItemTeacher = ({ item }: { item: TaskLibraryItem }) => (
-  <View style={appSharedStyles.itemContainer}>
-    <Text style={appSharedStyles.itemTitle}>{item.title}</Text>
-    <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
-    <Text style={[appSharedStyles.itemDetailText, appSharedStyles.taskLibraryItemTickets]}>
-      {item.baseTickets} Base Tickets
-    </Text>
-  </View>
-);
+import { TicketHistoryItem } from '../components/common/TicketHistoryItem';
+import { TaskLibraryItemTeacher } from '../components/common/TaskLibraryItemTeacher';
 
 export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId } = useAuth();

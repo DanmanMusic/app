@@ -4,10 +4,10 @@ import { usePaginatedTicketHistory } from '../../hooks/usePaginatedTicketHistory
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminHistorySectionProps } from '../../types/componentProps';
-import { TicketHistoryItem } from '../../views/StudentView';
 
 import PaginationControls from './PaginationControls';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { TicketHistoryItem } from '../common/TicketHistoryItem';
 
 export const AdminHistorySection: React.FC<AdminHistorySectionProps> = () => {
   const {

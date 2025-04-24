@@ -6,12 +6,12 @@ import { Announcement } from '../../mocks/mockAnnouncements';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminAnnouncementsSectionProps } from '../../types/componentProps';
-import { AnnouncementListItemStudent } from '../../views/StudentView';
 import ConfirmationModal from '../common/ConfirmationModal';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import CreateAnnouncementModal from './modals/CreateAnnouncementModal';
 import EditAnnouncementModal from './modals/EditAnnouncementModal';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { AnnouncementListItem } from '../common/AnnouncementListItem';
 
 export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps> = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -105,7 +105,7 @@ export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps>
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <View style={appSharedStyles.itemContainer}>
-              <AnnouncementListItemStudent item={item} />
+              <AnnouncementListItem item={item} />
               <View style={adminSharedStyles.itemActions}>
                 <Button
                   title="Edit"

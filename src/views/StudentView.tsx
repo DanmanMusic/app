@@ -22,148 +22,17 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePaginatedStudentHistory } from '../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../hooks/usePaginatedStudentTasks';
 import { Announcement } from '../mocks/mockAnnouncements';
-import { AssignedTask } from '../mocks/mockAssignedTasks';
 import { Instrument } from '../mocks/mockInstruments';
 import { RewardItem } from '../mocks/mockRewards';
-import { TicketTransaction } from '../mocks/mockTickets';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 import { StudentViewProps } from '../types/componentProps';
 import { User } from '../types/userTypes';
 import { getInstrumentNames, getUserDisplayName } from '../utils/helpers';
-import { commonSharedStyles } from '../styles/commonSharedStyles';
-
-const AssignedTaskItem = ({
-  task,
-  onMarkComplete,
-  canMark,
-  isLoading,
-}: {
-  task: AssignedTask;
-  onMarkComplete?: (assignmentId: string) => void;
-  canMark?: boolean;
-  isLoading?: boolean;
-}) => {
-  const taskStatus = task.isComplete
-    ? task.verificationStatus === 'pending'
-      ? 'Complete (Pending Verification)'
-      : `Verified (${task.verificationStatus || '?'})`
-    : 'Assigned';
-  const showMarkCompleteButton = !task.isComplete && canMark && onMarkComplete;
-
-  return (
-    <View style={appSharedStyles.itemContainer}>
-      <Text style={appSharedStyles.itemTitle}>{task.taskTitle}</Text>
-      <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
-      {task.actualPointsAwarded !== undefined && task.verificationStatus !== 'pending' && (
-        <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textSuccess]}>
-          Awarded: {task.actualPointsAwarded ?? 0} Tickets
-        </Text>
-      )}
-      {task.completedDate && (
-        <Text style={appSharedStyles.itemDetailText}>
-          Completed: {new Date(task.completedDate).toLocaleDateString()}
-        </Text>
-      )}
-      {task.verifiedDate && task.verificationStatus !== 'pending' && (
-        <Text style={appSharedStyles.itemDetailText}>
-          Verified: {new Date(task.verifiedDate).toLocaleDateString()}
-        </Text>
-      )}
-      {showMarkCompleteButton && (
-        <Button
-          title={isLoading ? 'Marking...' : 'Mark Complete'}
-          onPress={() => onMarkComplete(task.id)}
-          disabled={isLoading}
-        />
-      )}
-      {!task.isComplete && !canMark && <Button title="Mark Complete" disabled={true} />}
-      {task.isComplete && task.verificationStatus === 'pending' && (
-        <Text style={commonSharedStyles.pendingNote}>Awaiting teacher verification...</Text>
-      )}
-    </View>
-  );
-};
-
-const RewardItemStudent = ({
-  item,
-  currentBalance,
-  isGoal,
-}: {
-  item: RewardItem;
-  currentBalance: number;
-  isGoal: boolean;
-}) => {
-  const canEarn = currentBalance >= item.cost;
-  const ticketsNeeded = item.cost - currentBalance;
-
-  return (
-    <View
-      style={[
-        appSharedStyles.itemContainer,
-        canEarn ? appSharedStyles.rewardItemAffordable : {},
-        isGoal ? appSharedStyles.rewardItemGoal : {},
-      ]}
-    >
-      <View style={commonSharedStyles.itemContentRow}>
-        <Image source={{ uri: item.imageUrl }} style={commonSharedStyles.itemImageMedium} resizeMode="contain" />
-        <View style={commonSharedStyles.itemDetailsContainer}>
-          <Text style={commonSharedStyles.rewardName}>{item.name}</Text>
-          <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
-            {item.cost} Tickets
-          </Text>
-          {item.description && (
-            <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
-          )}
-          {canEarn ? (
-            <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textSuccess]}>
-              Available Now!
-            </Text>
-          ) : (
-            <Text style={[appSharedStyles.itemDetailText, { color: colors.textPrimary }]}>
-              Need {ticketsNeeded} more tickets
-            </Text>
-          )}
-        </View>
-      </View>
-    </View>
-  );
-};
-
-export const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
-  <View style={commonSharedStyles.historyItemContainer}>
-    <Text style={commonSharedStyles.historyItemTimestamp}>{new Date(item.timestamp).toLocaleString()}</Text>
-    <Text style={commonSharedStyles.historyItemDetails}>
-      {item.type === 'task_award'
-        ? 'Task Award'
-        : item.type === 'manual_add'
-          ? 'Manual Add'
-          : item.type === 'manual_subtract'
-            ? 'Manual Subtract'
-            : item.type === 'redemption'
-              ? 'Redemption'
-              : item.type}
-      :{' '}
-      <Text
-        style={[
-          commonSharedStyles.historyItemAmount,
-          item.amount > 0 ? { color: colors.success } : { color: colors.danger },
-        ]}
-      >
-        {item.amount > 0 ? `+${item.amount}` : item.amount} Tickets
-      </Text>
-    </Text>
-    {item.notes && <Text style={commonSharedStyles.historyItemNotes}>{item.notes}</Text>}
-  </View>
-);
-
-export const AnnouncementListItemStudent = ({ item }: { item: Announcement }) => (
-  <View style={appSharedStyles.itemContainer}>
-    <Text style={commonSharedStyles.announcementTitle}>{item.title}</Text>
-    <Text style={appSharedStyles.itemDetailText}>{item.message}</Text>
-    <Text style={commonSharedStyles.announcementDate}>{new Date(item.date).toLocaleDateString()}</Text>
-  </View>
-);
+import { TicketHistoryItem } from '../components/common/TicketHistoryItem';
+import { RewardItemStudent } from '../components/common/RewardItemStudent';
+import { AssignedTaskItem } from '../components/common/AssignedTaskItem';
+import { AnnouncementListItem } from '../components/common/AnnouncementListItem';
 
 type StudentTab = 'dashboard' | 'tasks' | 'rewards' | 'announcements';
 
@@ -572,7 +441,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                 <FlatList
                   data={studentAnnouncements}
                   keyExtractor={item => `announcement-${item.id}`}
-                  renderItem={({ item }) => <AnnouncementListItemStudent item={item} />}
+                  renderItem={({ item }) => <AnnouncementListItem item={item} />}
                   ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
                   ListEmptyComponent={() => (
                     <Text style={appSharedStyles.emptyListText}>No announcements found.</Text>
