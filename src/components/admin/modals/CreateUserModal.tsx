@@ -1,25 +1,23 @@
 import React, { useState, useEffect } from 'react';
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
 import {
   Modal,
   View,
   Text,
-  StyleSheet,
   Button,
   TextInput,
   ScrollView,
   ActivityIndicator,
   Alert,
 } from 'react-native';
-
 import { createUser, fetchTeachers } from '../../../api/users';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
 import { CreateUserModalProps } from '../../../types/componentProps';
 import { UserRole, User } from '../../../types/userTypes';
 import { getUserDisplayName } from '../../../utils/helpers';
+import { modalSharedStyles } from '../../../styles/modalSharedStyles';
+import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
 const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'student'];
 
@@ -116,23 +114,23 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalStyles.centeredView}>
-        <View style={modalStyles.modalView}>
-          <Text style={modalStyles.modalTitle}>Create New User</Text>
+      <View style={modalSharedStyles.centeredView}>
+        <View style={modalSharedStyles.modalView}>
+          <Text style={modalSharedStyles.modalTitle}>Create New User</Text>
 
-          <ScrollView style={modalStyles.scrollView}>
-            <Text style={modalStyles.label}>First Name:</Text>
+          <ScrollView style={modalSharedStyles.scrollView}>
+            <Text style={commonSharedStyles.label}>First Name:</Text>
             <TextInput
-              style={modalStyles.input}
+              style={commonSharedStyles.input}
               placeholder="Enter First Name"
               placeholderTextColor={colors.textLight}
               value={firstName}
               onChangeText={setFirstName}
               editable={!mutation.isPending}
             />
-            <Text style={modalStyles.label}>Last Name:</Text>
+            <Text style={commonSharedStyles.label}>Last Name:</Text>
             <TextInput
-              style={modalStyles.input}
+              style={commonSharedStyles.input}
               placeholder="Enter Last Name"
               placeholderTextColor={colors.textLight}
               value={lastName}
@@ -140,8 +138,8 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
               editable={!mutation.isPending}
             />
 
-            <Text style={modalStyles.label}>Role:</Text>
-            <View style={modalStyles.roleButtons}>
+            <Text style={commonSharedStyles.label}>Role:</Text>
+            <View style={modalSharedStyles.buttonContainer}>
               {CREATABLE_ROLES.map(r => (
                 <Button
                   key={r}
@@ -154,11 +152,11 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
             </View>
 
             {role === 'student' && (
-              <View style={modalStyles.roleSpecificSection}>
-                <Text style={modalStyles.roleSectionTitle}>Student Details (Optional)</Text>
+              <View style={modalSharedStyles.modalSubSection}>
+                <Text style={modalSharedStyles.modalTitle}>Student Details (Optional)</Text>
 
-                <Text style={modalStyles.label}>Instruments:</Text>
-                <View style={modalStyles.selectionContainer}>
+                <Text style={commonSharedStyles.label}>Instruments:</Text>
+                <View style={commonSharedStyles.selectionContainer}>
                   {mockInstruments.length > 0 ? (
                     mockInstruments.map(inst => (
                       <Button
@@ -178,8 +176,8 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                   )}
                 </View>
 
-                <Text style={[modalStyles.label, { marginTop: 15 }]}>Link Teachers:</Text>
-                <View style={modalStyles.selectionContainer}>
+                <Text style={[commonSharedStyles.label, { marginTop: 15 }]}>Link Teachers:</Text>
+                <View style={commonSharedStyles.selectionContainer}>
                   {isLoadingTeachers && <ActivityIndicator color={colors.primary} />}
                   {isErrorTeachers && (
                     <Text style={appSharedStyles.textDanger}>Error loading teachers.</Text>
@@ -211,26 +209,26 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
           </ScrollView>
 
           {mutation.isPending && (
-            <View style={modalStyles.loadingContainer}>
+            <View style={modalSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalStyles.loadingText}>Creating User...</Text>
+              <Text style={modalSharedStyles.loadingText}>Creating User...</Text>
             </View>
           )}
           {mutation.isError && (
-            <Text style={modalStyles.errorText}>
+            <Text style={commonSharedStyles.errorText}>
               Error:{' '}
               {mutation.error instanceof Error ? mutation.error.message : 'Failed to create user'}
             </Text>
           )}
 
-          <View style={modalStyles.buttonContainer}>
+          <View style={modalSharedStyles.buttonContainer}>
             <Button
               title="Create User"
               onPress={handleCreatePress}
               disabled={mutation.isPending || !role || !firstName || !lastName || isLoadingTeachers}
             />
           </View>
-          <View style={modalStyles.footerButton}>
+          <View style={modalSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}
@@ -243,106 +241,5 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     </Modal>
   );
 };
-
-const modalStyles = StyleSheet.create({
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: colors.backgroundPrimary,
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    width: '95%',
-    maxWidth: 500,
-    maxHeight: '90%',
-  },
-  scrollView: { width: '100%', marginBottom: 15 },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-    color: colors.textPrimary,
-    width: '100%',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderPrimary,
-    paddingBottom: 10,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 5,
-    color: colors.textPrimary,
-    alignSelf: 'flex-start',
-  },
-  input: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: colors.borderPrimary,
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16,
-    color: colors.textPrimary,
-    backgroundColor: colors.backgroundPrimary,
-    marginBottom: 5,
-  },
-  roleButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 10,
-    marginBottom: 15,
-  },
-  roleSpecificSection: {
-    marginTop: 20,
-    paddingTop: 15,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderPrimary,
-    width: '100%',
-  },
-  roleSectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  selectionContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-    marginBottom: 5,
-  },
-  loadingText: { marginLeft: 10, fontSize: 14, color: colors.textSecondary },
-  errorText: {
-    color: colors.danger,
-    textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 5,
-    fontSize: 14,
-  },
-  buttonContainer: { flexDirection: 'column', width: '100%', marginTop: 10, gap: 10 },
-  footerButton: { width: '100%', marginTop: 10 },
-});
 
 export default CreateUserModal;

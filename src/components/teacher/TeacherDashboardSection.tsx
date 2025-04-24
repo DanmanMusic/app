@@ -1,21 +1,14 @@
 import React, { useMemo } from 'react';
-
 import { useQuery } from '@tanstack/react-query';
-
-import { View, Text, FlatList, Button, ActivityIndicator } from 'react-native';
-
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 import { fetchAssignedTasks } from '../../api/assignedTasks';
 import { fetchStudents } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
-import { AssignedTask } from '../../mocks/mockAssignedTasks';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { TeacherDashboardSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';
-import { User } from '../../types/userTypes';
-import { getUserDisplayName } from '../../utils/helpers';
 import { PendingVerificationItem } from '../../views/TeacherView';
-import { adminSharedStyles } from '../admin/adminSharedStyles';
 
 export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = ({
   onInitiateVerificationModal,
@@ -59,18 +52,14 @@ export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = (
   return (
     <View>
       <Text style={appSharedStyles.sectionTitle}>
-        {' '}
-        Pending Verifications ({pendingVerifications.length}){' '}
+        Pending Verifications ({pendingVerifications.length})
       </Text>
       {isLoading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />}
-      {}
       {isErrorTasks && (
         <Text style={[appSharedStyles.textDanger, { marginVertical: 5 }]}>
           Error loading tasks: {errorTasks?.message}
         </Text>
       )}
-      {}
-
       {!isLoading &&
         !isErrorTasks &&
         (pendingVerifications.length > 0 ? (

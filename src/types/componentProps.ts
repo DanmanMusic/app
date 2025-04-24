@@ -176,9 +176,8 @@ export interface AdminInstrumentsSectionProps {}
 
 export interface AdminStudentDetailViewProps {
   viewingStudentId: string;
-  onAssignTask: () => void;
-  onBack: () => void;
   onInitiateVerification?: (task: AssignedTask) => void;
+  onInitiateAssignTaskForStudent: (studentId: string) => void;
 }
 
 export interface ViewAllAssignedTasksModalProps {
@@ -214,4 +213,13 @@ export interface TeacherTasksSectionProps {
 export interface ParentStudentListItemProps {
   student: User;
   onSelectStudent: (studentId: string) => void;
+}
+
+export interface RedeemRewardModalProps {
+  visible: boolean;
+  onClose: () => void;
+  studentId: string;
+  studentName: string;
+  currentBalance: number;
+  redeemerId: string;
 }

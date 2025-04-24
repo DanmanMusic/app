@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-import { View, Text, Button, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
-
+import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 import { fetchAnnouncements, deleteAnnouncement } from '../../api/announcements';
 import { Announcement } from '../../mocks/mockAnnouncements';
 import { appSharedStyles } from '../../styles/appSharedStyles';
@@ -11,10 +8,10 @@ import { colors } from '../../styles/colors';
 import { AdminAnnouncementsSectionProps } from '../../types/componentProps';
 import { AnnouncementListItemStudent } from '../../views/StudentView';
 import ConfirmationModal from '../common/ConfirmationModal';
-
-import { adminSharedStyles } from './adminSharedStyles';
+import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import CreateAnnouncementModal from './modals/CreateAnnouncementModal';
 import EditAnnouncementModal from './modals/EditAnnouncementModal';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps> = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -88,38 +85,27 @@ export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps>
 
   return (
     <View>
-      {}
       <Text style={appSharedStyles.sectionTitle}>
-        {' '}
-        Announcements & Challenges ({announcements.length}){' '}
+        Announcements & Challenges ({announcements.length})
       </Text>
-      {}
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button title="Create New Announcement" onPress={handleAddPress} />
       </View>
-
-      {}
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
       )}
-
-      {}
       {isError && !isLoading && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{getErrorMessage()}</Text>
+        <View style={commonSharedStyles.errorContainer}>
+          <Text style={commonSharedStyles.errorText}>{getErrorMessage()}</Text>
         </View>
       )}
-
-      {}
       {!isLoading && !isError && (
         <FlatList
           data={announcements}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <View style={appSharedStyles.itemContainer}>
-              {}
               <AnnouncementListItemStudent item={item} />
-              {}
               <View style={adminSharedStyles.itemActions}>
                 <Button
                   title="Edit"
@@ -142,8 +128,6 @@ export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps>
           )}
         />
       )}
-
-      {}
       <CreateAnnouncementModal visible={isCreateModalVisible} onClose={closeCreateModal} />
       <EditAnnouncementModal
         visible={isEditModalVisible}
@@ -162,20 +146,3 @@ export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  errorContainer: {
-    marginVertical: 20,
-    padding: 15,
-    alignItems: 'center',
-    backgroundColor: '#ffebee',
-    borderColor: colors.danger,
-    borderWidth: 1,
-    borderRadius: 5,
-  },
-  errorText: {
-    color: colors.danger,
-    fontSize: 14,
-    textAlign: 'center',
-  },
-});

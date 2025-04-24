@@ -1,11 +1,8 @@
 import React, { useState, useMemo } from 'react';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   Button,
   FlatList,
@@ -13,13 +10,12 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { fetchAssignedTasks, createAssignedTask, deleteAssignedTask } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
 import { fetchTaskLibrary } from '../api/taskLibrary';
 import { fetchStudentBalance } from '../api/tickets';
 import { fetchStudents } from '../api/users';
-import { adminSharedStyles } from '../components/admin/adminSharedStyles';
+import { adminSharedStyles } from '../styles/adminSharedStyles';
 import PaginationControls from '../components/admin/PaginationControls';
 import AssignTaskModal from '../components/common/AssignTaskModal';
 import { useAuth } from '../contexts/AuthContext';
@@ -35,6 +31,7 @@ import { TeacherViewProps } from '../types/componentProps';
 import { SimplifiedStudent } from '../types/dataTypes';
 import { User } from '../types/userTypes';
 import { getUserDisplayName, getInstrumentNames } from '../utils/helpers';
+import { commonSharedStyles } from '../styles/commonSharedStyles';
 
 export const PendingVerificationItem = ({
   task,
@@ -69,7 +66,7 @@ export const StudentListItem = ({
   onViewProfile: (studentId: string) => void;
   onAssignTask: (studentId: string) => void;
 }) => (
-  <View style={[appSharedStyles.itemContainer, !student.isActive ? styles.inactiveItemStyle : {}]}>
+  <View style={[appSharedStyles.itemContainer, !student.isActive ? appSharedStyles.inactiveItemStyle : {}]}>
     <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
     <Text style={appSharedStyles.itemDetailText}>
       Instrument(s): {getInstrumentNames(student.instrumentIds, mockInstruments)}
@@ -85,7 +82,7 @@ export const StudentListItem = ({
     >
       Status: {student.isActive ? 'Active' : 'Inactive'}
     </Text>
-    <View style={styles.studentActions}>
+    <View style={appSharedStyles.studentActions}>
       <Button title="View Profile" onPress={() => onViewProfile(student.id)} />
       {student.isActive && <Button title="Assign Task" onPress={() => onAssignTask(student.id)} />}
     </View>
@@ -96,18 +93,18 @@ export const TaskLibraryItemTeacher = ({ item }: { item: TaskLibraryItem }) => (
   <View style={appSharedStyles.itemContainer}>
     <Text style={appSharedStyles.itemTitle}>{item.title}</Text>
     <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
-    <Text style={[appSharedStyles.itemDetailText, styles.taskLibraryItemTickets]}>
+    <Text style={[appSharedStyles.itemDetailText, appSharedStyles.taskLibraryItemTickets]}>
       {item.baseTickets} Base Tickets
     </Text>
   </View>
 );
 
 const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
-  <View style={historyStyles.historyItemContainer}>
-    <Text style={historyStyles.historyItemTimestamp}>
+  <View style={commonSharedStyles.historyItemContainer}>
+    <Text style={commonSharedStyles.historyItemTimestamp}>
       {new Date(item.timestamp).toLocaleString()}
     </Text>
-    <Text style={historyStyles.historyItemDetails}>
+    <Text style={commonSharedStyles.historyItemDetails}>
       {item.type === 'task_award'
         ? 'Task Award'
         : item.type === 'manual_add'
@@ -117,17 +114,17 @@ const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
             : item.type === 'redemption'
               ? 'Redemption'
               : item.type}
-      :{' '}
+      :
       <Text
         style={[
-          historyStyles.historyItemAmount,
+          commonSharedStyles.historyItemAmount,
           item.amount > 0 ? { color: colors.success } : { color: colors.danger },
         ]}
       >
         {item.amount > 0 ? `+${item.amount}` : item.amount} Tickets
       </Text>
     </Text>
-    {item.notes && <Text style={historyStyles.historyItemNotes}>{item.notes}</Text>}
+    {item.notes && <Text style={commonSharedStyles.historyItemNotes}>{item.notes}</Text>}
   </View>
 );
 
@@ -289,6 +286,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     setViewingSection('students');
   };
   const handleInitiateAssignTaskForStudent = (studentId: string) => {
+    console.log('yo2')
     setAssignTaskTargetStudentId(studentId);
     setIsAssignTaskModalVisible(true);
   };
@@ -417,7 +415,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
                           </Text>
                         )}
                       {item.isComplete && item.verificationStatus === 'pending' && (
-                        <Text style={adminSharedStyles.pendingNote}>Awaiting verification...</Text>
+                        <Text style={commonSharedStyles.pendingNote}>Awaiting verification...</Text>
                       )}
                       <View style={adminSharedStyles.assignedTaskActions}>
                         {allowVerify && (
@@ -513,7 +511,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
         <Text style={appSharedStyles.header}>Teacher: {teacherDisplayName}</Text>
       </View>
       <ScrollView style={appSharedStyles.container}>
-        <View style={styles.teacherNav}>
+        <View style={appSharedStyles.teacherNav}>
           <Button
             title="Dashboard"
             onPress={() => setViewingSection('dashboard')}
@@ -569,8 +567,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
         {viewingSection === 'students' && (
           <View>
             <Text style={appSharedStyles.sectionTitle}>
-              {' '}
-              My Students ({studentsLinkedToTeacher.length}){' '}
+              My Students ({studentsLinkedToTeacher.length})
             </Text>
             {studentsLoading && (
               <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
@@ -612,8 +609,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
               />
             </View>
             <Text style={adminSharedStyles.sectionSubTitle}>
-              {' '}
-              Task Library ({taskLibrary.length}){' '}
+              Task Library ({taskLibrary.length})
             </Text>
             {libraryLoading && (
               <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
@@ -641,36 +637,3 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  teacherNav: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginBottom: 20,
-    gap: 8,
-  },
-  studentActions: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 10, gap: 5 },
-  taskLibraryItemTickets: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 5,
-    fontStyle: 'italic',
-  },
-  inactiveItemStyle: { borderColor: colors.secondary, opacity: 0.7 },
-});
-
-const historyStyles = StyleSheet.create({
-  historyItemContainer: {
-    backgroundColor: colors.backgroundGrey,
-    padding: 10,
-    marginBottom: 5,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: colors.borderSecondary,
-  },
-  historyItemTimestamp: { fontSize: 12, color: colors.textVeryLight, marginBottom: 4 },
-  historyItemDetails: { fontSize: 14, color: colors.textSecondary },
-  historyItemAmount: { fontWeight: 'bold' },
-  historyItemNotes: { fontSize: 13, color: colors.textLight, marginTop: 4, fontStyle: 'italic' },
-});

@@ -1,15 +1,12 @@
 import React from 'react';
-
 import {
   View,
   Text,
   Button,
   FlatList,
-  StyleSheet,
   TextInput,
   ActivityIndicator,
 } from 'react-native';
-
 import { Instrument } from '../../mocks/mockInstruments';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
@@ -17,9 +14,9 @@ import { AdminUsersSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';
 import { UserRole, User, UserStatus } from '../../types/userTypes';
 import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
-
-import { adminSharedStyles } from './adminSharedStyles';
+import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import PaginationControls from './PaginationControls';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 type StudentFilter = UserStatus | 'all';
 
@@ -31,7 +28,7 @@ const AdminUserItem = ({
   onViewManage: (userId: string, role: UserRole) => void;
 }) => (
   <View
-    style={[appSharedStyles.itemContainer, user.status === 'inactive' ? styles.inactiveItem : {}]}
+    style={[appSharedStyles.itemContainer, user.status === 'inactive' ? appSharedStyles.inactiveItem : {}]}
   >
     <Text style={appSharedStyles.itemTitle}>{getUserDisplayName(user)}</Text>
     <Text
@@ -66,9 +63,8 @@ const AdminStudentItem = ({
   onViewManage: (studentId: string, role: UserRole) => void;
   onInitiateAssignTask: (studentId: string) => void;
 }) => {
-  console.log('[AdminStudentItem] Received student prop:', JSON.stringify(student, null, 2));
   return (
-    <View style={[appSharedStyles.itemContainer, !student.isActive ? styles.inactiveItem : {}]}>
+    <View style={[appSharedStyles.itemContainer, !student.isActive ? appSharedStyles.inactiveItem : {}]}>
       <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
       <Text style={appSharedStyles.itemDetailText}>
         Instrument(s): {getInstrumentNames(student.instrumentIds, mockInstruments)}
@@ -84,7 +80,6 @@ const AdminStudentItem = ({
       >
         Status: {student.isActive ? 'Active' : 'Inactive'}
       </Text>
-      {}
       <View style={adminSharedStyles.itemActions}>
         <Button
           title="View Details"
@@ -93,7 +88,6 @@ const AdminStudentItem = ({
             onViewManage(student.id, 'student');
           }}
         />
-        {}
         {student.isActive && (
           <Button title="Assign Task" onPress={() => onInitiateAssignTask(student.id)} />
         )}
@@ -111,7 +105,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   setActiveTab,
   studentFilter,
   setStudentFilter,
-
   studentSearchTerm,
   setStudentSearchTerm,
   isLoading,
@@ -123,7 +116,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   onInitiateAssignTaskForStudent,
 }) => {
   const renderUserItem = ({ item }: { item: User | SimplifiedStudent }) => {
-    console.log('[AdminUsersSection] Rendering item:', JSON.stringify(item));
     const role =
       activeTab === 'students' ? 'student' : activeTab === 'teachers' ? 'teacher' : 'parent';
     if (role === 'student') {
@@ -155,8 +147,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
 
   return (
     <View>
-      {}
-      <View style={styles.tabContainer}>
+      <View style={appSharedStyles.tabContainer}>
         <Button
           title={`Students`}
           onPress={() => setActiveTab('students')}
@@ -174,12 +165,10 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
         />
       </View>
 
-      {}
       {activeTab === 'students' && studentFilter && setStudentFilter && setStudentSearchTerm && (
-        <View style={styles.filterAndSearchContainer}>
-          {}
-          <View style={styles.filterContainer}>
-            <Text style={styles.filterLabel}>Show:</Text>
+        <View style={appSharedStyles.filterAndSearchContainer}>
+          <View style={appSharedStyles.filterContainer}>
+            <Text style={appSharedStyles.filterLabel}>Show:</Text>
             <Button
               title="Active"
               onPress={() => handleFilterChange('active')}
@@ -196,9 +185,8 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
               color={studentFilter === 'all' ? colors.info : colors.secondary}
             />
           </View>
-          {}
           <TextInput
-            style={styles.searchInput}
+            style={commonSharedStyles.searchInput}
             placeholder="Search Students by Name..."
             placeholderTextColor={colors.textLight}
             value={studentSearchTerm}
@@ -208,23 +196,16 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
           />
         </View>
       )}
-
-      {}
       {activeTab !== 'students' && <View style={{ height: 5 }} />}
-
-      {}
-      <View style={styles.listArea}>
-        {}
+      <View style={appSharedStyles.listArea}>
         {(isLoading || (isFetching && displayData.length > 0)) && (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
         )}
-        {}
         {isError && !isLoading && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{getErrorMessage()}</Text>
+          <View style={commonSharedStyles.errorContainer}>
+            <Text style={commonSharedStyles.errorText}>{getErrorMessage()}</Text>
           </View>
         )}
-        {}
         {!isLoading && !isError && (
           <FlatList
             data={displayData}
@@ -257,48 +238,3 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  tabContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    marginBottom: 5,
-    gap: 10,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSecondary,
-  },
-  filterAndSearchContainer: { paddingVertical: 5, marginBottom: 10 },
-  filterContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 10,
-  },
-  filterLabel: { marginRight: 10, fontSize: 14, fontWeight: 'bold', color: colors.textSecondary },
-  searchInput: {
-    height: 40,
-    borderColor: colors.borderPrimary,
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    fontSize: 15,
-    backgroundColor: colors.backgroundPrimary,
-    color: colors.textPrimary,
-  },
-  listArea: { marginTop: 10 },
-  inactiveItem: { borderColor: colors.secondary, opacity: 0.7 },
-  errorContainer: {
-    marginVertical: 20,
-    padding: 15,
-    alignItems: 'center',
-    backgroundColor: '#ffebee',
-    borderColor: colors.danger,
-    borderWidth: 1,
-    borderRadius: 5,
-  },
-  errorText: { color: colors.danger, fontSize: 14, textAlign: 'center' },
-});

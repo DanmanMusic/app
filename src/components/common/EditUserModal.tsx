@@ -1,26 +1,23 @@
 import React, { useState, useEffect } from 'react';
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
 import {
   Modal,
   View,
   Text,
-  StyleSheet,
   Button,
   TextInput,
   ScrollView,
   ActivityIndicator,
   Alert,
 } from 'react-native';
-
 import { updateUser, fetchTeachers } from '../../api/users';
-import { Instrument } from '../../mocks/mockInstruments';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { EditUserModalProps } from '../../types/componentProps';
-import { User, UserRole } from '../../types/userTypes';
+import { User } from '../../types/userTypes';
 import { getUserDisplayName } from '../../utils/helpers';
+import { modalSharedStyles } from '../../styles/modalSharedStyles';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const EditUserModal: React.FC<EditUserModalProps> = ({
   visible,
@@ -156,32 +153,32 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalStyles.centeredView}>
-        <View style={modalStyles.modalView}>
-          <Text style={modalStyles.modalTitle}>Edit User: {currentUserDisplayName}</Text>
-          <Text style={modalStyles.subTitle}>
+      <View style={modalSharedStyles.centeredView}>
+        <View style={modalSharedStyles.modalView}>
+          <Text style={modalSharedStyles.modalTitle}>Edit User: {currentUserDisplayName}</Text>
+          <Text style={modalSharedStyles.subTitle}>
             {' '}
             Role: {userToEdit.role.toUpperCase()} (ID: {userToEdit.id}){' '}
           </Text>
 
-          <ScrollView style={modalStyles.scrollView}>
-            <Text style={modalStyles.label}>First Name:</Text>
+          <ScrollView style={modalSharedStyles.scrollView}>
+            <Text style={commonSharedStyles.label}>First Name:</Text>
             <TextInput
-              style={modalStyles.input}
+              style={commonSharedStyles.input}
               value={firstName}
               onChangeText={setFirstName}
               editable={!mutation.isPending}
             />
-            <Text style={modalStyles.label}>Last Name:</Text>
+            <Text style={commonSharedStyles.label}>Last Name:</Text>
             <TextInput
-              style={modalStyles.input}
+              style={commonSharedStyles.input}
               value={lastName}
               onChangeText={setLastName}
               editable={!mutation.isPending}
             />
-            <Text style={modalStyles.label}>Nickname:</Text>
+            <Text style={commonSharedStyles.label}>Nickname:</Text>
             <TextInput
-              style={modalStyles.input}
+              style={commonSharedStyles.input}
               value={nickname}
               onChangeText={setNickname}
               placeholder="Optional Nickname"
@@ -189,13 +186,11 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
               editable={!mutation.isPending}
             />
 
-            {}
             {userToEdit.role === 'student' && (
               <>
-                {}
-                <View style={modalStyles.roleSpecificSection}>
-                  <Text style={modalStyles.roleSectionTitle}>Instruments</Text>
-                  <View style={modalStyles.selectionContainer}>
+                <View style={modalSharedStyles.roleSpecificSection}>
+                  <Text style={modalSharedStyles.roleSectionTitle}>Instruments</Text>
+                  <View style={modalSharedStyles.selectionContainer}>
                     {mockInstruments.length > 0 ? (
                       mockInstruments.map(inst => (
                         <Button
@@ -215,11 +210,9 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     )}
                   </View>
                 </View>
-
-                {}
-                <View style={modalStyles.roleSpecificSection}>
-                  <Text style={modalStyles.roleSectionTitle}>Linked Teachers</Text>
-                  <View style={modalStyles.selectionContainer}>
+                <View style={modalSharedStyles.roleSpecificSection}>
+                  <Text style={modalSharedStyles.roleSectionTitle}>Linked Teachers</Text>
+                  <View style={modalSharedStyles.selectionContainer}>
                     {isLoadingTeachers && <ActivityIndicator color={colors.primary} />}
                     {isErrorTeachers && (
                       <Text style={appSharedStyles.textDanger}>Error loading teachers.</Text>
@@ -250,33 +243,28 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
               </>
             )}
           </ScrollView>
-
-          {}
           {mutation.isPending && (
-            <View style={modalStyles.loadingContainer}>
+            <View style={modalSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalStyles.loadingText}>Saving Changes...</Text>
+              <Text style={modalSharedStyles.loadingText}>Saving Changes...</Text>
             </View>
           )}
           {mutation.isError && (
-            <Text style={modalStyles.errorText}>
-              {' '}
+            <Text style={commonSharedStyles.errorText}>
               Error:{' '}
               {mutation.error instanceof Error
                 ? mutation.error.message
-                : 'Failed to save changes'}{' '}
+                : 'Failed to save changes'}
             </Text>
           )}
-
-          {}
-          <View style={modalStyles.buttonContainer}>
+          <View style={modalSharedStyles.buttonContainer}>
             <Button
               title="Save Changes"
               onPress={handleSaveChanges}
               disabled={mutation.isPending || isLoadingTeachers}
             />
           </View>
-          <View style={modalStyles.footerButton}>
+          <View style={modalSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}
@@ -289,117 +277,5 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     </Modal>
   );
 };
-
-const modalStyles = StyleSheet.create({
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: colors.backgroundPrimary,
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    width: '95%',
-    maxWidth: 500,
-    maxHeight: '90%',
-  },
-  scrollView: { width: '100%', marginBottom: 15 },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    textAlign: 'center',
-    color: colors.textPrimary,
-    width: '100%',
-  },
-  subTitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 15,
-    textAlign: 'center',
-    width: '100%',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderPrimary,
-    paddingBottom: 10,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 5,
-    color: colors.textPrimary,
-    alignSelf: 'flex-start',
-  },
-  input: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: colors.borderPrimary,
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16,
-    color: colors.textPrimary,
-    backgroundColor: colors.backgroundPrimary,
-    marginBottom: 5,
-  },
-  roleSpecificSection: {
-    marginTop: 15,
-    paddingTop: 15,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderSecondary,
-    width: '100%',
-  },
-  roleSectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  selectionContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  linkedItemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 8,
-    backgroundColor: colors.backgroundGrey,
-    borderRadius: 4,
-    marginBottom: 5,
-    borderWidth: 1,
-    borderColor: colors.borderSecondary,
-  },
-  linkedItemText: { flex: 1, marginRight: 10, fontSize: 15, color: colors.textPrimary },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-    marginBottom: 5,
-  },
-  loadingText: { marginLeft: 10, fontSize: 14, color: colors.textSecondary },
-  errorText: {
-    color: colors.danger,
-    textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 5,
-    fontSize: 14,
-  },
-  buttonContainer: { flexDirection: 'column', width: '100%', marginTop: 10, gap: 10 },
-  footerButton: { width: '100%', marginTop: 10 },
-});
 
 export default EditUserModal;

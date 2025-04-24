@@ -1,22 +1,20 @@
 import React, { useState, useEffect } from 'react';
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-
 import {
   Modal,
   View,
   Text,
-  StyleSheet,
   Button,
   TextInput,
   ActivityIndicator,
   Alert,
 } from 'react-native';
-
 import { adjustTickets } from '../../../api/tickets';
 import { useAuth } from '../../../contexts/AuthContext';
 import { colors } from '../../../styles/colors';
 import { ManualTicketAdjustmentModalProps } from '../../../types/componentProps';
+import { modalSharedStyles } from '../../../styles/modalSharedStyles';
+import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
 const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = ({
   visible,
@@ -59,7 +57,7 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
       setIsSubtracting(false);
       mutation.reset();
     }
-  }, [visible, studentId, mutation]);
+  }, [visible, studentId]);
 
   const handleAdjust = () => {
     if (!currentUserId) {
@@ -103,13 +101,13 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalStyles.centeredView}>
-        <View style={modalStyles.modalView}>
-          <Text style={modalStyles.modalTitle}>Manual Ticket Adjustment</Text>
-          <Text style={modalStyles.studentInfo}>Student: {studentName}</Text>
-          <Text style={modalStyles.studentInfo}>Current Balance: {currentBalance} Tickets</Text>
+      <View style={modalSharedStyles.centeredView}>
+        <View style={modalSharedStyles.modalView}>
+          <Text style={modalSharedStyles.modalTitle}>Manual Ticket Adjustment</Text>
+          <Text style={modalSharedStyles.modalContextInfo}>Student: {studentName}</Text>
+          <Text style={modalSharedStyles.modalContextInfo}>Current Balance: {currentBalance} Tickets</Text>
 
-          <View style={modalStyles.toggleContainer}>
+          <View style={modalSharedStyles.modalToggleContainer}>
             <Button
               title="Add Tickets"
               onPress={() => setIsSubtracting(false)}
@@ -124,9 +122,9 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
             />
           </View>
 
-          <Text style={modalStyles.label}>Amount to {actionText}:</Text>
+          <Text style={commonSharedStyles.label}>Amount to {actionText}:</Text>
           <TextInput
-            style={modalStyles.input}
+            style={commonSharedStyles.input}
             value={String(amount)}
             onChangeText={text =>
               setAmount(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || '')
@@ -136,10 +134,9 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
             keyboardType="numeric"
             editable={!mutation.isPending}
           />
-
-          <Text style={modalStyles.label}>Reason / Notes:</Text>
+          <Text style={commonSharedStyles.label}>Reason / Notes:</Text>
           <TextInput
-            style={modalStyles.textArea}
+            style={commonSharedStyles.textArea}
             value={notes}
             onChangeText={setNotes}
             placeholder={`Reason for ${isSubtracting ? 'subtracting' : 'adding'} tickets...`}
@@ -148,30 +145,24 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
             numberOfLines={3}
             editable={!mutation.isPending}
           />
-
-          <Text style={modalStyles.previewText}>
+          <Text style={modalSharedStyles.previewText}>
             New Balance Preview: {newBalancePreview} Tickets
           </Text>
-
-          {}
           {mutation.isPending && (
-            <View style={modalStyles.loadingContainer}>
+            <View style={modalSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalStyles.loadingText}>Adjusting Tickets...</Text>
+              <Text style={modalSharedStyles.loadingText}>Adjusting Tickets...</Text>
             </View>
           )}
-
-          {}
           {mutation.isError && (
-            <Text style={modalStyles.errorText}>
+            <Text style={commonSharedStyles.errorText}>
               Error:{' '}
               {mutation.error instanceof Error
                 ? mutation.error.message
                 : 'Failed to adjust tickets'}
             </Text>
           )}
-
-          <View style={modalStyles.buttonContainer}>
+          <View style={modalSharedStyles.buttonContainer}>
             <Button
               title={confirmButtonText}
               onPress={handleAdjust}
@@ -185,7 +176,7 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
               }
             />
           </View>
-          <View style={modalStyles.footerButton}>
+          <View style={modalSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}
@@ -198,96 +189,5 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
     </Modal>
   );
 };
-
-const modalStyles = StyleSheet.create({
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: colors.backgroundPrimary,
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'stretch',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    width: '95%',
-    maxWidth: 450,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-    color: colors.textPrimary,
-    width: '100%',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderPrimary,
-    paddingBottom: 10,
-  },
-  studentInfo: { fontSize: 16, marginBottom: 5, color: colors.textSecondary, textAlign: 'center' },
-  toggleContainer: { flexDirection: 'row', justifyContent: 'space-around', marginVertical: 15 },
-  label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 5,
-    color: colors.textPrimary,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.borderPrimary,
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16,
-    color: colors.textPrimary,
-    backgroundColor: colors.backgroundPrimary,
-    marginBottom: 10,
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-    borderWidth: 1,
-    borderColor: colors.borderPrimary,
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16,
-    color: colors.textPrimary,
-    backgroundColor: colors.backgroundPrimary,
-    marginBottom: 10,
-  },
-  previewText: {
-    fontSize: 14,
-    fontStyle: 'italic',
-    color: colors.textLight,
-    textAlign: 'center',
-    marginBottom: 15,
-  },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-    marginBottom: 5,
-    height: 20,
-  },
-  loadingText: { marginLeft: 10, fontSize: 14, color: colors.textSecondary },
-  errorText: {
-    color: colors.danger,
-    textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 5,
-    fontSize: 14,
-    minHeight: 18,
-  },
-  buttonContainer: { marginTop: 10, marginBottom: 10 },
-  footerButton: { marginTop: 10 },
-});
 
 export default ManualTicketAdjustmentModal;

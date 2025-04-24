@@ -1,11 +1,8 @@
 import React, { useState, useMemo } from 'react';
-
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   FlatList,
   Button,
@@ -14,7 +11,6 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { fetchAnnouncements } from '../api/announcements';
 import { updateAssignedTask } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
@@ -35,6 +31,7 @@ import { colors } from '../styles/colors';
 import { StudentViewProps } from '../types/componentProps';
 import { User } from '../types/userTypes';
 import { getInstrumentNames, getUserDisplayName } from '../utils/helpers';
+import { commonSharedStyles } from '../styles/commonSharedStyles';
 
 const AssignedTaskItem = ({
   task,
@@ -57,7 +54,7 @@ const AssignedTaskItem = ({
   return (
     <View style={appSharedStyles.itemContainer}>
       <Text style={appSharedStyles.itemTitle}>{task.taskTitle}</Text>
-      <Text style={styles.taskItemStatus}>Status: {taskStatus}</Text>
+      <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
       {task.actualPointsAwarded !== undefined && task.verificationStatus !== 'pending' && (
         <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textSuccess]}>
           Awarded: {task.actualPointsAwarded ?? 0} Tickets
@@ -82,7 +79,7 @@ const AssignedTaskItem = ({
       )}
       {!task.isComplete && !canMark && <Button title="Mark Complete" disabled={true} />}
       {task.isComplete && task.verificationStatus === 'pending' && (
-        <Text style={styles.pendingNote}>Awaiting teacher verification...</Text>
+        <Text style={commonSharedStyles.pendingNote}>Awaiting teacher verification...</Text>
       )}
     </View>
   );
@@ -104,14 +101,14 @@ const RewardItemStudent = ({
     <View
       style={[
         appSharedStyles.itemContainer,
-        canEarn ? styles.rewardItemAffordable : {},
-        isGoal ? styles.rewardItemGoal : {},
+        canEarn ? appSharedStyles.rewardItemAffordable : {},
+        isGoal ? appSharedStyles.rewardItemGoal : {},
       ]}
     >
-      <View style={styles.rewardItemContent}>
-        <Image source={{ uri: item.imageUrl }} style={styles.rewardImage} resizeMode="contain" />
-        <View style={styles.rewardDetails}>
-          <Text style={styles.rewardName}>{item.name}</Text>
+      <View style={commonSharedStyles.itemContentRow}>
+        <Image source={{ uri: item.imageUrl }} style={commonSharedStyles.itemImageMedium} resizeMode="contain" />
+        <View style={commonSharedStyles.itemDetailsContainer}>
+          <Text style={commonSharedStyles.rewardName}>{item.name}</Text>
           <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
             {item.cost} Tickets
           </Text>
@@ -134,9 +131,9 @@ const RewardItemStudent = ({
 };
 
 export const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
-  <View style={styles.historyItemContainer}>
-    <Text style={styles.historyItemTimestamp}>{new Date(item.timestamp).toLocaleString()}</Text>
-    <Text style={styles.historyItemDetails}>
+  <View style={commonSharedStyles.historyItemContainer}>
+    <Text style={commonSharedStyles.historyItemTimestamp}>{new Date(item.timestamp).toLocaleString()}</Text>
+    <Text style={commonSharedStyles.historyItemDetails}>
       {item.type === 'task_award'
         ? 'Task Award'
         : item.type === 'manual_add'
@@ -149,22 +146,22 @@ export const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
       :{' '}
       <Text
         style={[
-          styles.historyItemAmount,
+          commonSharedStyles.historyItemAmount,
           item.amount > 0 ? { color: colors.success } : { color: colors.danger },
         ]}
       >
         {item.amount > 0 ? `+${item.amount}` : item.amount} Tickets
       </Text>
     </Text>
-    {item.notes && <Text style={styles.historyItemNotes}>{item.notes}</Text>}
+    {item.notes && <Text style={commonSharedStyles.historyItemNotes}>{item.notes}</Text>}
   </View>
 );
 
 export const AnnouncementListItemStudent = ({ item }: { item: Announcement }) => (
   <View style={appSharedStyles.itemContainer}>
-    <Text style={styles.announcementTitle}>{item.title}</Text>
+    <Text style={commonSharedStyles.announcementTitle}>{item.title}</Text>
     <Text style={appSharedStyles.itemDetailText}>{item.message}</Text>
-    <Text style={styles.announcementDate}>{new Date(item.date).toLocaleDateString()}</Text>
+    <Text style={commonSharedStyles.announcementDate}>{new Date(item.date).toLocaleDateString()}</Text>
   </View>
 );
 
@@ -362,27 +359,25 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
       <View style={appSharedStyles.container}>
-        {}
         {!studentIdToView && (
           <Text style={appSharedStyles.header}>Welcome, {studentDisplayName}!</Text>
         )}
-        <Text style={styles.instrumentText}>
-          {' '}
-          Instrument(s): {getInstrumentNames(user.instrumentIds, mockInstruments)}{' '}
+        <Text style={appSharedStyles.instrumentText}>
+          Instrument(s): {getInstrumentNames(user.instrumentIds, mockInstruments)}
         </Text>
         {}
         {balanceLoading ? (
-          <Text style={[styles.balance, appSharedStyles.textGold]}>Loading balance...</Text>
+          <Text style={[appSharedStyles.balance, appSharedStyles.textGold]}>Loading balance...</Text>
         ) : balanceError ? (
-          <Text style={[styles.balance, appSharedStyles.textDanger]}>
+          <Text style={[appSharedStyles.balance, appSharedStyles.textDanger]}>
             Error loading balance: {balanceErrorMsg?.message}
           </Text>
         ) : (
-          <Text style={[styles.balance, appSharedStyles.textGold]}>Current Tickets: {balance}</Text>
+          <Text style={[appSharedStyles.balance, appSharedStyles.textGold]}>Current Tickets: {balance}</Text>
         )}
 
         {}
-        <View style={styles.tabContainer}>
+        <View style={appSharedStyles.tabContainer}>
           <Button
             title="Dashboard"
             onPress={() => setActiveTab('dashboard')}
@@ -406,7 +401,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
         </View>
 
         {}
-        <View style={styles.contentArea}>
+        <View style={appSharedStyles.contentArea}>
           {}
           {activeTab === 'dashboard' && (
             <ScrollView>
@@ -419,15 +414,15 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
               {!rewardsLoading &&
                 !rewardsError &&
                 (goalReward ? (
-                  <View style={styles.goalContainer}>
+                  <View style={appSharedStyles.goalContainer}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
                       <Image
                         source={{ uri: goalReward.imageUrl }}
-                        style={styles.goalImage}
+                        style={appSharedStyles.goalImage}
                         resizeMode="contain"
                       />
                       <View style={{ flex: 1, marginLeft: 10 }}>
-                        <Text style={styles.goalText}>Saving for: {goalReward.name}</Text>
+                        <Text style={appSharedStyles.goalText}>Saving for: {goalReward.name}</Text>
                         <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
                           {' '}
                           {goalReward.cost} Tickets{' '}
@@ -435,22 +430,22 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                       </View>
                     </View>
                     {goalMet ? (
-                      <Text style={styles.progressText}>
+                      <Text style={appSharedStyles.progressText}>
                         {' '}
                         Progress: {goalReward.cost} / {goalReward.cost} (100.0%){' '}
                         {balance > goalReward.cost &&
                           ` with ${balance - goalReward.cost} remaining`}{' '}
                       </Text>
                     ) : (
-                      <Text style={styles.progressText}>
+                      <Text style={appSharedStyles.progressText}>
                         {' '}
                         Progress: {balance} / {goalReward.cost} ({clampedProgress.toFixed(1)}%){' '}
                       </Text>
                     )}
-                    <View style={styles.progressBarBackground}>
+                    <View style={appSharedStyles.progressBarBackground}>
                       <View
                         style={[
-                          styles.progressBarFill,
+                          appSharedStyles.progressBarFill,
                           {
                             width: `${clampedProgress}%`,
                             backgroundColor: goalMet ? colors.success : colors.gold,
@@ -461,8 +456,8 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                     <Button title="Change Goal" onPress={handleSetGoalPress} />
                   </View>
                 ) : (
-                  <View style={styles.goalContainer}>
-                    <Text style={styles.goalText}>No goal set yet.</Text>
+                  <View style={appSharedStyles.goalContainer}>
+                    <Text style={appSharedStyles.goalText}>No goal set yet.</Text>
                     <Button title="Set a Goal" onPress={handleSetGoalPress} />
                   </View>
                 ))}
@@ -487,7 +482,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                     <Text style={appSharedStyles.emptyListText}>No history yet.</Text>
                   )}
                   scrollEnabled={false}
-                  contentContainerStyle={styles.listContentContainer}
+                  contentContainerStyle={appSharedStyles.listContentContainer}
                 />
               )}
               {!historyLoading && !historyError && totalHistoryCount > paginatedHistory.length && (
@@ -501,8 +496,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
               <View style={{ height: 30 }} />
             </ScrollView>
           )}
-
-          {}
           {activeTab === 'tasks' && (
             <>
               {tasksLoading && (
@@ -540,7 +533,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                       />
                     ) : null
                   }
-                  contentContainerStyle={styles.listContentContainer}
+                  contentContainerStyle={appSharedStyles.listContentContainer}
                 />
               )}
             </>
@@ -572,14 +565,13 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                   ListEmptyComponent={() => (
                     <Text style={appSharedStyles.emptyListText}>No rewards found.</Text>
                   )}
-                  contentContainerStyle={styles.listContentContainer}
+                  contentContainerStyle={appSharedStyles.listContentContainer}
                   ListFooterComponent={<View style={{ height: 20 }} />}
                 />
               )}
             </>
           )}
 
-          {}
           {activeTab === 'announcements' && (
             <>
               {announcementsLoading && (
@@ -599,7 +591,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                   ListEmptyComponent={() => (
                     <Text style={appSharedStyles.emptyListText}>No announcements found.</Text>
                   )}
-                  contentContainerStyle={styles.listContentContainer}
+                  contentContainerStyle={appSharedStyles.listContentContainer}
                   ListFooterComponent={<View style={{ height: 20 }} />}
                 />
               )}
@@ -607,12 +599,9 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           )}
         </View>
       </View>
-
-      {}
       <SetGoalModal
         visible={isSetGoalModalVisible}
         onClose={() => setIsSetGoalModalVisible(false)}
-        rewardsCatalog={rewardsCatalog}
         currentBalance={balance}
         currentGoalId={goalRewardId}
         onSetGoal={handleGoalSelected}
@@ -620,83 +609,3 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  instrumentText: { fontSize: 16, color: colors.textSecondary, marginBottom: 5 },
-  balance: { fontSize: 28, fontWeight: 'bold', marginBottom: 15 },
-  tabContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    marginBottom: 15,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderPrimary,
-    gap: 10,
-  },
-  contentArea: { flex: 1 },
-  listContentContainer: { paddingBottom: 5 },
-  goalContainer: {
-    backgroundColor: colors.backgroundPrimary,
-    padding: 15,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.borderHighlight,
-    marginBottom: 20,
-  },
-  goalImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: colors.borderSecondary,
-  },
-  goalText: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
-  progressText: { fontSize: 14, color: colors.textSecondary, marginBottom: 5 },
-  progressBarBackground: {
-    height: 10,
-    backgroundColor: '#eee',
-    borderRadius: 5,
-    overflow: 'hidden',
-    marginBottom: 10,
-  },
-  progressBarFill: { height: '100%', borderRadius: 5 },
-  taskItemStatus: { fontSize: 14, color: colors.textSecondary, marginBottom: 8 },
-  pendingNote: { fontSize: 13, color: colors.warning, fontStyle: 'italic', marginTop: 5 },
-  rewardItemAffordable: { borderColor: colors.success, borderWidth: 2 },
-  rewardItemGoal: {
-    borderColor: colors.primary,
-    borderWidth: 2,
-    backgroundColor: colors.backgroundHighlight,
-  },
-  rewardItemContent: { flexDirection: 'row', alignItems: 'center' },
-  rewardImage: {
-    width: 60,
-    height: 60,
-    marginRight: 15,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: colors.borderPrimary,
-  },
-  rewardDetails: { flex: 1, justifyContent: 'center' },
-  rewardName: { fontSize: 15, fontWeight: 'bold', color: colors.textPrimary },
-  historyItemContainer: {
-    backgroundColor: colors.backgroundGrey,
-    padding: 10,
-    marginBottom: 5,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: colors.borderSecondary,
-  },
-  historyItemTimestamp: { fontSize: 12, color: colors.textVeryLight, marginBottom: 4 },
-  historyItemDetails: { fontSize: 14, color: colors.textSecondary },
-  historyItemAmount: { fontWeight: 'bold' },
-  historyItemNotes: { fontSize: 13, color: colors.textLight, marginTop: 4, fontStyle: 'italic' },
-  announcementTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  announcementDate: { fontSize: 12, color: colors.textVeryLight, marginTop: 8, textAlign: 'right' },
-});

@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-
-import { Modal, View, Text, StyleSheet, Button, ActivityIndicator } from 'react-native';
-
+import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
 import { deleteUser, toggleUserStatus } from '../../api/users';
 import { colors } from '../../styles/colors';
 import { DeactivateOrDeleteUserModalProps } from '../../types/componentProps';
-import { User, UserStatus } from '../../types/userTypes';
 import { getUserDisplayName } from '../../utils/helpers';
+import { modalSharedStyles } from '../../styles/modalSharedStyles';
 
 import ConfirmationModal from './ConfirmationModal';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = ({
   visible,
@@ -121,12 +119,12 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
   return (
     <>
       <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={onClose}>
-        <View style={modalStyles.centeredView}>
-          <View style={modalStyles.modalView}>
-            <Text style={modalStyles.modalTitle}>Manage User Status</Text>
-            <Text style={modalStyles.userInfo}>User: {displayName}</Text>
-            <Text style={modalStyles.userInfo}>
-              Status:{' '}
+        <View style={modalSharedStyles.centeredView}>
+          <View style={modalSharedStyles.modalView}>
+            <Text style={modalSharedStyles.modalTitle}>Manage User Status</Text>
+            <Text style={modalSharedStyles.modalContextInfo}>User: {displayName}</Text>
+            <Text style={modalSharedStyles.modalContextInfo}>
+              Status:
               <Text
                 style={{
                   fontWeight: 'bold',
@@ -136,36 +134,31 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
                 {currentStatusText}
               </Text>
             </Text>
-
-            {}
             {isActionPending && (
-              <View style={modalStyles.loadingContainer}>
+              <View style={modalSharedStyles.loadingContainer}>
                 <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={modalStyles.loadingText}>
+                <Text style={modalSharedStyles.loadingText}>
                   {deleteMutation.isPending ? 'Deleting User...' : 'Updating Status...'}
                 </Text>
               </View>
             )}
-            {}
             {toggleStatusMutation.isError && (
-              <Text style={modalStyles.errorText}>
+              <Text style={commonSharedStyles.errorText}>
                 Status update failed:{' '}
                 {toggleStatusMutation.error instanceof Error
                   ? toggleStatusMutation.error.message
                   : 'Unknown error'}
               </Text>
             )}
-            {}
             {deleteMutation.isError && (
-              <Text style={modalStyles.errorText}>
+              <Text style={commonSharedStyles.errorText}>
                 Delete failed:{' '}
                 {deleteMutation.error instanceof Error
                   ? deleteMutation.error.message
                   : 'Unknown error'}
               </Text>
             )}
-
-            <View style={modalStyles.buttonContainer}>
+            <View style={modalSharedStyles.buttonContainer}>
               <Button
                 title={toggleButtonText}
                 onPress={handleToggle}
@@ -179,8 +172,7 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
                 disabled={isActionPending}
               />
             </View>
-
-            <View style={modalStyles.footerButton}>
+            <View style={modalSharedStyles.footerButton}>
               <Button
                 title="Close"
                 onPress={onClose}
@@ -203,75 +195,5 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
     </>
   );
 };
-
-const modalStyles = StyleSheet.create({
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: colors.backgroundPrimary,
-    borderRadius: 10,
-    padding: 25,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    width: '90%',
-    maxWidth: 400,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-    color: colors.textPrimary,
-  },
-  userInfo: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 5,
-    marginBottom: 10,
-    height: 20,
-  },
-  loadingText: {
-    marginLeft: 10,
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  errorText: {
-    color: colors.danger,
-    textAlign: 'center',
-    marginTop: 5,
-    marginBottom: 10,
-    fontSize: 14,
-    minHeight: 18,
-  },
-  buttonContainer: {
-    width: '100%',
-    marginTop: 10,
-    marginBottom: 15,
-    gap: 15,
-  },
-  footerButton: {
-    width: '100%',
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderSecondary,
-    paddingTop: 15,
-  },
-});
 
 export default DeactivateOrDeleteUserModal;

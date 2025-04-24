@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-import { View, Text, StyleSheet, Button, FlatList, Image, ActivityIndicator } from 'react-native';
-
+import { View, Text, Button, FlatList, Image, ActivityIndicator } from 'react-native';
 import { fetchRewards, deleteReward } from '../../api/rewards';
 import { RewardItem } from '../../mocks/mockRewards';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminRewardsSectionProps } from '../../types/componentProps';
 import ConfirmationModal from '../common/ConfirmationModal';
-
-import { adminSharedStyles } from './adminSharedStyles';
+import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import CreateRewardModal from './modals/CreateRewardModal';
 import EditRewardModal from './modals/EditRewardModal';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 const AdminRewardItem = ({
   item,
@@ -27,9 +24,9 @@ const AdminRewardItem = ({
   disabled?: boolean;
 }) => (
   <View style={appSharedStyles.itemContainer}>
-    <View style={styles.rewardItemContent}>
-      <Image source={{ uri: item.imageUrl }} style={styles.rewardImage} resizeMode="contain" />
-      <View style={styles.rewardDetails}>
+    <View style={commonSharedStyles.itemContentRow}>
+      <Image source={{ uri: item.imageUrl }} style={commonSharedStyles.itemImageMedium} resizeMode="contain" />
+      <View style={commonSharedStyles.itemDetailsContainer}>
         <Text style={appSharedStyles.itemTitle}>{item.name}</Text>
         <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
           {item.cost} Tickets
@@ -120,26 +117,18 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = () => {
 
   return (
     <View>
-      {}
       <Text style={appSharedStyles.sectionTitle}>Rewards Catalog ({rewardsCatalog.length})</Text>
-      {}
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button title="Add New Reward" onPress={handleAddPress} />
       </View>
-
-      {}
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
       )}
-
-      {}
       {isError && !isLoading && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{getErrorMessage()}</Text>
+        <View style={commonSharedStyles.errorContainer}>
+          <Text style={commonSharedStyles.errorText}>{getErrorMessage()}</Text>
         </View>
       )}
-
-      {}
       {!isLoading && !isError && (
         <FlatList
           data={rewardsCatalog}
@@ -159,8 +148,6 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = () => {
           )}
         />
       )}
-
-      {}
       <CreateRewardModal visible={isCreateModalVisible} onClose={closeCreateModal} />
       <EditRewardModal
         visible={isEditModalVisible}
@@ -179,36 +166,3 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  rewardItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  rewardImage: {
-    width: 60,
-    height: 60,
-    marginRight: 15,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: colors.borderPrimary,
-  },
-  rewardDetails: {
-    flex: 1,
-  },
-  errorContainer: {
-    marginVertical: 20,
-    padding: 15,
-    alignItems: 'center',
-    backgroundColor: '#ffebee',
-    borderColor: colors.danger,
-    borderWidth: 1,
-    borderRadius: 5,
-  },
-  errorText: {
-    color: colors.danger,
-    fontSize: 14,
-    textAlign: 'center',
-  },
-});

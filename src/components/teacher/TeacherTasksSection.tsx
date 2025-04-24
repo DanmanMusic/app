@@ -1,16 +1,13 @@
 import React from 'react';
-
 import { useQuery } from '@tanstack/react-query';
-
-import { View, Text, FlatList, Button, StyleSheet, ActivityIndicator } from 'react-native';
-
+import { View, Text, FlatList, Button, ActivityIndicator } from 'react-native';
 import { fetchTaskLibrary } from '../../api/taskLibrary';
 import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { TeacherTasksSectionProps } from '../../types/componentProps';
 import { TaskLibraryItemTeacher } from '../../views/TeacherView';
-import { adminSharedStyles } from '../admin/adminSharedStyles';
+import { adminSharedStyles } from '../../styles/adminSharedStyles';
 
 export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
   assignTaskMutationPending,
@@ -30,7 +27,6 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
   return (
     <View>
       <Text style={appSharedStyles.sectionTitle}>Task Management</Text>
-      {}
       <View style={{ alignItems: 'flex-start', marginBottom: 20 }}>
         <Button
           title="Assign Task"
@@ -38,9 +34,7 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
           disabled={assignTaskMutationPending}
         />
       </View>
-      {}
       <Text style={adminSharedStyles.sectionSubTitle}> Task Library ({taskLibrary.length}) </Text>
-      {}
       {isLoading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />}
       {isError && (
         <Text style={appSharedStyles.textDanger}>Error loading task library: {error?.message}</Text>
@@ -61,12 +55,3 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  taskLibraryItemTickets: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 5,
-    fontStyle: 'italic',
-  },
-});

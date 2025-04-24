@@ -1,19 +1,13 @@
 import React, { useState, useMemo } from 'react';
-
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-
 import {
   Modal,
   View,
   Text,
-  StyleSheet,
   Button,
   FlatList,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
-
-import { deleteAssignedTask } from '../../../api/assignedTasks';
 import { fetchStudents, fetchTeachers, fetchParents } from '../../../api/users';
 import {
   usePaginatedAssignedTasks,
@@ -25,8 +19,10 @@ import { ViewAllAssignedTasksModalProps } from '../../../types/componentProps';
 import { User } from '../../../types/userTypes';
 import { getUserDisplayName } from '../../../utils/helpers';
 import ConfirmationModal from '../../common/ConfirmationModal';
-import { adminSharedStyles } from '../adminSharedStyles';
+import { adminSharedStyles } from '../../../styles/adminSharedStyles';
 import PaginationControls from '../PaginationControls';
+import { modalSharedStyles } from '../../../styles/modalSharedStyles';
+import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
 const AssignedTaskDetailItem = ({
   item,
@@ -78,7 +74,7 @@ const AssignedTaskDetailItem = ({
         </Text>
       )}
       {item.isComplete && item.verificationStatus === 'pending' && (
-        <Text style={adminSharedStyles.pendingNote}>Awaiting verification...</Text>
+        <Text style={commonSharedStyles.pendingNote}>Awaiting verification...</Text>
       )}
       <View style={adminSharedStyles.assignedTaskActions}>
         {allowVerify && onInitiateVerification && (
@@ -180,11 +176,11 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
   return (
     <>
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-        <View style={modalStyles.centeredView}>
-          <View style={modalStyles.modalView}>
+        <View style={modalSharedStyles.centeredView}>
+          <View style={modalSharedStyles.modalView}>
             {}
-            <View style={modalStyles.modalHeader}>
-              <Text style={modalStyles.modalTitle}>Assigned Tasks ({totalItems})</Text>
+            <View style={modalSharedStyles.modalHeader}>
+              <Text style={modalSharedStyles.modalTitle}>Assigned Tasks ({totalItems})</Text>
               {isFetchingTasks && !isLoadingTasks && (
                 <ActivityIndicator
                   size="small"
@@ -193,9 +189,9 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                 />
               )}
             </View>
-            <View style={modalStyles.filterSection}>
-              <View style={modalStyles.filterRow}>
-                <Text style={modalStyles.filterLabel}>Task Status:</Text>
+            <View style={modalSharedStyles.filterSection}>
+              <View style={modalSharedStyles.filterRow}>
+                <Text style={modalSharedStyles.filterLabel}>Task Status:</Text>
                 <Button
                   title="All"
                   onPress={() => setAssignmentFilter('all')}
@@ -217,8 +213,8 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                   color={assignmentFilter === 'completed' ? colors.success : colors.secondary}
                 />
               </View>
-              <View style={modalStyles.filterRow}>
-                <Text style={modalStyles.filterLabel}>Student Status:</Text>
+              <View style={modalSharedStyles.filterRow}>
+                <Text style={modalSharedStyles.filterLabel}>Student Status:</Text>
                 <Button
                   title="Active"
                   onPress={() => setStudentStatusFilter('active')}
@@ -244,13 +240,13 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
               />
             )}
             {isErrorTasks && !isLoadingTasks && (
-              <View style={modalStyles.errorContainer}>
-                <Text style={modalStyles.errorText}>Error</Text>
+              <View style={commonSharedStyles.errorContainer}>
+                <Text style={commonSharedStyles.errorText}>Error</Text>
               </View>
             )}
             {!isDataLoading && !isErrorTasks && (
               <FlatList
-                style={modalStyles.listContainer}
+                style={modalSharedStyles.modalListContainer}
                 data={tasks}
                 keyExtractor={item => item.id}
                 renderItem={({ item }) => (
@@ -271,7 +267,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                 contentContainerStyle={{ paddingBottom: 10 }}
               />
             )}
-            <View style={modalStyles.footer}>
+            <View style={modalSharedStyles.footer}>
               {!isDataLoading && !isErrorTasks && totalPages > 1 && (
                 <PaginationControls
                   currentPage={currentPage}
@@ -304,76 +300,3 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
     </>
   );
 };
-
-const modalStyles = StyleSheet.create({
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  modalView: {
-    margin: 10,
-    backgroundColor: colors.backgroundSecondary,
-    borderRadius: 10,
-    padding: 0,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    width: '95%',
-    maxHeight: '90%',
-  },
-  modalHeader: {
-    width: '100%',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderPrimary,
-    backgroundColor: colors.backgroundPrimary,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    alignItems: 'center',
-  },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', color: colors.textPrimary },
-  filterSection: {
-    width: '100%',
-    backgroundColor: colors.backgroundPrimary,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSecondary,
-    paddingBottom: 10,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 5,
-    gap: 8,
-    alignItems: 'center',
-  },
-  filterLabel: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginRight: 5 },
-  listContainer: { width: '100%', flex: 1, paddingHorizontal: 10, paddingTop: 10 },
-  footer: {
-    width: '100%',
-    paddingBottom: 10,
-    paddingTop: 5,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderPrimary,
-    backgroundColor: colors.backgroundPrimary,
-    borderBottomLeftRadius: 10,
-    borderBottomRightRadius: 10,
-    alignItems: 'center',
-  },
-  errorContainer: {
-    marginVertical: 20,
-    padding: 15,
-    alignItems: 'center',
-    backgroundColor: '#ffebee',
-    borderColor: colors.danger,
-    borderWidth: 1,
-    borderRadius: 5,
-  },
-  errorText: { color: colors.danger, fontSize: 14, textAlign: 'center' },
-});

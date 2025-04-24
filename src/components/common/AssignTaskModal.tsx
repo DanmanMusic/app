@@ -1,12 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
 import {
   Modal,
   View,
   Text,
-  StyleSheet,
   Button,
   FlatList,
   TouchableOpacity,
@@ -16,7 +13,6 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-
 import { createAssignedTask } from '../../api/assignedTasks';
 import { fetchTaskLibrary } from '../../api/taskLibrary';
 import { fetchStudents } from '../../api/users';
@@ -26,116 +22,8 @@ import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AssignTaskModalProps } from '../../types/componentProps';
-import { SimplifiedStudent } from '../../types/dataTypes';
-
-const modalStyles = StyleSheet.create({
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  modalView: {
-    margin: 10,
-    backgroundColor: colors.backgroundPrimary,
-    borderRadius: 10,
-    padding: 15,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    width: '95%',
-    maxHeight: '90%',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-    color: colors.textPrimary,
-    width: '100%',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderPrimary,
-    paddingBottom: 10,
-  },
-  stepTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 10,
-    marginBottom: 10,
-    color: colors.textSecondary,
-    alignSelf: 'flex-start',
-    width: '100%',
-  },
-  contentScrollView: { width: '100%', maxHeight: '65%', marginBottom: 15 },
-  searchInput: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: colors.borderPrimary,
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16,
-    color: colors.textPrimary,
-    backgroundColor: colors.backgroundPrimary,
-    marginBottom: 10,
-  },
-  listItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: colors.borderSecondary },
-  listItemText: { fontSize: 15, color: colors.textPrimary },
-  taskItemText: { fontSize: 14, color: colors.textPrimary },
-  taskDescription: { fontSize: 12, color: colors.textLight, marginTop: 3 },
-  modeSwitchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 15,
-    paddingHorizontal: 5,
-  },
-  label: { fontSize: 14, fontWeight: 'bold', marginBottom: 5, color: colors.textPrimary },
-  input: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: colors.borderPrimary,
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16,
-    color: colors.textPrimary,
-    backgroundColor: colors.backgroundPrimary,
-    marginBottom: 10,
-  },
-  textArea: { minHeight: 80, textAlignVertical: 'top' },
-  confirmationText: { fontSize: 16, marginVertical: 15, textAlign: 'center', lineHeight: 22 },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginTop: 15,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderPrimary,
-    paddingTop: 15,
-    gap: 10,
-  },
-  footerButton: { width: '100%', marginTop: 0, marginBottom: 10 },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 5,
-    marginBottom: 10,
-    height: 20,
-  },
-  loadingText: { marginLeft: 10, fontSize: 14, color: colors.textSecondary },
-  errorText: {
-    color: colors.danger,
-    textAlign: 'center',
-    marginTop: 5,
-    marginBottom: 10,
-    fontSize: 14,
-    minHeight: 18,
-  },
-});
+import { modalSharedStyles } from '../../styles/modalSharedStyles';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   visible,
@@ -328,9 +216,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     if (step === 1 && !preselectedStudentId) {
       return (
         <>
-          <Text style={modalStyles.stepTitle}>Step 1: Select Student</Text>
+          <Text style={modalSharedStyles.stepTitle}>Step 1: Select Student</Text>
           <TextInput
-            style={modalStyles.searchInput}
+            style={modalSharedStyles.searchInput}
             placeholder="Search Active Students..."
             value={studentSearchTerm}
             onChangeText={setStudentSearchTerm}
@@ -342,19 +230,19 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
           )}
           {isErrorStudents && (
-            <Text style={modalStyles.errorText}>
+            <Text style={commonSharedStyles.errorText}>
               Error loading students: {errorStudents?.message}
             </Text>
           )}
           {!isLoadingStudents && !isErrorStudents && (
             <FlatList
-              style={modalStyles.contentScrollView}
+              style={modalSharedStyles.contentScrollView}
               data={filteredStudents}
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
                 <TouchableOpacity onPress={() => handleStudentSelect(item.id)}>
-                  <View style={modalStyles.listItem}>
-                    <Text style={modalStyles.listItemText}>{item.name}</Text>
+                  <View style={modalSharedStyles.listItem}>
+                    <Text style={modalSharedStyles.listItemText}>{item.name}</Text>
                   </View>
                 </TouchableOpacity>
               )}
@@ -376,12 +264,12 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         'Selected Student';
       return (
         <>
-          <Text style={modalStyles.stepTitle}>
+          <Text style={modalSharedStyles.stepTitle}>
             {' '}
             Step {preselectedStudentId ? 1 : 2}: Assign Task to {studentName}{' '}
           </Text>
-          <View style={modalStyles.modeSwitchContainer}>
-            <Text style={modalStyles.label}>Select from Library</Text>
+          <View style={modalSharedStyles.modeSwitchContainer}>
+            <Text style={commonSharedStyles.label}>Select from Library</Text>
             <Switch
               trackColor={{ false: colors.secondary, true: colors.primary }}
               thumbColor={colors.backgroundPrimary}
@@ -389,23 +277,23 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
               onValueChange={setIsAdHocMode}
               value={isAdHocMode}
             />
-            <Text style={modalStyles.label}>Create Custom Task</Text>
+            <Text style={commonSharedStyles.label}>Create Custom Task</Text>
           </View>
-          <ScrollView style={modalStyles.contentScrollView}>
+          <ScrollView style={modalSharedStyles.contentScrollView}>
             {isAdHocMode ? (
               <View>
-                <Text style={modalStyles.label}>Custom Task Title:</Text>
+                <Text style={commonSharedStyles.label}>Custom Task Title:</Text>
                 <TextInput
-                  style={modalStyles.input}
+                  style={commonSharedStyles.input}
                   value={adHocTitle}
                   onChangeText={setAdHocTitle}
                   placeholder="e.g., Help setup for recital"
                   placeholderTextColor={colors.textLight}
                   editable={!mutation.isPending}
                 />
-                <Text style={modalStyles.label}>Custom Task Description:</Text>
+                <Text style={commonSharedStyles.label}>Custom Task Description:</Text>
                 <TextInput
-                  style={[modalStyles.input, modalStyles.textArea]}
+                  style={[commonSharedStyles.input, commonSharedStyles.textArea]}
                   value={adHocDescription}
                   onChangeText={setAdHocDescription}
                   placeholder="Describe the task briefly"
@@ -413,9 +301,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                   multiline={true}
                   editable={!mutation.isPending}
                 />
-                <Text style={modalStyles.label}>Base Points:</Text>
+                <Text style={commonSharedStyles.label}>Base Points:</Text>
                 <TextInput
-                  style={modalStyles.input}
+                  style={commonSharedStyles.input}
                   value={String(adHocBasePoints)}
                   onChangeText={text =>
                     setAdHocBasePoints(
@@ -448,11 +336,11 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                     keyExtractor={item => item.id}
                     renderItem={({ item }) => (
                       <TouchableOpacity onPress={() => handleLibraryTaskSelect(item)}>
-                        <View style={modalStyles.listItem}>
-                          <Text style={modalStyles.taskItemText}>
+                        <View style={modalSharedStyles.listItem}>
+                          <Text style={modalSharedStyles.taskItemText}>
                             {item.title} ({item.baseTickets} pts)
                           </Text>
-                          <Text style={modalStyles.taskDescription}>{item.description}</Text>
+                          <Text style={modalSharedStyles.taskDescription}>{item.description}</Text>
                         </View>
                       </TouchableOpacity>
                     )}
@@ -477,11 +365,11 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       const taskPoints = isAdHocMode ? adHocBasePoints : selectedLibraryTask?.baseTickets;
       return (
         <>
-          <Text style={modalStyles.stepTitle}>
+          <Text style={modalSharedStyles.stepTitle}>
             {' '}
             Step {preselectedStudentId ? 2 : 3}: Confirm Assignment{' '}
           </Text>
-          <Text style={modalStyles.confirmationText}>
+          <Text style={modalSharedStyles.confirmationText}>
             {' '}
             Assign task "{taskTitle || 'N/A'}" ({taskPoints ?? '?'} points) to "{studentName}"?{' '}
           </Text>
@@ -493,28 +381,27 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalStyles.centeredView}>
-        <View style={modalStyles.modalView}>
-          <Text style={modalStyles.modalTitle}>Assign Task</Text>
+      <View style={modalSharedStyles.centeredView}>
+        <View style={modalSharedStyles.modalView}>
+          <Text style={modalSharedStyles.modalTitle}>Assign Task</Text>
           {renderStepContent()}
           {mutation.isPending && (
-            <View style={modalStyles.loadingContainer}>
+            <View style={modalSharedStyles.loadingContainer}>
               {' '}
               <ActivityIndicator size="small" color={colors.primary} />{' '}
-              <Text style={modalStyles.loadingText}>Assigning Task...</Text>{' '}
+              <Text style={modalSharedStyles.loadingText}>Assigning Task...</Text>{' '}
             </View>
           )}
           {mutation.isError && (
-            <Text style={modalStyles.errorText}>
-              {' '}
+            <Text style={commonSharedStyles.errorText}>
               Error:{' '}
               {mutation.error instanceof Error
                 ? mutation.error.message
-                : 'Failed to assign task'}{' '}
+                : 'Failed to assign task'}
             </Text>
           )}
           {step === 3 && (
-            <View style={modalStyles.footerButton}>
+            <View style={modalSharedStyles.footerButton}>
               <Button
                 title={mutation.isPending ? 'Assigning...' : 'Confirm & Assign'}
                 onPress={handleConfirm}
@@ -524,7 +411,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
               />
             </View>
           )}
-          <View style={modalStyles.buttonContainer}>
+          <View style={modalSharedStyles.buttonContainer}>
             {(step > 1 && !preselectedStudentId) ||
             step === 3 ||
             (step === 2 && preselectedStudentId) ? (

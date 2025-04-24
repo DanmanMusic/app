@@ -1,7 +1,6 @@
 import { StyleSheet } from 'react-native';
-
-import { appSharedStyles } from '../../styles/appSharedStyles';
-import { colors } from '../../styles/colors';
+import { appSharedStyles } from './appSharedStyles';
+import { colors } from './colors';
 
 export const adminSharedStyles = StyleSheet.create({
   adminNav: {
@@ -35,24 +34,6 @@ export const adminSharedStyles = StyleSheet.create({
     gap: 5,
   },
 
-  rewardItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-
-  rewardImage: {
-    width: 60,
-    height: 60,
-    marginRight: 15,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: colors.borderPrimary,
-  },
-  rewardDetails: {
-    flex: 1,
-  },
-
   taskItem: {
     ...appSharedStyles.itemContainer,
     padding: 10,
@@ -78,13 +59,6 @@ export const adminSharedStyles = StyleSheet.create({
     color: colors.success,
   },
 
-  pendingNote: {
-    fontSize: 12,
-    color: colors.warning,
-    fontStyle: 'italic',
-    marginTop: 5,
-  },
-
   assignedTaskActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -108,5 +82,14 @@ export const adminSharedStyles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     marginBottom: 3,
+  },
+  instrumentIcon: {
+    width: 40,
+    height: 40,
+    marginRight: 15,
+  },
+  itemTitleText: {
+    flexShrink: 1,
+    marginBottom: 0,
   },
 });

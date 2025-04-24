@@ -1,9 +1,9 @@
 import React from 'react';
-
-import { View, Text, Button, StyleSheet } from 'react-native';
-
+import { View, Text, Button } from 'react-native';
 import { colors } from '../../styles/colors';
 import { PaginationControlsProps } from '../../types/componentProps';
+import { appSharedStyles } from '../../styles/appSharedStyles';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 const PaginationControls: React.FC<PaginationControlsProps> = ({
   currentPage,
@@ -27,14 +27,14 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
   }
 
   return (
-    <View style={styles.container}>
+    <View style={commonSharedStyles.paginationContainer}>
       <Button
         title="Previous"
         onPress={handlePrevious}
         disabled={currentPage <= 1}
         color={colors.primary}
       />
-      <Text style={styles.pageInfo}>
+      <Text style={commonSharedStyles.pageInfo}>
         Page {currentPage} of {totalPages}
       </Text>
       <Button
@@ -46,24 +46,5 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderSecondary,
-  },
-  pageInfo: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginHorizontal: 15,
-  },
-});
 
 export default PaginationControls;

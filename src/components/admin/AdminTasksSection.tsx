@@ -1,13 +1,11 @@
 import React from 'react';
-
-import { View, Text, Button, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
-
+import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminTasksSectionProps } from '../../types/componentProps';
-
-import { adminSharedStyles } from './adminSharedStyles';
+import { adminSharedStyles } from '../../styles/adminSharedStyles';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 const AdminTaskLibraryItem = ({ item }: { item: TaskLibraryItem }) => (
   <View style={appSharedStyles.itemContainer}>
@@ -58,8 +56,8 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
       )}
       {isError && !isLoading && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{getErrorMessage()}</Text>
+        <View style={commonSharedStyles.errorContainer}>
+          <Text style={commonSharedStyles.errorText}>{getErrorMessage()}</Text>
         </View>
       )}
       {!isLoading && !isError && (
@@ -77,16 +75,3 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  errorContainer: {
-    marginVertical: 20,
-    padding: 15,
-    alignItems: 'center',
-    backgroundColor: '#ffebee',
-    borderColor: colors.danger,
-    borderWidth: 1,
-    borderRadius: 5,
-  },
-  errorText: { color: colors.danger, fontSize: 14, textAlign: 'center' },
-});

@@ -1,17 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
-
 import { useQuery, useQueries } from '@tanstack/react-query';
-
-import { View, Text, StyleSheet, Button, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { useAuth } from '../contexts/AuthContext';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 import { ParentStudentListItemProps, ParentViewProps } from '../types/componentProps';
 import { User } from '../types/userTypes';
 import { getUserDisplayName } from '../utils/helpers';
-
 import { StudentView } from './StudentView';
 
 const ParentStudentListItem: React.FC<ParentStudentListItemProps> = ({
@@ -167,14 +163,12 @@ export const ParentView: React.FC<ParentViewProps> = () => {
 
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={styles.parentHeader}>
-          <Text style={styles.parentHeaderText}>Viewing: {getUserDisplayName(studentToView)}</Text>
-          {}
+        <View style={appSharedStyles.parentHeader}>
+          <Text style={appSharedStyles.parentHeaderText}>Viewing: {getUserDisplayName(studentToView)}</Text>
           {hasMultipleStudents && (
             <Button title="Select Student" onPress={() => setViewingStudentId(null)} />
           )}
         </View>
-        {}
         <StudentView studentIdToView={viewingStudentId} />
       </SafeAreaView>
     );
@@ -185,7 +179,7 @@ export const ParentView: React.FC<ParentViewProps> = () => {
       <View style={appSharedStyles.container}>
         <Text style={appSharedStyles.header}>Parent Dashboard</Text>
         <Text style={appSharedStyles.sectionTitle}>Your Students</Text>
-        {}
+
         {isErrorStudents && (
           <Text style={appSharedStyles.textDanger}>Error loading some student details.</Text>
         )}
@@ -205,7 +199,6 @@ export const ParentView: React.FC<ParentViewProps> = () => {
           <Text style={appSharedStyles.emptyListText}>No students linked to your account.</Text>
         ) : null}
 
-        {}
         <View style={{ marginTop: 20 }}>
           <Button
             title="Link Another Student (Mock QR)"
@@ -216,21 +209,3 @@ export const ParentView: React.FC<ParentViewProps> = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  parentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderPrimary,
-    backgroundColor: colors.backgroundPrimary,
-  },
-  parentHeaderText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-  },
-});

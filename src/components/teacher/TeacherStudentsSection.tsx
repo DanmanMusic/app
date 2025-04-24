@@ -1,18 +1,12 @@
 import React, { useMemo } from 'react';
-
 import { useQuery } from '@tanstack/react-query';
-
-import { View, Text, FlatList, Button, StyleSheet, ActivityIndicator } from 'react-native';
-
+import { View, Text, FlatList, Button, ActivityIndicator } from 'react-native';
 import { fetchStudents } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
-import { Instrument } from '../../mocks/mockInstruments';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { TeacherStudentsSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';
-import { User } from '../../types/userTypes';
-import { getInstrumentNames } from '../../utils/helpers';
 import { StudentListItem } from '../../views/TeacherView';
 
 export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
@@ -47,8 +41,7 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
   return (
     <View>
       <Text style={appSharedStyles.sectionTitle}>
-        {' '}
-        My Students ({studentsLinkedToTeacher.length}){' '}
+        My Students ({studentsLinkedToTeacher.length})
       </Text>
       {isLoading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />}
       {isError && (
@@ -84,8 +77,3 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  studentActions: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 10, gap: 5 },
-  inactiveItemStyle: { borderColor: colors.secondary, opacity: 0.7 },
-});

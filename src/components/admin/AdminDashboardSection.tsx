@@ -1,13 +1,11 @@
 import React from 'react';
-
 import { useQuery } from '@tanstack/react-query';
-
-import { View, Text, Button, ActivityIndicator, StyleSheet } from 'react-native';
-
+import { View, Text, Button, ActivityIndicator } from 'react-native';
 import { fetchUserCounts, fetchPendingTaskCount, UserCounts, TaskStats } from '../../api/stats';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminDashboardSectionProps } from '../../types/componentProps';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
   onViewPendingVerifications,
@@ -48,7 +46,6 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
         <ActivityIndicator color={colors.primary} style={{ marginVertical: 15 }} />
       ) : (
         <>
-          {}
           <Text style={appSharedStyles.itemDetailText}>
             Total Students: {isErrorCounts ? 'Error' : studentCount}
           </Text>
@@ -62,15 +59,13 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
             Tasks Pending Verification: {isErrorTaskStats ? 'Error' : pendingVerificationsCount}
           </Text>
           {isErrorCounts && (
-            <Text style={styles.errorText}>Failed to load user counts: {errorCounts?.message}</Text>
+            <Text style={commonSharedStyles.errorText}>Failed to load user counts: {errorCounts?.message}</Text>
           )}
           {isErrorTaskStats && (
-            <Text style={styles.errorText}>
+            <Text style={commonSharedStyles.errorText}>
               Failed to load task stats: {errorTaskStats?.message}
             </Text>
           )}
-
-          {}
           <View style={{ marginTop: 20, alignItems: 'flex-start' }}>
             <Button
               title={`View Pending Verifications (${isErrorTaskStats ? '!' : pendingVerificationsCount})`}
@@ -84,11 +79,3 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  errorText: {
-    color: colors.danger,
-    fontSize: 13,
-    marginTop: 5,
-  },
-});

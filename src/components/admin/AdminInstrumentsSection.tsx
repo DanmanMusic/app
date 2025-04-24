@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-import { View, Text, StyleSheet, Button, FlatList, Image, ActivityIndicator } from 'react-native';
-
+import { View, Text, Button, FlatList, Image, ActivityIndicator } from 'react-native';
 import { fetchInstruments, deleteInstrument } from '../../api/instruments';
 import { Instrument } from '../../mocks/mockInstruments';
 import { appSharedStyles } from '../../styles/appSharedStyles';
@@ -11,10 +8,10 @@ import { colors } from '../../styles/colors';
 import { AdminInstrumentsSectionProps } from '../../types/componentProps';
 import { getInstrumentIconSource } from '../../utils/helpers';
 import ConfirmationModal from '../common/ConfirmationModal';
-
-import { adminSharedStyles } from './adminSharedStyles';
+import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import CreateInstrumentModal from './modals/CreateInstrumentModal';
 import EditInstrumentModal from './modals/EditInstrumentModal';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 const AdminInstrumentItem = ({
   item,
@@ -28,13 +25,13 @@ const AdminInstrumentItem = ({
   disabled?: boolean;
 }) => (
   <View style={appSharedStyles.itemContainer}>
-    <View style={styles.itemContent}>
+    <View style={commonSharedStyles.itemContentRow}>
       <Image
         source={getInstrumentIconSource(item.name)}
-        style={styles.instrumentIcon}
+        style={adminSharedStyles.instrumentIcon}
         resizeMode="contain"
       />
-      <Text style={[appSharedStyles.itemTitle, styles.itemTitleText]}>{item.name}</Text>
+      <Text style={[appSharedStyles.itemTitle, adminSharedStyles.itemTitleText]}>{item.name}</Text>
     </View>
     {}
     <View style={adminSharedStyles.itemActions}>
@@ -119,26 +116,18 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
 
   return (
     <View>
-      {}
       <Text style={appSharedStyles.sectionTitle}>Instruments ({instruments.length})</Text>
-      {}
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button title="Add New Instrument" onPress={handleAddPress} />
       </View>
-
-      {}
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
       )}
-
-      {}
       {isError && !isLoading && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{getErrorMessage()}</Text>
+        <View style={commonSharedStyles.errorContainer}>
+          <Text style={commonSharedStyles.errorText}>{getErrorMessage()}</Text>
         </View>
       )}
-
-      {}
       {!isLoading && !isError && (
         <FlatList
           data={instruments}
@@ -158,8 +147,6 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
           )}
         />
       )}
-
-      {}
       <CreateInstrumentModal visible={isCreateModalVisible} onClose={closeCreateModal} />
       <EditInstrumentModal
         visible={isEditModalVisible}
@@ -178,34 +165,3 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  itemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  instrumentIcon: {
-    width: 40,
-    height: 40,
-    marginRight: 15,
-  },
-  itemTitleText: {
-    flexShrink: 1,
-    marginBottom: 0,
-  },
-  errorContainer: {
-    marginVertical: 20,
-    padding: 15,
-    alignItems: 'center',
-    backgroundColor: '#ffebee',
-    borderColor: colors.danger,
-    borderWidth: 1,
-    borderRadius: 5,
-  },
-  errorText: {
-    color: colors.danger,
-    fontSize: 14,
-    textAlign: 'center',
-  },
-});

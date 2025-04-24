@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Slider from '@react-native-community/slider';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Modal, View, Text, StyleSheet, Button, ActivityIndicator, Alert } from 'react-native';
-
+import { Modal, View, Text, Button, ActivityIndicator, Alert } from 'react-native';
 import { updateAssignedTask, createAssignedTask } from '../api/assignedTasks';
 import { useAuth } from '../contexts/AuthContext';
 import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
@@ -10,6 +9,8 @@ import { colors } from '../styles/colors';
 import { TaskVerificationModalProps } from '../types/componentProps';
 import { User } from '../types/userTypes';
 import { getUserDisplayName } from '../utils/helpers';
+import { modalSharedStyles } from '../styles/modalSharedStyles';
+import { commonSharedStyles } from '../styles/commonSharedStyles';
 
 const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   visible,
@@ -91,7 +92,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
       verifyMutation.reset();
       reassignMutation.reset();
     }
-  }, [visible, task, verifyMutation, reassignMutation]);
+  }, [visible, task]);
 
   if (!visible || !task) {
     return null;
@@ -166,15 +167,15 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   if (currentStep === 1) {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-        <View style={modalStyles.centeredView}>
-          <View style={modalStyles.modalView}>
-            <Text style={modalStyles.modalTitle}>Verify Task</Text>
-            <Text style={modalStyles.taskTitle}>{taskTitle}</Text>
+        <View style={modalSharedStyles.centeredView}>
+          <View style={modalSharedStyles.modalView}>
+            <Text style={modalSharedStyles.modalTitle}>Verify Task</Text>
+            <Text style={modalSharedStyles.taskTitle}>{taskTitle}</Text>
             <Text>Student: {studentNameDisplay}</Text>
             <Text>Potential Tickets: {basePointsDisplay}</Text>
             <Text style={{ marginBottom: 20 }}>Completed: {completedDateTime}</Text>
-            <Text style={modalStyles.stepTitle}>Step 1: Select Status</Text>
-            <View style={modalStyles.buttonContainer}>
+            <Text style={modalSharedStyles.stepTitle}>Step 1: Select Status</Text>
+            <View style={modalSharedStyles.buttonContainer}>
               <Button
                 title="Verified"
                 onPress={() => handleStatusSelect('verified')}
@@ -193,7 +194,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
                 disabled={isLoadingStudent}
               />
             </View>
-            <View style={modalStyles.footerButton}>
+            <View style={modalSharedStyles.footerButton}>
               <Button title="Cancel" onPress={onClose} color={colors.secondary} />
             </View>
           </View>
@@ -207,14 +208,13 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     const effectiveSliderMaxValue = sliderMaxValue === 0 ? 1 : sliderMaxValue;
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-        <View style={modalStyles.centeredView}>
-          <View style={modalStyles.modalView}>
-            <Text style={modalStyles.modalTitle}>Verify Task</Text>
-            <Text style={modalStyles.taskTitle}>{taskTitle}</Text>
+        <View style={modalSharedStyles.centeredView}>
+          <View style={modalSharedStyles.modalView}>
+            <Text style={modalSharedStyles.modalTitle}>Verify Task</Text>
+            <Text style={modalSharedStyles.taskTitle}>{taskTitle}</Text>
             <Text>Student: {studentNameDisplay}</Text>
             <Text style={{ marginBottom: 10 }}>
-              {' '}
-              Status Selected:{' '}
+              Status Selected:
               <Text
                 style={{
                   fontWeight: 'bold',
@@ -226,17 +226,16 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
                         : colors.danger,
                 }}
               >
-                {' '}
-                {selectedStatus?.toUpperCase()}{' '}
-              </Text>{' '}
+                {selectedStatus?.toUpperCase()}
+              </Text>
             </Text>
-            <Text style={modalStyles.stepTitle}>Step 2: Award Tickets</Text>
-            <View style={modalStyles.pointsInputContainer}>
+            <Text style={modalSharedStyles.stepTitle}>Step 2: Award Tickets</Text>
+            <View style={modalSharedStyles.pointsInputContainer}>
               <Text style={{ fontSize: 16 }}>Tickets Awarded:</Text>
-              <Text style={modalStyles.awardedPointsText}>{awardedPoints}</Text>
+              <Text style={modalSharedStyles.awardedPointsText}>{awardedPoints}</Text>
             </View>
             <Slider
-              style={modalStyles.slider}
+              style={modalSharedStyles.slider}
               minimumValue={0}
               maximumValue={effectiveSliderMaxValue}
               step={1}
@@ -247,26 +246,25 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               thumbTintColor={colors.primary}
               disabled={verifyMutation.isPending}
             />
-            <View style={modalStyles.rangeText}>
+            <View style={modalSharedStyles.rangeText}>
               <Text>0</Text>
               <Text>Max: {basePointsDisplay}</Text>
             </View>
             {verifyMutation.isPending && (
-              <View style={modalStyles.loadingContainer}>
+              <View style={modalSharedStyles.loadingContainer}>
                 <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={modalStyles.loadingText}>Confirming...</Text>
+                <Text style={modalSharedStyles.loadingText}>Confirming...</Text>
               </View>
             )}
             {verifyMutation.isError && (
-              <Text style={modalStyles.errorText}>
-                {' '}
-                Error:{' '}
+              <Text style={commonSharedStyles.errorText}>
+                Error:
                 {verifyMutation.error instanceof Error
                   ? verifyMutation.error.message
-                  : 'Failed to verify'}{' '}
+                  : 'Failed to verify'}
               </Text>
             )}
-            <View style={modalStyles.buttonContainer}>
+            <View style={modalSharedStyles.buttonContainer}>
               <Button
                 title={verifyMutation.isPending ? 'Confirming...' : 'Confirm Tickets'}
                 onPress={handleConfirmTickets}
@@ -279,7 +277,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
                 disabled={verifyMutation.isPending}
               />
             </View>
-            <View style={modalStyles.footerButton}>
+            <View style={modalSharedStyles.footerButton}>
               <Button
                 title="Cancel Verification"
                 onPress={onClose}
@@ -296,51 +294,48 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   if (currentStep === 3) {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-        <View style={modalStyles.centeredView}>
-          <View style={modalStyles.modalView}>
-            <Text style={modalStyles.modalTitle}>Verification Complete!</Text>
-            <Text style={modalStyles.taskTitle}>{taskTitle}</Text>
+        <View style={modalSharedStyles.centeredView}>
+          <View style={modalSharedStyles.modalView}>
+            <Text style={modalSharedStyles.modalTitle}>Verification Complete!</Text>
+            <Text style={modalSharedStyles.taskTitle}>{taskTitle}</Text>
             <Text>Student: {studentNameDisplay}</Text>
             <Text style={{ marginBottom: 20 }}>
-              {' '}
               Status: <Text style={{ fontWeight: 'bold' }}>
                 {selectedStatus?.toUpperCase()}
-              </Text>{' '}
-              {' - '} Tickets Awarded:{' '}
+              </Text>
+              {' - '} Tickets Awarded:
               <Text
                 style={{
                   fontWeight: 'bold',
                   color: awardedPoints > 0 ? colors.success : colors.danger,
                 }}
               >
-                {' '}
-                {awardedPoints}{' '}
-              </Text>{' '}
+                {awardedPoints}
+              </Text>
             </Text>
-            <Text style={modalStyles.stepTitle}>Step 3: Re-assign?</Text>
+            <Text style={modalSharedStyles.stepTitle}>Step 3: Re-assign?</Text>
             {reassignMutation.isPending && (
-              <View style={modalStyles.loadingContainer}>
+              <View style={modalSharedStyles.loadingContainer}>
                 <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={modalStyles.loadingText}>Re-assigning...</Text>
+                <Text style={modalSharedStyles.loadingText}>Re-assigning...</Text>
               </View>
             )}
             {reassignMutation.isError && (
-              <Text style={modalStyles.errorText}>
-                {' '}
-                Re-assign Error:{' '}
+              <Text style={commonSharedStyles.errorText}>
+                Re-assign Error:
                 {reassignMutation.error instanceof Error
                   ? reassignMutation.error.message
-                  : 'Failed'}{' '}
+                  : 'Failed'}
               </Text>
             )}
-            <View style={modalStyles.buttonContainer}>
+            <View style={modalSharedStyles.buttonContainer}>
               <Button
                 title={reassignMutation.isPending ? 'Re-assigning...' : 'Re-assign Task'}
                 onPress={handleReassignTask}
                 disabled={reassignMutation.isPending}
               />
             </View>
-            <View style={modalStyles.buttonContainer}>
+            <View style={modalSharedStyles.buttonContainer}>
               <Button title="Done" onPress={onClose} disabled={reassignMutation.isPending} />
             </View>
           </View>
@@ -351,92 +346,5 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
 
   return null;
 };
-
-// --- Styles ---
-const modalStyles = StyleSheet.create({
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: colors.backgroundPrimary,
-    borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    width: '90%',
-    maxWidth: 400,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-    color: colors.textPrimary,
-  },
-  taskTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-    color: colors.textPrimary,
-  },
-  stepTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 15,
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderPrimary,
-    paddingBottom: 5,
-    width: '100%',
-    textAlign: 'center',
-    color: colors.textPrimary,
-  },
-  buttonContainer: { flexDirection: 'column', width: '100%', marginTop: 10, gap: 10 },
-  footerButton: { width: '100%', marginTop: 20 },
-  pointsInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-    gap: 10,
-  },
-  awardedPointsText: { fontSize: 20, fontWeight: 'bold', color: colors.gold },
-  slider: { width: '100%', height: 40, marginTop: 10 },
-  rangeText: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 5,
-    marginTop: -5,
-    marginBottom: 5,
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 20,
-    marginBottom: 10,
-  },
-  loadingText: { marginLeft: 10, fontSize: 14, color: colors.textSecondary },
-  errorText: {
-    color: colors.danger,
-    textAlign: 'center',
-    marginTop: 5,
-    marginBottom: 10,
-    fontSize: 14,
-    minHeight: 18,
-  },
-});
 
 export default TaskVerificationModal;
