@@ -30,7 +30,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   onClose,
   preselectedStudentId,
 }) => {
-  const { currentUserId } = useAuth()
+  const { currentUserId } = useAuth();
   const queryClient = useQueryClient();
 
   const [step, setStep] = useState(1);
@@ -59,12 +59,16 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     isError: isErrorStudents,
     error: errorStudents,
   } = useQuery({
-    queryKey: ['students', { filter: 'active', context: 'assignTaskModal', teacherId: currentUserId }],
-    queryFn: () => fetchStudents({
-      filter: 'active',
-      page: 1, // Fetch first page, assuming linking doesn't exceed one page often for a teacher
-      teacherId: currentUserId ?? undefined // Pass teacherId here
-    }),
+    queryKey: [
+      'students',
+      { filter: 'active', context: 'assignTaskModal', teacherId: currentUserId },
+    ],
+    queryFn: () =>
+      fetchStudents({
+        filter: 'active',
+        page: 1, // Fetch first page, assuming linking doesn't exceed one page often for a teacher
+        teacherId: currentUserId ?? undefined, // Pass teacherId here
+      }),
     enabled: visible && step === 1 && !preselectedStudentId && !!currentUserId, // Only enable if needed and teacherId is available
     staleTime: 5 * 60 * 1000,
   });
@@ -255,7 +259,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
               )}
               ListEmptyComponent={
                 <Text style={appSharedStyles.emptyListText}>
-                  {studentSearchTerm ? 'No students match search.' : 'No active students linked to you.'}
+                  {studentSearchTerm
+                    ? 'No students match search.'
+                    : 'No active students linked to you.'}
                 </Text>
               }
             />
@@ -398,9 +404,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
               Error:
-              {mutation.error instanceof Error
-                ? mutation.error.message
-                : 'Failed to assign task'}
+              {mutation.error instanceof Error ? mutation.error.message : 'Failed to assign task'}
             </Text>
           )}
           {step === 3 && (

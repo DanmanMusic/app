@@ -23,7 +23,12 @@ export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = (
   } = useQuery({
     queryKey: [
       'assigned-tasks',
-      { assignmentStatus: 'pending', studentStatus: 'active', teacherId, context: 'teacherDashboard' },
+      {
+        assignmentStatus: 'pending',
+        studentStatus: 'active',
+        teacherId,
+        context: 'teacherDashboard',
+      },
     ],
     queryFn: () =>
       fetchAssignedTasks({

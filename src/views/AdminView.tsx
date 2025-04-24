@@ -209,7 +209,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const handleInitiateCreateUser = () => {
     console.log('[AdminView] handleInitiateCreateUser called');
     setIsCreateUserModalVisible(true);
-  };  
+  };
   const handleInitiateAssignTaskGeneral = () => {
     console.log('[AdminView] handleInitiateAssignTaskGeneral called');
     setAssignTaskTargetStudentId(null);
@@ -262,7 +262,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           onInitiateAssignTaskForStudent={() =>
             handleInitiateAssignTaskForStudent(viewingStudentId)
           }
-          onInitiateEditStudent={handleEditStudentClick}          
+          onInitiateEditStudent={handleEditStudentClick}
         />
       );
     }

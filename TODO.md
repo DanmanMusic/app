@@ -37,6 +37,7 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 ## [ ] Development Phase 2: Fixes, Remaining Features & API Refinements
 
 ### [ ] 1. Address Known Issues & TODOs from Refactor
+
     - [x] **Teacher Filtering:** Fix client-side filtering placeholders in `TeacherView`/`TeacherDashboardSection`/`TeacherStudentsSection`. Requires either:
         - [x] Enhancing API/MSW (`fetchStudents`, `fetchAssignedTasks`) to accept `teacherId` for filtering OR return full `User` objects with `linkedTeacherIds`.
         - [ ] Creating dedicated endpoints (e.g., `/api/teachers/:id/students`, `/api/teachers/:id/pending-verifications`).
@@ -52,6 +53,7 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
     - [ ] **Role-Based Action Control (Teacher vs. Admin):** Need a mechanism to easily control button visibility in the student detail view based on the *viewer's* role (Admin or Teacher). For now, all buttons should remain visible for both roles viewing the profile.
 
 ### [ ] 2. Implement Remaining Mutations & Actions
+
     - [x] Assigned Task: Task Verification (`PATCH /api/assigned-tasks/:id` via `TaskVerificationModal`).
     - [x] Assigned Task: Re-assign (`POST /api/assigned-tasks` via `TaskVerificationModal`).
     - [x] Assigned Task: Assign Task (`POST /api/assigned-tasks` via `AssignTaskModal`).
@@ -60,11 +62,13 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
     - [ ] User Linking (Admin): Add UI controls (e.g., multi-select) in Create/Edit User Modals for linking Students <-> Teachers, Students <-> Instruments. Connect to `PATCH /api/users/:id`.
 
 ### [ ] 3. Implement Remaining Mock UI/Placeholders
+
     - [ ] Teacher Action: View All Students button functionality.
     - [ ] Parent Action: Link Another Student button functionality (QR flow).
     - [ ] Student Action: Rewards redemption flow/button.
 
 ### [ ] 4. Refinements & Testing
+
     - [ ] Thoroughly test all user role workflows after fixes.
     - [ ] Refine UI/UX based on testing (loading states, error messages, navigation).
     - [ ] Add unit/integration tests.
@@ -75,12 +79,12 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 - [ ] Define database schema in Supabase based on Data Models.
 - [ ] Develop Supabase Edge Functions for complex logic (Verification, Redemption, Adjustments, Cascading Logic).
 - [ ] Integrate Frontend with Supabase:
-    - [ ] Install/Configure `supabase-js`.
-    - [ ] Replace API client functions with `supabase-js` calls in TQ `queryFn`/`mutationFn`.
-    - [ ] Implement real authentication (QR Code, Teacher/Admin login) using Supabase Auth. Update `AuthContext`.
-    - [ ] Update pagination hooks for Supabase (`range`, filters).
-    - [ ] Align TQ keys/invalidation with Supabase.
-    - [ ] Remove MSW dependency and configuration.
+  - [ ] Install/Configure `supabase-js`.
+  - [ ] Replace API client functions with `supabase-js` calls in TQ `queryFn`/`mutationFn`.
+  - [ ] Implement real authentication (QR Code, Teacher/Admin login) using Supabase Auth. Update `AuthContext`.
+  - [ ] Update pagination hooks for Supabase (`range`, filters).
+  - [ ] Align TQ keys/invalidation with Supabase.
+  - [ ] Remove MSW dependency and configuration.
 - [ ] Optional: Implement Realtime updates, Push Notifications.
 
 ## [ ] Supporting Features
