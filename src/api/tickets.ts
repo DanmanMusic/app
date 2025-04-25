@@ -1,4 +1,4 @@
-import { TicketTransaction } from '../mocks/mockTickets';
+import { TicketTransaction } from '../types/dataTypes';
 
 interface TicketHistoryResponse {
   items: TicketTransaction[];

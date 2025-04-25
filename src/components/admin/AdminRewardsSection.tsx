@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 import { fetchRewards, deleteReward } from '../../api/rewards';
-import { RewardItem } from '../../mocks/mockRewards';
+import { RewardItem } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminRewardsSectionProps } from '../../types/componentProps';
@@ -43,8 +43,8 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = () => {
         type: 'success',
         text1: 'Success',
         text2: 'Reward deleted.',
-        position: 'bottom'
-      });      
+        position: 'bottom',
+      });
     },
     onError: (err, deletedRewardId) => {
       console.error(`Error deleting reward item ${deletedRewardId}:`, err);
@@ -54,8 +54,8 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = () => {
         text1: 'Deletion Failed',
         text2: err instanceof Error ? err.message : 'Could not delete reward.',
         position: 'bottom',
-        visibilityTime: 4000
-      });      
+        visibilityTime: 4000,
+      });
     },
   });
 

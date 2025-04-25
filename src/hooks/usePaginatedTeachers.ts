@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
 import { fetchTeachers } from '../api/users';
-import { User } from '../types/userTypes';
+import { User } from '../types/dataTypes';
 
 interface UsePaginatedTeachersReturn {
   teachers: User[];

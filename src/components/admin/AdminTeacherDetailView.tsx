@@ -3,7 +3,7 @@ import { View, Text, Button, ActivityIndicator, ScrollView, StyleSheet } from 'r
 import { useQuery } from '@tanstack/react-query';
 
 import { useAuth } from '../../contexts/AuthContext';
-import { User } from '../../types/userTypes';
+import { User } from '../../types/dataTypes';
 import { getUserDisplayName } from '../../utils/helpers';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';

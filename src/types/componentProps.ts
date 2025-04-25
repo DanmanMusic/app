@@ -1,11 +1,14 @@
-import { Announcement } from '../mocks/mockAnnouncements';
-import { AssignedTask } from '../mocks/mockAssignedTasks';
-import { Instrument } from '../mocks/mockInstruments';
-import { RewardItem } from '../mocks/mockRewards';
-import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
-
-import { SimplifiedStudent } from './dataTypes';
-import { User, UserRole, UserStatus } from './userTypes';
+import {
+  Announcement,
+  AssignedTask,
+  Instrument,
+  RewardItem,
+  SimplifiedStudent,
+  TaskLibraryItem,
+  User,
+  UserRole,
+  UserStatus,
+} from '../types/dataTypes';
 
 export interface AdminViewProps {
   onInitiateVerificationModal?: (task: AssignedTask) => void;

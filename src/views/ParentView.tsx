@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 import { ParentViewProps } from '../types/componentProps';
-import { User } from '../types/userTypes';
+import { User } from '../types/dataTypes';
 import { getUserDisplayName } from '../utils/helpers';
 import { StudentView } from './StudentView';
 import { ParentStudentListItem } from '../components/common/ParentStudentListItem';

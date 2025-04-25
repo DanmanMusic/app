@@ -1,7 +1,6 @@
 import { Button, Text, View } from 'react-native';
 import { Instrument } from '../../mocks';
-import { SimplifiedStudent } from '../../types/dataTypes';
-import { UserRole } from '../../types/userTypes';
+import { SimplifiedStudent, UserRole } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { getInstrumentNames } from '../../utils/helpers';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';

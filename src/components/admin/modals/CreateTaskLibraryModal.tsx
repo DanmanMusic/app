@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import { createTaskLibraryItem } from '../../../api/taskLibrary';
-import { TaskLibraryItem } from '../../../mocks/mockTaskLibrary';
+import { TaskLibraryItem } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { CreateTaskLibraryModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
@@ -26,8 +26,8 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
         type: 'success',
         text1: 'Success',
         text2: 'Task library item created.',
-        position: 'bottom'
-    });      
+        position: 'bottom',
+      });
     },
     onError: error => {
       console.error('Error creating task library item via mutation:', error);
@@ -36,8 +36,8 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
         text1: 'Creation Failed',
         text2: error instanceof Error ? error.message : 'Could not create task library item.',
         position: 'bottom',
-        visibilityTime: 4000
-      });      
+        visibilityTime: 4000,
+      });
     },
   });
 

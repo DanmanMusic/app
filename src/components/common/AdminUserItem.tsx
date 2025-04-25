@@ -1,7 +1,7 @@
 import { Button, Text, View } from 'react-native';
 
 import { appSharedStyles } from '../../styles/appSharedStyles';
-import { User, UserRole } from '../../types/userTypes';
+import { User, UserRole } from '../../types/dataTypes';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { getUserDisplayName } from '../../utils/helpers';
 import { colors } from '../../styles/colors';

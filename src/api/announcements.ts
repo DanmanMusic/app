@@ -1,4 +1,4 @@
-import { Announcement } from '../mocks/mockAnnouncements';
+import { Announcement } from '../types/dataTypes';
 
 /**
  * Fetches all announcements.

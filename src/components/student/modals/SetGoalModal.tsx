@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 
 import { fetchRewards } from '../../../api/rewards';
-import { RewardItem } from '../../../mocks/mockRewards';
+import { RewardItem } from '../../../types/dataTypes';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
 import {

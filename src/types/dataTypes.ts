@@ -1,11 +1,81 @@
-import { Announcement } from '../mocks/mockAnnouncements';
-import { AssignedTask } from '../mocks/mockAssignedTasks';
-import { Instrument } from '../mocks/mockInstruments';
-import { RewardItem } from '../mocks/mockRewards';
-import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
-import { TicketTransaction } from '../mocks/mockTickets';
+export type AnnouncementType = 'announcement' | 'challenge' | 'redemption_celebration';
 
-import { User } from './userTypes';
+export interface Announcement {
+  id: string;
+  type: AnnouncementType;
+  title: string;
+  message: string;
+  date: string;
+  relatedStudentId?: string;
+}
+
+export type TaskVerificationStatus = 'pending' | 'verified' | 'partial' | 'incomplete' | undefined;
+
+export interface AssignedTask {
+  id: string;
+
+  studentId: string;
+  assignedById: string;
+  assignedDate: string;
+
+  taskTitle: string;
+  taskDescription: string;
+  taskBasePoints: number;
+
+  isComplete: boolean;
+  completedDate?: string;
+  verificationStatus?: TaskVerificationStatus;
+  verifiedById?: string;
+  verifiedDate?: string;
+  actualPointsAwarded?: number;
+}
+
+export interface Instrument {
+  id: string;
+  name: string;
+}
+
+export interface RewardItem {
+  id: string;
+  name: string;
+  cost: number;
+  imageUrl: string;
+  description?: string;
+}
+
+export interface TaskLibraryItem {
+  id: string;
+  title: string;
+  description: string;
+  baseTickets: number;
+}
+
+export type TransactionType = 'task_award' | 'manual_add' | 'manual_subtract' | 'redemption';
+
+export interface TicketTransaction {
+  id: string;
+  studentId: string;
+  timestamp: string;
+  amount: number;
+  type: TransactionType;
+  sourceId: string;
+  notes?: string;
+}
+
+export type UserRole = 'admin' | 'teacher' | 'student' | 'parent';
+export type UserStatus = 'active' | 'inactive';
+
+export interface User {
+  id: string;
+  role: UserRole;
+  firstName: string;
+  lastName: string;
+  nickname?: string;
+  instrumentIds?: string[];
+  linkedTeacherIds?: string[];
+  linkedStudentIds?: string[];
+  status: UserStatus;
+}
 
 export interface SimplifiedStudent {
   id: string;

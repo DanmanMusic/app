@@ -2,12 +2,8 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
-import {
-  fetchAssignedTasks,
-  TaskAssignmentFilterStatusAPI,
-  StudentTaskFilterStatusAPI,
-} from '../api/assignedTasks';
-import { AssignedTask } from '../mocks/mockAssignedTasks';
+import { fetchAssignedTasks } from '../api/assignedTasks';
+import { AssignedTask } from '../types/dataTypes';
 
 export type TaskAssignmentFilterStatus = 'all' | 'assigned' | 'pending' | 'completed';
 export type StudentTaskFilterStatus = 'active' | 'inactive' | 'all';

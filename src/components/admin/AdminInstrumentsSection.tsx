@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 import { fetchInstruments, deleteInstrument } from '../../api/instruments';
-import { Instrument } from '../../mocks/mockInstruments';
+import { Instrument } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminInstrumentsSectionProps } from '../../types/componentProps';
@@ -45,8 +45,8 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
         type: 'success',
         text1: 'Success',
         text2: 'Instrument deleted.',
-        position: 'bottom'
-      });      
+        position: 'bottom',
+      });
     },
     onError: (err, deletedInstrumentId) => {
       console.error(`Error deleting instrument ${deletedInstrumentId}:`, err);
@@ -56,8 +56,8 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
         text1: 'Deletion Failed',
         text2: err instanceof Error ? err.message : 'Could not delete instrument.',
         position: 'bottom',
-        visibilityTime: 4000
-      });      
+        visibilityTime: 4000,
+      });
     },
   });
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 import { fetchAnnouncements, deleteAnnouncement } from '../../api/announcements';
-import { Announcement } from '../../mocks/mockAnnouncements';
+import { Announcement } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminAnnouncementsSectionProps } from '../../types/componentProps';
@@ -46,19 +46,19 @@ export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps>
         type: 'success',
         text1: 'Success',
         text2: 'Announcement deleted.',
-        position: 'bottom'
-      });      
+        position: 'bottom',
+      });
     },
     onError: (err, deletedAnnouncementId) => {
-      console.error(`Error deleting announcement ${deletedAnnouncementId}:`, err);      
+      console.error(`Error deleting announcement ${deletedAnnouncementId}:`, err);
       closeDeleteModal();
       Toast.show({
         type: 'error',
         text1: 'Deletion Failed',
         text2: err instanceof Error ? err.message : 'Could not delete announcement.',
         position: 'bottom',
-        visibilityTime: 4000
-      });      
+        visibilityTime: 4000,
+      });
     },
   });
 

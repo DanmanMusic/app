@@ -1,9 +1,6 @@
 import React from 'react';
 import { View, Text, Button } from 'react-native';
-
-import { AssignedTask } from '../../mocks/mockAssignedTasks';
-
-import { getUserDisplayName } from '../../utils/helpers';
+import { AssignedTask } from '../../types/dataTypes';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';

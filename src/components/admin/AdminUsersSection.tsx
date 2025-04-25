@@ -4,8 +4,7 @@ import { View, Text, Button, FlatList, TextInput, ActivityIndicator } from 'reac
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminUsersSectionProps } from '../../types/componentProps';
-import { SimplifiedStudent } from '../../types/dataTypes';
-import { User, UserRole, UserStatus } from '../../types/userTypes';
+import { SimplifiedStudent, User, UserRole, UserStatus } from '../../types/dataTypes';
 import PaginationControls from './PaginationControls';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminUserItem } from '../common/AdminUserItem';

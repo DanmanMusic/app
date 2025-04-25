@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
 import { fetchParents } from '../api/users';
-import { User } from '../types/userTypes';
+import { User } from '../types/dataTypes';
 
 interface UsePaginatedParentsReturn {
   parents: User[];

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal, View, Text, Button, TextInput, ActivityIndicator } from 'react-native';
 import { createAnnouncement } from '../../../api/announcements';
-import { Announcement, AnnouncementType } from '../../../mocks/mockAnnouncements';
+import { Announcement, AnnouncementType } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { CreateAnnouncementModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';

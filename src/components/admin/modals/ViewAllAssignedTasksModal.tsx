@@ -1,20 +1,15 @@
 import React, { useState, useMemo } from 'react';
-import { useMutation, useQueryClient, useQuery, useQueries } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Modal, View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
-
-import { fetchStudents, fetchTeachers, fetchParents } from '../../../api/users';
+import { fetchStudents, fetchTeachers } from '../../../api/users';
 import { deleteAssignedTask } from '../../../api/assignedTasks';
 import { usePaginatedAssignedTasks } from '../../../hooks/usePaginatedAssignedTasks';
-
 import ConfirmationModal from '../../common/ConfirmationModal';
 import PaginationControls from '../PaginationControls';
 import { AssignedTaskDetailItem } from '../../common/AssignedTaskDetailItem';
-
 import { ViewAllAssignedTasksModalProps } from '../../../types/componentProps';
-import { User } from '../../../types/userTypes';
-import { AssignedTask } from '../../../mocks/mockAssignedTasks';
+import { User } from '../../../types/dataTypes';
 import { getUserDisplayName } from '../../../utils/helpers';
-
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';

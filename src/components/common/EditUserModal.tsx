@@ -5,7 +5,7 @@ import { updateUser, fetchTeachers } from '../../api/users';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { EditUserModalProps } from '../../types/componentProps';
-import { User } from '../../types/userTypes';
+import { User } from '../../types/dataTypes';
 import { getUserDisplayName } from '../../utils/helpers';
 import { modalSharedStyles } from '../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';

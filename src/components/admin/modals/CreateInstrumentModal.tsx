@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal, View, Text, Button, TextInput, ActivityIndicator } from 'react-native';
 import { createInstrument } from '../../../api/instruments';
-import { Instrument } from '../../../mocks/mockInstruments';
+import { Instrument } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { CreateInstrumentModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';

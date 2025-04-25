@@ -1,7 +1,4 @@
-export interface Instrument {
-  id: string;
-  name: string;
-}
+import { Instrument } from '../types/dataTypes';
 
 export const mockInstruments: Instrument[] = [
   { id: 'inst-1', name: 'Piano' },

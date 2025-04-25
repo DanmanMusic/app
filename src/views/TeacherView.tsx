@@ -2,25 +2,17 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { View, Text, ScrollView, Button, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { fetchInstruments } from '../api/instruments';
-
 import { TeacherDashboardSection } from '../components/teacher/TeacherDashboardSection';
 import { TeacherStudentsSection } from '../components/teacher/TeacherStudentsSection';
 import { TeacherTasksSection } from '../components/teacher/TeacherTasksSection';
 import { AdminStudentDetailView } from '../components/admin/AdminStudentDetailView';
-
 import AssignTaskModal from '../components/common/AssignTaskModal';
 import TaskVerificationModal from '../components/common/TaskVerificationModal';
 import EditUserModal from '../components/common/EditUserModal';
-
 import { useAuth } from '../contexts/AuthContext';
-
-import { AssignedTask } from '../mocks/mockAssignedTasks';
-import { Instrument } from '../mocks/mockInstruments';
 import { TeacherViewProps } from '../types/componentProps';
-import { User } from '../types/userTypes';
-
+import { AssignedTask, Instrument, User } from '../types/dataTypes';
 import { getUserDisplayName } from '../utils/helpers';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';

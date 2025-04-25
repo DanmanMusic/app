@@ -1,4 +1,4 @@
-import { Instrument } from '../mocks/mockInstruments';
+import { Instrument } from '../types/dataTypes';
 
 /**
  * Fetches all instruments.

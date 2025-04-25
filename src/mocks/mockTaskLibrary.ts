@@ -1,9 +1,4 @@
-export interface TaskLibraryItem {
-  id: string;
-  title: string;
-  description: string;
-  baseTickets: number;
-}
+import { TaskLibraryItem } from '../types/dataTypes';
 
 export const initialMockTaskLibrary: TaskLibraryItem[] = [
   {

@@ -1,5 +1,4 @@
-import { SimplifiedStudent } from '../types/dataTypes';
-import { User, UserStatus } from '../types/userTypes';
+import { SimplifiedStudent, User, UserStatus } from '../types/dataTypes';
 import { getUserDisplayName } from '../utils/helpers';
 
 interface StudentsApiResponse {

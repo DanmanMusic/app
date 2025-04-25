@@ -1,4 +1,4 @@
-import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
+import { TaskLibraryItem } from '../types/dataTypes';
 
 /**
  * Fetches the entire task library.

@@ -4,7 +4,7 @@ import { View, Text, FlatList, Button, ActivityIndicator } from 'react-native';
 
 import { fetchTaskLibrary } from '../../api/taskLibrary';
 
-import { TaskLibraryItem } from '../../mocks/mockTaskLibrary';
+import { TaskLibraryItem } from '../../types/dataTypes';
 import { TaskLibraryItemTeacher } from '../common/TaskLibraryItemTeacher';
 import { TeacherTasksSectionProps } from '../../types/componentProps';
 

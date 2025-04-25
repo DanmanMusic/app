@@ -11,12 +11,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
-
 import { fetchAssignedTasks } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
 import { fetchTaskLibrary, deleteTaskLibraryItem } from '../api/taskLibrary';
-import { fetchTeachers, fetchParents, fetchStudents } from '../api/users';
-
 import { AdminAnnouncementsSection } from '../components/admin/AdminAnnouncementsSection';
 import { AdminDashboardSection } from '../components/admin/AdminDashboardSection';
 import { AdminHistorySection } from '../components/admin/AdminHistorySection';
@@ -26,7 +23,6 @@ import { AdminStudentDetailView } from '../components/admin/AdminStudentDetailVi
 import { AdminTasksSection } from '../components/admin/AdminTasksSection';
 import { AdminUsersSection } from '../components/admin/AdminUsersSection';
 import { PendingVerificationItem } from '../components/common/PendingVerificationItem';
-
 import CreateUserModal from '../components/admin/modals/CreateUserModal';
 import CreateTaskLibraryModal from '../components/admin/modals/CreateTaskLibraryModal';
 import EditTaskLibraryModal from '../components/admin/modals/EditTaskLibraryModal';
@@ -37,19 +33,19 @@ import AssignTaskModal from '../components/common/AssignTaskModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 import EditUserModal from '../components/common/EditUserModal';
 import DeactivateOrDeleteUserModal from '../components/common/DeactivateOrDeleteUserModal';
-
 import { useAuth } from '../contexts/AuthContext';
 import { usePaginatedParents } from '../hooks/usePaginatedParents';
 import { usePaginatedStudents } from '../hooks/usePaginatedStudents';
 import { usePaginatedTeachers } from '../hooks/usePaginatedTeachers';
-
-import { AssignedTask } from '../mocks/mockAssignedTasks';
-import { Instrument } from '../mocks/mockInstruments';
-import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
-import { AdminViewProps, AdminTasksSectionProps } from '../types/componentProps';
-import { User, UserRole } from '../types/userTypes';
-import { SimplifiedStudent } from '../types/dataTypes';
-
+import {
+  AssignedTask,
+  Instrument,
+  TaskLibraryItem,
+  User,
+  UserRole,
+  SimplifiedStudent,
+} from '../types/dataTypes';
+import { AdminViewProps } from '../types/componentProps';
 import { getUserDisplayName } from '../utils/helpers';
 import { adminSharedStyles } from '../styles/adminSharedStyles';
 import { appSharedStyles } from '../styles/appSharedStyles';

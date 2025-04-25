@@ -1,14 +1,4 @@
-export type TransactionType = 'task_award' | 'manual_add' | 'manual_subtract' | 'redemption';
-
-export interface TicketTransaction {
-  id: string;
-  studentId: string;
-  timestamp: string;
-  amount: number;
-  type: TransactionType;
-  sourceId: string;
-  notes?: string;
-}
+import { TicketTransaction } from '../types/dataTypes';
 
 export const mockTicketBalances: Record<string, number> = {
   'student-1': 5200,

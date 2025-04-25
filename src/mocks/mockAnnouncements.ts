@@ -1,13 +1,4 @@
-export type AnnouncementType = 'announcement' | 'challenge' | 'redemption_celebration';
-
-export interface Announcement {
-  id: string;
-  type: AnnouncementType;
-  title: string;
-  message: string;
-  date: string;
-  relatedStudentId?: string;
-}
+import { Announcement } from '../types/dataTypes';
 
 export const mockAnnouncements: Announcement[] = [
   {

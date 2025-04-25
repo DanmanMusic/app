@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import { deleteAssignedTask, updateAssignedTask } from '../../api/assignedTasks';
+import { deleteAssignedTask } from '../../api/assignedTasks';
 import { fetchInstruments } from '../../api/instruments';
 import { fetchStudentBalance } from '../../api/tickets';
 import { fetchTeachers } from '../../api/users';
@@ -23,10 +23,8 @@ import { TicketHistoryItem } from '../common/TicketHistoryItem';
 import ConfirmationModal from '../common/ConfirmationModal';
 import PaginationControls from './PaginationControls';
 
-import { AssignedTask } from '../../mocks/mockAssignedTasks';
-import { Instrument } from '../../mocks/mockInstruments';
+import { AssignedTask, Instrument, User } from '../../types/dataTypes';
 import { AdminStudentDetailViewProps } from '../../types/componentProps';
-import { User } from '../../types/userTypes';
 
 import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
 import { appSharedStyles } from '../../styles/appSharedStyles';

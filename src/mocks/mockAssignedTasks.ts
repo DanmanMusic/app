@@ -1,24 +1,3 @@
-export type TaskVerificationStatus = 'pending' | 'verified' | 'partial' | 'incomplete' | undefined;
-
-export interface AssignedTask {
-  id: string;
-
-  studentId: string;
-  assignedById: string;
-  assignedDate: string;
-
-  taskTitle: string;
-  taskDescription: string;
-  taskBasePoints: number;
-
-  isComplete: boolean;
-  completedDate?: string;
-  verificationStatus?: TaskVerificationStatus;
-  verifiedById?: string;
-  verifiedDate?: string;
-  actualPointsAwarded?: number;
-}
-
 export const mockAssignedTasksStudent1: AssignedTask[] = [
   {
     id: 'assigned-1',

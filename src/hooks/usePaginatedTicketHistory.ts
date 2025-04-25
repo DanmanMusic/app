@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
 import { fetchTicketHistory } from '../api/tickets';
-import { TicketTransaction } from '../mocks/mockTickets';
+import { TicketTransaction } from '../types/dataTypes';
 
 export interface UsePaginatedTicketHistoryReturn {
   history: TicketTransaction[];

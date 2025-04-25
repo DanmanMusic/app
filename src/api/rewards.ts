@@ -1,4 +1,4 @@
-import { RewardItem } from '../mocks/mockRewards';
+import { RewardItem } from '../types/dataTypes';
 
 /**
  * Fetches the entire rewards catalog.

@@ -1,4 +1,4 @@
-import { User } from '../types/userTypes';
+import { User } from '../types/dataTypes';
 
 export const mockUsers: Record<string, User> = {
   'admin-1': {

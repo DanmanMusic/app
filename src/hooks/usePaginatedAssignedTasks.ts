@@ -7,7 +7,7 @@ import {
   TaskAssignmentFilterStatusAPI,
   StudentTaskFilterStatusAPI,
 } from '../api/assignedTasks';
-import { AssignedTask } from '../mocks/mockAssignedTasks';
+import { AssignedTask } from '../types/dataTypes';
 
 export type TaskAssignmentFilterStatus = 'all' | 'assigned' | 'pending' | 'completed';
 export type StudentTaskFilterStatus = 'active' | 'inactive' | 'all';

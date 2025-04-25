@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useMemo, ReactNode } from 'react';
 
-import { UserRole } from '../types/userTypes';
+import { UserRole } from '../types/dataTypes';
 
 type MockAuthState = {
   role: UserRole | 'public';

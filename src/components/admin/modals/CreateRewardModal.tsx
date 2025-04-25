@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import { createReward } from '../../../api/rewards';
-import { RewardItem } from '../../../mocks/mockRewards';
+import { RewardItem } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { CreateRewardModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';

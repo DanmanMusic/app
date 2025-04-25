@@ -1,5 +1,4 @@
-import { AssignedTask } from '../mocks/mockAssignedTasks';
-import { UserStatus } from '../types/userTypes';
+import { AssignedTask, UserStatus } from '../types/dataTypes';
 
 export type TaskAssignmentFilterStatusAPI = 'all' | 'assigned' | 'pending' | 'completed';
 export type StudentTaskFilterStatusAPI = UserStatus | 'all';

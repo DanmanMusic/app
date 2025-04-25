@@ -1,10 +1,4 @@
-export interface RewardItem {
-  id: string;
-  name: string;
-  cost: number;
-  imageUrl: string;
-  description?: string;
-}
+import { RewardItem } from '../types/dataTypes';
 
 export const initialMockRewardsCatalog: RewardItem[] = [
   {
