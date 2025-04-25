@@ -7,13 +7,12 @@ import { fetchRewards } from '../api/rewards';
 import { Announcement, RewardItem } from '../types/dataTypes';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
-import { PublicViewProps } from '../types/componentProps';
 import { AnnouncementListItem } from '../components/common/AnnouncementListItem';
 import { RewardItemPublic } from '../components/common/RewardItemPublic';
 
 type PublicTab = 'welcome' | 'rewards' | 'announcements';
 
-export const PublicView: React.FC<PublicViewProps> = () => {
+export const PublicView = () => {
   const [activeTab, setActiveTab] = useState<PublicTab>('welcome');
 
   const {

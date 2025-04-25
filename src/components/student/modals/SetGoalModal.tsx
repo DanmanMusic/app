@@ -1,24 +1,12 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  Modal,
-  View,
-  Text,
-  Button,
-  FlatList,
-  TouchableOpacity,
-  Image,
-  ActivityIndicator,
-} from 'react-native';
+import { Modal, View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 
 import { fetchRewards } from '../../../api/rewards';
 import { RewardItem } from '../../../types/dataTypes';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
-import {
-  SetGoalModalProps as ExternalSetGoalModalProps,
-  SetGoalModalProps,
-} from '../../../types/componentProps';
+import { SetGoalModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { RewardGoalItem } from '../../common/RewardGoalItem';
 

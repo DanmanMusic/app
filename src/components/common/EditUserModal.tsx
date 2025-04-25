@@ -15,7 +15,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   visible,
   userToEdit,
   onClose,
-  mockInstruments,
+  instruments,
 }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -196,8 +196,8 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                 <View style={modalSharedStyles.roleSpecificSection}>
                   <Text style={modalSharedStyles.roleSectionTitle}>Instruments</Text>
                   <View style={modalSharedStyles.selectionContainer}>
-                    {mockInstruments.length > 0 ? (
-                      mockInstruments.map(inst => (
+                    {instruments.length > 0 ? (
+                      instruments.map(inst => (
                         <Button
                           key={inst.id}
                           title={inst.name}

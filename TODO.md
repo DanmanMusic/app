@@ -38,39 +38,39 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 
 ### [ ] 1. Address Known Issues & TODOs from Refactor
 
-    - [x] **Teacher Filtering:** Fix client-side filtering placeholders in `TeacherView`/`TeacherDashboardSection`/`TeacherStudentsSection`. Requires either:
-        - [x] Enhancing API/MSW (`fetchStudents`, `fetchAssignedTasks`) to accept `teacherId` for filtering OR return full `User` objects with `linkedTeacherIds`.
-        - [ ] Creating dedicated endpoints (e.g., `/api/teachers/:id/students`, `/api/teachers/:id/pending-verifications`).
-    - [x] **Admin View:** Fix "View Details" for newly created users (ensure `AdminStudentDetailView` gets correct data/state updates post-creation - should be fixed by removing context dependency, needs testing).
-    - [ ] **User Lookups:** Ensure components needing user names (e.g., `AdminStudentDetailView` for linked teachers, potentially `TaskVerificationModal`) fetch required data or receive necessary lists (e.g., `teachers`) via props. Remove `allUsers` prop where feasible.
-    - [ ] **API/MSW Handlers:**
-        - [ ] Add `fetchAllUsers` function (`/api/users/all` handler already added).
-        - [ ] Add `fetchUserById` function (or continue using direct `fetch` in `useQuery`).
-        - [ ] Add MSW handlers for Stats API (`/api/stats/user-counts`, `/api/assigned-tasks/stats`).
-    - [ ] **Pagination:** Review `fetch*` calls using `page: 1` where full lists are needed (e.g., `fetchStudents` in `TeacherView` for lookups/filtering) and implement proper pagination or fetching of all required items.
-    - [ ] **UI Feedback:** Replace remaining `Alert.alert` calls (especially in mutation `onError`) with better UI feedback (e.g., Toasts, inline messages).
-    - [ ] **Lint Errors:** Address remaining ESLint errors (unused vars, exhaustive-deps, empty interfaces, require imports).
-    - [ ] **Role-Based Action Control (Teacher vs. Admin):** Need a mechanism to easily control button visibility in the student detail view based on the *viewer's* role (Admin or Teacher). For now, all buttons should remain visible for both roles viewing the profile.
+    - [x] **Teacher Filtering:** Fixed API/MSW and component logic.
+    - [x] **Admin View (Created Users):** Assumed fixed by TQ refactor. (Requires testing).
+    - [x] **User Lookups:** Refactored components to remove `allUsers` prop; components fetch needed data or receive specific props.
+    - [x] **API/MSW Handlers:** Necessary handlers/functions exist.
+    - [x] **Pagination for Lookups:** Added `limit` param to fetch functions for fetching full lists.
+    - [x] **UI Feedback:** Replaced `Alert.alert` with `react-native-toast-message`.
+    - [ ] **Lint Errors:** Address remaining ESLint errors (unused vars, exhaustive-deps, empty interfaces, require imports). Run `npm run lint -- --fix`.
+    - [x] **Role-Based Action Control (Teacher vs. Admin):** Implemented via optional props and conditional rendering in `AdminStudentDetailView`.
+    - [ ] **Dark Mode:** Implement Dark Mode support (adjust colors, test components). *(Added from earlier discussion)*
 
 ### [ ] 2. Implement Remaining Mutations & Actions
 
     - [x] Assigned Task: Task Verification (`PATCH /api/assigned-tasks/:id` via `TaskVerificationModal`).
     - [x] Assigned Task: Re-assign (`POST /api/assigned-tasks` via `TaskVerificationModal`).
     - [x] Assigned Task: Assign Task (`POST /api/assigned-tasks` via `AssignTaskModal`).
-    - [ ] Tickets: Manual Adjustment (`POST /api/ticket-adjustments` via `ManualTicketAdjustmentModal`).
-    - [ ] Rewards: Redeem Reward (`POST /api/reward-redemptions` - requires UI/modal and mutation).
+    - [x] Tickets: Manual Adjustment (`POST /api/ticket-adjustments` via `ManualTicketAdjustmentModal`).
+    - [x] Rewards: Redeem Reward (`POST /api/reward-redemptions` via `RedeemRewardModal`).
     - [ ] User Linking (Admin): Add UI controls (e.g., multi-select) in Create/Edit User Modals for linking Students <-> Teachers, Students <-> Instruments. Connect to `PATCH /api/users/:id`.
 
 ### [ ] 3. Implement Remaining Mock UI/Placeholders
 
-    - [ ] Teacher Action: View All Students button functionality.
-    - [ ] Parent Action: Link Another Student button functionality (QR flow).
-    - [ ] Student Action: Rewards redemption flow/button.
+    - [x] Teacher Detail View Placeholder replaced with basic implementation.
+    - [x] Parent Detail View Placeholder replaced with basic implementation.
+    - [ ] Teacher Detail View: Implement fetching/display of linked students. *(Partially done in placeholder, needs refinement)*
+    - [ ] Parent Detail View: Implement fetching/display of linked students. *(Done)*
+    - [ ] Teacher Action: View All Students button functionality (in `TeacherStudentsSection`).
+    - [ ] Parent Action: Link Another Student button functionality (in `AdminParentDetailView` and `ParentView`).
+    - [ ] Student Action: Rewards redemption flow/button (in `StudentView`).
 
 ### [ ] 4. Refinements & Testing
 
     - [ ] Thoroughly test all user role workflows after fixes.
-    - [ ] Refine UI/UX based on testing (loading states, error messages, navigation).
+    - [ ] Refine UI/UX based on testing (loading states, error messages, navigation, empty states).
     - [ ] Add unit/integration tests.
 
 ## [ ] Development Phase 3: Backend Development and Integration (Target: Supabase)

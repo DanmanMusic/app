@@ -43,8 +43,8 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
       console.error('Error adjusting tickets via mutation:', error);
       Toast.show({
         type: 'error',
-        text1: 'Adjustment Failed', // Corrected title
-        text2: error instanceof Error ? error.message : 'Could not adjust tickets.', // Corrected message
+        text1: 'Adjustment Failed',
+        text2: error instanceof Error ? error.message : 'Could not adjust tickets.',
         position: 'bottom',
         visibilityTime: 4000,
       });

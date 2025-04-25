@@ -50,20 +50,8 @@ import { getUserDisplayName } from '../utils/helpers';
 import { adminSharedStyles } from '../styles/adminSharedStyles';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
-
-const AdminTeacherDetailView: React.FC<{ userId: string }> = ({ userId }) => (
-  <View style={styles.placeholderView}>
-    <Text style={styles.placeholderText}>Teacher Detail View Placeholder (ID: {userId})</Text>
-    <Text>TODO: Add Teacher-specific details and actions.</Text>
-  </View>
-);
-
-const AdminParentDetailView: React.FC<{ userId: string }> = ({ userId }) => (
-  <View style={styles.placeholderView}>
-    <Text style={styles.placeholderText}>Parent Detail View Placeholder (ID: {userId})</Text>
-    <Text>TODO: Add Parent-specific details and actions.</Text>
-  </View>
-);
+import { AdminTeacherDetailView } from '../components/admin/AdminTeacherDetailView';
+import { AdminParentDetailView } from '../components/admin/AdminParentDetailView';
 
 type AdminSection =
   | 'dashboard'
@@ -336,6 +324,16 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     handleBackFromDetailView();
   };
 
+  const handleViewStudentProfileFromParent = (studentId: string) => {
+    setViewingUserId(studentId);
+    setViewingUserRole('student');
+  };
+
+  const handleViewStudentProfile = (studentId: string) => {
+    setViewingUserId(studentId);
+    setViewingUserRole('student');
+  };
+
   const isLoadingCoreData = adminLoading || instrumentsLoading;
   if (isLoadingCoreData) {
     return (
@@ -390,9 +388,23 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             />
           );
         case 'teacher':
-          return <AdminTeacherDetailView userId={viewingUserId} />;
+          return (
+            <AdminTeacherDetailView
+              viewingUserId={viewingUserId}
+              onInitiateEditUser={() => handleInitiateEditUser(viewedUserData!)}
+              onInitiateStatusUser={() => handleInitiateStatusUser(viewedUserData!)}
+              onViewStudentProfile={handleViewStudentProfile}
+            />
+          );
         case 'parent':
-          return <AdminParentDetailView userId={viewingUserId} />;
+          return (
+            <AdminParentDetailView
+              viewingUserId={viewingUserId}
+              onInitiateEditUser={() => handleInitiateEditUser(viewedUserData!)}
+              onInitiateStatusUser={() => handleInitiateStatusUser(viewedUserData!)}
+              onViewStudentProfile={handleViewStudentProfileFromParent}
+            />
+          );
         default:
           return (
             <View style={appSharedStyles.container}>
@@ -553,7 +565,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
                   ? teacherListError
                   : parentListError
             }
-            mockInstruments={fetchedInstruments}
+            instruments={fetchedInstruments}
             onViewManageUser={handleViewManageUser}
             onInitiateAssignTaskForStudent={handleInitiateAssignTaskForStudent}
             onInitiateCreateUser={handleInitiateCreateUser}
@@ -628,7 +640,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
       <CreateUserModal
         visible={isCreateUserModalVisible}
         onClose={() => setIsCreateUserModalVisible(false)}
-        mockInstruments={fetchedInstruments}
+        instruments={fetchedInstruments}
       />
       <AssignTaskModal
         visible={isAssignTaskModalVisible}
@@ -664,7 +676,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         visible={isEditUserModalVisible}
         userToEdit={userToManage}
         onClose={handleCloseEditUserModal}
-        mockInstruments={fetchedInstruments}
+        instruments={fetchedInstruments}
       />
       <DeactivateOrDeleteUserModal
         visible={isStatusModalVisible}

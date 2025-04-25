@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native';
-import { TaskLibraryItem } from '../../mocks';
+import { TaskLibraryItem } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 
 export const TaskLibraryItemTeacher = ({ item }: { item: TaskLibraryItem }) => (

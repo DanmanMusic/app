@@ -1,5 +1,5 @@
 import { Button, Image, Text, View } from 'react-native';
-import { Instrument } from '../../mocks';
+import { Instrument } from '../../types/dataTypes';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';

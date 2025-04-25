@@ -1,5 +1,5 @@
 import { Image, Text, View } from 'react-native';
-import { RewardItem } from '../../mocks';
+import { RewardItem } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';

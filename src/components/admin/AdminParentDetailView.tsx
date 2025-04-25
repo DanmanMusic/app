@@ -10,20 +10,13 @@ import {
 } from 'react-native';
 import { useQuery, useQueries } from '@tanstack/react-query';
 
-import { useAuth } from '../../contexts/AuthContext';
 import { User } from '../../types/dataTypes';
 import { getUserDisplayName } from '../../utils/helpers';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
-
-interface AdminParentDetailViewProps {
-  viewingUserId: string;
-  onInitiateEditUser: (user: User) => void;
-  onInitiateStatusUser: (user: User) => void;
-  onViewStudentProfile: (studentId: string) => void;
-}
+import { AdminParentDetailViewProps } from '../../types/componentProps';
 
 export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
   viewingUserId,
@@ -31,8 +24,6 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
   onInitiateStatusUser,
   onViewStudentProfile,
 }) => {
-  const { currentUserId: adminUserId } = useAuth();
-
   const {
     data: parent,
     isLoading: parentLoading,
@@ -90,6 +81,11 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
   const parentDisplayName = getUserDisplayName(parent);
   const isParentActive = parent.status === 'active';
 
+  const handleEdit = () => onInitiateEditUser(parent);
+  const handleStatus = () => onInitiateStatusUser(parent);
+  const handleLinkStudent = () =>
+    alert(`TODO: Implement link student flow for ${parentDisplayName}...`);
+
   return (
     <ScrollView style={appSharedStyles.container}>
       <Text style={appSharedStyles.sectionTitle}>Parent Details</Text>
@@ -106,27 +102,25 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
           {parent.status}
         </Text>
       </Text>
+
       <View
         style={[adminSharedStyles.adminStudentActions, commonSharedStyles.actionButtonsContainer]}
       >
         <Button
           title="Edit Info (TODO)"
-          onPress={() => alert('Parent editing not implemented')}
+          onPress={handleEdit}
           color={colors.warning}
           disabled={true}
         />
-        <Button
-          title="Manage Status"
-          onPress={() => onInitiateStatusUser(parent)}
-          color={colors.secondary}
-        />
+        <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
         <Button
           title="Link Another Student (TODO)"
-          onPress={() => alert(`TODO: Implement link student flow for ${parentDisplayName}...`)}
+          onPress={handleLinkStudent}
           color={colors.info}
           disabled={!isParentActive}
         />
       </View>
+
       <Text style={appSharedStyles.sectionTitle}>Linked Students</Text>
       {isLoadingLinkedStudents && <ActivityIndicator color={colors.primary} />}
       {!isLoadingLinkedStudents && linkedStudents.length > 0 && (

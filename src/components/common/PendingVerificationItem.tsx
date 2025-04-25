@@ -1,5 +1,5 @@
 import { Button, Text, View } from 'react-native';
-import { AssignedTask } from '../../mocks';
+import { AssignedTask } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
 

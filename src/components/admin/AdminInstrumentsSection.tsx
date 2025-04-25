@@ -5,7 +5,6 @@ import { fetchInstruments, deleteInstrument } from '../../api/instruments';
 import { Instrument } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
-import { AdminInstrumentsSectionProps } from '../../types/componentProps';
 import ConfirmationModal from '../common/ConfirmationModal';
 import CreateInstrumentModal from './modals/CreateInstrumentModal';
 import EditInstrumentModal from './modals/EditInstrumentModal';
@@ -13,7 +12,7 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminInstrumentItem } from '../common/AdminInstrumentItem';
 import Toast from 'react-native-toast-message';
 
-export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = () => {
+export const AdminInstrumentsSection = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);

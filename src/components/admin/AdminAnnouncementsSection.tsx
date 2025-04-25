@@ -5,7 +5,6 @@ import { fetchAnnouncements, deleteAnnouncement } from '../../api/announcements'
 import { Announcement } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
-import { AdminAnnouncementsSectionProps } from '../../types/componentProps';
 import ConfirmationModal from '../common/ConfirmationModal';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import CreateAnnouncementModal from './modals/CreateAnnouncementModal';
@@ -14,7 +13,7 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AnnouncementListItem } from '../common/AnnouncementListItem';
 import Toast from 'react-native-toast-message';
 
-export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps> = () => {
+export const AdminAnnouncementsSection = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);

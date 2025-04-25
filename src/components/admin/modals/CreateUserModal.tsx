@@ -16,7 +16,7 @@ const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'student'];
 export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   visible,
   onClose,
-  mockInstruments,
+  instruments,
 }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -164,8 +164,8 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
                 <Text style={commonSharedStyles.label}>Instruments:</Text>
                 <View style={commonSharedStyles.selectionContainer}>
-                  {mockInstruments.length > 0 ? (
-                    mockInstruments.map(inst => (
+                  {instruments.length > 0 ? (
+                    instruments.map(inst => (
                       <Button
                         key={inst.id}
                         title={inst.name}

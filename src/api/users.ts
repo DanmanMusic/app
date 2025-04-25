@@ -48,7 +48,7 @@ interface FetchStudentsResult {
 
 export const fetchStudents = async ({
   page = 1,
-  limit = 5,
+  limit = 10,
   filter = 'active',
   searchTerm = '',
   teacherId,
@@ -92,7 +92,7 @@ export const fetchStudents = async ({
 
 export const fetchTeachers = async ({
   page = 1,
-  limit = 5,
+  limit = 10,
 }: FetchTeachersParams = {}): Promise<TeachersApiResponse> => {
   console.log(`[API] Fetching teachers: page=${page}, limit=${limit}`);
   const params = new URLSearchParams();
@@ -111,7 +111,7 @@ export const fetchTeachers = async ({
 
 export const fetchParents = async ({
   page = 1,
-  limit = 5,
+  limit = 10,
 }: FetchParentsParams = {}): Promise<ParentsApiResponse> => {
   console.log(`[API] Fetching parents: page=${page}, limit=${limit}`);
   const params = new URLSearchParams();

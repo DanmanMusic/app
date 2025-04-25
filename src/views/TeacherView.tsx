@@ -167,7 +167,7 @@ export const TeacherView: React.FC<TeacherViewProps> = () => {
         )}
         {viewingSection === 'students' && (
           <TeacherStudentsSection
-            mockInstruments={fetchedInstruments}
+            instruments={fetchedInstruments}
             onViewProfile={handleViewProfile}
             onAssignTask={handleInitiateAssignTaskForStudent}
           />
@@ -221,7 +221,7 @@ export const TeacherView: React.FC<TeacherViewProps> = () => {
         visible={isEditStudentModalVisible}
         userToEdit={studentToEdit}
         onClose={handleCloseEditUserModal}
-        mockInstruments={fetchedInstruments}
+        instruments={fetchedInstruments}
       />
     </SafeAreaView>
   );

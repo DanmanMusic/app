@@ -93,6 +93,6 @@ export interface StudentProfileData {
   rewardsCatalog: RewardItem[];
   announcements: Announcement[];
   taskLibrary: TaskLibraryItem[];
-  mockInstruments: Instrument[];
+  instruments: Instrument[];
   onMarkTaskComplete?: (taskId: string) => void;
 }

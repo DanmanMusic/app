@@ -22,10 +22,6 @@ export interface StudentViewProps {
   studentIdToView?: string;
 }
 
-export interface ParentViewProps {}
-
-export interface PublicViewProps {}
-
 export interface TaskVerificationModalProps {
   visible: boolean;
   task: AssignedTask | null;
@@ -41,14 +37,14 @@ export interface AssignTaskModalProps {
 export interface CreateUserModalProps {
   visible: boolean;
   onClose: () => void;
-  mockInstruments: Instrument[];
+  instruments: Instrument[];
 }
 
 export interface EditUserModalProps {
   visible: boolean;
   userToEdit: User | null;
   onClose: () => void;
-  mockInstruments: Instrument[];
+  instruments: Instrument[];
 }
 
 export interface DeactivateOrDeleteUserModalProps {
@@ -128,13 +124,6 @@ export interface ManualTicketAdjustmentModalProps {
   currentBalance: number;
 }
 
-export interface ViewAllAssignedTasksModalProps {
-  visible: boolean;
-  onClose: () => void;
-
-  onInitiateVerification?: (task: AssignedTask) => void;
-}
-
 type UserTab = 'students' | 'teachers' | 'parents';
 type StudentFilter = UserStatus | 'all';
 
@@ -146,7 +135,7 @@ export interface AdminUsersSectionProps {
   isFetching?: boolean;
   isError: boolean;
   error: Error | null;
-  mockInstruments: Instrument[];
+  instruments: Instrument[];
   activeTab: UserTab;
   setActiveTab: (tab: UserTab) => void;
   setPage: (page: number) => void;
@@ -174,14 +163,6 @@ export interface AdminTasksSectionProps {
   onInitiateDeleteTask: (task: TaskLibraryItem) => void;
   deleteTaskMutationPending: boolean;
 }
-
-export interface AdminRewardsSectionProps {}
-
-export interface AdminHistorySectionProps {}
-
-export interface AdminAnnouncementsSectionProps {}
-
-export interface AdminInstrumentsSectionProps {}
 
 export interface AdminStudentDetailViewProps {
   viewingStudentId: string;
@@ -211,7 +192,7 @@ export interface TeacherDashboardSectionProps {
 }
 
 export interface TeacherStudentsSectionProps {
-  mockInstruments: Instrument[];
+  instruments: Instrument[];
   onViewProfile: (studentId: string) => void;
   onAssignTask: (studentId: string) => void;
 }
@@ -239,4 +220,18 @@ export interface AdminTaskLibraryItemProps {
   onEdit: (task: TaskLibraryItem) => void;
   onDelete: (task: TaskLibraryItem) => void;
   disabled?: boolean;
+}
+
+export interface AdminTeacherDetailViewProps {
+  viewingUserId: string;
+  onInitiateEditUser: (user: User) => void;
+  onInitiateStatusUser: (user: User) => void;
+  onViewStudentProfile: (studentId: string) => void;
+}
+
+export interface AdminParentDetailViewProps {
+  viewingUserId: string;
+  onInitiateEditUser: (user: User) => void;
+  onInitiateStatusUser: (user: User) => void;
+  onViewStudentProfile: (studentId: string) => void;
 }

@@ -29,7 +29,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   onClose,
   preselectedStudentId,
 }) => {
-  const { currentUserId } = useAuth();
+  const { currentUserId, currentUserRole } = useAuth();
   const queryClient = useQueryClient();
 
   const [step, setStep] = useState(1);
@@ -50,6 +50,8 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     enabled: visible && step === 2 && !isAdHocMode,
   });
 
+  const filterTeacherId = currentUserRole === 'teacher' ? currentUserId : undefined;
+
   const {
     data: studentListResult,
     isLoading: isLoadingStudents,
@@ -58,13 +60,17 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   } = useQuery({
     queryKey: [
       'students',
-      { filter: 'active', context: 'assignTaskModal', teacherId: currentUserId },
+      {
+        filter: 'active',
+        context: 'assignTaskModal',
+        ...(filterTeacherId && { teacherId: filterTeacherId }),
+      },
     ],
     queryFn: () =>
       fetchStudents({
         filter: 'active',
         page: 1,
-        teacherId: currentUserId ?? undefined,
+        teacherId: filterTeacherId ?? undefined,
       }),
     enabled: visible && step === 1 && !preselectedStudentId && !!currentUserId,
     staleTime: 5 * 60 * 1000,
@@ -97,7 +103,10 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     [taskLibrary]
   );
 
-  const availableStudents = studentListResult?.students ?? [];
+  const availableStudents = useMemo(() => {
+    return studentListResult?.students ?? [];
+  }, [studentListResult?.students]);
+
   const filteredStudents = useMemo(() => {
     const searchTermLower = studentSearchTerm.toLowerCase().trim();
     if (!searchTermLower) {
@@ -281,7 +290,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                 <Text style={appSharedStyles.emptyListText}>
                   {studentSearchTerm
                     ? 'No students match search.'
-                    : 'No active students linked to you.'}
+                    : currentUserRole === 'teacher'
+                      ? 'No active students linked to you.'
+                      : 'No active students found.'}
                 </Text>
               }
             />
@@ -401,7 +412,8 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             Step {preselectedStudentId ? 2 : 3}: Confirm Assignment
           </Text>
           <Text style={modalSharedStyles.confirmationText}>
-            Assign task "{taskTitle || 'N/A'}" ({taskPoints ?? '?'} points) to "{studentName}"?
+            Assign task &ldquo;{taskTitle || 'N/A'}&rdquo; ({taskPoints ?? '?'} points) to &ldquo;
+            {studentName}&rdquo;?
           </Text>
         </>
       );

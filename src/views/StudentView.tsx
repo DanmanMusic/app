@@ -91,7 +91,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   });
 
   const {
-    data: mockInstruments = [],
+    data: instruments = [],
     isLoading: instrumentsLoading,
     isError: instrumentsError,
     error: instrumentsErrorMsg,
@@ -228,7 +228,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           <Text style={appSharedStyles.header}>Welcome, {studentDisplayName}!</Text>
         )}
         <Text style={appSharedStyles.instrumentText}>
-          Instrument(s): {getInstrumentNames(user.instrumentIds, mockInstruments)}
+          Instrument(s): {getInstrumentNames(user.instrumentIds, instruments)}
         </Text>
         {balanceLoading ? (
           <Text style={[appSharedStyles.balance, appSharedStyles.textGold]}>

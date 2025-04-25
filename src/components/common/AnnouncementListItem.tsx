@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native';
-import { Announcement } from '../../mocks';
+import { Announcement } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 

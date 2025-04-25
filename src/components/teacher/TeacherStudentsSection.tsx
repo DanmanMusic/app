@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { View, Text, FlatList, Button, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 import { fetchStudents } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
 import { appSharedStyles } from '../../styles/appSharedStyles';
@@ -10,7 +10,7 @@ import { SimplifiedStudent } from '../../types/dataTypes';
 import { StudentListItem } from '../common/StudentListItem';
 
 export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
-  mockInstruments,
+  instruments,
   onViewProfile,
   onAssignTask,
 }) => {
@@ -48,7 +48,7 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
             renderItem={({ item }) => (
               <StudentListItem
                 student={item}
-                mockInstruments={mockInstruments}
+                instruments={instruments}
                 onViewProfile={onViewProfile}
                 onAssignTask={onAssignTask}
               />

@@ -1,6 +1,6 @@
 import { Instrument } from '../types/dataTypes';
 
-export const mockInstruments: Instrument[] = [
+export const instruments: Instrument[] = [
   { id: 'inst-1', name: 'Piano' },
   { id: 'inst-2', name: 'Guitar' },
   { id: 'inst-3', name: 'Drums' },

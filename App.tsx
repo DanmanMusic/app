@@ -186,5 +186,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.textPrimary,
   },
-  resetButtonContainer: { position: 'absolute', bottom: 20, left: 20, right: 20 },
+  resetButtonContainer: { position: 'absolute', top: 0, right: 0 },
 });

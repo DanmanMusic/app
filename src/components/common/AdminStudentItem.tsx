@@ -1,6 +1,5 @@
 import { Button, Text, View } from 'react-native';
-import { Instrument } from '../../mocks';
-import { SimplifiedStudent, UserRole } from '../../types/dataTypes';
+import { Instrument, SimplifiedStudent, UserRole } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { getInstrumentNames } from '../../utils/helpers';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
@@ -8,12 +7,12 @@ import { colors } from '../../styles/colors';
 
 export const AdminStudentItem = ({
   student,
-  mockInstruments,
+  instruments,
   onViewManage,
   onInitiateAssignTask,
 }: {
   student: SimplifiedStudent;
-  mockInstruments: Instrument[];
+  instruments: Instrument[];
   onViewManage: (studentId: string, role: UserRole) => void;
   onInitiateAssignTask: (studentId: string) => void;
 }) => {
@@ -23,7 +22,7 @@ export const AdminStudentItem = ({
     >
       <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
       <Text style={appSharedStyles.itemDetailText}>
-        Instrument(s): {getInstrumentNames(student.instrumentIds, mockInstruments)}
+        Instrument(s): {getInstrumentNames(student.instrumentIds, instruments)}
       </Text>
       <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
         Balance: {student.balance}

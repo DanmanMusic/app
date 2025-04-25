@@ -1,5 +1,5 @@
 import { Image, Text, TouchableOpacity, View } from 'react-native';
-import { RewardItem } from '../../mocks';
+import { RewardItem } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { modalSharedStyles } from '../../styles/modalSharedStyles';
 

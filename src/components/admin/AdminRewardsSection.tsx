@@ -5,7 +5,6 @@ import { fetchRewards, deleteReward } from '../../api/rewards';
 import { RewardItem } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
-import { AdminRewardsSectionProps } from '../../types/componentProps';
 import ConfirmationModal from '../common/ConfirmationModal';
 import CreateRewardModal from './modals/CreateRewardModal';
 import EditRewardModal from './modals/EditRewardModal';
@@ -13,7 +12,7 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminRewardItem } from '../common/AdminRewardItem';
 import Toast from 'react-native-toast-message';
 
-export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = () => {
+export const AdminRewardsSection = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);

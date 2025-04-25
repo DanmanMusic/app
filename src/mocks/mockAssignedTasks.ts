@@ -1,3 +1,5 @@
+import { AssignedTask } from '../types/dataTypes';
+
 export const mockAssignedTasksStudent1: AssignedTask[] = [
   {
     id: 'assigned-1',

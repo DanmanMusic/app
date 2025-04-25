@@ -1,18 +1,17 @@
 import { Button, Text, View } from 'react-native';
-import { Instrument } from '../../mocks';
-import { SimplifiedStudent } from '../../types/dataTypes';
+import { Instrument, SimplifiedStudent } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { getInstrumentNames } from '../../utils/helpers';
 import { colors } from '../../styles/colors';
 
 export const StudentListItem = ({
   student,
-  mockInstruments,
+  instruments,
   onViewProfile,
   onAssignTask,
 }: {
   student: SimplifiedStudent;
-  mockInstruments: Instrument[];
+  instruments: Instrument[];
   onViewProfile: (studentId: string) => void;
   onAssignTask: (studentId: string) => void;
 }) => (
@@ -24,7 +23,7 @@ export const StudentListItem = ({
   >
     <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
     <Text style={appSharedStyles.itemDetailText}>
-      Instrument(s): {getInstrumentNames(student.instrumentIds, mockInstruments)}
+      Instrument(s): {getInstrumentNames(student.instrumentIds, instruments)}
     </Text>
     <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
       Balance: {student.balance} Tickets

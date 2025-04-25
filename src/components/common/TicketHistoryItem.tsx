@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native';
-import { TicketTransaction } from '../../mocks';
+import { TicketTransaction } from '../../types/dataTypes';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 

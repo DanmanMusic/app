@@ -15,7 +15,7 @@ import { getUserDisplayName } from '../utils/helpers';
 
 import { mockAnnouncements as initialMockAnnouncements } from './mockAnnouncements';
 import { mockAllAssignedTasks } from './mockAssignedTasks';
-import { mockInstruments as initialMockInstruments } from './mockInstruments';
+import { instruments as initialMockInstruments } from './mockInstruments';
 import { initialMockRewardsCatalog } from './mockRewards';
 import { initialMockTaskLibrary } from './mockTaskLibrary';
 import { mockTicketBalances, mockTicketHistory } from './mockTickets';
@@ -28,18 +28,19 @@ const currentMockUsers = { ...mockUsers };
 const mockTaskLibraryData: TaskLibraryItem[] = [...initialMockTaskLibrary];
 const mockRewardsData: RewardItem[] = [...initialMockRewardsCatalog];
 const mockAnnouncementsData: Announcement[] = [...initialMockAnnouncements];
-const mockInstrumentsData: Instrument[] = [...initialMockInstruments];
+const instrumentsData: Instrument[] = [...initialMockInstruments];
 const mockAssignedTasksData: AssignedTask[] = [...mockAllAssignedTasks];
 const mockTicketBalancesData = { ...mockTicketBalances };
 const mockTicketHistoryData: TicketTransaction[] = [...mockTicketHistory];
 
 const getFilteredStudents = (
+  users: User[],
   filter: UserStatus | 'all',
   searchTerm: string,
   teacherId?: string | null
 ): User[] => {
   const termLower = searchTerm.toLowerCase();
-  return Object.values(currentMockUsers)
+  return users
     .filter(user => user.role === 'student')
     .filter(student => {
       if (teacherId && !student.linkedTeacherIds?.includes(teacherId)) {
@@ -61,8 +62,8 @@ const getFilteredStudents = (
       return a.firstName.localeCompare(b.firstName);
     });
 };
-const getSortedTeachers = (): User[] => {
-  return Object.values(currentMockUsers)
+const getSortedTeachers = (users: User[]): User[] => {
+  return users
     .filter(user => user.role === 'teacher')
     .sort((a, b) => {
       const lastNameComparison = a.lastName.localeCompare(b.lastName);
@@ -70,8 +71,8 @@ const getSortedTeachers = (): User[] => {
       return a.firstName.localeCompare(b.firstName);
     });
 };
-const getSortedParents = (): User[] => {
-  return Object.values(currentMockUsers)
+const getSortedParents = (users: User[]): User[] => {
+  return users
     .filter(user => user.role === 'parent')
     .sort((a, b) => {
       const lastNameA = a.lastName || '';
@@ -87,23 +88,37 @@ const getSortedParents = (): User[] => {
 export const handlers = [
   http.get('/api/students', ({ request }) => {
     const url = new URL(request.url);
+    console.log('URL:', url);
     const page = parseInt(url.searchParams.get('page') || '1', 10);
-    const limit = parseInt(url.searchParams.get('limit') || '5', 10);
+    const limit = parseInt(url.searchParams.get('limit') || '10', 10);
     const filter = (url.searchParams.get('filter') as UserStatus | 'all') || 'all';
     const searchTerm = url.searchParams.get('search') || '';
     const teacherId = url.searchParams.get('teacherId');
-    const filteredStudents = getFilteredStudents(filter, searchTerm, teacherId);
+    const allStudents = Object.values(currentMockUsers).filter(u => u.role === 'student');
+    const filteredStudents = getFilteredStudents(allStudents, filter, searchTerm, teacherId);
+
+    console.log('[MSW /api/students] Filtered Students Count:', filteredStudents.length);
+    console.log(
+      '[MSW /api/students] Filtered Students:',
+      filteredStudents.map(s => ({ id: s.id, status: s.status }))
+    );
+
     const totalItems = filteredStudents.length;
     const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
     const startIndex = (page - 1) * limit;
     const paginatedItems = filteredStudents.slice(startIndex, startIndex + limit);
+
+    console.log(
+      `[MSW /api/students] Returning ${paginatedItems.length} students for page ${page}.`
+    );
     return HttpResponse.json({ items: paginatedItems, totalPages, currentPage: page, totalItems });
   }),
   http.get('/api/teachers', ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1', 10);
     const limit = parseInt(url.searchParams.get('limit') || '5', 10);
-    const sortedTeachers = getSortedTeachers();
+    const allTeachers = Object.values(currentMockUsers).filter(u => u.role === 'teacher');
+    const sortedTeachers = getSortedTeachers(allTeachers);
     const totalItems = sortedTeachers.length;
     const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
     const startIndex = (page - 1) * limit;
@@ -114,7 +129,8 @@ export const handlers = [
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1', 10);
     const limit = parseInt(url.searchParams.get('limit') || '5', 10);
-    const sortedParents = getSortedParents();
+    const allParents = Object.values(currentMockUsers).filter(u => u.role === 'parent');
+    const sortedParents = getSortedParents(allParents);
     const totalItems = sortedParents.length;
     const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
     const startIndex = (page - 1) * limit;
@@ -337,7 +353,7 @@ export const handlers = [
   }),
 
   http.get('/api/instruments', () => {
-    const d = [...mockInstrumentsData].sort((a, b) => a.name.localeCompare(b.name));
+    const d = [...instrumentsData].sort((a, b) => a.name.localeCompare(b.name));
     return HttpResponse.json(d);
   }),
   http.post('/api/instruments', async ({ request }) => {
@@ -346,7 +362,7 @@ export const handlers = [
       if (!d || !d.name || !d.name.trim()) return new HttpResponse('Invalid data', { status: 400 });
       const i = `inst-${Date.now()}-${Math.random().toString(36).substring(7)}`;
       const n = { name: d.name.trim(), id: i };
-      mockInstrumentsData.push(n);
+      instrumentsData.push(n);
       return HttpResponse.json(n, { status: 201 });
     } catch (e) {
       return new HttpResponse('Bad request', { status: 400 });
@@ -355,14 +371,14 @@ export const handlers = [
   http.patch('/api/instruments/:id', async ({ request, params }) => {
     const { id } = params;
     if (typeof id !== 'string') return new HttpResponse('Invalid ID', { status: 400 });
-    const idx = mockInstrumentsData.findIndex(i => i.id === id);
+    const idx = instrumentsData.findIndex(i => i.id === id);
     if (idx === -1) return new HttpResponse('Not found', { status: 404 });
     try {
       const u = (await request.json()) as Partial<Omit<Instrument, 'id'>>;
       if (u.name != null && !u.name.trim()) return new HttpResponse('Name empty', { status: 400 });
-      const n = { ...mockInstrumentsData[idx], ...u };
+      const n = { ...instrumentsData[idx], ...u };
       if (u.name) n.name = u.name.trim();
-      mockInstrumentsData[idx] = n;
+      instrumentsData[idx] = n;
       return HttpResponse.json(n);
     } catch (e) {
       return new HttpResponse('Bad request', { status: 400 });
@@ -371,9 +387,9 @@ export const handlers = [
   http.delete('/api/instruments/:id', ({ params }) => {
     const { id } = params;
     if (typeof id !== 'string') return new HttpResponse('Invalid ID', { status: 400 });
-    const idx = mockInstrumentsData.findIndex(i => i.id === id);
+    const idx = instrumentsData.findIndex(i => i.id === id);
     if (idx === -1) return new HttpResponse('Not found', { status: 404 });
-    mockInstrumentsData.splice(idx, 1);
+    instrumentsData.splice(idx, 1);
     return new HttpResponse(null, { status: 204 });
   }),
 
