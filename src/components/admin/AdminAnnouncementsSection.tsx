@@ -12,6 +12,7 @@ import CreateAnnouncementModal from './modals/CreateAnnouncementModal';
 import EditAnnouncementModal from './modals/EditAnnouncementModal';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AnnouncementListItem } from '../common/AnnouncementListItem';
+import Toast from 'react-native-toast-message';
 
 export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps> = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -41,13 +42,23 @@ export const AdminAnnouncementsSection: React.FC<AdminAnnouncementsSectionProps>
 
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       closeDeleteModal();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Announcement deleted.',
+        position: 'bottom'
+      });      
     },
     onError: (err, deletedAnnouncementId) => {
-      console.error(`Error deleting announcement ${deletedAnnouncementId}:`, err);
-      alert(
-        `Failed to delete announcement: ${err instanceof Error ? err.message : 'Unknown error'}`
-      );
+      console.error(`Error deleting announcement ${deletedAnnouncementId}:`, err);      
       closeDeleteModal();
+      Toast.show({
+        type: 'error',
+        text1: 'Deletion Failed',
+        text2: err instanceof Error ? err.message : 'Could not delete announcement.',
+        position: 'bottom',
+        visibilityTime: 4000
+      });      
     },
   });
 

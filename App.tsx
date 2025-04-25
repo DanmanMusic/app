@@ -21,6 +21,7 @@ import { ParentView } from './src/views/ParentView';
 import { PublicView } from './src/views/PublicView';
 import { StudentView } from './src/views/StudentView';
 import { TeacherView } from './src/views/TeacherView';
+import Toast from 'react-native-toast-message';
 
 // Import Components & Types
 
@@ -214,6 +215,7 @@ export default function App() {
           <DataProvider>
             {/* Render the main content */}
             <AppContent />
+            <Toast />
           </DataProvider>
         </AuthProvider>
       </SafeAreaProvider>

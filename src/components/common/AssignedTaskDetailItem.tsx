@@ -1,44 +1,61 @@
-import { Button, Text, View } from 'react-native';
-import { AssignedTask } from '../../mocks';
-import { User } from '../../types/userTypes';
+import React from 'react';
+import { View, Text, Button } from 'react-native';
+
+import { AssignedTask } from '../../mocks/mockAssignedTasks';
+
+import { getUserDisplayName } from '../../utils/helpers';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
-import { getUserDisplayName } from '../../utils/helpers';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 
-export const AssignedTaskDetailItem = ({
+interface AssignedTaskDetailItemProps {
+  item: AssignedTask;
+  studentName: string;
+  assignerName: string;
+  verifierName?: string | null;
+  studentStatus: 'active' | 'inactive' | 'unknown';
+  onInitiateVerification?: (task: AssignedTask) => void;
+  onDelete?: (assignmentId: string) => void;
+  disabled?: boolean;
+}
+
+export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
   item,
-  allUsers,
+  studentName,
+  assignerName,
+  verifierName,
+  studentStatus,
   onInitiateVerification,
   onDelete,
   disabled,
-}: {
-  item: AssignedTask;
-  allUsers: User[];
-  onInitiateVerification?: (task: AssignedTask) => void;
-  onDelete: (assignmentId: string) => void;
-  disabled?: boolean;
 }) => {
-  const student = allUsers.find(u => u.id === item.studentId);
-  const assigner = allUsers.find(u => u.id === item.assignedById);
-  const verifier = item.verifiedById ? allUsers.find(u => u.id === item.verifiedById) : null;
-  const allowDelete =
-    (!item.isComplete || item.verificationStatus === 'pending') && student?.status === 'active';
   const allowVerify =
-    item.isComplete && item.verificationStatus === 'pending' && student?.status === 'active';
+    onInitiateVerification &&
+    item.isComplete &&
+    item.verificationStatus === 'pending' &&
+    studentStatus === 'active';
+
+  const allowDelete =
+    onDelete &&
+    (!item.isComplete || item.verificationStatus === 'pending') &&
+    studentStatus === 'active';
+
+  const taskStatus = item.isComplete
+    ? item.verificationStatus === 'pending'
+      ? 'Complete (Pending Verification)'
+      : `Verified (${item.verificationStatus || 'status unknown'})`
+    : 'Assigned';
 
   return (
     <View style={adminSharedStyles.taskItem}>
       <Text style={adminSharedStyles.taskItemTitle}>{item.taskTitle}</Text>
       <Text style={appSharedStyles.itemDetailText}>
-        Student: {student ? getUserDisplayName(student) : item.studentId}
-        {student && ` (${student.status})`}
+        Student: {studentName} ({studentStatus})
       </Text>
-      <Text style={adminSharedStyles.taskItemStatus}>Status: Status</Text>
+      <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
       <Text style={appSharedStyles.itemDetailText}>
-        Assigned: {new Date(item.assignedDate).toLocaleDateString()} by
-        {assigner ? getUserDisplayName(assigner) : item.assignedById}
+        Assigned: {new Date(item.assignedDate).toLocaleDateString()} by {assignerName}
       </Text>
       {item.completedDate && (
         <Text style={appSharedStyles.itemDetailText}>
@@ -47,8 +64,8 @@ export const AssignedTaskDetailItem = ({
       )}
       {item.verifiedDate && item.verificationStatus !== 'pending' && (
         <Text style={appSharedStyles.itemDetailText}>
-          Verified: {new Date(item.verifiedDate).toLocaleDateString()} by
-          {verifier ? getUserDisplayName(verifier) : item.verifiedById}
+          Verified: {new Date(item.verifiedDate).toLocaleDateString()} by{' '}
+          {verifierName || item.verifiedById || 'Unknown'}
         </Text>
       )}
       {item.actualPointsAwarded !== undefined && item.verificationStatus !== 'pending' && (
@@ -60,15 +77,19 @@ export const AssignedTaskDetailItem = ({
         <Text style={commonSharedStyles.pendingNote}>Awaiting verification...</Text>
       )}
       <View style={adminSharedStyles.assignedTaskActions}>
-        {allowVerify && onInitiateVerification && (
-          <Button title="Verify" onPress={() => onInitiateVerification(item)} disabled={disabled} />
+        {allowVerify && (
+          <Button
+            title="Verify"
+            onPress={() => onInitiateVerification!(item)}
+            disabled={disabled}
+          />
         )}
         {allowDelete && (
           <Button
             title="Remove"
-            onPress={() => onDelete(item.id)}
+            onPress={() => onDelete!(item.id)}
             color={colors.danger}
-            disabled={!allowDelete || disabled}
+            disabled={disabled}
           />
         )}
       </View>

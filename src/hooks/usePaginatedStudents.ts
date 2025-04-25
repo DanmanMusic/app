@@ -23,8 +23,6 @@ export interface UsePaginatedStudentsReturn {
   error: Error | null;
 }
 
-const ITEMS_PER_PAGE = 5;
-
 export const usePaginatedStudents = (): UsePaginatedStudentsReturn => {
   const [currentPage, setCurrentPage] = useState(1);
   const [currentFilter, setFilter] = useState<UserStatus | 'all'>('active');

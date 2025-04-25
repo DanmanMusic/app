@@ -11,6 +11,7 @@ import CreateRewardModal from './modals/CreateRewardModal';
 import EditRewardModal from './modals/EditRewardModal';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminRewardItem } from '../common/AdminRewardItem';
+import Toast from 'react-native-toast-message';
 
 export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -36,15 +37,25 @@ export const AdminRewardsSection: React.FC<AdminRewardsSectionProps> = () => {
     mutationFn: deleteReward,
     onSuccess: (_, deletedRewardId) => {
       console.log(`Reward item ${deletedRewardId} deleted successfully via mutation.`);
-
       queryClient.invalidateQueries({ queryKey: ['rewards'] });
       closeDeleteModal();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Reward deleted.',
+        position: 'bottom'
+      });      
     },
     onError: (err, deletedRewardId) => {
       console.error(`Error deleting reward item ${deletedRewardId}:`, err);
-
-      alert(`Failed to delete reward: ${err instanceof Error ? err.message : 'Unknown error'}`);
       closeDeleteModal();
+      Toast.show({
+        type: 'error',
+        text1: 'Deletion Failed',
+        text2: err instanceof Error ? err.message : 'Could not delete reward.',
+        position: 'bottom',
+        visibilityTime: 4000
+      });      
     },
   });
 

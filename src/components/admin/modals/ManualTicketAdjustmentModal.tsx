@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Modal, View, Text, Button, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { Modal, View, Text, Button, TextInput, ActivityIndicator } from 'react-native';
 import { adjustTickets } from '../../../api/tickets';
 import { useAuth } from '../../../contexts/AuthContext';
 import { colors } from '../../../styles/colors';
 import { ManualTicketAdjustmentModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = ({
   visible,
@@ -30,15 +31,23 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
       queryClient.invalidateQueries({ queryKey: ['balance', studentId] });
       queryClient.invalidateQueries({ queryKey: ['ticket-history', { studentId }] });
       queryClient.invalidateQueries({ queryKey: ['ticket-history'] });
-      Alert.alert('Success', `Tickets adjusted successfully for ${studentName}.`);
       onClose();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Tickets adjusted successfully.',
+        position: 'bottom',
+      });
     },
     onError: error => {
       console.error('Error adjusting tickets via mutation:', error);
-      Alert.alert(
-        'Error',
-        `Failed to adjust tickets: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Adjustment Failed', // Corrected title
+        text2: error instanceof Error ? error.message : 'Could not adjust tickets.', // Corrected message
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 
@@ -53,25 +62,47 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
 
   const handleAdjust = () => {
     if (!currentUserId) {
-      Alert.alert('Error', 'Adjuster ID not found. Cannot perform adjustment.');
+      Toast.show({
+        type: 'error',
+        text1: 'Re-assign Failed',
+        text2: 'Error - Adjuster ID not found. Cannot perform adjustment.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
       return;
     }
     if (amount === '' || isNaN(Number(amount)) || Number(amount) <= 0) {
-      Alert.alert('Validation Error', 'Please enter a valid positive amount.');
+      Toast.show({
+        type: 'error',
+        text1: 'Re-assign Failed',
+        text2: 'Validation Error - Please enter a valid positive amount.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
+
       return;
     }
     if (!notes.trim()) {
-      Alert.alert('Validation Error', 'Please enter a reason (notes) for the adjustment.');
+      Toast.show({
+        type: 'error',
+        text1: 'Re-assign Failed',
+        text2: 'Validation Error - Please enter a reason (notes) for the adjustment.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
       return;
     }
 
     const adjustmentAmount = isSubtracting ? -Number(amount) : Number(amount);
 
     if (isSubtracting && currentBalance < Number(amount)) {
-      Alert.alert(
-        'Insufficient Balance',
-        `${studentName} only has ${currentBalance} tickets. Cannot subtract ${Number(amount)}.`
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Re-assign Failed',
+        text2: `Insufficient Balance - ${studentName} only has ${currentBalance} tickets. Cannot subtract ${Number(amount)}.`,
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
       return;
     }
 

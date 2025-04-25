@@ -2,6 +2,7 @@ import { Button, Text, View } from 'react-native';
 import { ParentStudentListItemProps } from '../../types/componentProps';
 import { getUserDisplayName } from '../../utils/helpers';
 import { colors } from '../../styles/colors';
+import { appSharedStyles } from '../../styles/appSharedStyles';
 
 export const ParentStudentListItem: React.FC<ParentStudentListItemProps> = ({
   student,

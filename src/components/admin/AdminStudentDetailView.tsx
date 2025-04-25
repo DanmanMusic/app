@@ -8,44 +8,49 @@ import {
   FlatList,
   SafeAreaView,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
-import { deleteAssignedTask } from '../../api/assignedTasks';
+
+import { deleteAssignedTask, updateAssignedTask } from '../../api/assignedTasks';
 import { fetchInstruments } from '../../api/instruments';
 import { fetchStudentBalance } from '../../api/tickets';
 import { fetchTeachers } from '../../api/users';
+
 import { useAuth } from '../../contexts/AuthContext';
 import { usePaginatedStudentHistory } from '../../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../../hooks/usePaginatedStudentTasks';
+
+import { TicketHistoryItem } from '../common/TicketHistoryItem';
+import ConfirmationModal from '../common/ConfirmationModal';
+import PaginationControls from './PaginationControls';
+
 import { AssignedTask } from '../../mocks/mockAssignedTasks';
 import { Instrument } from '../../mocks/mockInstruments';
-import { appSharedStyles } from '../../styles/appSharedStyles';
-import { colors } from '../../styles/colors';
 import { AdminStudentDetailViewProps } from '../../types/componentProps';
 import { User } from '../../types/userTypes';
+
 import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
-import { TicketHistoryItem } from '../common/TicketHistoryItem'; // Corrected import
-import ConfirmationModal from '../common/ConfirmationModal';
-import DeactivateOrDeleteUserModal from '../common/DeactivateOrDeleteUserModal';
+import { appSharedStyles } from '../../styles/appSharedStyles';
+import { colors } from '../../styles/colors';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
-import ManualTicketAdjustmentModal from './modals/ManualTicketAdjustmentModal';
-import RedeemRewardModal from './modals/RedeemRewardModal';
-import PaginationControls from './PaginationControls';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   viewingStudentId,
+
   onInitiateVerification,
   onInitiateAssignTaskForStudent,
   onInitiateEditStudent,
+  onInitiateStatusUser,
+  onInitiateTicketAdjustment,
+  onInitiateRedemption,
+  onInitiateDeleteTask,
 }) => {
-  const { currentUserId: adminUserId } = useAuth();
+  const { currentUserId: viewingUserId } = useAuth();
   const queryClient = useQueryClient();
-  const [isStatusModalVisible, setIsStatusModalVisible] = useState(false);
-  const [isAdjustmentModalVisible, setIsAdjustmentModalVisible] = useState(false);
+
   const [isDeleteTaskConfirmVisible, setIsDeleteTaskConfirmVisible] = useState(false);
   const [taskToDeleteId, setTaskToDeleteId] = useState<string | null>(null);
-  const [isRedeemModalVisible, setIsRedeemModalVisible] = useState(false);
 
   const {
     data: student,
@@ -55,12 +60,12 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   } = useQuery<User, Error>({
     queryKey: ['user', viewingStudentId],
     queryFn: async () => {
-      if (!viewingStudentId) throw new Error('No student ID');
+      if (!viewingStudentId) throw new Error('No student ID provided');
       const response = await fetch(`/api/users/${viewingStudentId}`);
       if (!response.ok) throw new Error(`Failed to fetch student ${viewingStudentId}`);
-      const data = await response.json();
-      if (data.role !== 'student') throw new Error('User is not a student');
-      return data;
+      const userData = await response.json();
+      if (userData.role !== 'student') throw new Error('User is not a student');
+      return userData;
     },
     enabled: !!viewingStudentId,
     staleTime: 5 * 60 * 1000,
@@ -90,6 +95,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
     queryKey: ['teachers', { status: 'active', context: 'studentDetailLookup' }],
     queryFn: async () => {
       const result = await fetchTeachers({ page: 1 });
+
       return (result?.items || []).filter(t => t.status === 'active');
     },
     enabled: !!student,
@@ -101,10 +107,10 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
     currentPage: tasksCurrentPage,
     totalPages: tasksTotalPages,
     setPage: setTasksPage,
-    totalTasksCount,
     isLoading: studentTasksLoading,
     isError: studentTasksError,
     error: studentTasksErrorObject,
+    totalTasksCount,
   } = usePaginatedStudentTasks(viewingStudentId);
 
   const {
@@ -112,61 +118,100 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
     currentPage: historyCurrentPage,
     totalPages: historyTotalPages,
     setPage: setHistoryPage,
-    totalItems: totalHistoryCount,
     isLoading: studentHistoryLoading,
     isError: studentHistoryError,
     error: studentHistoryErrorObject,
+    totalItems: totalHistoryCount,
   } = usePaginatedStudentHistory(viewingStudentId);
 
   const deleteTaskMutation = useMutation({
     mutationFn: deleteAssignedTask,
     onSuccess: (_, deletedAssignmentId) => {
-      Alert.alert('Success', 'Task assignment removed.');
       queryClient.invalidateQueries({
         queryKey: ['assigned-tasks', { studentId: viewingStudentId }],
       });
       queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
       closeDeleteConfirmModal();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Task removed successfully.',
+        position: 'bottom',
+      });
     },
     onError: error => {
-      Alert.alert(
-        'Error',
-        `Failed to remove task: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
       closeDeleteConfirmModal();
+      Toast.show({
+        type: 'error',
+        text1: 'Removal Failed',
+        text2: error instanceof Error ? error.message : 'Could not remove task.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 
-  //const handleEditStudent = () => setIsEditModalVisible(true);
-  const handleManageStatus = () => setIsStatusModalVisible(true);
-  const handleLoginAsStudent = () => {
-    if (student) alert(`Simulating QR Code for ${getUserDisplayName(student)}...`);
-  };
-  const handleOpenAdjustmentModal = () => setIsAdjustmentModalVisible(true);
-  const handleOpenRedeemModal = () => setIsRedeemModalVisible(true);
-
-  //const closeEditModal = () => setIsEditModalVisible(false);
-  const closeStatusModal = () => setIsStatusModalVisible(false);
-  const closeAdjustmentModal = () => setIsAdjustmentModalVisible(false);
   const closeDeleteConfirmModal = () => {
     setIsDeleteTaskConfirmVisible(false);
     setTaskToDeleteId(null);
     deleteTaskMutation.reset();
   };
-  const handleCloseRedeemModal = () => setIsRedeemModalVisible(false);
 
   const handleDeleteAssignmentClick = (assignmentId: string) => {
-    setTaskToDeleteId(assignmentId);
-    setIsDeleteTaskConfirmVisible(true);
+    if (onInitiateDeleteTask) {
+      setTaskToDeleteId(assignmentId);
+      setIsDeleteTaskConfirmVisible(true);
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: 'Re-assign Failed',
+        text2: 'Permission Denied - You cannot remove assigned tasks.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
+    }
   };
+
   const handleConfirmDeleteTask = () => {
-    if (taskToDeleteId && !deleteTaskMutation.isPending) deleteTaskMutation.mutate(taskToDeleteId);
+    if (taskToDeleteId && !deleteTaskMutation.isPending && onInitiateDeleteTask) {
+      deleteTaskMutation.mutate(taskToDeleteId);
+    }
   };
+
   const handleVerifyTaskClick = (task: AssignedTask) => {
-    if (student && onInitiateVerification) onInitiateVerification(task);
+    if (student && onInitiateVerification) {
+      onInitiateVerification(task);
+    }
   };
+
   const handleAssignTaskClick = () => {
-    if (student) onInitiateAssignTaskForStudent(student.id);
+    if (student) {
+      onInitiateAssignTaskForStudent(student.id);
+    }
+  };
+
+  const handleEditClick = () => {
+    if (student) {
+      onInitiateEditStudent(student);
+    }
+  };
+
+  const handleStatusClick = () => {
+    if (student && onInitiateStatusUser) {
+      onInitiateStatusUser(student);
+    }
+  };
+
+  const handleAdjustmentClick = () => {
+    if (student && onInitiateTicketAdjustment) {
+      onInitiateTicketAdjustment(student);
+    }
+  };
+
+  const handleRedemptionClick = () => {
+    if (student && onInitiateRedemption) {
+      onInitiateRedemption(student);
+    }
   };
 
   const isLoading = studentLoading || instrumentsLoading || teachersLoading;
@@ -204,6 +249,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
 
   const studentDisplayName = getUserDisplayName(student);
   const isStudentActive = student.status === 'active';
+  const taskToDeleteObject = paginatedTasks.find(task => task.id === taskToDeleteId);
 
   return (
     <>
@@ -238,7 +284,6 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
           ) : (
             <Text style={appSharedStyles.itemDetailText}>Linked Teachers: None</Text>
           )}
-
           {balanceLoading ? (
             <Text style={[appSharedStyles.itemDetailText, { fontWeight: 'bold' }]}>
               Balance: Loading...
@@ -252,39 +297,43 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
               Balance: {balance} Tickets
             </Text>
           )}
-
           <View
             style={[
               adminSharedStyles.adminStudentActions,
               commonSharedStyles.actionButtonsContainer,
             ]}
           >
-            <Button
-              title="Adjust Tickets"
-              onPress={handleOpenAdjustmentModal}
-              disabled={!isStudentActive || balanceLoading}
-            />
-            <Button
-              title="Redeem Reward"
-              onPress={handleOpenRedeemModal}
-              disabled={!isStudentActive || balance <= 0}
-              color={colors.success}
-            />
+            {onInitiateTicketAdjustment && (
+              <Button
+                title="Adjust Tickets"
+                onPress={handleAdjustmentClick}
+                disabled={!isStudentActive || balanceLoading}
+              />
+            )}
+            {onInitiateRedemption && (
+              <Button
+                title="Redeem Reward"
+                onPress={handleRedemptionClick}
+                disabled={!isStudentActive || balance <= 0}
+                color={colors.success}
+              />
+            )}
             <Button
               title="Assign Task"
               onPress={handleAssignTaskClick}
               disabled={!isStudentActive}
             />
-            <Button title="Edit Info" onPress={onInitiateEditStudent} color={colors.warning} />
-            <Button title="Manage Status" onPress={handleManageStatus} color={colors.secondary} />
+            <Button title="Edit Info" onPress={handleEditClick} color={colors.warning} />
+            {onInitiateStatusUser && (
+              <Button title="Manage Status" onPress={handleStatusClick} color={colors.secondary} />
+            )}
             <Button
               title="Login (QR)"
-              onPress={handleLoginAsStudent}
+              onPress={() => alert(`Simulating QR Code for ${studentDisplayName}...`)}
               color={colors.info}
               disabled={!isStudentActive}
             />
           </View>
-
           <Text style={appSharedStyles.sectionTitle}>Assigned Tasks ({totalTasksCount})</Text>
           {studentTasksLoading && <ActivityIndicator />}
           {studentTasksError && (
@@ -297,19 +346,25 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
               data={paginatedTasks}
               keyExtractor={item => `task-${item.id}`}
               renderItem={({ item }) => {
-                const allowDelete =
-                  (!item.isComplete || item.verificationStatus === 'pending') && isStudentActive;
                 const allowVerify =
-                  item.isComplete && item.verificationStatus === 'pending' && isStudentActive;
+                  onInitiateVerification &&
+                  item.isComplete &&
+                  item.verificationStatus === 'pending' &&
+                  isStudentActive;
+                const allowDelete =
+                  onInitiateDeleteTask &&
+                  (!item.isComplete || item.verificationStatus === 'pending') &&
+                  isStudentActive;
                 const taskStatus = item.isComplete
                   ? item.verificationStatus === 'pending'
                     ? 'Complete (Pending Verification)'
                     : `Verified (${item.verificationStatus || 'status unknown'})`
                   : 'Assigned';
+
                 return (
                   <View style={adminSharedStyles.taskItem}>
                     <Text style={adminSharedStyles.taskItemTitle}>{item.taskTitle}</Text>
-                    <Text style={adminSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
+                    <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
                     {item.completedDate && (
                       <Text style={appSharedStyles.itemDetailText}>
                         Completed: {new Date(item.completedDate).toLocaleDateString()}
@@ -330,7 +385,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
                       <Text style={commonSharedStyles.pendingNote}>Awaiting verification...</Text>
                     )}
                     <View style={adminSharedStyles.assignedTaskActions}>
-                      {onInitiateVerification && allowVerify && (
+                      {allowVerify && (
                         <Button
                           title="Verify"
                           onPress={() => handleVerifyTaskClick(item)}
@@ -370,7 +425,6 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
               contentContainerStyle={{ paddingBottom: 10 }}
             />
           )}
-
           <Text style={appSharedStyles.sectionTitle}>History ({totalHistoryCount})</Text>
           {studentHistoryLoading && <ActivityIndicator />}
           {studentHistoryError && (
@@ -400,44 +454,17 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
               contentContainerStyle={{ paddingBottom: 10 }}
             />
           )}
-
-          <View style={{ height: 30 }} />
         </ScrollView>
       </SafeAreaView>
-
-      {student && adminUserId && (
-        <>
-          <DeactivateOrDeleteUserModal
-            visible={isStatusModalVisible}
-            user={student}
-            onClose={closeStatusModal}
-          />
-          <ManualTicketAdjustmentModal
-            visible={isAdjustmentModalVisible}
-            onClose={closeAdjustmentModal}
-            studentId={student.id}
-            studentName={studentDisplayName}
-            currentBalance={balance}
-          />
-          <ConfirmationModal
-            visible={isDeleteTaskConfirmVisible}
-            title="Confirm Remove Task"
-            message={`Are you sure you want to remove this assigned task? This cannot be undone.`}
-            confirmText={deleteTaskMutation.isPending ? 'Removing...' : 'Remove Task'}
-            onConfirm={handleConfirmDeleteTask}
-            onCancel={closeDeleteConfirmModal}
-            confirmDisabled={deleteTaskMutation.isPending}
-          />
-          <RedeemRewardModal
-            visible={isRedeemModalVisible}
-            onClose={handleCloseRedeemModal}
-            studentId={student.id}
-            studentName={studentDisplayName}
-            currentBalance={balance}
-            redeemerId={adminUserId}
-          />
-        </>
-      )}
+      <ConfirmationModal
+        visible={isDeleteTaskConfirmVisible}
+        title="Confirm Remove Task"
+        message={`Are you sure you want to remove the assigned task "${taskToDeleteObject?.taskTitle || 'selected task'}"? This cannot be undone.`}
+        confirmText={deleteTaskMutation.isPending ? 'Removing...' : 'Remove Task'}
+        onConfirm={handleConfirmDeleteTask}
+        onCancel={closeDeleteConfirmModal}
+        confirmDisabled={deleteTaskMutation.isPending}
+      />
     </>
   );
 };

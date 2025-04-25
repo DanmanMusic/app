@@ -9,11 +9,13 @@ import { modalSharedStyles } from '../../styles/modalSharedStyles';
 
 import ConfirmationModal from './ConfirmationModal';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = ({
   visible,
   user,
   onClose,
+  onDeletionSuccess,
 }) => {
   const [isConfirmDeleteVisible, setIsConfirmDeleteVisible] = useState(false);
   const queryClient = useQueryClient();
@@ -31,7 +33,16 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
         queryClient.invalidateQueries({ queryKey: ['parents'] });
       }
       console.log(`Successfully deleted user ${user ? getUserDisplayName(user) : userId}.`);
+      if (onDeletionSuccess) {
+        onDeletionSuccess(userId);
+      }
       onClose();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'User deleted successfully.',
+        position: 'bottom',
+      });
     },
     onError: (error, userId) => {
       console.error(`Error deleting user ${userId} via mutation:`, error);
@@ -39,6 +50,13 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
         `Failed to delete user: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
       setIsConfirmDeleteVisible(false);
+      Toast.show({
+        type: 'error',
+        text1: 'Delete Failed',
+        text2: error instanceof Error ? error.message : 'Could not delete user.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 
@@ -56,18 +74,29 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
       } else if (updatedUser.role === 'parent') {
         queryClient.invalidateQueries({ queryKey: ['parents'] });
       }
-
       queryClient.invalidateQueries({ queryKey: ['user', updatedUser.id] });
-
       console.log(
         `Successfully toggled status for ${getUserDisplayName(updatedUser)} to ${updatedUser.status}.`
       );
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'User status updated successfully.',
+        position: 'bottom',
+      });
     },
     onError: (error, userId) => {
       console.error(`Error toggling status for user ${userId} via mutation:`, error);
       console.error(
         `Failed to toggle status: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
+      Toast.show({
+        type: 'error',
+        text1: 'Update Failed',
+        text2: error instanceof Error ? error.message : 'Could not update user status.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 

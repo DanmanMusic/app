@@ -1,4 +1,5 @@
 import { Button, Text, View } from 'react-native';
+
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { User, UserRole } from '../../types/userTypes';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
@@ -33,7 +34,7 @@ export const AdminUserItem = ({
       </Text>
     )}
     <View style={adminSharedStyles.itemActions}>
-      <Button title="View/Edit Details" onPress={() => onViewManage(user.id, user.role)} />
+      <Button title="View Details" onPress={() => onViewManage(user.id, user.role)} />
     </View>
   </View>
 );

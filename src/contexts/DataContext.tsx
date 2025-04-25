@@ -10,7 +10,7 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
-  const [currentMockUsers, setCurrentMockUsers] = useState<Record<string, User>>(initialMockUsers);
+  const [currentMockUsers] = useState<Record<string, User>>(initialMockUsers);
 
   const value = useMemo(
     () => ({

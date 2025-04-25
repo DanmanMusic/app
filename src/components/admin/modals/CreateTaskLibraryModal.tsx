@@ -7,6 +7,7 @@ import { colors } from '../../../styles/colors';
 import { CreateTaskLibraryModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible, onClose }) => {
   const [title, setTitle] = useState('');
@@ -19,12 +20,24 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
     mutationFn: createTaskLibraryItem,
     onSuccess: createdTask => {
       console.log('Task library item created successfully via mutation:', createdTask);
-
       queryClient.invalidateQueries({ queryKey: ['task-library'] });
       onClose();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Task library item created.',
+        position: 'bottom'
+    });      
     },
     onError: error => {
       console.error('Error creating task library item via mutation:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Creation Failed',
+        text2: error instanceof Error ? error.message : 'Could not create task library item.',
+        position: 'bottom',
+        visibilityTime: 4000
+      });      
     },
   });
 
@@ -35,7 +48,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
       setBaseTickets('');
       mutation.reset();
     }
-  }, [visible, mutation]);
+  }, [visible]);
 
   const handleCreate = () => {
     const numericTickets =

@@ -11,7 +11,6 @@ import {
   ScrollView,
   Switch,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { createAssignedTask } from '../../api/assignedTasks';
 import { fetchTaskLibrary } from '../../api/taskLibrary';
@@ -24,6 +23,7 @@ import { colors } from '../../styles/colors';
 import { AssignTaskModalProps } from '../../types/componentProps';
 import { modalSharedStyles } from '../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   visible,
@@ -51,8 +51,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     enabled: visible && step === 2 && !isAdHocMode,
   });
 
-  // Fetch students ONLY if no student is preselected AND it's step 1
-  // **Crucially, add teacherId to the query key and function call**
   const {
     data: studentListResult,
     isLoading: isLoadingStudents,
@@ -66,10 +64,10 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     queryFn: () =>
       fetchStudents({
         filter: 'active',
-        page: 1, // Fetch first page, assuming linking doesn't exceed one page often for a teacher
-        teacherId: currentUserId ?? undefined, // Pass teacherId here
+        page: 1,
+        teacherId: currentUserId ?? undefined,
       }),
-    enabled: visible && step === 1 && !preselectedStudentId && !!currentUserId, // Only enable if needed and teacherId is available
+    enabled: visible && step === 1 && !preselectedStudentId && !!currentUserId,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -85,10 +83,13 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     },
     onError: error => {
       console.error('Error assigning task via mutation:', error);
-      Alert.alert(
-        'Error',
-        `Failed to assign task: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Assign Task Failed',
+        text2: `Failed to assign task: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 
@@ -97,7 +98,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     [taskLibrary]
   );
 
-  // Use the fetched students, which should now be filtered by teacherId if applicable
   const availableStudents = studentListResult?.students ?? [];
   const filteredStudents = useMemo(() => {
     const searchTermLower = studentSearchTerm.toLowerCase().trim();
@@ -156,10 +156,13 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       isNaN(numericPoints) ||
       numericPoints < 0
     ) {
-      Alert.alert(
-        'Validation Error',
-        'Please fill in Title, Description, and valid Points for custom tasks.'
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Please fill in Title, Description, and valid Points for custom tasks.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
       return;
     }
     setSelectedLibraryTask(null);
@@ -168,7 +171,13 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
 
   const handleConfirm = () => {
     if (!selectedStudentId || !currentUserId) {
-      Alert.alert('Error', 'Student or assigner ID missing.');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Student or assigner ID missing.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
       return;
     }
 
@@ -188,7 +197,13 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         isNaN(numericPoints) ||
         numericPoints < 0
       ) {
-        Alert.alert('Validation Error', 'Invalid custom task details.');
+        Toast.show({
+          type: 'error',
+          text1: 'Validation Error',
+          text2: 'Invalid custom task details.',
+          position: 'bottom',
+          visibilityTime: 4000,
+        });
         return;
       }
       assignmentData = {
@@ -207,7 +222,13 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         taskBasePoints: selectedLibraryTask.baseTickets,
       };
     } else {
-      Alert.alert('Error', 'No task selected or defined.');
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'No task selected or defined.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
       return;
     }
     mutation.mutate(assignmentData);
@@ -230,7 +251,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           <Text style={modalSharedStyles.stepTitle}>Step 1: Select Student</Text>
           <TextInput
             style={modalSharedStyles.searchInput}
-            placeholder="Search Your Students..." // Updated placeholder
+            placeholder="Search Your Students..."
             value={studentSearchTerm}
             onChangeText={setStudentSearchTerm}
             placeholderTextColor={colors.textLight}
@@ -248,7 +269,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           {!isLoadingStudents && !isErrorStudents && (
             <FlatList
               style={modalSharedStyles.contentScrollView}
-              data={filteredStudents} // Already filtered by teacher and search term
+              data={filteredStudents}
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
                 <TouchableOpacity onPress={() => handleStudentSelect(item.id)}>

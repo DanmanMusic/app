@@ -7,6 +7,7 @@ import { colors } from '../../../styles/colors';
 import { CreateRewardModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');
@@ -22,9 +23,22 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
       console.log('Reward created successfully via mutation:', createdReward);
       queryClient.invalidateQueries({ queryKey: ['rewards'] });
       onClose();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Reward created successfully.',
+        position: 'bottom',
+      });
     },
     onError: error => {
       console.error('Error creating reward via mutation:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Creation Failed',
+        text2: error instanceof Error ? error.message : 'Could not create reward.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 
@@ -36,7 +50,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
       setImageUrl('');
       mutation.reset();
     }
-  }, [visible, mutation]);
+  }, [visible]);
 
   const handleCreate = () => {
     const numericCost = typeof cost === 'number' ? cost : parseInt(String(cost || '0'), 10);

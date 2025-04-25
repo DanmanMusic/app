@@ -7,6 +7,7 @@ import { colors } from '../../../styles/colors';
 import { CreateInstrumentModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');
@@ -19,9 +20,22 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
       console.log('Instrument created successfully via mutation:', createdInstrument);
       queryClient.invalidateQueries({ queryKey: ['instruments'] });
       onClose();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Instrument created successfully.',
+        position: 'bottom',
+      });
     },
     onError: error => {
       console.error('Error creating instrument via mutation:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Creation Failed',
+        text2: error instanceof Error ? error.message : 'Could not create instrument.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 
@@ -30,7 +44,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
       setName('');
       mutation.reset();
     }
-  }, [visible, mutation]);
+  }, [visible]);
 
   const handleCreate = () => {
     if (!name.trim()) {

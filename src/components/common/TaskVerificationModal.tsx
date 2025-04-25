@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Slider from '@react-native-community/slider';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Modal, View, Text, Button, ActivityIndicator, Alert } from 'react-native';
+import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
 import { updateAssignedTask, createAssignedTask } from '../../api/assignedTasks';
 import { useAuth } from '../../contexts/AuthContext';
 import { AssignedTask, TaskVerificationStatus } from '../../mocks/mockAssignedTasks';
@@ -11,6 +11,7 @@ import { User } from '../../types/userTypes';
 import { getUserDisplayName } from '../../utils/helpers';
 import { modalSharedStyles } from '../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   visible,
@@ -21,12 +22,17 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   const studentId = task?.studentId;
   const queryClient = useQueryClient();
 
-  const { data: student, isLoading: isLoadingStudent } = useQuery<User, Error>({
-    queryKey: ['user', studentId],
+  const {
+    data: student,
+    isLoading: isLoadingStudent,
+    isError: studentFetchError,
+    error: studentFetchErrorMsg,
+  } = useQuery<User, Error>({
+    queryKey: ['user', studentId, { context: 'verificationModal' }],
     queryFn: async () => {
-      if (!studentId) throw new Error('No student ID for verification modal');
+      if (!studentId) throw new Error('No student ID provided to verification modal');
       const response = await fetch(`/api/users/${studentId}`);
-      if (!response.ok) throw new Error('Failed to fetch student for modal');
+      if (!response.ok) throw new Error('Failed to fetch student for verification modal');
       return response.json();
     },
     enabled: !!visible && !!studentId,
@@ -55,30 +61,40 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     },
     onError: (error, variables) => {
       console.error(`Error verifying task ${variables.assignmentId} via mutation:`, error);
-      Alert.alert(
-        'Error',
-        `Failed to verify task: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Verify Failed',
+        text2: error instanceof Error ? error.message : 'Could not verify task.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
-
   const reassignMutation = useMutation({
     mutationFn: createAssignedTask,
     onSuccess: createdAssignment => {
       console.log(`Task re-assigned successfully via mutation (New ID: ${createdAssignment.id})`);
-      Alert.alert('Success', `Task "${createdAssignment.taskTitle}" re-assigned successfully.`);
       queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
       queryClient.invalidateQueries({
         queryKey: ['assigned-tasks', { studentId: createdAssignment.studentId }],
       });
       onClose();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: `Task "${createdAssignment.taskTitle}" re-assigned successfully.`,
+        position: 'bottom',
+      });
     },
     onError: error => {
       console.error('Error re-assigning task via mutation:', error);
-      Alert.alert(
-        'Error',
-        `Failed to re-assign task: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Re-assign Failed',
+        text2: error instanceof Error ? error.message : 'Could not re-assign task.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 
@@ -99,10 +115,13 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   }
 
   const studentNameDisplay = isLoadingStudent
-    ? 'Loading...'
-    : student
-      ? getUserDisplayName(student)
-      : 'Unknown Student';
+    ? 'Loading student...'
+    : studentFetchError
+      ? 'Error loading student'
+      : student
+        ? getUserDisplayName(student)
+        : 'Unknown Student';
+
   const taskTitle = task.taskTitle;
   const completedDateTime = task.completedDate
     ? new Date(task.completedDate).toLocaleString()
@@ -126,10 +145,15 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     setAwardedPoints(initialPoints);
     setCurrentStep(2);
   };
-
   const handleConfirmTickets = () => {
     if (!selectedStatus || !currentUserId) {
-      Alert.alert('Error', 'Status or Verifier ID missing.');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Status or Verifier ID missing.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
       return;
     }
     if (verifyMutation.isPending) return;
@@ -142,15 +166,21 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     > = {
       verificationStatus: selectedStatus,
       verifiedById: currentUserId,
+      verifiedDate: new Date().toISOString(),
       actualPointsAwarded:
         selectedStatus === 'verified' || selectedStatus === 'partial' ? finalPoints : undefined,
     };
     verifyMutation.mutate({ assignmentId: task.id, updates });
   };
-
   const handleReassignTask = () => {
     if (!task || !currentUserId) {
-      Alert.alert('Error', 'Original task data or Assigner ID missing.');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Original task data or Assigner ID missing.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
       return;
     }
     if (reassignMutation.isPending) return;
@@ -204,8 +234,6 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   }
 
   if (currentStep === 2 && selectedStatus) {
-    const sliderMaxValue = basePointsDisplay >= 0 ? basePointsDisplay : 0;
-    const effectiveSliderMaxValue = sliderMaxValue === 0 ? 1 : sliderMaxValue;
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
         <View style={modalSharedStyles.centeredView}>
@@ -214,7 +242,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             <Text style={modalSharedStyles.taskTitle}>{taskTitle}</Text>
             <Text>Student: {studentNameDisplay}</Text>
             <Text style={{ marginBottom: 10 }}>
-              Status Selected:
+              Status Selected:{' '}
               <Text
                 style={{
                   fontWeight: 'bold',
@@ -237,9 +265,9 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             <Slider
               style={modalSharedStyles.slider}
               minimumValue={0}
-              maximumValue={effectiveSliderMaxValue}
+              maximumValue={Math.max(1, basePointsDisplay)}
               step={1}
-              value={Math.min(effectiveSliderMaxValue, Math.max(0, awardedPoints))}
+              value={Math.min(Math.max(1, basePointsDisplay), Math.max(0, awardedPoints))}
               onValueChange={value => setAwardedPoints(Math.round(value))}
               minimumTrackTintColor={colors.gold}
               maximumTrackTintColor={colors.borderPrimary}
@@ -258,7 +286,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             )}
             {verifyMutation.isError && (
               <Text style={commonSharedStyles.errorText}>
-                Error:
+                Error:{' '}
                 {verifyMutation.error instanceof Error
                   ? verifyMutation.error.message
                   : 'Failed to verify'}
@@ -301,7 +329,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             <Text>Student: {studentNameDisplay}</Text>
             <Text style={{ marginBottom: 20 }}>
               Status: <Text style={{ fontWeight: 'bold' }}>{selectedStatus?.toUpperCase()}</Text>
-              {' - '} Tickets Awarded:
+              {' - '} Tickets Awarded:{' '}
               <Text
                 style={{
                   fontWeight: 'bold',
@@ -320,7 +348,7 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             )}
             {reassignMutation.isError && (
               <Text style={commonSharedStyles.errorText}>
-                Re-assign Error:
+                Re-assign Error:{' '}
                 {reassignMutation.error instanceof Error
                   ? reassignMutation.error.message
                   : 'Failed'}

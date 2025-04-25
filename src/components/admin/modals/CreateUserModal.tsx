@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Modal,
-  View,
-  Text,
-  Button,
-  TextInput,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import { createUser, fetchTeachers } from '../../../api/users';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
@@ -18,6 +9,7 @@ import { UserRole, User } from '../../../types/userTypes';
 import { getUserDisplayName } from '../../../utils/helpers';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'student'];
 
@@ -59,13 +51,22 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
         queryClient.invalidateQueries({ queryKey: ['teachers'] });
       }
       onClose();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'User created successfully.',
+        position: 'bottom',
+      });
     },
     onError: error => {
       console.error('Error creating user via mutation:', error);
-      Alert.alert(
-        'Error',
-        `Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Creation Failed',
+        text2: error instanceof Error ? error.message : 'Could not create user.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 
@@ -94,7 +95,13 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
   const handleCreatePress = () => {
     if (!firstName.trim() || !lastName.trim() || !role) {
-      Alert.alert('Validation Error', 'Please enter First Name, Last Name, and select a Role.');
+      Toast.show({
+        type: 'error',
+        text1: 'Re-assign Failed',
+        text2: 'Validation Error - Please enter First Name, Last Name, and select a Role.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
       return;
     }
 

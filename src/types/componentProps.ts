@@ -1,5 +1,5 @@
 import { Announcement } from '../mocks/mockAnnouncements';
-import { AssignedTask, TaskVerificationStatus } from '../mocks/mockAssignedTasks';
+import { AssignedTask } from '../mocks/mockAssignedTasks';
 import { Instrument } from '../mocks/mockInstruments';
 import { RewardItem } from '../mocks/mockRewards';
 import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
@@ -52,6 +52,7 @@ export interface DeactivateOrDeleteUserModalProps {
   visible: boolean;
   user: User | null;
   onClose: () => void;
+  onDeletionSuccess?: (deletedUserId: string) => void;
 }
 
 export interface ConfirmationModalProps {
@@ -163,8 +164,12 @@ export interface AdminTasksSectionProps {
   taskLibrary: TaskLibraryItem[];
   isLoading: boolean;
   isError: boolean;
+  error: Error | null;
   onInitiateAssignTask: () => void;
-  onInitiateVerification?: (task: AssignedTask) => void;
+  onInitiateCreateTask: () => void;
+  onInitiateEditTask: (task: TaskLibraryItem) => void;
+  onInitiateDeleteTask: (task: TaskLibraryItem) => void;
+  deleteTaskMutationPending: boolean;
 }
 
 export interface AdminRewardsSectionProps {}
@@ -179,7 +184,11 @@ export interface AdminStudentDetailViewProps {
   viewingStudentId: string;
   onInitiateVerification?: (task: AssignedTask) => void;
   onInitiateAssignTaskForStudent: (studentId: string) => void;
-  onInitiateEditStudent: () => void;
+  onInitiateEditStudent: (user: User) => void;
+  onInitiateStatusUser?: (user: User) => void;
+  onInitiateTicketAdjustment?: (user: User) => void;
+  onInitiateRedemption?: (user: User) => void;
+  onInitiateDeleteTask?: (assignmentId: string) => void;
 }
 
 export interface ViewAllAssignedTasksModalProps {
@@ -195,9 +204,6 @@ export interface PaginationControlsProps {
 }
 
 export interface TeacherDashboardSectionProps {
-  pendingVerifications: AssignedTask[];
-  isLoading: boolean;
-  isError: boolean;
   onInitiateVerificationModal: (task: AssignedTask) => void;
 }
 
@@ -208,7 +214,6 @@ export interface TeacherStudentsSectionProps {
 }
 
 export interface TeacherTasksSectionProps {
-  assignTaskMutationPending: boolean;
   onInitiateAssignTaskGeneral: () => void;
 }
 
@@ -224,4 +229,11 @@ export interface RedeemRewardModalProps {
   studentName: string;
   currentBalance: number;
   redeemerId: string;
+}
+
+export interface AdminTaskLibraryItemProps {
+  item: TaskLibraryItem;
+  onEdit: (task: TaskLibraryItem) => void;
+  onDelete: (task: TaskLibraryItem) => void;
+  disabled?: boolean;
 }

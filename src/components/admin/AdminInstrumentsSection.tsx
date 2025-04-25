@@ -11,6 +11,7 @@ import CreateInstrumentModal from './modals/CreateInstrumentModal';
 import EditInstrumentModal from './modals/EditInstrumentModal';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminInstrumentItem } from '../common/AdminInstrumentItem';
+import Toast from 'react-native-toast-message';
 
 export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -40,11 +41,23 @@ export const AdminInstrumentsSection: React.FC<AdminInstrumentsSectionProps> = (
 
       queryClient.invalidateQueries({ queryKey: ['instruments'] });
       closeDeleteModal();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Instrument deleted.',
+        position: 'bottom'
+      });      
     },
     onError: (err, deletedInstrumentId) => {
       console.error(`Error deleting instrument ${deletedInstrumentId}:`, err);
-      alert(`Failed to delete instrument: ${err instanceof Error ? err.message : 'Unknown error'}`);
       closeDeleteModal();
+      Toast.show({
+        type: 'error',
+        text1: 'Deletion Failed',
+        text2: err instanceof Error ? err.message : 'Could not delete instrument.',
+        position: 'bottom',
+        visibilityTime: 4000
+      });      
     },
   });
 

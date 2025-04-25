@@ -59,12 +59,6 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
         ) : (
           <Text style={appSharedStyles.emptyListText}> No students linked to you. </Text>
         ))}
-      <View style={{ marginTop: 20, alignItems: 'flex-start' }}>
-        <Button
-          title="View All Students (TODO)"
-          onPress={() => alert('Implement view all students')}
-        />
-      </View>
     </View>
   );
 };

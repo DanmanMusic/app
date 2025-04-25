@@ -7,6 +7,7 @@ import { colors } from '../../../styles/colors';
 import { EditAnnouncementModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
   visible,
@@ -23,9 +24,22 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
       console.log('Announcement updated successfully via mutation:', updatedAnnouncement);
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       onClose();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Announcement updated successfully.',
+        position: 'bottom',
+      });
     },
     onError: (error, variables) => {
       console.error(`Error updating announcement ${variables.announcementId} via mutation:`, error);
+      Toast.show({
+        type: 'error',
+        text1: 'Update Failed',
+        text2: error instanceof Error ? error.message : 'Could not update announcement.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
   useEffect(() => {
@@ -35,7 +49,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
       setType(announcementToEdit.type);
       mutation.reset();
     }
-  }, [visible, announcementToEdit, mutation]);
+  }, [visible, announcementToEdit]);
   const handleSave = () => {
     if (!announcementToEdit) return;
 

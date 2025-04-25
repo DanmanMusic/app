@@ -41,7 +41,7 @@ export const fetchAssignedTasks = async ({
   if (studentId) {
     params.append('studentId', studentId);
   }
-  // Add teacherId to params if provided
+
   if (teacherId) {
     params.append('teacherId', teacherId);
   }

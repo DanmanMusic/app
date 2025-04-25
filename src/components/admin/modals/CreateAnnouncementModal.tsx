@@ -7,6 +7,7 @@ import { colors } from '../../../styles/colors';
 import { CreateAnnouncementModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visible, onClose }) => {
   const [title, setTitle] = useState('');
@@ -19,9 +20,22 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
       console.log('Announcement created successfully via mutation:', createdAnnouncement);
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       onClose();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Announcement created successfully.',
+        position: 'bottom',
+      });
     },
     onError: error => {
       console.error('Error creating announcement via mutation:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Creation Failed',
+        text2: error instanceof Error ? error.message : 'Could not create announcement.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 
@@ -32,7 +46,7 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
       setType('announcement');
       mutation.reset();
     }
-  }, [visible, mutation]);
+  }, [visible]);
 
   const handleCreate = () => {
     if (!title.trim()) {

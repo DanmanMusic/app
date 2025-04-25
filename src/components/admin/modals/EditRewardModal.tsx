@@ -7,6 +7,7 @@ import { colors } from '../../../styles/colors';
 import { EditRewardModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit, onClose }) => {
   const [name, setName] = useState('');
@@ -22,9 +23,22 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
       console.log('Reward updated successfully via mutation:', updatedReward);
       queryClient.invalidateQueries({ queryKey: ['rewards'] });
       onClose();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Reward updated successfully.',
+        position: 'bottom',
+      });
     },
     onError: (error, variables) => {
       console.error(`Error updating reward ${variables.rewardId} via mutation:`, error);
+      Toast.show({
+        type: 'error',
+        text1: 'Update Failed',
+        text2: error instanceof Error ? error.message : 'Could not update reward.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 
@@ -36,7 +50,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
       setImageUrl(rewardToEdit.imageUrl);
       mutation.reset();
     }
-  }, [visible, rewardToEdit, mutation]);
+  }, [visible, rewardToEdit]);
 
   const handleSave = () => {
     if (!rewardToEdit) return;

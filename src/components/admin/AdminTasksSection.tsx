@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
+
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminTasksSectionProps } from '../../types/componentProps';
@@ -11,11 +12,16 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
   taskLibrary,
   isLoading,
   isError,
+  error,
   onInitiateAssignTask,
-  onInitiateVerification,
+  onInitiateCreateTask,
+  onInitiateEditTask,
+  onInitiateDeleteTask,
+  deleteTaskMutationPending,
 }) => {
   const getErrorMessage = () => {
-    return 'Error loading task library.';
+    if (!error) return 'An unknown error occurred.';
+    return `Error loading task library: ${error.message}`;
   };
 
   return (
@@ -27,8 +33,9 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
       <Text style={adminSharedStyles.sectionSubTitle}>Task Library ({taskLibrary.length})</Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button
-          title="Create New Task Library Item (TODO)"
-          onPress={() => alert('TODO: Open Create Task Modal')}
+          title="Create New Task Library Item"
+          onPress={onInitiateCreateTask}
+          disabled={deleteTaskMutationPending}
         />
       </View>
       {isLoading && (
@@ -43,7 +50,14 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
         <FlatList
           data={taskLibrary}
           keyExtractor={item => item.id}
-          renderItem={({ item }) => <AdminTaskLibraryItem item={item} />}
+          renderItem={({ item }) => (
+            <AdminTaskLibraryItem
+              item={item}
+              onEdit={onInitiateEditTask}
+              onDelete={onInitiateDeleteTask}
+              disabled={deleteTaskMutationPending}
+            />
+          )}
           scrollEnabled={false}
           ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
           ListEmptyComponent={() => (

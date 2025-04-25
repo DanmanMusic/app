@@ -5,19 +5,13 @@ import { User, UserStatus } from '../types/userTypes';
 import { getUserDisplayName } from '../utils/helpers';
 
 import { mockAnnouncements as initialMockAnnouncements, Announcement } from './mockAnnouncements';
-import { mockAllAssignedTasks, AssignedTask, TaskVerificationStatus } from './mockAssignedTasks';
+import { mockAllAssignedTasks, AssignedTask } from './mockAssignedTasks';
 import { mockInstruments as initialMockInstruments, Instrument } from './mockInstruments';
 import { initialMockRewardsCatalog, RewardItem } from './mockRewards';
 import { initialMockTaskLibrary, TaskLibraryItem } from './mockTaskLibrary';
-import {
-  mockTicketBalances,
-  mockTicketHistory,
-  TicketTransaction,
-  TransactionType,
-} from './mockTickets';
+import { mockTicketBalances, mockTicketHistory, TicketTransaction } from './mockTickets';
 import { mockUsers } from './mockUsers';
 
-const ITEMS_PER_PAGE = 5;
 const ASSIGNED_TASKS_PAGE_LIMIT = 10;
 const HISTORY_PAGE_LIMIT = 15;
 
@@ -85,34 +79,37 @@ export const handlers = [
   http.get('/api/students', ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1', 10);
+    const limit = parseInt(url.searchParams.get('limit') || '5', 10);
     const filter = (url.searchParams.get('filter') as UserStatus | 'all') || 'all';
     const searchTerm = url.searchParams.get('search') || '';
     const teacherId = url.searchParams.get('teacherId');
     const filteredStudents = getFilteredStudents(filter, searchTerm, teacherId);
     const totalItems = filteredStudents.length;
-    const totalPages = totalItems > 0 ? Math.ceil(totalItems / ITEMS_PER_PAGE) : 1;
-    const startIndex = (page - 1) * ITEMS_PER_PAGE;
-    const paginatedItems = filteredStudents.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
+    const startIndex = (page - 1) * limit;
+    const paginatedItems = filteredStudents.slice(startIndex, startIndex + limit);
     return HttpResponse.json({ items: paginatedItems, totalPages, currentPage: page, totalItems });
   }),
   http.get('/api/teachers', ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1', 10);
+    const limit = parseInt(url.searchParams.get('limit') || '5', 10);
     const sortedTeachers = getSortedTeachers();
     const totalItems = sortedTeachers.length;
-    const totalPages = totalItems > 0 ? Math.ceil(totalItems / ITEMS_PER_PAGE) : 1;
-    const startIndex = (page - 1) * ITEMS_PER_PAGE;
-    const paginatedItems = sortedTeachers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
+    const startIndex = (page - 1) * limit;
+    const paginatedItems = sortedTeachers.slice(startIndex, startIndex + limit);
     return HttpResponse.json({ items: paginatedItems, totalPages, currentPage: page, totalItems });
   }),
   http.get('/api/parents', ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1', 10);
+    const limit = parseInt(url.searchParams.get('limit') || '5', 10);
     const sortedParents = getSortedParents();
     const totalItems = sortedParents.length;
-    const totalPages = totalItems > 0 ? Math.ceil(totalItems / ITEMS_PER_PAGE) : 1;
-    const startIndex = (page - 1) * ITEMS_PER_PAGE;
-    const paginatedItems = sortedParents.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
+    const startIndex = (page - 1) * limit;
+    const paginatedItems = sortedParents.slice(startIndex, startIndex + limit);
     return HttpResponse.json({ items: paginatedItems, totalPages, currentPage: page, totalItems });
   }),
   http.post('/api/users', async ({ request }) => {

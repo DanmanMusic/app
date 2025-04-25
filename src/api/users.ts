@@ -14,11 +14,30 @@ interface TeachersApiResponse {
   currentPage: number;
   totalItems: number;
 }
+
+interface FetchTeachersParams {
+  page?: number;
+  limit?: number;
+}
+
 interface ParentsApiResponse {
   items: User[];
   totalPages: number;
   currentPage: number;
   totalItems: number;
+}
+
+interface FetchParentsParams {
+  page?: number;
+  limit?: number;
+}
+
+interface FetchStudentsParams {
+  page?: number;
+  limit?: number;
+  filter?: UserStatus | 'all';
+  searchTerm?: string;
+  teacherId?: string;
 }
 
 interface FetchStudentsResult {
@@ -30,30 +49,26 @@ interface FetchStudentsResult {
 
 export const fetchStudents = async ({
   page = 1,
+  limit = 5,
   filter = 'active',
   searchTerm = '',
-  teacherId, // <-- Add teacherId here
-}: {
-  page?: number;
-  filter?: UserStatus | 'all';
-  searchTerm?: string;
-  teacherId?: string; // <-- Define the optional parameter type
-}): Promise<FetchStudentsResult> => {
-  // Update console log to include teacherId if present
+  teacherId,
+}: FetchStudentsParams): Promise<FetchStudentsResult> => {
   console.log(
-    `[API] Fetching students: page=${page}, filter=${filter}, search='${searchTerm}'${teacherId ? `, teacherId=${teacherId}` : ''}`
+    `[API] Fetching students: page=${page}, limit=${limit}, filter=${filter}, search='${searchTerm}'${teacherId ? `, teacherId=${teacherId}` : ''}`
   );
   const params = new URLSearchParams();
   params.append('page', String(page));
+  params.append('limit', String(limit));
   params.append('filter', filter);
   if (searchTerm) {
     params.append('search', searchTerm);
   }
-  // Add teacherId to params if provided
   if (teacherId) {
     params.append('teacherId', teacherId);
   }
   const response = await fetch(`/api/students?${params.toString()}`);
+
   console.log(`[API] Students Response status: ${response.status}`);
   if (!response.ok) {
     console.error(`[API] Students Network response was not ok: ${response.statusText}`);
@@ -61,12 +76,11 @@ export const fetchStudents = async ({
   }
   const data: StudentsApiResponse = await response.json();
   console.log(`[API] Received ${data.items?.length} raw students from API mock.`);
-  // Keep the mapping logic as is - balance might need adjustment later if API provides it
   const simplifiedStudents = (data.items || []).map(student => ({
     id: student.id,
     name: getUserDisplayName(student),
     instrumentIds: student.instrumentIds,
-    balance: 0, // Placeholder - might need updating if API returns balance
+    balance: 0,
     isActive: student.status === 'active',
   }));
   return {
@@ -79,12 +93,12 @@ export const fetchStudents = async ({
 
 export const fetchTeachers = async ({
   page = 1,
-}: {
-  page?: number;
-}): Promise<TeachersApiResponse> => {
-  console.log(`[API] Fetching teachers: page=${page}`);
+  limit = 5,
+}: FetchTeachersParams = {}): Promise<TeachersApiResponse> => {
+  console.log(`[API] Fetching teachers: page=${page}, limit=${limit}`);
   const params = new URLSearchParams();
   params.append('page', String(page));
+  params.append('limit', String(limit));
   const response = await fetch(`/api/teachers?${params.toString()}`);
   console.log(`[API] Teachers Response status: ${response.status}`);
   if (!response.ok) {
@@ -98,12 +112,12 @@ export const fetchTeachers = async ({
 
 export const fetchParents = async ({
   page = 1,
-}: {
-  page?: number;
-}): Promise<ParentsApiResponse> => {
-  console.log(`[API] Fetching parents: page=${page}`);
+  limit = 5,
+}: FetchParentsParams = {}): Promise<ParentsApiResponse> => {
+  console.log(`[API] Fetching parents: page=${page}, limit=${limit}`);
   const params = new URLSearchParams();
   params.append('page', String(page));
+  params.append('limit', String(limit));
   const response = await fetch(`/api/parents?${params.toString()}`);
   console.log(`[API] Parents Response status: ${response.status}`);
   if (!response.ok) {

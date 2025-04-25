@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Modal,
-  View,
-  Text,
-  Button,
-  TextInput,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import { updateUser, fetchTeachers } from '../../api/users';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
@@ -18,6 +9,7 @@ import { User } from '../../types/userTypes';
 import { getUserDisplayName } from '../../utils/helpers';
 import { modalSharedStyles } from '../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 export const EditUserModal: React.FC<EditUserModalProps> = ({
   visible,
@@ -60,13 +52,22 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         queryClient.invalidateQueries({ queryKey: ['teachers'] });
       }
       onClose();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'User updated successfully.',
+        position: 'bottom',
+      });
     },
     onError: error => {
       console.error('Error updating user via mutation:', error);
-      Alert.alert(
-        'Error',
-        `Failed to save changes: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Update Failed',
+        text2: error instanceof Error ? error.message : 'Could not update user.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 
@@ -107,7 +108,13 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   const handleSaveChanges = () => {
     if (!userToEdit || userToEdit.role === 'parent') return;
     if (!firstName.trim() || !lastName.trim()) {
-      Alert.alert('Validation Error', 'First Name and Last Name cannot be empty.');
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'First Name and Last Name cannot be empty.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
       return;
     }
 

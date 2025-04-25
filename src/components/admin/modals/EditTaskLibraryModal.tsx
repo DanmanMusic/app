@@ -7,6 +7,7 @@ import { colors } from '../../../styles/colors';
 import { EditTaskLibraryModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
   visible,
@@ -23,12 +24,24 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     mutationFn: updateTaskLibraryItem,
     onSuccess: updatedTask => {
       console.log('Task library item updated successfully via mutation:', updatedTask);
-
       queryClient.invalidateQueries({ queryKey: ['task-library'] });
       onClose();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Task library item updated successfully.',
+        position: 'bottom',
+      });
     },
     onError: (error, variables) => {
       console.error(`Error updating task library item ${variables.taskId} via mutation:`, error);
+      Toast.show({
+        type: 'error',
+        text1: 'Update Failed',
+        text2: error instanceof Error ? error.message : 'Could not update task library item.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 
@@ -39,7 +52,7 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       setBaseTickets(taskToEdit.baseTickets);
       mutation.reset();
     }
-  }, [visible, taskToEdit, mutation]);
+  }, [visible, taskToEdit]);
 
   const handleSave = () => {
     if (!taskToEdit) return;

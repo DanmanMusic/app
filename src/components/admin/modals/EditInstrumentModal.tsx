@@ -8,6 +8,7 @@ import { EditInstrumentModalProps } from '../../../types/componentProps';
 import { getInstrumentIconSource } from '../../../utils/helpers';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
   visible,
@@ -24,9 +25,22 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
       console.log('Instrument updated successfully via mutation:', updatedInstrument);
       queryClient.invalidateQueries({ queryKey: ['instruments'] });
       onClose();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Instrument updated successfully.',
+        position: 'bottom',
+      });
     },
     onError: (error, variables) => {
       console.error(`Error updating instrument ${variables.instrumentId} via mutation:`, error);
+      Toast.show({
+        type: 'error',
+        text1: 'Update Failed',
+        text2: error instanceof Error ? error.message : 'Could not update instrument.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 
@@ -35,7 +49,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
       setName(instrumentToEdit.name);
       mutation.reset();
     }
-  }, [visible, instrumentToEdit, mutation]);
+  }, [visible, instrumentToEdit]);
 
   const handleSave = () => {
     if (!instrumentToEdit) return;

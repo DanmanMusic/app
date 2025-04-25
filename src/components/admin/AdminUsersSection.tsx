@@ -1,16 +1,15 @@
 import React from 'react';
 import { View, Text, Button, FlatList, TextInput, ActivityIndicator } from 'react-native';
+
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminUsersSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';
-import { User, UserStatus } from '../../types/userTypes';
+import { User, UserRole, UserStatus } from '../../types/userTypes';
 import PaginationControls from './PaginationControls';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminUserItem } from '../common/AdminUserItem';
 import { AdminStudentItem } from '../common/AdminStudentItem';
-
-type StudentFilter = UserStatus | 'all';
 
 export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   displayData,
@@ -35,6 +34,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   const renderUserItem = ({ item }: { item: User | SimplifiedStudent }) => {
     const role =
       activeTab === 'students' ? 'student' : activeTab === 'teachers' ? 'teacher' : 'parent';
+
     if (role === 'student') {
       return (
         <AdminStudentItem
@@ -56,7 +56,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     return `Error loading ${resource}: ${error.message}`;
   };
 
-  const handleFilterChange = (filter: StudentFilter) => {
+  const handleFilterChange = (filter: UserStatus | 'all') => {
     if (setStudentFilter) {
       setStudentFilter(filter);
     }
@@ -80,9 +80,8 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
           onPress={() => setActiveTab('parents')}
           color={activeTab === 'parents' ? colors.primary : colors.secondary}
         />
-        <Button title="Create User" onPress={() => onInitiateCreateUser()} />
+        <Button title="Create User" onPress={onInitiateCreateUser} />
       </View>
-
       {activeTab === 'students' && studentFilter && setStudentFilter && setStudentSearchTerm && (
         <View style={appSharedStyles.filterAndSearchContainer}>
           <View style={appSharedStyles.filterContainer}>

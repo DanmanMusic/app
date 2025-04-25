@@ -1,17 +1,25 @@
 import React, { useState, useMemo } from 'react';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery, useQueries } from '@tanstack/react-query';
 import { Modal, View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
+
 import { fetchStudents, fetchTeachers, fetchParents } from '../../../api/users';
+import { deleteAssignedTask } from '../../../api/assignedTasks';
 import { usePaginatedAssignedTasks } from '../../../hooks/usePaginatedAssignedTasks';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
-import { colors } from '../../../styles/colors';
-import { ViewAllAssignedTasksModalProps } from '../../../types/componentProps';
-import { User } from '../../../types/userTypes';
+
 import ConfirmationModal from '../../common/ConfirmationModal';
 import PaginationControls from '../PaginationControls';
+import { AssignedTaskDetailItem } from '../../common/AssignedTaskDetailItem';
+
+import { ViewAllAssignedTasksModalProps } from '../../../types/componentProps';
+import { User } from '../../../types/userTypes';
+import { AssignedTask } from '../../../mocks/mockAssignedTasks';
+import { getUserDisplayName } from '../../../utils/helpers';
+
+import { appSharedStyles } from '../../../styles/appSharedStyles';
+import { colors } from '../../../styles/colors';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
-import { AssignedTaskDetailItem } from '../../common/AssignedTaskDetailItem';
+import Toast from 'react-native-toast-message';
 
 export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps> = ({
   visible,
@@ -39,55 +47,102 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
     error: errorTasks,
   } = usePaginatedAssignedTasks('pending', 'active');
 
-  const { data: studentData, isLoading: isLoadingStudents } = useQuery({
-    queryKey: ['students', { page: 1, limit: 1000, filter: 'all' }],
-    queryFn: () => fetchStudents({ page: 1, filter: 'all' }),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: teacherData, isLoading: isLoadingTeachers } = useQuery({
-    queryKey: ['teachers', { page: 1, limit: 1000 }],
-    queryFn: () => fetchTeachers({ page: 1 }),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: parentData, isLoading: isLoadingParents } = useQuery({
-    queryKey: ['parents', { page: 1, limit: 1000 }],
-    queryFn: () => fetchParents({ page: 1 }),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: adminData, isLoading: isLoadingAdmins } = useQuery({
-    queryKey: ['users', { role: 'admin' }],
+  const { data: allStudentsData, isLoading: isLoadingStudents } = useQuery<User[], Error>({
+    queryKey: ['users', { role: 'student', limit: 9999, context: 'allTasksModal' }],
     queryFn: async () => {
-      const response = await fetch('/api/users?role=admin&limit=100');
+      const result = await fetchStudents({ page: 1, limit: 9999, filter: 'all' });
+
+      const studentResponses = await Promise.all(
+        (result?.students || []).map(s =>
+          fetch(`/api/users/${s.id}`).then(res => (res.ok ? res.json() : null))
+        )
+      );
+      return studentResponses.filter(u => u !== null) as User[];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const { data: allTeachersData, isLoading: isLoadingTeachers } = useQuery<User[], Error>({
+    queryKey: ['users', { role: 'teacher', limit: 9999, context: 'allTasksModal' }],
+    queryFn: async () => {
+      const result = await fetchTeachers({ page: 1 });
+
+      return result?.items || [];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const { data: allAdminsData, isLoading: isLoadingAdmins } = useQuery<User[], Error>({
+    queryKey: ['users', { role: 'admin', limit: 9999, context: 'allTasksModal' }],
+    queryFn: async () => {
+      const response = await fetch('/api/users?role=admin&limit=1000');
       if (!response.ok) return [];
       const result = await response.json();
       return result.items || [];
     },
-    staleTime: 15 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 
-  const allUsers = useMemo(() => {
-    const studentsForLookup = (studentData?.students ?? []).map(
-      s => ({ ...s, role: 'student' }) as unknown as User
-    );
-    const teachersForLookup = teacherData?.items ?? [];
-    const parentsForLookup = parentData?.items ?? [];
-    const adminsForLookup = adminData ?? [];
+  const userLookup = useMemo(() => {
+    const lookup: Record<string, { name: string; status: 'active' | 'inactive' | 'unknown' }> = {};
+    const allUsers = [
+      ...(allStudentsData || []),
+      ...(allTeachersData || []),
+      ...(allAdminsData || []),
+    ];
+    allUsers.forEach(user => {
+      if (user && user.id) {
+        lookup[user.id] = {
+          name: getUserDisplayName(user),
+          status: user.status || 'unknown',
+        };
+      }
+    });
+    return lookup;
+  }, [allStudentsData, allTeachersData, allAdminsData]);
 
-    return [...studentsForLookup, ...teachersForLookup, ...parentsForLookup, ...adminsForLookup];
-  }, [studentData, teacherData, parentData, adminData]);
+  const isLoadingUsers = isLoadingStudents || isLoadingTeachers || isLoadingAdmins;
 
-  const isLoadingUsers =
-    isLoadingStudents || isLoadingTeachers || isLoadingParents || isLoadingAdmins;
+  const deleteMutation = useMutation({
+    mutationFn: deleteAssignedTask,
+    onSuccess: (_, deletedId) => {
+      console.log(`Task ${deletedId} deleted from All Tasks modal.`);
+      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
+      closeDeleteConfirmModal();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Assigned task removed.',
+        position: 'bottom',
+      });
+    },
+    onError: error => {
+      console.error('Error deleting task:', error);
+      closeDeleteConfirmModal();
+      Toast.show({
+        type: 'error',
+        text1: 'Removal Failed',
+        text2: error instanceof Error ? error.message : 'Could not remove task.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
+    },
+  });
 
-  const deleteMutation = useMutation({});
-
-  const handleDeleteTask = (assignmentId: string) => {};
-  const handleConfirmDeleteAction = () => {};
-  const closeDeleteConfirmModal = () => {};
-  const getErrorMessage = () => {};
+  const handleDeleteTask = (assignmentId: string) => {
+    setTaskToDeleteId(assignmentId);
+    setIsDeleteConfirmVisible(true);
+  };
+  const handleConfirmDeleteAction = () => {
+    if (taskToDeleteId && !deleteMutation.isPending) {
+      deleteMutation.mutate(taskToDeleteId);
+    }
+  };
+  const closeDeleteConfirmModal = () => {
+    setIsDeleteConfirmVisible(false);
+    setTaskToDeleteId(null);
+    deleteMutation.reset();
+  };
 
   const taskToDeleteObject = tasks.find(task => task.id === taskToDeleteId);
 
@@ -151,6 +206,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                 />
               </View>
             </View>
+
             {isDataLoading && (
               <ActivityIndicator
                 size="large"
@@ -158,25 +214,44 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                 style={{ marginVertical: 30 }}
               />
             )}
+
             {isErrorTasks && !isLoadingTasks && (
               <View style={commonSharedStyles.errorContainer}>
-                <Text style={commonSharedStyles.errorText}>Error</Text>
+                <Text style={commonSharedStyles.errorText}>
+                  Error loading tasks: {errorTasks?.message}
+                </Text>
               </View>
             )}
+
             {!isDataLoading && !isErrorTasks && (
               <FlatList
                 style={modalSharedStyles.modalListContainer}
                 data={tasks}
                 keyExtractor={item => item.id}
-                renderItem={({ item }) => (
-                  <AssignedTaskDetailItem
-                    item={item}
-                    allUsers={allUsers}
-                    onInitiateVerification={onInitiateVerification}
-                    onDelete={handleDeleteTask}
-                    disabled={deleteMutation.isPending && taskToDeleteId === item.id}
-                  />
-                )}
+                renderItem={({ item }) => {
+                  const studentInfo = userLookup[item.studentId] || {
+                    name: `ID: ${item.studentId}`,
+                    status: 'unknown',
+                  };
+                  const assignerInfo = userLookup[item.assignedById] || {
+                    name: `ID: ${item.assignedById}`,
+                    status: 'unknown',
+                  };
+                  const verifierInfo = item.verifiedById ? userLookup[item.verifiedById] : null;
+
+                  return (
+                    <AssignedTaskDetailItem
+                      item={item}
+                      studentName={studentInfo.name}
+                      assignerName={assignerInfo.name}
+                      verifierName={verifierInfo?.name}
+                      studentStatus={studentInfo.status}
+                      onInitiateVerification={onInitiateVerification}
+                      onDelete={handleDeleteTask}
+                      disabled={deleteMutation.isPending && taskToDeleteId === item.id}
+                    />
+                  );
+                }}
                 ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
                 ListEmptyComponent={
                   <Text style={[appSharedStyles.emptyListText, { padding: 20 }]}>
@@ -186,6 +261,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                 contentContainerStyle={{ paddingBottom: 10 }}
               />
             )}
+
             <View style={modalSharedStyles.footer}>
               {!isDataLoading && !isErrorTasks && totalPages > 1 && (
                 <PaginationControls
@@ -206,7 +282,6 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
           </View>
         </View>
       </Modal>
-
       <ConfirmationModal
         visible={isDeleteConfirmVisible}
         title="Confirm Removal"

@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { View, Text, ScrollView, Button, FlatList, ActivityIndicator } from 'react-native';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  View,
+  Text,
+  ScrollView,
+  Button,
+  FlatList,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
-// Import API functions used by queries in this view
 import { fetchAssignedTasks } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
-import { fetchTaskLibrary } from '../api/taskLibrary';
-import { fetchTeachers } from '../api/users'; // Import fetchTeachers
+import { fetchTaskLibrary, deleteTaskLibraryItem } from '../api/taskLibrary';
+import { fetchTeachers, fetchParents, fetchStudents } from '../api/users';
 
-// Import Child Components (Sections)
 import { AdminAnnouncementsSection } from '../components/admin/AdminAnnouncementsSection';
 import { AdminDashboardSection } from '../components/admin/AdminDashboardSection';
 import { AdminHistorySection } from '../components/admin/AdminHistorySection';
@@ -18,33 +25,50 @@ import { AdminRewardsSection } from '../components/admin/AdminRewardsSection';
 import { AdminStudentDetailView } from '../components/admin/AdminStudentDetailView';
 import { AdminTasksSection } from '../components/admin/AdminTasksSection';
 import { AdminUsersSection } from '../components/admin/AdminUsersSection';
+import { PendingVerificationItem } from '../components/common/PendingVerificationItem';
 
-// Import Modals triggered by this view or its children
 import CreateUserModal from '../components/admin/modals/CreateUserModal';
+import CreateTaskLibraryModal from '../components/admin/modals/CreateTaskLibraryModal';
+import EditTaskLibraryModal from '../components/admin/modals/EditTaskLibraryModal';
 import { ViewAllAssignedTasksModal } from '../components/admin/modals/ViewAllAssignedTasksModal';
+import ManualTicketAdjustmentModal from '../components/admin/modals/ManualTicketAdjustmentModal';
+import RedeemRewardModal from '../components/admin/modals/RedeemRewardModal';
 import AssignTaskModal from '../components/common/AssignTaskModal';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 import EditUserModal from '../components/common/EditUserModal';
+import DeactivateOrDeleteUserModal from '../components/common/DeactivateOrDeleteUserModal';
 
-// Import Contexts and Hooks
 import { useAuth } from '../contexts/AuthContext';
 import { usePaginatedParents } from '../hooks/usePaginatedParents';
 import { usePaginatedStudents } from '../hooks/usePaginatedStudents';
 import { usePaginatedTeachers } from '../hooks/usePaginatedTeachers';
 
-// Import Types
 import { AssignedTask } from '../mocks/mockAssignedTasks';
 import { Instrument } from '../mocks/mockInstruments';
 import { TaskLibraryItem } from '../mocks/mockTaskLibrary';
-import { AdminViewProps } from '../types/componentProps';
+import { AdminViewProps, AdminTasksSectionProps } from '../types/componentProps';
 import { User, UserRole } from '../types/userTypes';
+import { SimplifiedStudent } from '../types/dataTypes';
 
-// Import Utils and Styles
 import { getUserDisplayName } from '../utils/helpers';
 import { adminSharedStyles } from '../styles/adminSharedStyles';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 
-// --- Type Definitions ---
+const AdminTeacherDetailView: React.FC<{ userId: string }> = ({ userId }) => (
+  <View style={styles.placeholderView}>
+    <Text style={styles.placeholderText}>Teacher Detail View Placeholder (ID: {userId})</Text>
+    <Text>TODO: Add Teacher-specific details and actions.</Text>
+  </View>
+);
+
+const AdminParentDetailView: React.FC<{ userId: string }> = ({ userId }) => (
+  <View style={styles.placeholderView}>
+    <Text style={styles.placeholderText}>Parent Detail View Placeholder (ID: {userId})</Text>
+    <Text>TODO: Add Parent-specific details and actions.</Text>
+  </View>
+);
+
 type AdminSection =
   | 'dashboard'
   | 'dashboard-pending-verification'
@@ -55,29 +79,37 @@ type AdminSection =
   | 'announcements'
   | 'instruments';
 type UserTab = 'students' | 'teachers' | 'parents';
-// --- End Type Definitions ---
 
 export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId } = useAuth();
+  const queryClient = useQueryClient();
 
-  // --- State ---
   const [viewingSection, setViewingSection] = useState<AdminSection>('dashboard');
-  const [viewingStudentId, setViewingStudentId] = useState<string | null>(null);
   const [activeUserTab, setActiveUserTab] = useState<UserTab>('students');
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null);
+  const [viewingUserRole, setViewingUserRole] = useState<UserRole | null>(null);
   const [isCreateUserModalVisible, setIsCreateUserModalVisible] = useState(false);
   const [isAssignTaskModalVisible, setIsAssignTaskModalVisible] = useState(false);
   const [assignTaskTargetStudentId, setAssignTaskTargetStudentId] = useState<string | null>(null);
   const [isViewAllAssignedTasksModalVisible, setIsViewAllAssignedTasksModalVisible] =
     useState(false);
-  const [isEditStudentModalVisible, setIsEditStudentModalVisible] = useState(false);
+  const [isCreateTaskModalVisible, setIsCreateTaskModalVisible] = useState(false);
+  const [isEditTaskModalVisible, setIsEditTaskModalVisible] = useState(false);
+  const [isDeleteTaskModalVisible, setIsDeleteTaskModalVisible] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<TaskLibraryItem | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<TaskLibraryItem | null>(null);
+  const [isEditUserModalVisible, setIsEditUserModalVisible] = useState(false);
+  const [isStatusModalVisible, setIsStatusModalVisible] = useState(false);
+  const [userToManage, setUserToManage] = useState<User | null>(null);
+  const [isAdjustmentModalVisible, setIsAdjustmentModalVisible] = useState(false);
+  const [isRedeemModalVisible, setIsRedeemModalVisible] = useState(false);
 
-  // --- TQ Queries ---
   const {
     data: adminUser,
     isLoading: adminLoading,
     isError: adminError,
   } = useQuery<User, Error>({
-    queryKey: ['user', currentUserId],
+    queryKey: ['user', currentUserId, { role: 'admin' }],
     queryFn: async () => {
       if (!currentUserId) throw new Error('No admin user ID');
       const response = await fetch(`/api/users/${currentUserId}`);
@@ -90,26 +122,16 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     staleTime: 15 * 60 * 1000,
   });
 
-  const { data: viewingStudentUser } = useQuery<User, Error>({
-    queryKey: ['user', viewingStudentId],
+  const { data: viewedUserData, isLoading: viewedUserLoading } = useQuery<User, Error>({
+    queryKey: ['user', viewingUserId, { role: viewingUserRole }],
     queryFn: async () => {
-      if (!viewingStudentId) throw new Error('No student ID');
-      const response = await fetch(`/api/users/${viewingStudentId}`);
-      if (!response.ok) throw new Error(`Failed to fetch student ${viewingStudentId}`);
+      if (!viewingUserId) throw new Error('No user ID to view');
+      const response = await fetch(`/api/users/${viewingUserId}`);
+      if (!response.ok) throw new Error(`Failed to fetch user ${viewingUserId}`);
       return response.json();
     },
-    enabled: !!viewingStudentId,
+    enabled: !!viewingUserId && !!viewingUserRole,
     staleTime: 5 * 60 * 1000,
-  });
-
-  const {
-    data: taskLibrary = [],
-    isLoading: libraryLoading,
-    isError: libraryError,
-  } = useQuery<TaskLibraryItem[], Error>({
-    queryKey: ['task-library'],
-    queryFn: fetchTaskLibrary,
-    staleTime: 10 * 60 * 1000,
   });
 
   const {
@@ -149,6 +171,17 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     error: parentListError,
   } = usePaginatedParents();
 
+  const {
+    data: taskLibrary = [],
+    isLoading: libraryLoading,
+    isError: libraryError,
+    error: libraryErrorMsg,
+  } = useQuery<TaskLibraryItem[], Error>({
+    queryKey: ['task-library'],
+    queryFn: fetchTaskLibrary,
+    staleTime: 10 * 60 * 1000,
+  });
+
   const { data: fetchedInstruments = [], isLoading: instrumentsLoading } = useQuery<
     Instrument[],
     Error
@@ -172,71 +205,146 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const pendingTasks = assignedTasksResult?.items ?? [];
   const pendingVerifications = pendingTasks;
 
-  const { data: allActiveTeachers = [] } = useQuery<User[], Error>({
-    queryKey: ['teachers', { status: 'active', context: 'adminViewLookup' }],
-    queryFn: async () => {
-      // Assuming fetchTeachers fetches page 1 by default, adjust if needed to get ALL active
-      const result = await fetchTeachers({ page: 1 });
-      return (result?.items || []).filter(t => t.status === 'active');
+  const deleteTaskMutation = useMutation({
+    mutationFn: deleteTaskLibraryItem,
+    onSuccess: (_, deletedTaskId) => {
+      console.log(`Task library item ${deletedTaskId} deleted successfully via mutation.`);
+      queryClient.invalidateQueries({ queryKey: ['task-library'] });
+      handleCloseDeleteTaskModal();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Task library item deleted.',
+        position: 'bottom',
+      });
     },
-    staleTime: 10 * 60 * 1000,
+    onError: (error, deletedTaskId) => {
+      console.error(`Error deleting task library item ${deletedTaskId}:`, error);
+      Toast.show({
+        type: 'error',
+        text1: 'Deletion Failed',
+        text2: error instanceof Error ? error.message : 'Could not delete task.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
+    },
   });
 
-  // --- Event Handlers ---
   const handleViewManageUser = (userId: string, role: UserRole) => {
-    if (role === 'student') {
-      setViewingStudentId(userId);
-    } else {
-      const userList = role === 'teacher' ? teachers : role === 'parent' ? parents : [];
-      const user = userList.find(u => u.id === userId);
-      alert(`TODO: Manage ${role}: ${user ? getUserDisplayName(user) : userId}`);
-    }
+    setViewingUserId(userId);
+    setViewingUserRole(role);
   };
-  const handleBackFromStudentDetail = () => {
-    setViewingStudentId(null);
-    setViewingSection('users');
+
+  const handleBackFromDetailView = () => {
+    setViewingUserId(null);
+    setViewingUserRole(null);
   };
+
   const handleInternalInitiateVerificationModal = (task: AssignedTask) => {
     if (onInitiateVerificationModal) {
       onInitiateVerificationModal(task);
     }
   };
+
   const handleInitiateAssignTaskForStudent = (studentId: string) => {
-    console.log('[AdminView] handleInitiateAssignTaskForStudent called for:', studentId);
     setAssignTaskTargetStudentId(studentId);
     setIsAssignTaskModalVisible(true);
   };
-  const handleInitiateCreateUser = () => {
-    console.log('[AdminView] handleInitiateCreateUser called');
-    setIsCreateUserModalVisible(true);
-  };
+
   const handleInitiateAssignTaskGeneral = () => {
-    console.log('[AdminView] handleInitiateAssignTaskGeneral called');
     setAssignTaskTargetStudentId(null);
     setIsAssignTaskModalVisible(true);
   };
+
   const handleAssignTaskModalClose = () => {
     setIsAssignTaskModalVisible(false);
     setAssignTaskTargetStudentId(null);
   };
+
+  const handleInitiateCreateUser = () => {
+    setIsCreateUserModalVisible(true);
+  };
+
   const handleViewAllAssignedTasks = () => {
     setIsViewAllAssignedTasksModalVisible(true);
   };
+
   const handleViewAllAssignedTasksModalClose = () => {
     setIsViewAllAssignedTasksModalVisible(false);
   };
-  const handleEditStudentClick = () => {
-    if (viewingStudentId) setIsEditStudentModalVisible(true);
+
+  const handleInitiateCreateTask = () => setIsCreateTaskModalVisible(true);
+  const handleCloseCreateTaskModal = () => setIsCreateTaskModalVisible(false);
+
+  const handleInitiateEditTask = (task: TaskLibraryItem) => {
+    setTaskToEdit(task);
+    setIsEditTaskModalVisible(true);
+  };
+  const handleCloseEditTaskModal = () => {
+    setIsEditTaskModalVisible(false);
+    setTaskToEdit(null);
   };
 
-  // --- Render Logic ---
+  const handleInitiateDeleteTask = (task: TaskLibraryItem) => {
+    setTaskToDelete(task);
+    setIsDeleteTaskModalVisible(true);
+  };
+  const handleCloseDeleteTaskModal = () => {
+    setIsDeleteTaskModalVisible(false);
+    setTaskToDelete(null);
+    deleteTaskMutation.reset();
+  };
+  const handleConfirmDeleteTask = () => {
+    if (taskToDelete && !deleteTaskMutation.isPending) {
+      deleteTaskMutation.mutate(taskToDelete.id);
+    }
+  };
+
+  const handleInitiateEditUser = (user: User) => {
+    setUserToManage(user);
+    setIsEditUserModalVisible(true);
+  };
+  const handleInitiateStatusUser = (user: User) => {
+    setUserToManage(user);
+    setIsStatusModalVisible(true);
+  };
+  const handleInitiateTicketAdjustment = (user: User) => {
+    setUserToManage(user);
+    setIsAdjustmentModalVisible(true);
+  };
+  const handleInitiateRedemption = (user: User) => {
+    setUserToManage(user);
+    setIsRedeemModalVisible(true);
+  };
+
+  const handleCloseEditUserModal = () => {
+    setIsEditUserModalVisible(false);
+    setUserToManage(null);
+  };
+  const handleCloseStatusModal = () => {
+    setIsStatusModalVisible(false);
+    setUserToManage(null);
+  };
+  const handleCloseAdjustmentModal = () => {
+    setIsAdjustmentModalVisible(false);
+    setUserToManage(null);
+  };
+  const handleCloseRedeemModal = () => {
+    setIsRedeemModalVisible(false);
+    setUserToManage(null);
+  };
+
+  const handleDeletionSuccess = (deletedUserId: string) => {
+    console.log(`[AdminView] Deletion successful for ${deletedUserId}, resetting view.`);
+    handleCloseStatusModal();
+    handleBackFromDetailView();
+  };
+
   const isLoadingCoreData = adminLoading || instrumentsLoading;
   if (isLoadingCoreData) {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View
-          style={[appSharedStyles.container, { justifyContent: 'center', alignItems: 'center' }]}
-        >
+        <View style={styles.centered}>
           <ActivityIndicator size="large" />
         </View>
       </SafeAreaView>
@@ -252,66 +360,94 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     );
   }
 
-  // --- Determine main content ---
   const renderMainContent = () => {
-    if (viewingStudentId) {
-      return (
-        <AdminStudentDetailView
-          viewingStudentId={viewingStudentId}
-          onInitiateVerification={handleInternalInitiateVerificationModal}
-          onInitiateAssignTaskForStudent={() =>
-            handleInitiateAssignTaskForStudent(viewingStudentId)
-          }
-          onInitiateEditStudent={handleEditStudentClick}
-        />
-      );
+    if (viewingUserId && viewingUserRole) {
+      if (viewedUserLoading) {
+        return (
+          <View style={styles.centered}>
+            <ActivityIndicator size="large" />
+          </View>
+        );
+      }
+      if (!viewedUserData) {
+        return (
+          <View style={appSharedStyles.container}>
+            <Text style={appSharedStyles.textDanger}>Error loading user details.</Text>
+            <Button title="Back" onPress={handleBackFromDetailView} />
+          </View>
+        );
+      }
+
+      switch (viewingUserRole) {
+        case 'student':
+          return (
+            <AdminStudentDetailView
+              viewingStudentId={viewingUserId}
+              onInitiateVerification={handleInternalInitiateVerificationModal}
+              onInitiateAssignTaskForStudent={() =>
+                handleInitiateAssignTaskForStudent(viewingUserId)
+              }
+              onInitiateEditStudent={() => handleInitiateEditUser(viewedUserData!)}
+              onInitiateStatusUser={() => handleInitiateStatusUser(viewedUserData!)}
+              onInitiateTicketAdjustment={() => handleInitiateTicketAdjustment(viewedUserData!)}
+              onInitiateRedemption={() => handleInitiateRedemption(viewedUserData!)}
+            />
+          );
+        case 'teacher':
+          return <AdminTeacherDetailView userId={viewingUserId} />;
+        case 'parent':
+          return <AdminParentDetailView userId={viewingUserId} />;
+        default:
+          return (
+            <View style={appSharedStyles.container}>
+              <Text>Invalid user role selected.</Text>
+              <Button title="Back" onPress={handleBackFromDetailView} />
+            </View>
+          );
+      }
     }
 
     const isUsersLoading = isStudentListLoading || isTeacherListLoading || isParentListLoading;
     return (
       <ScrollView style={appSharedStyles.container}>
-        {/* Navigation Buttons */}
-        {viewingSection !== 'dashboard-pending-verification' && (
-          <View style={adminSharedStyles.adminNav}>
-            <Button
-              title="Dashboard"
-              onPress={() => setViewingSection('dashboard')}
-              color={viewingSection === 'dashboard' ? colors.primary : colors.secondary}
-            />
-            <Button
-              title="Users"
-              onPress={() => setViewingSection('users')}
-              color={viewingSection === 'users' ? colors.primary : colors.secondary}
-            />
-            <Button
-              title="Tasks"
-              onPress={() => setViewingSection('tasks')}
-              color={viewingSection === 'tasks' ? colors.primary : colors.secondary}
-            />
-            <Button
-              title="Rewards"
-              onPress={() => setViewingSection('rewards')}
-              color={viewingSection === 'rewards' ? colors.primary : colors.secondary}
-            />
-            <Button
-              title="History"
-              onPress={() => setViewingSection('history')}
-              color={viewingSection === 'history' ? colors.primary : colors.secondary}
-            />
-            <Button
-              title="Announcements"
-              onPress={() => setViewingSection('announcements')}
-              color={viewingSection === 'announcements' ? colors.primary : colors.secondary}
-            />
-            <Button
-              title="Instruments"
-              onPress={() => setViewingSection('instruments')}
-              color={viewingSection === 'instruments' ? colors.primary : colors.secondary}
-            />
-          </View>
-        )}
+        <View style={adminSharedStyles.adminNav}>
+          <Button
+            title="Dashboard"
+            onPress={() => setViewingSection('dashboard')}
+            color={viewingSection === 'dashboard' ? colors.primary : colors.secondary}
+          />
+          <Button
+            title="Users"
+            onPress={() => setViewingSection('users')}
+            color={viewingSection === 'users' ? colors.primary : colors.secondary}
+          />
+          <Button
+            title="Tasks"
+            onPress={() => setViewingSection('tasks')}
+            color={viewingSection === 'tasks' ? colors.primary : colors.secondary}
+          />
+          <Button
+            title="Rewards"
+            onPress={() => setViewingSection('rewards')}
+            color={viewingSection === 'rewards' ? colors.primary : colors.secondary}
+          />
+          <Button
+            title="History"
+            onPress={() => setViewingSection('history')}
+            color={viewingSection === 'history' ? colors.primary : colors.secondary}
+          />
+          <Button
+            title="Announcements"
+            onPress={() => setViewingSection('announcements')}
+            color={viewingSection === 'announcements' ? colors.primary : colors.secondary}
+          />
+          <Button
+            title="Instruments"
+            onPress={() => setViewingSection('instruments')}
+            color={viewingSection === 'instruments' ? colors.primary : colors.secondary}
+          />
+        </View>
 
-        {/* Sections */}
         {viewingSection === 'dashboard' && (
           <AdminDashboardSection
             onViewPendingVerifications={() => setViewingSection('dashboard-pending-verification')}
@@ -341,29 +477,24 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
                     )}
                     keyExtractor={item => item.id}
                     renderItem={({ item }) => {
-                      const studentSimple = students.find(s => s.id === item.studentId);
+                      const studentSimple: SimplifiedStudent | undefined = students.find(
+                        s => s.id === item.studentId
+                      );
                       return (
-                        <View style={appSharedStyles.pendingItem}>
-                          {' '}
-                          {/* ... item content ... */}{' '}
-                          <Button
-                            title="Verify Task"
-                            onPress={() => handleInternalInitiateVerificationModal(item)}
-                          />{' '}
-                        </View>
+                        <PendingVerificationItem
+                          task={item}
+                          studentName={studentSimple?.name ?? 'Unknown Student'}
+                          onInitiateVerification={handleInternalInitiateVerificationModal}
+                        />
                       );
                     }}
                     scrollEnabled={false}
                     ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-                    ListEmptyComponent={() => (
-                      <Text style={appSharedStyles.emptyListText}>
-                        No tasks pending verification.
-                      </Text>
-                    )}
                   />
                 ) : (
                   <Text style={appSharedStyles.emptyListText}>No tasks pending verification.</Text>
                 )}
+                <Button title="Back to Dashboard" onPress={() => setViewingSection('dashboard')} />
               </>
             )}
           </View>
@@ -437,7 +568,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             taskLibrary={taskLibrary}
             isLoading={libraryLoading}
             isError={libraryError ?? false}
+            error={libraryErrorMsg}
             onInitiateAssignTask={handleInitiateAssignTaskGeneral}
+            onInitiateCreateTask={handleInitiateCreateTask}
+            onInitiateEditTask={handleInitiateEditTask}
+            onInitiateDeleteTask={handleInitiateDeleteTask}
+            deleteTaskMutationPending={deleteTaskMutation.isPending}
           />
         )}
         {viewingSection === 'rewards' && <AdminRewardsSection />}
@@ -445,7 +581,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         {viewingSection === 'announcements' && <AdminAnnouncementsSection />}
         {viewingSection === 'instruments' && <AdminInstrumentsSection />}
 
-        {/* View All Tasks Button */}
         {viewingSection === 'tasks' && (
           <View style={{ alignItems: 'flex-start', marginTop: 10, marginBottom: 20 }}>
             <Button title="View All Assigned Tasks" onPress={handleViewAllAssignedTasks} />
@@ -454,22 +589,30 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
       </ScrollView>
     );
   };
-  // --- END: Determine main content ---
 
-  // --- Main Return Structure ---
-  const showBackButton = !!viewingStudentId || viewingSection !== 'dashboard';
+  const getHeaderTitle = () => {
+    if (viewingUserId && viewingUserRole) {
+      if (viewedUserLoading) return 'Loading User...';
+      if (viewedUserData)
+        return `${
+          viewingUserRole.charAt(0).toUpperCase() + viewingUserRole.slice(1)
+        }: ${getUserDisplayName(viewedUserData)}`;
+      return 'Error Loading User';
+    }
+    return `Admin: ${getUserDisplayName(adminUser)}`;
+  };
+
+  const showBackButton = !!viewingUserId;
   const handleBackPress = () => {
-    if (viewingStudentId) {
-      handleBackFromStudentDetail();
+    if (viewingUserId) {
+      handleBackFromDetailView();
     } else {
       setViewingSection('dashboard');
     }
   };
-  const isStudentActive = viewingStudentUser?.status === 'active';
 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      {/* Header */}
       <View style={appSharedStyles.headerContainer}>
         <View style={appSharedStyles.headerSideContainer}>
           {showBackButton ? (
@@ -479,18 +622,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           )}
         </View>
         <Text style={appSharedStyles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
-          {viewingStudentId
-            ? viewingStudentUser
-              ? getUserDisplayName(viewingStudentUser)
-              : 'Loading...'
-            : `Admin: ${getUserDisplayName(adminUser)}`}
+          {getHeaderTitle()}
         </Text>
+        <View style={appSharedStyles.headerSideContainer} />
       </View>
 
-      {/* Main Content */}
       {renderMainContent()}
 
-      {/* Modals */}
       <CreateUserModal
         visible={isCreateUserModalVisible}
         onClose={() => setIsCreateUserModalVisible(false)}
@@ -506,14 +644,80 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         onClose={handleViewAllAssignedTasksModalClose}
         onInitiateVerification={handleInternalInitiateVerificationModal}
       />
-      {viewingStudentUser && (
-        <EditUserModal
-          visible={isEditStudentModalVisible}
-          userToEdit={viewingStudentUser}
-          onClose={() => setIsEditStudentModalVisible(false)}
-          mockInstruments={fetchedInstruments}
+      <CreateTaskLibraryModal
+        visible={isCreateTaskModalVisible}
+        onClose={handleCloseCreateTaskModal}
+      />
+      <EditTaskLibraryModal
+        visible={isEditTaskModalVisible}
+        taskToEdit={taskToEdit}
+        onClose={handleCloseEditTaskModal}
+      />
+      <ConfirmationModal
+        visible={isDeleteTaskModalVisible}
+        title="Confirm Delete Task"
+        message={`Are you sure you want to delete the library task "${
+          taskToDelete?.title || ''
+        }"? This cannot be undone.`}
+        confirmText={deleteTaskMutation.isPending ? 'Deleting...' : 'Delete Task'}
+        onConfirm={handleConfirmDeleteTask}
+        onCancel={handleCloseDeleteTaskModal}
+        confirmDisabled={deleteTaskMutation.isPending}
+      />
+      <EditUserModal
+        visible={isEditUserModalVisible}
+        userToEdit={userToManage}
+        onClose={handleCloseEditUserModal}
+        mockInstruments={fetchedInstruments}
+      />
+      <DeactivateOrDeleteUserModal
+        visible={isStatusModalVisible}
+        user={userToManage}
+        onClose={handleCloseStatusModal}
+        onDeletionSuccess={handleDeletionSuccess}
+      />
+      {userToManage?.role === 'student' && currentUserId && (
+        <ManualTicketAdjustmentModal
+          visible={isAdjustmentModalVisible}
+          onClose={handleCloseAdjustmentModal}
+          studentId={userToManage.id}
+          studentName={getUserDisplayName(userToManage)}
+          currentBalance={0}
+        />
+      )}
+      {userToManage?.role === 'student' && currentUserId && (
+        <RedeemRewardModal
+          visible={isRedeemModalVisible}
+          onClose={handleCloseRedeemModal}
+          studentId={userToManage.id}
+          studentName={getUserDisplayName(userToManage)}
+          currentBalance={0}
+          redeemerId={currentUserId}
         />
       )}
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  placeholderView: {
+    alignItems: 'center',
+    backgroundColor: colors.backgroundGrey,
+    borderRadius: 8,
+    flex: 1,
+    justifyContent: 'center',
+    margin: 15,
+    padding: 20,
+  },
+  placeholderText: {
+    color: colors.textSecondary,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  centered: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+});

@@ -1,4 +1,3 @@
-// src/components/admin/modals/RedeemRewardModal.tsx
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -11,16 +10,16 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { fetchRewards } from '../../../api/rewards';
-import { redeemReward } from '../../../api/tickets'; // Import the API function
+import { redeemReward } from '../../../api/tickets';
 import { RewardItem } from '../../../mocks/mockRewards';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
-import { RedeemRewardModalProps } from '../../../types/componentProps'; // Import the props
+import { RedeemRewardModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import Toast from 'react-native-toast-message';
 
 const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
   visible,
@@ -33,76 +32,101 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
   const queryClient = useQueryClient();
   const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
 
-  // Fetch Rewards Catalog
   const {
     data: rewardsCatalog = [],
     isLoading: isLoadingRewards,
     isError: isErrorRewards,
     error: errorRewards,
   } = useQuery<RewardItem[], Error>({
-    queryKey: ['rewards'], // Use the same key as other places fetching rewards
+    queryKey: ['rewards'],
     queryFn: fetchRewards,
-    staleTime: 10 * 60 * 1000, // Cache for 10 mins
-    enabled: visible, // Only fetch when the modal is visible
+    staleTime: 10 * 60 * 1000,
+    enabled: visible,
   });
 
-  // Redeem Mutation
   const redeemMutation = useMutation({
     mutationFn: redeemReward,
     onSuccess: transaction => {
       console.log('Reward redeemed successfully via mutation:', transaction);
-      // Invalidate queries to update UI
       queryClient.invalidateQueries({ queryKey: ['balance', studentId] });
       queryClient.invalidateQueries({ queryKey: ['ticket-history', { studentId }] });
-      queryClient.invalidateQueries({ queryKey: ['ticket-history'] }); // Invalidate global history too
-
-      const redeemedItem = rewardsCatalog.find(r => r.id === selectedRewardId);
-      Alert.alert(
-        'Success',
-        `Successfully redeemed "${redeemedItem?.name || 'Reward'}" for ${studentName}.`
-      );
-      onClose(); // Close modal on success
+      queryClient.invalidateQueries({ queryKey: ['ticket-history'] });
+      onClose();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Reward redeemed successfully.',
+        position: 'bottom',
+      });
     },
     onError: error => {
       console.error('Error redeeming reward via mutation:', error);
-      Alert.alert(
-        'Redemption Failed',
-        error instanceof Error ? error.message : 'An unknown error occurred.'
-      );
-      // Keep modal open on error for user to try again or cancel
+      Toast.show({
+        type: 'error',
+        text1: 'Redemption Failed',
+        text2: error instanceof Error ? error.message : 'Could not redeem reward.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 
-  // Reset selection when modal opens/closes or student changes
   useEffect(() => {
     if (visible) {
       setSelectedRewardId(null);
-      redeemMutation.reset(); // Reset mutation state
+      redeemMutation.reset();
     }
-  }, [visible, studentId]); // Depend on visible and studentId
+  }, [visible, studentId]);
 
   const handleSelectItem = (reward: RewardItem) => {
     if (currentBalance >= reward.cost) {
       setSelectedRewardId(reward.id);
     } else {
-      Alert.alert('Insufficient Tickets', `You need ${reward.cost - currentBalance} more tickets.`);
-      setSelectedRewardId(null); // Deselect if cannot afford
+      Toast.show({
+        type: 'error',
+        text1: 'Re-assign Failed',
+        text2: `Insufficient Tickets - You need ${reward.cost - currentBalance} more tickets.`,
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
+      setSelectedRewardId(null);
     }
   };
 
   const handleConfirmRedemption = () => {
     if (!selectedRewardId) {
-      Alert.alert('No Reward Selected', 'Please select a reward to redeem.');
+      Toast.show({
+        type: 'error',
+        text1: 'Re-assign Failed',
+        text2: 'No Reward Selected - Please select a reward to redeem.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
+
       return;
     }
     const selectedReward = rewardsCatalog.find(r => r.id === selectedRewardId);
     if (!selectedReward) {
-      Alert.alert('Error', 'Selected reward not found.');
+      Toast.show({
+        type: 'error',
+        text1: 'Re-assign Failed',
+        text2: 'Error - Selected reward not found.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
+
       return;
     }
-    // Double-check affordability before mutation (though API should also check)
+
     if (currentBalance < selectedReward.cost) {
-      Alert.alert('Insufficient Tickets', `Cannot redeem ${selectedReward.name}.`);
+      Toast.show({
+        type: 'error',
+        text1: 'Re-assign Failed',
+        text2: `Insufficient Tickets - Cannot redeem ${selectedReward.name}.`,
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
+
       return;
     }
 
@@ -122,7 +146,7 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
     return (
       <TouchableOpacity
         onPress={() => handleSelectItem(item)}
-        disabled={!canAfford || redeemMutation.isPending} // Disable if cannot afford or redeeming
+        disabled={!canAfford || redeemMutation.isPending}
       >
         <View
           style={[
@@ -168,7 +192,7 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
           {!isLoadingRewards && !isErrorRewards && (
             <FlatList
               style={modalSharedStyles.modalListContainer}
-              data={rewardsCatalog.sort((a, b) => a.cost - b.cost)} // Sort by cost
+              data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
               renderItem={renderRewardItem}
               keyExtractor={item => item.id}
               ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -213,7 +237,6 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
   );
 };
 
-// Reward Item Specific Styling
 const styles = StyleSheet.create({
   rewardItemBase: {
     flexDirection: 'row',

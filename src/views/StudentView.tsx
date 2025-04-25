@@ -1,15 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import {
-  View,
-  Text,
-  ScrollView,
-  FlatList,
-  Button,
-  Image,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, FlatList, Button, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchAnnouncements } from '../api/announcements';
 import { updateAssignedTask } from '../api/assignedTasks';
@@ -33,6 +24,7 @@ import { TicketHistoryItem } from '../components/common/TicketHistoryItem';
 import { RewardItemStudent } from '../components/common/RewardItemStudent';
 import { AssignedTaskItem } from '../components/common/AssignedTaskItem';
 import { AnnouncementListItem } from '../components/common/AnnouncementListItem';
+import Toast from 'react-native-toast-message';
 
 type StudentTab = 'dashboard' | 'tasks' | 'rewards' | 'announcements';
 
@@ -142,14 +134,22 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
         queryKey: ['assigned-tasks', { studentId: targetStudentId }],
       });
       queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
-      Alert.alert('Success', 'Task marked as complete!');
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Task marked as complete!',
+        position: 'bottom',
+      });
     },
     onError: (error, assignmentId) => {
       console.error(`Error marking task ${assignmentId} complete:`, error);
-      Alert.alert(
-        'Error',
-        `Failed to mark task complete: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Task Completion Failed',
+        text2: error instanceof Error ? error.message : 'Could not mark task complete.',
+        position: 'bottom',
+        visibilityTime: 4000,
+      });
     },
   });
 
