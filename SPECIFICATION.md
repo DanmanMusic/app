@@ -10,7 +10,7 @@ Future considerations, pending discussion and decisions, include features like p
 
 ## 2. User Creation, Linking, and Authentication
 
-*   **Account Creation:** Exclusively performed by the **Admin** role via a secure Admin interface. Admin creates accounts for **Admin**, **Teacher**, and **Student** users (likely creating entries in both `auth.users` and `profiles`). (Parents are not explicitly created via this interface). Requires first name, last name, role selection. Nickname is optional. For Students, Admin can link initial Teacher(s) and Instrument(s) via link tables, and importantly, **sets an initial numerical login PIN**. Uses backend API (e.g., Supabase functions/direct inserts).
+*   **Account Creation:** Exclusively performed by the **Admin** role via a secure Admin interface. Admin creates accounts for **Admin**, **Teacher**, and **Student** users (likely creating entries in both `auth.users` and `profiles`). (Parents are not explicitly created via this interface). Requires first name, last name, role selection. Nickname is optional. For Students, Admin can link initial Teacher(s) and Instrument(s) via link tables, and sets an initial numerical login PIN. Uses backend API (e.g., Supabase functions/direct inserts).
 *   **User Linking:** Relationships (Student<->Teacher, Student<->Instrument, Parent<->Student) are managed via **link tables** in the database (e.g., `student_teachers`, `student_instruments`, `parent_students`). Admin manages Teacher/Instrument links via the Admin UI (likely through update operations modifying link tables). Parent linking mechanism relies on backend logic associating parent profiles with student profiles (details TBD, potentially via Admin action or a separate Parent registration flow linked to student).
 *   **User Deactivation/Deletion (Admin Action):**
     *   Admins can manage user accounts via their interface.
@@ -19,7 +19,7 @@ Future considerations, pending discussion and decisions, include features like p
 *   **Authentication (Admin/Teacher):**
     *   Login via a dedicated secure mechanism (e.g., email/password) managed by the backend authentication system (e.g., Supabase Auth). Requires a distinct login interface. Backend returns a JWT session token upon successful login.
 *   **Authentication (Student/Parent - PIN-Based):**
-    *   **PIN Setting:** A unique numerical PIN (e.g., 4-6 digits) is initially set by the **Admin** upon Student account creation via the Admin interface. The Admin interface must provide a mechanism to set and potentially reset these PINs. PINs must be stored securely (e.g., hashed) on the backend (likely in the `user_credentials` table).
+    *   **PIN Setting & Management:** A unique numerical PIN (e.g., 4-6 digits) is initially set by the **Admin** upon Student account creation. The PIN can subsequently be viewed or reset by the **Admin** or by any **Teacher** linked to that student, via their respective UI interfaces. PINs must be stored securely (e.g., hashed) on the backend (likely in the `user_credentials` table).
     *   **Login Flow:**
         1.  The mobile app presents a login screen requesting a student identifier (**Decision Pending:** e.g., First Name + Last Name, generated username, email?) and the numerical PIN.
         2.  The user (Student or Parent) enters the identifier and PIN.
@@ -48,7 +48,7 @@ Future considerations, pending discussion and decisions, include features like p
 
 ### 3.1. Admin
 *   **User Management:** CRUD operations on user profiles (`profiles` table) and links (link tables) via API/backend functions. Manages user status (active/inactive) and permanent deletion. Pagination handled via hooks.
-*   **PIN Management:** Set/Reset Student PINs via Admin UI controls.
+*   **PIN Management:** Set/Reset Student PINs via Admin UI controls (primary responsibility).
 *   **Instrument Management:** CRUD via API (`/api/instruments` or Supabase equivalent).
 *   **Task Library Management:** CRUD via API (`/api/task-library` or Supabase equivalent).
 *   **Task Assignment:** Assigns tasks via API (`POST /api/assigned-tasks`). Can use library items or create Ad-Hoc tasks.
@@ -63,6 +63,7 @@ Future considerations, pending discussion and decisions, include features like p
 ### 3.2. Teacher
 *   **View Linked Students:** Fetches students linked via `student_teachers` table. Displays key details (name, instruments, balance).
 *   **View Student Profile:** Navigates to a view fetching student profile, assigned tasks, and history. Pagination handled by hooks.
+*   **PIN Management:** Can view and reset the PIN for their **linked students** via Teacher UI controls.
 *   **Task Assignment:** Assigns via API (`POST /api/assigned-tasks`).
 *   **Task Verification:** Views pending tasks for linked students, verifies via API (`PATCH /api/assigned-tasks/:id`).
 *   **Challenge Creation/Management (TBD):** *If the Challenge feature is approved,* Teachers might create/manage challenges, potentially targeted. (Specific permissions TBD).
@@ -110,88 +111,20 @@ Future considerations, pending discussion and decisions, include features like p
 *   **Balance:** Fetched via API (`GET /api/students/:id/balance`). Updated implicitly by backend logic/functions during task verification, adjustments, redemptions.
 *   **History:** Logged by backend. Fetched via API (`GET /api/ticket-history`).
 
-## 6. Data Models (Conceptual - For Supabase Schema)
+## 6. Data Entities & Concepts
 
-*(Note: FK = Foreign Key. Timestamps `created_at`, `updated_at` recommended for most tables. UUIDs generally preferred for IDs unless otherwise noted.)*
+The application manages several core data entities. The specific database table structure, columns, types, and relationships are detailed in the separate **[MODEL.md](./MODEL.md)** file. Conceptually, the main entities are:
 
-*   **`auth.users`:** (Built-in Supabase) Stores core identity (`id` [UUID], `email`, etc.)
-*   **`profiles`:** Stores public user data.
-    *   `id` (UUID, PK, FK -> `auth.users.id`)
-    *   `role` (TEXT/ENUM('admin', 'teacher', 'student', 'parent'), NOT NULL)
-    *   `first_name` (TEXT, NOT NULL)
-    *   `last_name` (TEXT, NOT NULL)
-    *   `nickname` (TEXT)
-    *   `status` (TEXT/ENUM 'active'/'inactive', NOT NULL)
-    *   **Potential Field (TBD):** `avatar_path?` (TEXT): Path for avatar in Supabase Storage.
-*   **`user_credentials`:** Stores specific credential information.
-    *   `user_id` (UUID, PK, FK -> `profiles.id`): The ID of the user this credential belongs to.
-    *   `pin_hash` (TEXT, NOT NULL): Securely hashed PIN. *(Applies only if `profiles.role = 'student'`)*.
-*   **`instruments`:**
-    *   `id` (UUID, PK)
-    *   `name` (TEXT, NOT NULL)
-    *   **Potential Field (TBD):** `image_path?` (TEXT): Path for icon in Supabase Storage.
-*   **`task_library`:**
-    *   `id` (UUID, PK)
-    *   `title` (TEXT, NOT NULL)
-    *   `description?` (TEXT): *Decision Pending: Necessity*.
-    *   `base_tickets` (INTEGER, NOT NULL)
-    *   **Potential Field (TBD):** `link_url?` (TEXT): Optional external link.
-*   **`rewards`:**
-    *   `id` (UUID, PK)
-    *   `name` (TEXT, NOT NULL)
-    *   `cost` (INTEGER, NOT NULL)
-    *   `image_path?` (TEXT): *Decision Pending: Mandatory?* Path for image in Supabase Storage.
-    *   `description?` (TEXT): *Decision Pending: Necessity*.
-*   **`assigned_tasks`:**
-    *   `id` (UUID, PK)
-    *   `student_id` (UUID, NOT NULL, FK -> `profiles.id`)
-    *   `assigned_by_id` (UUID, NOT NULL, FK -> `profiles.id`)
-    *   `assigned_date` (TIMESTAMPTZ, NOT NULL)
-    *   `task_title` (TEXT, NOT NULL)
-    *   `task_description` (TEXT, NOT NULL)
-    *   `task_base_points` (INTEGER, NOT NULL)
-    *   `is_complete` (BOOLEAN, default false)
-    *   `completed_date` (TIMESTAMPTZ)
-    *   `verification_status` (TEXT/ENUM 'pending', 'verified', 'partial', 'incomplete')
-    *   `verified_by_id` (UUID, FK -> `profiles.id`)
-    *   `verified_date` (TIMESTAMPTZ)
-    *   `actual_points_awarded` (INTEGER)
-    *   **Potential Field (TBD):** `task_link_url?` (TEXT): Optional link for this specific assignment.
-    *   **Potential Field (TBD):** `source_challenge_id?` (UUID, FK -> `challenges.id`): *Needed only if Challenges are implemented*.
-*   **`ticket_transactions`:**
-    *   `id` (BIGSERIAL, PK) or (UUID, PK)
-    *   `student_id` (UUID, NOT NULL, FK -> `profiles.id`)
-    *   `timestamp` (TIMESTAMPTZ, default `now()`)
-    *   `amount` (INTEGER, NOT NULL)
-    *   `type` (TEXT/ENUM 'task_award', 'manual_add', 'manual_subtract', 'redemption', NOT NULL)
-    *   `source_id` (TEXT): ID of related record (e.g., `assigned_tasks.id`, `rewards.id`, manual adjustor ID).
-    *   `notes` (TEXT)
-*   **`announcements`:**
-    *   `id` (UUID, PK)
-    *   `type` (TEXT/ENUM 'announcement', 'challenge', 'redemption_celebration', NOT NULL): *Decision Pending: Review types*.
-    *   `title` (TEXT, NOT NULL)
-    *   `message` (TEXT, NOT NULL): *Decision Pending: Confirm field/requirement*.
-    *   `date` (TIMESTAMPTZ, default `now()`)
-    *   `related_student_id` (UUID, FK -> `profiles.id`): *Decision Pending: Confirm usage*.
-*   **`challenges` (Potential New Model - TBD):**
-    *   *Decision Pending:* Should a distinct "Challenge" feature be implemented? If yes, the proposed model includes:
-        *   `id` (UUID, PK)
-        *   `title` (TEXT, NOT NULL)
-        *   `description` (TEXT, NOT NULL)
-        *   `base_tickets` (INTEGER, NOT NULL, >= 0)
-        *   `link_url?` (TEXT, NULLable): Optional URL relevant to the challenge.
-        *   `created_by_id` (UUID, NOT NULL, FK references `profiles.id`): ID of Admin or Teacher who created it.
-        *   `created_at` (TIMESTAMPTZ, default `now()`)
-        *   `updated_at` (TIMESTAMPTZ, default `now()`)
-        *   `target_instrument_id?` (UUID, NULLable, FK references `instruments.id`): Optionally target students with this instrument.
-        *   `target_teacher_id?` (UUID, NULLable, FK references `profiles.id`): Optionally target students linked to this teacher.
-        *   `is_global` (BOOLEAN, NOT NULL, default false): If true, available to all active students (overrides instrument/teacher targets).
-        *   `is_active` (BOOLEAN, NOT NULL, default true): Allows admins/teachers to enable/disable challenges.
-        *   `expiry_date?` (DATE, NULLable): Optional date after which the challenge can no longer be accepted.
-*   **Link Tables:**
-    *   `student_instruments` (`student_id` [FK->profiles], `instrument_id` [FK->instruments], PK(`student_id`, `instrument_id`))
-    *   `student_teachers` (`student_id` [FK->profiles], `teacher_id` [FK->profiles], PK(`student_id`, `teacher_id`))
-    *   `parent_students` (`parent_id` [FK->profiles], `student_id` [FK->profiles], PK(`parent_id`, `student_id`))
+*   **User Profiles:** Represents all individuals using the app (Admins, Teachers, Students, Parents). Linked to the core authentication identity and stores common information like name, role, and status. May potentially include user avatars (*Decision Pending*).
+*   **User Credentials:** Stores specific login information not suitable for the main profile, currently planned for securely storing hashed Student PINs.
+*   **Instruments:** A list of musical instruments taught or played. May potentially include icons/images (*Decision Pending*).
+*   **Task Library:** A predefined list of reusable tasks with titles, descriptions (*Decision Pending*), base ticket values, and potentially external links (*Decision Pending*).
+*   **Rewards:** The catalog of items redeemable with tickets, including name, cost, potentially mandatory images (*Decision Pending*), and descriptions (*Decision Pending*).
+*   **Assigned Tasks:** Represents a specific task instance assigned to a particular student by a teacher or admin, or accepted from a challenge (*Challenge Feature TBD*). Tracks completion and verification status, points awarded, and potentially links (*Decision Pending*).
+*   **Ticket Transactions:** A historical log of all events that change a student's ticket balance (task awards, manual adjustments, redemptions).
+*   **Announcements:** Store-wide or targeted messages (e.g., challenges, redemption celebrations (*Auto-generation TBD*)). Field requirements and types need final confirmation (*Decision Pending*).
+*   **Challenges (TBD):** A potential feature for opt-in tasks targeted at specific student groups (*Decision Pending*).
+*   **Relationships:** Connections between entities (like Students-Teachers, Students-Instruments, Parents-Students) are managed using standard relational database link tables (see `MODEL.md`).
 
 ## 7. Non-Functional Requirements
 
@@ -224,17 +157,23 @@ To create a visually engaging public-facing view and potentially themed backgrou
 The following features and details require discussion and **explicit decisions from Dan Lefler** before final specification and implementation:
 
 1.  **Task Link URL:**
-    *   Should an optional `link_url` field be added to tasks (library and assigned) for external resources (e.g., Ultimate Guitar, YouTube)?
+    *   Should an optional `link_url` field be added to tasks (library and assigned) for external resources?
+    *   _(Example: Should teachers be able to add a link like `https://www.ultimateguitar.com/tabs/1234` to a "Learn Song X" task?)._
 2.  **Image Requirements & Avatars:**
     *   **Instruments:** Require stored images (`image_path`), or is the current hardcoded icon approach sufficient?
+    *   _(Example: Show actual pictures of instruments available as rewards, or just generic icons like now?)._
     *   **Avatars:** Implement user avatars? For which roles (Teacher? Student? Parent? Admin?)?
+    *   _(Example: Allow students and/or teachers to upload profile pictures?)._
     *   **Rewards:** Is an image (`image_path`) mandatory for *all* rewards?
+    *   _(Example: Is it okay if some rewards, like a 'Snickers Bar', don't have a specific image uploaded?)._
 3.  **Automated Redemption Announcements:**
     *   Should the system *automatically* generate a public announcement when a "significant" reward is redeemed?
+    *   _(Example: When a student redeems the 'Fender Stratocaster' (cost 10000), should an announcement automatically appear saying "🎉 Alice redeemed a Fender Stratocaster! 🎉"? Or only if Admin manually creates it?)._
     *   If yes, how is "significant" defined (cost threshold, specific items)?
     *   If yes, what should the message format be?
 4.  **Challenge Feature (Go/No-Go):**
     *   Should the distinct "Challenge" system (opt-in tasks, potentially targeted) be implemented in V1?
+    *   _(Example: Should teachers be able to post 'challenges' like "Learn 3 new scales this month for 50 bonus tickets" that *any* relevant student can choose to accept and attempt?)._
     *   *If Yes to Challenges:*
         *   Can Teachers target challenges only to their own students, or more broadly?
         *   Is an `expiry_date` needed for challenges?
@@ -242,14 +181,22 @@ The following features and details require discussion and **explicit decisions f
         *   Who is the `assigned_by_id` for tasks generated from accepted challenges?
 5.  **Task/Reward/Announcement Fields:**
     *   Confirm necessity/optionality of `description` fields for Task Library items and Rewards.
+    *   _(Example: Is just 'Practice 15 mins' enough, or do we need the extra description text field? Same for rewards?)._
     *   Finalize Announcement fields (`message` requirement?), types (sufficient?), and `relatedStudentId` usage (only redemptions?).
+    *   _(Example: Is the 'message' field always needed? Are 'announcement', 'challenge', 'redemption' types enough?)._
 6.  **PIN Login Details:**
     *   What identifier (Name, Username, Email?) is used with the PIN for Student/Parent login?
+    *   _(Example: How does a student identify themselves with their PIN? By typing `Alice Wonder` + PIN, or `alice.w` + PIN, or `alice.wonder@email.com` + PIN?)._
     *   How is a Parent session differentiated from a Student session when using the child's credentials?
-7.  **Parent Reminders Feature (Go/No-Go):**
+    *   _(Example: If Mom Wonder logs in using `Alice Wonder` + Alice's PIN, how does the app confirm she's a Parent to show the Parent view? Does the backend check linked parents during login?)._
+7.  **Additional Login Methods:** Offer Email/Password for Students/Parents too?
+    *   _(Example: Should students *also* be able to set an email/password to log in, as an alternative to their Identifier+PIN? What about Parents having their own separate email/password login instead of using child credentials?)._
+8.  **Parent Reminders Feature (Go/No-Go):**
     *   Should the "Parent Reminders" feature be implemented in V1? (If yes, requires detailed specs).
-8.  **Data Deletion Policy:**
+    *   _(Example: Should parents have a button like "Nudge Alice about 'Practice Scales'" that shows a reminder in Alice's app?)._
+9.  **Data Deletion Policy:**
     *   When an Admin permanently deletes a student, should their associated `assigned_tasks` and `ticket_transactions` be cascade deleted or anonymized (e.g., `student_id` set to NULL)?
+    *   _(Example: If Admin deletes student 'Bob', should all records of tasks Bob completed and tickets he earned disappear forever, or should they remain but just say 'Deleted Student' instead of 'Bob'?)._
 
 ## 11. Potential Future Enhancements (Beyond V1 Scope / Pending Interest)
 
