@@ -1,109 +1,162 @@
+// src/api/instruments.ts
+import { supabase, getSupabase } from '../lib/supabaseClient';
 import { Instrument } from '../types/dataTypes';
 
-/**
- * Fetches all instruments.
- */
 export const fetchInstruments = async (): Promise<Instrument[]> => {
-  console.log(`[API] Fetching Instruments`);
-  const response = await fetch('/api/instruments');
-  console.log(`[API] Instruments Response status: ${response.status}`);
-  if (!response.ok) {
-    console.error(`[API] Instruments Network response was not ok: ${response.statusText}`);
-    throw new Error(`Failed to fetch instruments: ${response.statusText}`);
+  const client = getSupabase();
+  console.log(`[Supabase] Fetching Instruments`);
+  const { data, error } = await client
+    .from('instruments')
+    .select('id, name, image_path')
+    .order('name', { ascending: true });
+  if (error) {
+    console.error(`[Supabase] Error fetching instruments:`, error.message);
+    throw new Error(`Failed to fetch instruments: ${error.message}`);
   }
-
-  const data: Instrument[] = await response.json();
-  console.log(`[API] Received ${data?.length} instrument items from API mock.`);
-  return data;
+  console.log(`[Supabase] Received ${data?.length ?? 0} instrument items.`);
+  type InstrumentQueryResult = {
+      id: string;
+      name: string;
+      image_path: string | null;
+  }[] | null;
+  const typedData = data as InstrumentQueryResult;
+  return (typedData || []).map(item => ({
+    id: item.id,
+    name: item.name,
+    image_path: item.image_path,
+  }));
 };
 
-/**
- * Creates a new instrument item.
- */
 export const createInstrument = async (
-  instrumentData: Omit<Instrument, 'id'>
+  instrumentData: Pick<Instrument, 'name'>
 ): Promise<Instrument> => {
-  console.log('[API] Creating instrument:', instrumentData.name);
-  const response = await fetch('/api/instruments', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(instrumentData),
-  });
-  console.log(`[API] Create Instrument Response status: ${response.status}`);
-  if (!response.ok) {
-    let errorMsg = `Failed to create instrument: ${response.statusText}`;
-    try {
-      const errorBody = await response.json();
-      errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      console.log('[API] instruments try/catch error:', e);
-    }
-    console.error(`[API] Create Instrument failed: ${errorMsg}`);
-    throw new Error(errorMsg);
+  const client = getSupabase();
+  console.log('[Supabase] Creating instrument:', instrumentData.name);
+  const instrumentToInsert = {
+      name: instrumentData.name.trim(),
+  };
+  if (!instrumentToInsert.name) {
+      throw new Error("Instrument name cannot be empty.");
   }
-  const createdInstrument: Instrument = await response.json();
-  console.log(`[API] Instrument created successfully (ID: ${createdInstrument.id})`);
+  const { data, error } = await client
+    .from('instruments')
+    .insert(instrumentToInsert)
+    .select('id, name, image_path, created_at, updated_at')
+    .single();
+  if (error || !data) {
+    console.error(`[Supabase] Error creating instrument:`, error?.message);
+    throw new Error(`Failed to create instrument: ${error?.message || 'No data returned'}`);
+  }
+  const createdInstrument: Instrument = {
+      id: data.id,
+      name: data.name,
+      image_path: data.image_path,
+  };
+  console.log(`[Supabase] Instrument created successfully (ID: ${createdInstrument.id})`);
   return createdInstrument;
 };
 
-/**
- * Updates an existing instrument item.
- */
 export const updateInstrument = async ({
   instrumentId,
   updates,
 }: {
   instrumentId: string;
-  updates: Partial<Omit<Instrument, 'id'>>;
+  updates: Partial<Pick<Instrument, 'name'>>; // Changed to Partial
 }): Promise<Instrument> => {
-  console.log(`[API] Updating instrument ${instrumentId}:`, updates);
-  const response = await fetch(`/api/instruments/${instrumentId}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(updates),
-  });
-  console.log(`[API] Update Instrument Response status: ${response.status}`);
-  if (!response.ok) {
-    let errorMsg = `Failed to update instrument ${instrumentId}: ${response.statusText}`;
-    try {
-      const errorBody = await response.json();
-      errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      console.log('[API] instruments try/catch error:', e);
-    }
-    console.error(`[API] Update Instrument failed: ${errorMsg}`);
-    throw new Error(errorMsg);
+  const client = getSupabase();
+  console.log(`[Supabase] Updating instrument ${instrumentId} with:`, updates);
+
+  const updatePayload: { name?: string } = {};
+  if (updates.name && updates.name.trim()) {
+    updatePayload.name = updates.name.trim();
+  } else if (updates.hasOwnProperty('name')) {
+    throw new Error("Instrument name update cannot be empty.");
   }
-  const updatedInstrument: Instrument = await response.json();
-  console.log(`[API] Instrument ${instrumentId} updated successfully`);
+
+  if (Object.keys(updatePayload).length === 0) {
+    console.warn('[Supabase] updateInstrument called with no valid changes to apply.');
+    const { data: currentData, error: currentError } = await client
+       .from('instruments')
+       .select('id, name, image_path')
+       .eq('id', instrumentId)
+       .single();
+     if (currentError || !currentData) {
+         console.error(`[Supabase] Failed to fetch current instrument ${instrumentId} during no-op update`, currentError);
+         throw new Error('Failed to fetch instrument for no-op update');
+     }
+     return {
+         id: currentData.id,
+         name: currentData.name,
+         image_path: currentData.image_path
+     } as Instrument;
+  }
+
+  const { data, error } = await client
+    .from('instruments')
+    .update(updatePayload)
+    .eq('id', instrumentId)
+    .select('id, name, image_path, created_at, updated_at')
+    .single();
+
+  if (error || !data) {
+    console.error(`[Supabase] Error updating instrument ${instrumentId}:`, error?.message);
+    throw new Error(`Failed to update instrument ${instrumentId}: ${error?.message || 'No data returned'}`);
+  }
+
+  const updatedInstrument: Instrument = {
+      id: data.id,
+      name: data.name,
+      image_path: data.image_path,
+  };
+  console.log(`[Supabase] Instrument ${instrumentId} updated successfully`);
   return updatedInstrument;
 };
 
-/**
- * Deletes an instrument item.
- */
 export const deleteInstrument = async (instrumentId: string): Promise<void> => {
-  console.log(`[API] Deleting instrument ${instrumentId}`);
-  const response = await fetch(`/api/instruments/${instrumentId}`, {
-    method: 'DELETE',
-  });
-  console.log(`[API] Delete Instrument Response status: ${response.status}`);
-  if (!response.ok && response.status !== 204) {
-    let errorMsg = `Failed to delete instrument ${instrumentId}: ${response.statusText}`;
-    try {
-      const errorBody = await response.json();
-      errorMsg = errorBody.message || errorBody.error || errorMsg;
-    } catch (e) {
-      console.log('[API] instruments try/catch error:', e);
-    }
-    console.error(`[API] Delete Instrument failed: ${errorMsg}`);
-    throw new Error(errorMsg);
+  const client = getSupabase();
+  console.log(`[Supabase] Deleting instrument ${instrumentId}`);
+
+  let imagePathToDelete: string | null = null;
+  try {
+      const { data: instrumentData, error: fetchError } = await client
+          .from('instruments')
+          .select('image_path')
+          .eq('id', instrumentId)
+          .maybeSingle();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+          console.warn(`[Supabase] Could not fetch image_path before deleting instrument ${instrumentId}:`, fetchError.message);
+      } else if (instrumentData?.image_path) {
+          imagePathToDelete = instrumentData.image_path;
+          console.log(`[Supabase] Found image path to delete: ${imagePathToDelete}`);
+      }
+  } catch (e) {
+      console.warn(`[Supabase] Error fetching image_path before delete:`, e);
   }
-  if (response.status === 204) {
-    console.log(`[API] Instrument ${instrumentId} deleted successfully (204 No Content).`);
-  } else {
-    console.log(
-      `[API] Instrument ${instrumentId} deleted successfully (Status: ${response.status}).`
-    );
+
+  const { error: deleteDbError } = await client
+    .from('instruments')
+    .delete()
+    .eq('id', instrumentId);
+
+  if (deleteDbError) {
+    console.error(`[Supabase] Error deleting instrument ${instrumentId} from DB:`, deleteDbError.message);
+    throw new Error(`Failed to delete instrument ${instrumentId} from database: ${deleteDbError.message}`);
+  }
+
+  console.log(`[Supabase] Instrument ${instrumentId} deleted successfully from database.`);
+
+  if (imagePathToDelete) {
+    console.log(`[Supabase] Attempting to delete image from Storage: ${imagePathToDelete}`);
+    const cleanPath = imagePathToDelete.startsWith('/') ? imagePathToDelete.substring(1) : imagePathToDelete;
+    const { error: deleteStorageError } = await client.storage
+      .from('instrument-icons')
+      .remove([cleanPath]);
+
+    if (deleteStorageError) {
+      console.warn(`[Supabase] Failed to delete instrument icon '${cleanPath}' from Storage:`, deleteStorageError.message);
+    } else {
+      console.log(`[Supabase] Successfully deleted instrument icon '${cleanPath}' from Storage.`);
+    }
   }
 };

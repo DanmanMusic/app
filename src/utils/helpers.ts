@@ -1,22 +1,11 @@
+// src/utils/helpers.ts
 import { ImageSourcePropType } from 'react-native';
+import { supabase } from '../lib/supabaseClient';
 import { Instrument, TaskLibraryItem, User } from '../types/dataTypes';
 
 export const getTaskTitle = (taskId: string, taskLibrary: TaskLibraryItem[]): string => {
   const taskDetail = taskLibrary.find(libTask => libTask.id === taskId);
   return taskDetail?.title || `Custom Task (${taskId})`;
-};
-
-export const getInstrumentNames = (
-  instrumentIds: string[] | undefined,
-  instruments: Instrument[]
-): string => {
-  if (!instrumentIds || instrumentIds.length === 0) return 'N/A';
-  return instrumentIds
-    .map(id => {
-      const instrument = instruments.find(inst => inst.id === id);
-      return instrument?.name || `Unknown Instrument (${id})`;
-    })
-    .join(', ');
 };
 
 export const getUserDisplayName = (
@@ -32,14 +21,43 @@ export const getUserDisplayName = (
   return baseName || 'Unnamed User';
 };
 
+
+const getSupabasePublicUrl = (bucket: string, path: string | null | undefined): string | null => {
+  if (!path || !supabase) {
+    if (!supabase) console.warn("[Supabase Storage] Client not ready for getPublicUrl.");
+    return null;
+  }
+  try {
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    const { data } = supabase.storage.from(bucket).getPublicUrl(cleanPath);
+    return data?.publicUrl || null;
+  } catch (e) {
+    console.error("[Supabase Storage] Error getting public URL for path:", path, e);
+    return null;
+  }
+};
+
+
 export const getInstrumentIconSource = (
-  instrumentName: string | undefined
+  instrument: Pick<Instrument, 'name' | 'image_path'> | undefined | null
 ): ImageSourcePropType => {
   const defaultIcon = require('../../assets/instruments/icon.jpg');
-  if (!instrumentName) {
+  let publicUrl: string | null = null;
+
+  if (instrument?.image_path) {
+    publicUrl = getSupabasePublicUrl('instrument-icons', instrument.image_path);
+  }
+
+  if (publicUrl) {
+    return { uri: publicUrl };
+  }
+
+  if (!instrument?.name) {
     return defaultIcon;
   }
-  const imageName = instrumentName.toLowerCase().trim();
+
+  const imageName = instrument.name.toLowerCase().trim();
+
   try {
     switch (imageName) {
       case 'piano':
@@ -61,6 +79,7 @@ export const getInstrumentIconSource = (
         return defaultIcon;
     }
   } catch (error) {
+    console.error(`Error loading local fallback image for ${imageName}:`, error);
     return defaultIcon;
   }
 };

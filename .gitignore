@@ -3,6 +3,10 @@
 app_context.txt
 icon_generation_context.zip
 .vscode
+.env
+
+supabase/config.toml
+reset_db.sh
 
 # dependencies
 node_modules/

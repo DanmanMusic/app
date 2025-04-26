@@ -1,3 +1,4 @@
+// src/components/admin/modals/EditInstrumentModal.tsx
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal, View, Text, Button, TextInput, Image, ActivityIndicator } from 'react-native';
@@ -16,24 +17,23 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
   onClose,
 }) => {
   const [name, setName] = useState('');
-
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: updateInstrument,
-    onSuccess: updatedInstrument => {
-      console.log('Instrument updated successfully via mutation:', updatedInstrument);
+    onSuccess: (updatedInstrument) => {
+      console.log(`[EditInstrumentModal] onSuccess: Invalidating instruments query.`);
       queryClient.invalidateQueries({ queryKey: ['instruments'] });
       onClose();
       Toast.show({
         type: 'success',
         text1: 'Success',
-        text2: 'Instrument updated successfully.',
+        text2: `Instrument "${updatedInstrument.name}" updated successfully.`,
         position: 'bottom',
       });
     },
     onError: (error, variables) => {
-      console.error(`Error updating instrument ${variables.instrumentId} via mutation:`, error);
+      console.error(`[EditInstrumentModal] onError updating ${variables.instrumentId}:`, error);
       Toast.show({
         type: 'error',
         text1: 'Update Failed',
@@ -48,31 +48,44 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
     if (visible && instrumentToEdit) {
       setName(instrumentToEdit.name);
       mutation.reset();
+    } else {
+      setName('');
     }
   }, [visible, instrumentToEdit]);
 
   const handleSave = () => {
-    if (!instrumentToEdit) return;
+     if (!instrumentToEdit) return;
 
-    const trimmedName = name.trim();
-    if (!trimmedName) {
-      return;
-    }
+     const trimmedName = name.trim();
+     if (!trimmedName) {
+         Toast.show({
+             type: 'error',
+             text1: 'Validation Error',
+             text2: 'Instrument name cannot be empty.',
+             position: 'bottom',
+             visibilityTime: 4000,
+            });
+         return;
+      }
 
-    const updates: Partial<Omit<Instrument, 'id'>> = {};
-    if (trimmedName !== instrumentToEdit.name) {
-      updates.name = trimmedName;
-    }
+     const updates: Partial<Pick<Instrument, 'name'>> = {};
 
-    if (Object.keys(updates).length === 0) {
-      onClose();
-      return;
-    }
+     if (trimmedName !== instrumentToEdit.name) {
+         updates.name = trimmedName;
+     } else {
+         console.log('[EditInstrumentModal] No name change detected, closing.');
+         onClose();
+         return;
+     }
 
-    mutation.mutate({ instrumentId: instrumentToEdit.id, updates });
+     // The API function updateInstrument now accepts Partial<Pick<Instrument, 'name'>>
+     // so this call is valid even if updates only contains name.
+     mutation.mutate({ instrumentId: instrumentToEdit.id, updates });
   };
 
-  if (!instrumentToEdit) return null;
+  if (!instrumentToEdit) {
+    return null;
+  }
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -81,9 +94,9 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
           <Text style={modalSharedStyles.modalTitle}>Edit Instrument</Text>
           <Text style={modalSharedStyles.subTitle}>ID: {instrumentToEdit.id}</Text>
           <View style={modalSharedStyles.iconPreviewContainer}>
-            <Text style={commonSharedStyles.label}>Current Icon (Mock):</Text>
+            <Text style={commonSharedStyles.label}>Current Icon:</Text>
             <Image
-              source={getInstrumentIconSource(instrumentToEdit.name)}
+              source={getInstrumentIconSource(instrumentToEdit)}
               style={modalSharedStyles.iconPreview}
               resizeMode="contain"
             />
@@ -98,20 +111,25 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
             autoCapitalize="words"
             editable={!mutation.isPending}
           />
+
           {mutation.isPending && (
-            <View style={modalSharedStyles.loadingContainer}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalSharedStyles.loadingText}>Saving Changes...</Text>
-            </View>
+             <View style={modalSharedStyles.loadingContainer}>
+               <ActivityIndicator size="small" color={colors.primary} />
+               <Text style={modalSharedStyles.loadingText}>Saving Changes...</Text>
+             </View>
           )}
           {mutation.isError && (
-            <Text style={commonSharedStyles.errorText}>
-              Error:
-              {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
-            </Text>
+             <Text style={commonSharedStyles.errorText}>
+               Error: {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
+             </Text>
           )}
+
           <View style={modalSharedStyles.buttonContainer}>
-            <Button title="Save Changes" onPress={handleSave} disabled={mutation.isPending} />
+            <Button
+              title={mutation.isPending ? "Saving..." : "Save Changes"}
+              onPress={handleSave}
+              disabled={mutation.isPending || !name.trim() || (instrumentToEdit && name.trim() === instrumentToEdit.name)}
+            />
           </View>
           <View style={modalSharedStyles.footerButton}>
             <Button

@@ -351,48 +351,6 @@ export const handlers = [
     mockAnnouncementsData.splice(idx, 1);
     return new HttpResponse(null, { status: 204 });
   }),
-
-  http.get('/api/instruments', () => {
-    const d = [...instrumentsData].sort((a, b) => a.name.localeCompare(b.name));
-    return HttpResponse.json(d);
-  }),
-  http.post('/api/instruments', async ({ request }) => {
-    try {
-      const d = (await request.json()) as Omit<Instrument, 'id'>;
-      if (!d || !d.name || !d.name.trim()) return new HttpResponse('Invalid data', { status: 400 });
-      const i = `inst-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-      const n = { name: d.name.trim(), id: i };
-      instrumentsData.push(n);
-      return HttpResponse.json(n, { status: 201 });
-    } catch (e) {
-      return new HttpResponse('Bad request', { status: 400 });
-    }
-  }),
-  http.patch('/api/instruments/:id', async ({ request, params }) => {
-    const { id } = params;
-    if (typeof id !== 'string') return new HttpResponse('Invalid ID', { status: 400 });
-    const idx = instrumentsData.findIndex(i => i.id === id);
-    if (idx === -1) return new HttpResponse('Not found', { status: 404 });
-    try {
-      const u = (await request.json()) as Partial<Omit<Instrument, 'id'>>;
-      if (u.name != null && !u.name.trim()) return new HttpResponse('Name empty', { status: 400 });
-      const n = { ...instrumentsData[idx], ...u };
-      if (u.name) n.name = u.name.trim();
-      instrumentsData[idx] = n;
-      return HttpResponse.json(n);
-    } catch (e) {
-      return new HttpResponse('Bad request', { status: 400 });
-    }
-  }),
-  http.delete('/api/instruments/:id', ({ params }) => {
-    const { id } = params;
-    if (typeof id !== 'string') return new HttpResponse('Invalid ID', { status: 400 });
-    const idx = instrumentsData.findIndex(i => i.id === id);
-    if (idx === -1) return new HttpResponse('Not found', { status: 404 });
-    instrumentsData.splice(idx, 1);
-    return new HttpResponse(null, { status: 204 });
-  }),
-
   http.get('/api/assigned-tasks', ({ request }) => {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1', 10);

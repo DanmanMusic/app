@@ -33,6 +33,7 @@ export interface AssignedTask {
 export interface Instrument {
   id: string;
   name: string;
+  image_path?: string | null;
 }
 
 export interface RewardItem {

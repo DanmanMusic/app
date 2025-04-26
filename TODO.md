@@ -64,63 +64,70 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
     *   Finalize Announcement fields/types. _(Example: Is the 'message' field always needed? Are 'announcement', 'challenge', 'redemption' types enough?)._
 *   [ ] **Decide: Student Identifier for PIN Login:** Choose method. (PIN login *method* is set, but what do they type *with* the PIN?)
     *   _(Example: How does a student identify themselves with their PIN? By typing `Alice Wonder` + PIN, or `alice.w` + PIN, or `alice.wonder@email.com` + PIN?)._
-*   [ ] **Decide: Parent Login Context:** Confirm differentiation logic. (Assumes parent uses child's ID/PIN).
+*   [ ] **Decide: Parent Login Identification Mechanism:** Specify differentiation logic. (Assumes parent uses child's ID/PIN).
     *   _(Example: If Mom Wonder logs in using `Alice Wonder` + Alice's PIN, how does the app confirm she's a Parent to show the Parent view? Does the backend check linked parents during login?)._
 *   [ ] **Decide: Additional Login Methods:** Offer Email/Password for Students/Parents too?
     *   _(Example: Should students *also* be able to set an email/password to log in, as an alternative to their Identifier+PIN? What about Parents having their own separate email/password login instead of using child credentials?)._
 *   [ ] **Decide: Parent Reminders Feature:** Go/No-Go for V1? (If Go, provide detailed specs).
     *   _(Example: Should parents have a button like "Nudge Alice about 'Practice Scales'" that shows a reminder in Alice's app?)._
 *   [ ] **Decide: Data Deletion Policy:** Cascade delete or anonymize student tasks/history?
-    *   _(Example: If Admin deletes student 'Bob', should all records of tasks Bob completed and tickets he earned disappear forever, or should they remain but just say 'Deleted Student' instead of 'Bob'?).
+    *   _(Example: If Admin deletes student 'Bob', should all records of tasks Bob completed and tickets he earned disappear forever, or should they remain but just say 'Deleted Student' instead of 'Bob'?)._
 
 ### [ ] 2. Address Known Issues & TODOs
-
-*   [ ] **Lint Errors:** Address remaining ESLint errors (unused vars, exhaustive-deps, empty interfaces, require imports). Run `npm run lint -- --fix`.
-*   [ ] **Dark Mode:** Implement Dark Mode support (adjust colors, test components).
+*   [ ] **Lint Errors:** Address remaining ESLint errors. Run `npm run lint -- --fix`.
+*   [ ] **Dark Mode:** Implement Dark Mode support.
 *   [ ] **Admin View (Created Users):** Test if new users appear correctly after creation (post TQ refactor).
-*   [ ] **Role-Based Action Control:** Fully review/implement remaining permission checks (e.g., ensure teachers cannot perform admin-only actions even if UI is similar).
-*   [ ] **User Linking (Admin):** Add UI controls (e.g., multi-select) in Create/Edit User Modals for linking Students <-> Teachers, Students <-> Instruments. (Connect to `PATCH /api/users/:id` or Supabase equivalent later).
-*   [ ] **Balance in Modals:** Update `ManualTicketAdjustmentModal` and `RedeemRewardModal` in Admin/Teacher views to fetch/use the *actual* current balance instead of defaulting to 0.
+*   [ ] **Role-Based Action Control:** Fully review/implement remaining permission checks.
+*   [ ] **User Linking (Admin):** Add UI controls in Create/Edit User Modals for linking. (Connect to Supabase later).
+*   [ ] **Balance in Modals:** Update `ManualTicketAdjustmentModal` and `RedeemRewardModal` to fetch/use actual current balance.
 
 ### [ ] 3. Implement Remaining Mock UI/Placeholders
-
-*   [ ] **Student Action:** Implement Rewards redemption flow/button in `StudentView`. Needs to connect to `RedeemRewardModal` or similar flow.
+*   [ ] **Student Action:** Implement Rewards redemption flow/button in `StudentView`.
 *   [ ] **Parent Action:** Add mock "Link Another Student" button functionality/alert in `ParentView`.
 *   [ ] **Teacher Action:** Add mock "View All Students" button functionality/alert in `TeacherStudentsSection`.
 
 ### [ ] 4. Refinements & Testing
-
-*   [ ] Thoroughly test all user role workflows with MSW.
-*   [ ] Refine UI/UX based on testing (loading states, error messages, navigation, empty states, scrollability nuances).
+*   [x] Test `instruments` CRUD operations against Supabase (Create, Read tested; Update Name, Delete DB/Storage tested).
+*   [ ] Thoroughly test all user role workflows with remaining MSW mocks + Supabase instruments.
+*   [ ] Refine UI/UX based on testing.
 *   [ ] Add basic unit/integration tests (Optional for V1).
 
 ## [ ] Development Phase 3: Backend Development and Integration (Target: Supabase)
 
-*   [ ] Set up Supabase project & define initial schema based on SPECIFICATION.md (using CLI migrations).
-*   [ ] Install & Configure `supabase-js` client (`src/lib/supabaseClient.ts`).
+*   [x] Set up Supabase project.
+*   [x] Install & Configure Supabase CLI, Link Project.
+*   [x] Define initial schema for `instruments` table via CLI migration (`..._create_instruments_table.sql`).
+    *   [x] Includes table, RLS enabled, `updated_at` trigger, basic permissive RLS policies for CRUD (Dev only).
+*   [x] Install & Configure `supabase-js` client (`src/lib/supabaseClient.ts`).
+    *   [x] Includes `.env` setup for keys.
+    *   [x] Includes platform-specific storage adapter (`SecureStore`/`AsyncStorage`).
 *   [ ] **Implement Authentication:**
     *   [ ] Backend: Implement secure PIN hashing/storage (`user_credentials` table).
-    *   [ ] Backend: Create `login-with-pin` Edge Function (validates PIN, generates JWT).
-    *   [ ] Backend: Create `set-student-pin` Edge Function (Admin use).
+    *   [ ] Backend: Create `login-with-pin` Edge Function.
+    *   [ ] Backend: Create `set-student-pin` Edge Function.
     *   [ ] Frontend: Create PIN Login UI.
-    *   [ ] Frontend: Update `AuthContext` to use Supabase sessions & PIN login flow.
-    *   [ ] Frontend: Implement Admin/Teacher email/password login UI & flow.
+    *   [ ] Frontend: Update `AuthContext` for Supabase sessions & PIN login.
+    *   [ ] Frontend: Implement Admin/Teacher email/password login.
 *   [ ] **Integrate Data Fetching:**
-    *   [ ] Replace `src/api/` functions & TQ `queryFn`s with `supabase-js` calls (e.g., `fetchInstruments`, `fetchUsers`, etc.).
+    *   [x] Refactor `src/api/instruments.ts` (`fetchInstruments`) for Supabase.
+    *   [ ] Refactor other `src/api/` functions & TQ `queryFn`s for Supabase (`fetchUsers`, `fetchTasks`, etc.).
     *   [ ] Update pagination hooks (`usePaginated*`) for Supabase (`range`, filters).
 *   [ ] **Integrate Mutations:**
-    *   [ ] Replace `fetch` calls in TQ `mutationFn`s with Supabase client methods (`insert`, `update`, `delete`).
-    *   [ ] Develop Supabase Edge Functions for complex logic (Verification, Redemption, Adjustments, potential auto-announcements, Cascading Logic on delete).
-*   [ ] **Implement Storage:** (If images/avatars are decided upon)
-    *   [ ] Set up Supabase Storage Buckets.
-    *   [ ] Implement file upload logic.
-    *   [ ] Update UI to display images using generated URLs.
+    *   [x] Refactor `src/api/instruments.ts` (`createInstrument`, `updateInstrument`, `deleteInstrument`) for Supabase DB operations.
+    *   [ ] Refactor other mutation API functions for Supabase (`createUser`, `updateTask`, etc.).
+    *   [ ] Develop Supabase Edge Functions for complex logic (Verification, Redemption, Adjustments, etc.).
+*   [ ] **Implement Storage:**
+    *   [x] Set up Supabase Storage Bucket for instruments (`instrument-icons`).
+    *   [x] Refactor helpers/components to *display* images from Storage (`getInstrumentIconSource`, `AdminInstrumentItem`, `EditInstrumentModal`).
+    *   [ ] Implement file upload logic for instruments (in Modals and API functions).
+    *   [x] Implement file delete logic for instruments (integrated into `deleteInstrument`).
+    *   [ ] Set up Buckets and implement Upload/Delete for Rewards/Avatars (if decided).
 *   [ ] **Implement Features based on Decisions:** (Challenges, Task Links, Avatars, etc.)
-*   [ ] **Remove MSW:** Uninstall dependency, remove handlers, setup files, `metro.config.js` shims.
-*   [ ] Define and Implement RLS policies for all tables.
+*   [ ] **Remove MSW:** Uninstall dependency, remove handlers, setup files, `metro.config.js` shims (once all APIs are migrated).
+*   [x] Define and Implement initial permissive RLS policies for `instruments`.
+*   [ ] Define and Implement final, role-specific RLS policies for all tables.
 *   [ ] Optional: Implement Realtime updates, Push Notifications.
 
 ## [ ] Supporting Features (Post-MVP / Lower Priority)
-
 *   [ ] Frontend: Design and implement `PublicView` welcome/landing page using provided store assets.
 *   [ ] Frontend: Evaluate and potentially implement opaque background images using provided assets.

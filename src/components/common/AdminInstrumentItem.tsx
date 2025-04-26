@@ -1,26 +1,22 @@
+// src/components/common/AdminInstrumentItem.tsx
 import { Button, Image, Text, View } from 'react-native';
-import { Instrument } from '../../types/dataTypes';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { getInstrumentIconSource } from '../../utils/helpers';
+import { AdminInstrumentItemProps } from '../../types/componentProps';
 
-export const AdminInstrumentItem = ({
+export const AdminInstrumentItem: React.FC<AdminInstrumentItemProps> = ({ // Use React.FC
   item,
   onEdit,
   onDelete,
   disabled,
-}: {
-  item: Instrument;
-  onEdit: (instrument: Instrument) => void;
-  onDelete: (instrument: Instrument) => void;
-  disabled?: boolean;
 }) => (
   <View style={appSharedStyles.itemContainer}>
     <View style={commonSharedStyles.itemContentRow}>
       <Image
-        source={getInstrumentIconSource(item.name)}
+        source={getInstrumentIconSource(item)}
         style={adminSharedStyles.instrumentIcon}
         resizeMode="contain"
       />

@@ -235,3 +235,10 @@ export interface AdminParentDetailViewProps {
   onInitiateStatusUser: (user: User) => void;
   onViewStudentProfile: (studentId: string) => void;
 }
+
+export interface AdminInstrumentItemProps {
+  item: Instrument;
+  onEdit: (instrument: Instrument) => void;
+  onDelete: (instrument: Instrument) => void;
+  disabled?: boolean;
+}
