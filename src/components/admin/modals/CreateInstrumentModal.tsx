@@ -1,10 +1,9 @@
 // src/components/admin/modals/CreateInstrumentModal.tsx
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Modal, View, Text, Button, TextInput, ActivityIndicator } from 'react-native';
-// --- Make sure we import the refactored API function ---
+import { Modal, View, Text, Button, TextInput, ActivityIndicator, Image, Platform, Alert } from 'react-native'; // Added Image, Platform, Alert
+import * as ImagePicker from 'expo-image-picker'; // Import ImagePicker
 import { createInstrument } from '../../../api/instruments';
-// ------------------------------------------------------
 import { Instrument } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { CreateInstrumentModalProps } from '../../../types/componentProps';
@@ -14,16 +13,15 @@ import Toast from 'react-native-toast-message';
 
 const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');
+  const [imageUri, setImageUri] = useState<string | null>(null); // State for selected image URI
+  const [mimeType, setMimeType] = useState<string | undefined>(undefined); // State for MIME type
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    // --- Ensure mutationFn points to the correct API function ---
     mutationFn: createInstrument,
-    // ----------------------------------------------------------
     onSuccess: (createdInstrument) => {
-      // Invalidate the query for the instruments list so it refetches
       queryClient.invalidateQueries({ queryKey: ['instruments'] });
-      onClose(); // Close modal on success
+      onClose();
       Toast.show({
         type: 'success',
         text1: 'Success',
@@ -45,33 +43,69 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
   useEffect(() => {
     if (visible) {
       setName('');
-      mutation.reset(); // Reset mutation state when modal opens
+      setImageUri(null); // Reset image state
+      setMimeType(undefined);
+      mutation.reset();
     }
   }, [visible]);
+
+  // Function to handle picking an image
+  const pickImage = async () => {
+      // Request permissions if on native
+      if (Platform.OS !== 'web') {
+          const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          if (status !== 'granted') {
+              Alert.alert('Permission Required', 'Sorry, we need camera roll permissions to make this work!');
+              return;
+          }
+      }
+
+      try {
+          let result = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ['images'],
+              allowsEditing: true,
+              aspect: [1, 1], // Keep it square
+              quality: 0.8, // Reduce quality slightly for faster uploads
+          });
+
+          console.log('ImagePicker Result:', result);
+
+          if (!result.canceled && result.assets && result.assets.length > 0) {
+              const selectedAsset = result.assets[0];
+              setImageUri(selectedAsset.uri);
+              setMimeType(selectedAsset.mimeType); // Store the MIME type
+              console.log('Selected Image URI:', selectedAsset.uri, 'MIME Type:', selectedAsset.mimeType);
+          } else {
+              console.log('Image picking cancelled or failed.');
+          }
+      } catch (error) {
+          console.error("Error picking image: ", error);
+          Alert.alert('Image Pick Error', 'An error occurred while picking the image.');
+      }
+  };
+
 
   const handleCreate = () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
-      Toast.show({ // Provide user feedback for validation
+      Toast.show({
           type: 'error',
           text1: 'Validation Error',
           text2: 'Instrument name cannot be empty.',
           position: 'bottom',
+          visibilityTime: 4000,
       });
-      return; // Prevent submission if name is empty
+      return;
     }
 
-    // Prepare the data expected by the refactored createInstrument (just name for now)
-    const newInstrumentData: Pick<Instrument, 'name'> = {
-      name: trimmedName,
+    // Pass name and image details to the mutation
+    const instrumentData = {
+        name: trimmedName,
+        imageUri: imageUri, // Pass the URI
+        mimeType: mimeType, // Pass the mime type
     };
-    // --- TODO: Later, add image file handling here ---
-    // If an image was picked:
-    // 1. Upload image to Supabase Storage, get path
-    // 2. Add 'image_path' to newInstrumentData
-    // 3. Call mutation.mutate(newInstrumentData)
-    // For now, just mutate with the name:
-    mutation.mutate(newInstrumentData);
+
+    mutation.mutate(instrumentData);
   };
 
   return (
@@ -88,9 +122,24 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             placeholder="e.g., Saxophone"
             placeholderTextColor={colors.textLight}
             autoCapitalize="words"
-            editable={!mutation.isPending} // Disable input while submitting
+            editable={!mutation.isPending}
           />
-          {/* --- TODO: Add Image Picker button here later --- */}
+
+          {/* Image Picker Button and Preview */}
+          <Text style={commonSharedStyles.label}>Icon (Optional):</Text>
+          <View style={modalSharedStyles.iconPreviewContainer}>
+             {imageUri ? (
+                <Image source={{ uri: imageUri }} style={modalSharedStyles.iconPreview} resizeMode="contain" />
+              ) : (
+                <Text style={{ color: colors.textLight, fontStyle: 'italic' }}>No icon selected</Text>
+              )}
+             <Button
+                title={imageUri ? "Change Icon" : "Choose Icon"}
+                onPress={pickImage}
+                disabled={mutation.isPending}
+                color={colors.info}
+              />
+          </View>
 
           {mutation.isPending && (
             <View style={modalSharedStyles.loadingContainer}>
@@ -107,7 +156,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             <Button
               title={mutation.isPending ? "Creating..." : "Create Instrument"}
               onPress={handleCreate}
-              disabled={mutation.isPending || !name.trim()} // Disable if pending or name is empty
+              disabled={mutation.isPending || !name.trim()}
             />
           </View>
           <View style={modalSharedStyles.footerButton}>

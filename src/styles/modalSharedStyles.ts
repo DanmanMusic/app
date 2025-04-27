@@ -1,5 +1,5 @@
+// src/styles/modalSharedStyles.ts
 import { StyleSheet } from 'react-native';
-
 import { colors } from './colors';
 
 export const modalSharedStyles = StyleSheet.create({
@@ -41,7 +41,7 @@ export const modalSharedStyles = StyleSheet.create({
   },
   contentScrollView: {
     marginBottom: 15,
-    maxHeight: '65%',
+    maxHeight: '65%', // Adjust as needed
     width: '100%',
   },
   currentGoalItem: {
@@ -65,7 +65,7 @@ export const modalSharedStyles = StyleSheet.create({
     paddingVertical: 8,
   },
   filterSection: {
-    backgroundColor: colors.backgroundPrimary,
+    backgroundColor: colors.backgroundPrimary, // Light background for filter area
     borderBottomColor: colors.borderSecondary,
     borderBottomWidth: 1,
     paddingBottom: 10,
@@ -74,16 +74,16 @@ export const modalSharedStyles = StyleSheet.create({
   footer: {
     alignItems: 'center',
     backgroundColor: colors.backgroundPrimary,
-    borderBottomLeftRadius: 10,
+    borderBottomLeftRadius: 10, // Match modal border radius
     borderBottomRightRadius: 10,
     borderTopColor: colors.borderPrimary,
     borderTopWidth: 1,
-    paddingBottom: 10,
-    paddingTop: 5,
+    paddingBottom: 10, // Consistent padding
+    paddingTop: 5, // Less padding top in footer
     width: '100%',
   },
   footerButton: {
-    marginTop: 10,
+    marginTop: 10, // Space between main actions and cancel/close
     width: '100%',
   },
   goalSelectDetails: {
@@ -116,11 +116,6 @@ export const modalSharedStyles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 2,
   },
-  iconPreview: {
-    height: 60,
-    marginBottom: 5,
-    width: 60,
-  },
   iconPreviewContainer: {
     alignItems: 'center',
     borderBottomColor: colors.borderSecondary,
@@ -128,6 +123,16 @@ export const modalSharedStyles = StyleSheet.create({
     marginBottom: 15,
     paddingBottom: 15,
     width: '100%',
+    gap: 10, // Add gap between preview and button
+  },
+  iconPreview: {
+    width: 80, // Slightly larger preview
+    height: 80,
+    marginBottom: 5,
+    borderRadius: 5, // Optional rounded corners
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+    backgroundColor: colors.backgroundGrey, // Background for empty state or loading
   },
   listItem: {
     borderBottomColor: colors.borderSecondary,
@@ -141,7 +146,7 @@ export const modalSharedStyles = StyleSheet.create({
   loadingContainer: {
     alignItems: 'center',
     flexDirection: 'row',
-    height: 20,
+    height: 20, // Give it some height
     justifyContent: 'center',
     marginVertical: 10,
   },
@@ -162,15 +167,15 @@ export const modalSharedStyles = StyleSheet.create({
     backgroundColor: colors.backgroundPrimary,
     borderBottomColor: colors.borderPrimary,
     borderBottomWidth: 1,
-    borderTopLeftRadius: 10,
+    borderTopLeftRadius: 10, // Match modal border radius
     borderTopRightRadius: 10,
     padding: 15,
     width: '100%',
   },
   modalListContainer: {
-    flexGrow: 0,
+    flexGrow: 0, // Prevent list from taking all space initially
     marginBottom: 15,
-    maxHeight: '60%',
+    maxHeight: '60%', // Or adjust as needed
     width: '100%',
   },
   modalMessage: {
@@ -216,19 +221,19 @@ export const modalSharedStyles = StyleSheet.create({
     width: '100%',
   },
   modalView: {
-    alignItems: 'stretch',
+    alignItems: 'stretch', // Changed from 'center'
     backgroundColor: colors.backgroundPrimary,
     borderRadius: 10,
     elevation: 5,
     margin: 20,
-    maxHeight: '90%',
-    maxWidth: 500,
+    maxHeight: '90%', // Limit height
+    maxWidth: 500, // Limit width on larger screens
     padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    width: '90%',
+    width: '90%', // Responsive width
   },
   modeSwitchContainer: {
     alignItems: 'center',
@@ -258,7 +263,7 @@ export const modalSharedStyles = StyleSheet.create({
     fontSize: 12,
     justifyContent: 'space-between',
     marginBottom: 5,
-    marginTop: -5,
+    marginTop: -5, // Pull up slightly below slider
     paddingHorizontal: 5,
     width: '100%',
   },
@@ -277,8 +282,9 @@ export const modalSharedStyles = StyleSheet.create({
     width: '100%',
   },
   scrollView: {
-    marginBottom: 15,
+    marginBottom: 15, // Space before buttons
     width: '100%',
+    // Max height can be controlled by the modalView's maxHeight
   },
   searchInput: {
     backgroundColor: colors.backgroundPrimary,
@@ -296,10 +302,10 @@ export const modalSharedStyles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 10, // Space below selection buttons
   },
   slider: {
-    height: 40,
+    height: 40, // Standard touch target height
     marginTop: 10,
     width: '100%',
   },
@@ -309,7 +315,7 @@ export const modalSharedStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 10,
-    marginTop: 10,
+    marginTop: 10, // Consistent spacing
     width: '100%',
   },
   subTitle: {

@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 import { appSharedStyles } from './appSharedStyles';
 import { colors } from './colors';
@@ -39,6 +39,25 @@ export const adminSharedStyles = StyleSheet.create({
     flexShrink: 1,
     marginBottom: 0,
   },
+  pickerContainer: {
+    height: 50, // Set height for the container
+    borderColor: colors.borderPrimary,
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 15, // Match input margin bottom
+    justifyContent: 'center', // Center Picker vertically
+    backgroundColor: colors.backgroundPrimary, // Match input background
+  },
+  picker: {
+      width: '100%',
+      height: Platform.OS === 'android' ? 50 : undefined, // Android needs explicit height sometimes
+      color: colors.textPrimary, // Match input text color
+  },
+  pickerItem: {
+      // iOS specific styling for items in the dropdown list
+      height: 120, // Example height, adjust as needed for iOS list rows
+      fontSize: 16,
+  },  
   pendingDetail: {
     color: colors.textSecondary,
     fontSize: 14,

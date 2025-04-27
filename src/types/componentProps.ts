@@ -13,7 +13,6 @@ import {
 export interface AdminViewProps {
   onInitiateVerificationModal?: (task: AssignedTask) => void;
 }
-
 export interface TeacherViewProps {
   onInitiateVerificationModal: (task: AssignedTask) => void;
 }
@@ -172,7 +171,6 @@ export interface AdminStudentDetailViewProps {
   onInitiateStatusUser?: (user: User) => void;
   onInitiateTicketAdjustment?: (user: User) => void;
   onInitiateRedemption?: (user: User) => void;
-  onInitiateDeleteTask?: (assignmentId: string) => void;
 }
 
 export interface ViewAllAssignedTasksModalProps {

@@ -168,4 +168,7 @@ export const commonSharedStyles = StyleSheet.create({
     textAlignVertical: 'top',
     width: '100%',
   },
+  textCenter: {
+    textAlign: 'center',
+  },
 });
