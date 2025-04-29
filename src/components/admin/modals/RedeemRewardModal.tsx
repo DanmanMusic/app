@@ -30,7 +30,6 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
   onClose,
   studentId,
   studentName,
-  // currentBalance prop removed
   redeemerId,
 }) => {
   const queryClient = useQueryClient();

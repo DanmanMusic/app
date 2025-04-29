@@ -51,9 +51,9 @@ CREATE INDEX idx_profiles_status ON public.profiles (status);
 DROP POLICY IF EXISTS "TEMP Allow anon select access on profiles" ON public.profiles;
 CREATE POLICY "TEMP Allow anon select access on profiles"
 ON public.profiles FOR SELECT
-TO anon
+TO authenticated
 USING (true);
-COMMENT ON POLICY "TEMP Allow anon select access on profiles" ON public.profiles IS 'TEMP DEV ONLY: Allows anonymous read access. MUST BE REPLACED.';
+COMMENT ON POLICY "TEMP Allow authenticated select access on profiles" ON public.profiles IS 'TEMP DEV ONLY: Allows anonymous read access. MUST BE REPLACED.';
 
 -- 2. Allow Anon Insert Access (TEMPORARY - Needed for createUser API)
 DROP POLICY IF EXISTS "TEMP Allow anon insert access on profiles" ON public.profiles;

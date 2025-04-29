@@ -1,8 +1,8 @@
 // App.tsx
 import React, { useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { StyleSheet, Text, View, Button, ActivityIndicator, ScrollView } from 'react-native';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, Platform } from 'react-native'; // Platform might be removable if not used elsewhere now
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
@@ -14,108 +14,74 @@ import { ParentView } from './src/views/ParentView';
 import { PublicView } from './src/views/PublicView';
 import { StudentView } from './src/views/StudentView';
 import { TeacherView } from './src/views/TeacherView';
+import LoginModal from './src/components/common/LoginModal';
+
+// API Function for Selector
+import { fetchActiveProfilesForDevSelector } from './src/api/users';
 
 // Type Imports
-import { AssignedTask, User } from './src/types/dataTypes';
+import { AssignedTask, User, UserRole } from './src/types/dataTypes';
 
 // Style & Helper Imports
 import { colors } from './src/styles/colors';
 import { getUserDisplayName } from './src/utils/helpers';
+import { commonSharedStyles } from './src/styles/commonSharedStyles';
+import { appSharedStyles } from './src/styles/appSharedStyles';
 
-const mockUsers: User[] = [];
-
-// --- MSW Initialization Block REMOVED ---
-// if (__DEV__) {
-//   console.log('[MSW] Development mode detected. Initializing MSW...');
-//   if (Platform.OS === 'web') {
-//     import('./src/mocks/browser') // No longer exists
-//       .then(({ worker }) => {
-//         console.log('[MSW] Starting worker for web...');
-//         worker.start({ onUnhandledRequest: 'bypass' });
-//         console.log('[MSW] Web worker started.');
-//       })
-//       .catch(err => console.error('[MSW] Web worker failed to start:', err));
-//   } else {
-//     import('./src/mocks/server') // No longer exists
-//       .then(({ server }) => {
-//         console.log('[MSW] Starting server for native...');
-//         server.listen({ onUnhandledRequest: 'bypass' });
-//         console.log('[MSW] Native server started.');
-//       })
-//       .catch(err => console.error('[MSW] Native server failed to start:', err));
-//   }
-// }
-// --- End of REMOVED MSW Block ---
 
 const queryClient = new QueryClient();
 
-// Development View Selector remains for now to allow role switching during dev
-// TODO: Remove this component entirely when real authentication is implemented.
-const DevelopmentViewSelector = () => {
+// --- Development Role Selector ---
+const DevelopmentRoleSelector = () => {
   const { setMockAuthState } = useAuth();
-  // TODO: This should eventually fetch actual users if kept for testing roles
-  const currentMockUsers = mockUsers;
+  const { data: activeUsers = [], isLoading, isError, error } = useQuery({
+    queryKey: ['activeProfilesForDevSelector'],
+    queryFn: fetchActiveProfilesForDevSelector,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const handleSelectUser = (user: Pick<User, 'id' | 'role' | 'firstName' | 'lastName' | 'nickname'>) => {
+     console.log(`[DEV] Switching view to: ${getUserDisplayName(user)} (${user.role})`);
+    setMockAuthState({ role: user.role, userId: user.id });
+  };
 
   return (
-    <View style={styles.selectorContainer}>
-      <Text style={styles.selectorTitle}>Development Mode: Select User Role</Text>
-
+    <ScrollView contentContainerStyle={styles.selectorContainer}>
+      <Text style={styles.selectorTitle}>Development Mode: Select User</Text>
       <Button
         title="View as Public (Not Logged In)"
         onPress={() => setMockAuthState({ role: 'public' })}
         color={colors.secondary}
       />
-
-      {/* TODO: Replace this mock user mapping with actual user fetching/selection for testing */}
-      {Object.values(currentMockUsers).map(user => (
+      {isLoading && <ActivityIndicator size="large" color={colors.primary} />}
+      {isError && (<Text style={commonSharedStyles.errorText}>Error loading users: {error?.message}</Text>)}
+      {!isLoading && !isError && activeUsers.map(user => (
         <Button
           key={user.id}
           title={`Login as ${getUserDisplayName(user)} (${user.role})`}
-          onPress={() => {
-            // Logic to simulate logging in as this user role
-            // This part remains the same for now for dev switching
-            let viewingStudentId: string | undefined;
-            if (user.role === 'student') {
-              viewingStudentId = user.id;
-            } else if (user.role === 'parent') {
-              // Simplistic: assumes first linked student if available
-              viewingStudentId = user.linkedStudentIds?.[0];
-            } else if (user.role === 'teacher') {
-               // Simplistic: finds first active student linked to this teacher
-               viewingStudentId = Object.values(currentMockUsers).find(
-                 u =>
-                   u.role === 'student' &&
-                   u.status === 'active' &&
-                   u.linkedTeacherIds?.includes(user.id)
-               )?.id;
-            }
-            setMockAuthState({ role: user.role, userId: user.id, viewingStudentId });
-          }}
+          onPress={() => handleSelectUser(user)}
           color={
-            user.role === 'admin'
-              ? colors.danger
-              : user.role === 'teacher'
-                ? colors.primary
-                : user.role === 'parent'
-                  ? colors.success
-                  : user.role === 'student'
-                    ? colors.gold
-                    : colors.secondary
+              user.role === 'admin' ? colors.danger
+              : user.role === 'teacher' ? colors.primary
+              : user.role === 'parent' ? colors.success
+              : user.role === 'student' ? colors.gold
+              : colors.secondary
           }
         />
       ))}
-    </View>
+    </ScrollView>
   );
 };
+// --- END Development Role Selector ---
 
-// Main Application Content Component
+// --- Main Application Content Component ---
+// This component contains the core logic for rendering views and modals
 const AppContent = () => {
   const { mockAuthState, setMockAuthState, currentUserRole } = useAuth();
-  // State for the Task Verification Modal
   const [isVerificationModalVisible, setIsVerificationModalVisible] = useState(false);
   const [taskToVerify, setTaskToVerify] = useState<AssignedTask | null>(null);
+  const [isLoginModalVisible, setIsLoginModalVisible] = useState(false);
 
-  // Handlers for Task Verification Modal
   const handleInitiateVerificationModal = (task: AssignedTask) => {
     setTaskToVerify(task);
     setIsVerificationModalVisible(true);
@@ -125,52 +91,58 @@ const AppContent = () => {
     setTaskToVerify(null);
   };
 
-  // Renders the main view based on the current user role (from AuthContext)
+  const handleOpenLoginModal = () => setIsLoginModalVisible(true);
+  const handleCloseLoginModal = () => setIsLoginModalVisible(false);
+
+  // Define renderMainView INSIDE AppContent where state/props are accessible
   const renderMainView = () => {
+    if (__DEV__ && !mockAuthState) {
+      return <DevelopmentRoleSelector />;
+    }
+
     switch (currentUserRole) {
       case 'public':
-        return <PublicView />;
+        return <PublicView onLoginPress={handleOpenLoginModal} />;
       case 'student':
-        // StudentView might need user ID from context if not passed props
         return <StudentView />;
       case 'teacher':
         return <TeacherView onInitiateVerificationModal={handleInitiateVerificationModal} />;
       case 'parent':
         return <ParentView />;
       case 'admin':
-        // AdminView might pass down the handler if needed by sub-components
         return <AdminView onInitiateVerificationModal={handleInitiateVerificationModal} />;
       default:
-        // Should not happen if AuthContext provides a valid role or 'public'
         return <Text>Loading or Invalid Role...</Text>;
     }
   };
 
-  // In development mode, if no mock auth state is set, show the role selector
-  if (__DEV__ && !mockAuthState) {
-    return <DevelopmentViewSelector />;
-  }
+  const showDevResetButton = __DEV__ && mockAuthState;
 
-  // Otherwise, render the main application structure
   return (
+    // This View wraps the actual content displayed
     <View style={styles.container}>
       <StatusBar style="auto" />
 
+      {/* Call the render function defined above */}
       {renderMainView()}
 
-      {/* Task Verification Modal (Common) */}
+      {/* Render Modals */}
       <TaskVerificationModal
         visible={isVerificationModalVisible}
         task={taskToVerify}
         onClose={handleCloseVerificationModal}
       />
+      <LoginModal
+         visible={isLoginModalVisible}
+         onClose={handleCloseLoginModal}
+       />
 
-      {/* Development Mode: Show reset button if mock auth state is active */}
-      {__DEV__ && mockAuthState && (
+      {/* Dev Reset Button */}
+      {showDevResetButton && (
         <View style={styles.resetButtonContainer}>
           <Button
             title="Reset Mock View"
-            onPress={() => setMockAuthState(null)} // Clears mock state, showing selector again
+            onPress={() => setMockAuthState(null)}
             color={colors.secondary}
           />
         </View>
@@ -178,13 +150,17 @@ const AppContent = () => {
     </View>
   );
 };
+// --- END AppContent ---
 
-// Main App Component (Entry Point)
+
+// --- Main App Component (Entry Point) ---
+// This is the component registered with Expo. It sets up providers.
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <AuthProvider>
+          {/* Render AppContent, which holds the view logic */}
           <AppContent />
           <Toast /> {/* Global Toast provider */}
         </AuthProvider>
@@ -192,19 +168,21 @@ export default function App() {
     </QueryClientProvider>
   );
 }
+// --- END App ---
+
 
 // Styles
 const styles = StyleSheet.create({
-  container: { // Style for the main AppContent container
+  container: {
     flex: 1,
-    backgroundColor: colors.backgroundPrimary, // Use primary background
+    backgroundColor: colors.backgroundPrimary,
   },
-  selectorContainer: { // Style for the DevelopmentViewSelector container
-    flex: 1,
+  selectorContainer: {
+    flexGrow: 1,
     padding: 20,
-    justifyContent: 'center',
+    alignItems: 'stretch',
     gap: 10,
-    backgroundColor: colors.backgroundPrimary, // Consistent background
+    backgroundColor: colors.backgroundSecondary,
   },
   selectorTitle: {
     fontSize: 18,
@@ -213,10 +191,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.textPrimary,
   },
-  resetButtonContainer: { // Style for the reset button in dev mode
+  resetButtonContainer: {
     position: 'absolute',
-    top: 40, // Adjust positioning as needed (consider safe area)
+    top: 40,
     right: 10,
-    zIndex: 10, // Ensure it's above other content
+    zIndex: 10,
   },
 });

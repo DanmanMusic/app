@@ -36,14 +36,12 @@ export interface AssignTaskModalProps {
 export interface CreateUserModalProps {
   visible: boolean;
   onClose: () => void;
-  instruments: Instrument[];
 }
 
 export interface EditUserModalProps {
   visible: boolean;
   userToEdit: User | null;
   onClose: () => void;
-  instruments: Instrument[];
 }
 
 export interface DeactivateOrDeleteUserModalProps {
@@ -120,24 +118,15 @@ export interface ManualTicketAdjustmentModalProps {
   onClose: () => void;
   studentId: string;
   studentName: string;
-  currentBalance: number;
 }
 
 type UserTab = 'students' | 'teachers' | 'parents';
 type StudentFilter = UserStatus | 'all';
 
 export interface AdminUsersSectionProps {
-  displayData: Array<User | SimplifiedStudent>;
-  currentPage: number;
-  totalPages: number;
-  isLoading: boolean;
-  isFetching?: boolean;
-  isError: boolean;
-  error: Error | null;
   instruments: Instrument[];
   activeTab: UserTab;
   setActiveTab: (tab: UserTab) => void;
-  setPage: (page: number) => void;
   studentFilter?: StudentFilter;
   setStudentFilter?: (filter: StudentFilter) => void;
   studentSearchTerm?: string;
@@ -152,10 +141,6 @@ export interface AdminDashboardSectionProps {
 }
 
 export interface AdminTasksSectionProps {
-  taskLibrary: TaskLibraryItem[];
-  isLoading: boolean;
-  isError: boolean;
-  error: Error | null;
   onInitiateAssignTask: () => void;
   onInitiateCreateTask: () => void;
   onInitiateEditTask: (task: TaskLibraryItem) => void;
@@ -171,6 +156,7 @@ export interface AdminStudentDetailViewProps {
   onInitiateStatusUser?: (user: User) => void;
   onInitiateTicketAdjustment?: (user: User) => void;
   onInitiateRedemption?: (user: User) => void;
+  onInitiatePinGeneration?: (user: User) => void; // Add prop for PIN generation
 }
 
 export interface ViewAllAssignedTasksModalProps {
@@ -209,7 +195,6 @@ export interface RedeemRewardModalProps {
   onClose: () => void;
   studentId: string;
   studentName: string;
-  currentBalance: number;
   redeemerId: string;
 }
 
@@ -225,6 +210,8 @@ export interface AdminTeacherDetailViewProps {
   onInitiateEditUser: (user: User) => void;
   onInitiateStatusUser: (user: User) => void;
   onViewStudentProfile: (studentId: string) => void;
+  onInitiatePinGeneration?: (user: User) => void; // Add PIN handler prop (optional for Admin)
+
 }
 
 export interface AdminParentDetailViewProps {

@@ -1,9 +1,9 @@
 // src/api/users.ts
-import { getSupabase } from '../lib/supabaseClient';
+import { getSupabase } from '../lib/supabaseClient'; // Use getSupabase
 import { SimplifiedStudent, User, UserRole, UserStatus } from '../types/dataTypes';
-import { getUserDisplayName } from '../utils/helpers'; // Keep for simplifying student name
+import { getUserDisplayName } from '../utils/helpers';
 
-// --- Response Type Interfaces (assuming pagination structure) ---
+// --- Response Type Interfaces ---
 interface ProfilesApiResponse {
   items: User[];
   totalPages: number;
@@ -15,14 +15,20 @@ interface FetchUsersParams {
   page?: number;
   limit?: number;
   role: UserRole;
-  filter?: UserStatus | 'all'; // Used specifically for students
-  searchTerm?: string; // Used specifically for students
-  teacherId?: string; // Used specifically for students
-  // Add parentId, studentId for fetching linked users later if needed
+  filter?: UserStatus | 'all';
+  searchTerm?: string;
+  teacherId?: string;
 }
 
-// --- Helper to map DB profile to User type ---
-// We need this because link tables aren't directly on the profiles row
+interface FetchStudentsResult {
+  students: SimplifiedStudent[];
+  totalPages: number;
+  currentPage: number;
+  totalItems: number;
+}
+
+// --- Helper mapProfileToUser ---
+// Fetches linked data and maps a profile row to the User type
 const mapProfileToUser = async (profile: any, client: ReturnType<typeof getSupabase>): Promise<User> => {
     const userId = profile.id;
     let instrumentIds: string[] | undefined = undefined;
@@ -31,6 +37,7 @@ const mapProfileToUser = async (profile: any, client: ReturnType<typeof getSupab
 
     // Fetch related data based on role
     if (profile.role === 'student') {
+        // Fetch instruments
         const { data: instruments, error: instError } = await client
             .from('student_instruments')
             .select('instrument_id')
@@ -38,6 +45,7 @@ const mapProfileToUser = async (profile: any, client: ReturnType<typeof getSupab
         if (instError) console.error(`Error fetching instruments for student ${userId}:`, instError.message);
         else instrumentIds = instruments?.map(i => i.instrument_id) || [];
 
+        // Fetch teachers
         const { data: teachers, error: teachError } = await client
             .from('student_teachers')
             .select('teacher_id')
@@ -46,6 +54,7 @@ const mapProfileToUser = async (profile: any, client: ReturnType<typeof getSupab
          else linkedTeacherIds = teachers?.map(t => t.teacher_id) || [];
 
     } else if (profile.role === 'parent') {
+         // Fetch students linked to parent
          const { data: students, error: stuError } = await client
             .from('parent_students')
             .select('student_id')
@@ -55,6 +64,7 @@ const mapProfileToUser = async (profile: any, client: ReturnType<typeof getSupab
     }
     // Teachers don't have specific links stored *on* their profile in this model
 
+    // Return the mapped User object
     return {
         id: profile.id,
         role: profile.role as UserRole,
@@ -69,21 +79,20 @@ const mapProfileToUser = async (profile: any, client: ReturnType<typeof getSupab
     };
 }
 
-// --- Generic Fetch Function ---
-// This simplifies fetching for Teachers and Parents
+// --- Generic fetchProfilesByRole ---
+// Fetches paginated profiles for Teachers or Parents
 const fetchProfilesByRole = async ({
     page = 1,
     limit = 10,
     role,
 }: FetchUsersParams): Promise<ProfilesApiResponse> => {
-    const client = getSupabase();
-    console.log(`[Supabase] Fetching profiles: role=${role}, page=${page}, limit=${limit}`);
+     const client = getSupabase();
+     console.log(`[Supabase] Fetching profiles: role=${role}, page=${page}, limit=${limit}`);
+     const startIndex = (page - 1) * limit;
+     const endIndex = startIndex + limit - 1;
 
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit - 1;
-
-    // Query profiles table filtered by role
-    let query = client
+     // Query profiles table filtered by role
+     let query = client
         .from('profiles')
         .select('id, role, first_name, last_name, nickname, status', { count: 'exact' }) // Fetch base profile fields + count
         .eq('role', role)
@@ -91,47 +100,39 @@ const fetchProfilesByRole = async ({
         .order('first_name', { ascending: true })
         .range(startIndex, endIndex);
 
-    const { data, error, count } = await query;
+     const { data, error, count } = await query;
 
-    if (error) {
+     if (error) {
         console.error(`[Supabase] Error fetching ${role}s:`, error.message);
         throw new Error(`Failed to fetch ${role}s: ${error.message}`);
-    }
+     }
 
-    const totalItems = count ?? 0;
-    const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
+     const totalItems = count ?? 0;
+     const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
 
-    // Fetch linked data for each profile (inefficient for large lists, consider DB functions/views later)
-    const itemsWithLinks = await Promise.all((data || []).map(profile => mapProfileToUser(profile, client)));
+     // Fetch linked data for each profile (can be inefficient, consider views/RPC later)
+     const itemsWithLinks = await Promise.all((data || []).map(profile => mapProfileToUser(profile, client)));
 
-    console.log(`[Supabase] Received ${itemsWithLinks.length} ${role}s from API. Total: ${totalItems}`);
+     console.log(`[Supabase] Received ${itemsWithLinks.length} ${role}s from API. Total: ${totalItems}`);
 
-    return {
+     return {
         items: itemsWithLinks,
         totalPages,
         currentPage: page,
         totalItems,
-    };
+     };
 };
 
 
-// --- Specific Fetch Functions ---
-
-// Interface matching the old fetchStudents return structure for compatibility
-interface FetchStudentsResult {
-  students: SimplifiedStudent[]; // Using SimplifiedStudent for hooks
-  totalPages: number;
-  currentPage: number;
-  totalItems: number;
-}
-
+// --- fetchStudents ---
+// Fetches paginated students with filtering and search
 export const fetchStudents = async ({
   page = 1,
-  limit = 10,
+  limit = 20, // Default page size
   filter = 'active',
   searchTerm = '',
   teacherId,
-}: { // Destructure params for clarity
+}: {
     page?: number;
     limit?: number;
     filter?: UserStatus | 'all';
@@ -155,18 +156,13 @@ export const fetchStudents = async ({
         query = query.eq('status', filter);
     }
 
-    // Apply search term filter (case-insensitive search on concatenated name)
-    // Note: This basic search might be slow on large datasets. Consider full-text search later.
+    // Apply search term filter
     if (searchTerm) {
-        // Simple ILIKE search on first or last name
         query = query.or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%`);
-         // Alternative: Search combined name (might need DB function for efficiency)
-         // query = query.ilike('concat(first_name, \' \', last_name)', `%${searchTerm}%`);
     }
 
     // Apply teacherId filter using the student_teachers link table
     if (teacherId) {
-        // Fetch student IDs linked to the teacher first
         const { data: teacherStudentLinks, error: linkError } = await client
             .from('student_teachers')
             .select('student_id')
@@ -180,17 +176,15 @@ export const fetchStudents = async ({
         const linkedStudentIds = teacherStudentLinks?.map(link => link.student_id) || [];
 
         if (linkedStudentIds.length === 0) {
-            // If teacher has no students, return empty result immediately
              console.log(`[Supabase] Teacher ${teacherId} has no linked students.`);
              return { students: [], totalPages: 1, currentPage: 1, totalItems: 0 };
         }
-        // Add the filter to the main query
         query = query.in('id', linkedStudentIds);
     }
 
     // Add ordering and pagination
     query = query
-        .order('status', { ascending: true }) // Active first
+        .order('status', { ascending: true })
         .order('last_name', { ascending: true })
         .order('first_name', { ascending: true })
         .range(startIndex, endIndex);
@@ -206,7 +200,7 @@ export const fetchStudents = async ({
     const totalItems = count ?? 0;
     const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
 
-    // Fetch instruments for the fetched students (could be optimized with a join or view later)
+    // Fetch instruments for the fetched students
     const studentIds = studentProfiles?.map(p => p.id) || [];
     let instrumentsMap: Record<string, string[]> = {};
     if (studentIds.length > 0) {
@@ -217,7 +211,6 @@ export const fetchStudents = async ({
 
         if (instError) {
             console.error(`[Supabase] Error fetching instruments for student list:`, instError.message);
-            // Proceed without instruments if fetch fails
         } else {
             instrumentsMap = (instrumentsData || []).reduce((acc, row) => {
                 if (!acc[row.student_id]) acc[row.student_id] = [];
@@ -227,12 +220,11 @@ export const fetchStudents = async ({
         }
     }
 
-
     // Map profiles to SimplifiedStudent structure
     const simplifiedStudents = (studentProfiles || []).map(profile => ({
         id: profile.id,
         name: getUserDisplayName(profile), // Use helper for consistent display name
-        instrumentIds: instrumentsMap[profile.id] || [], // Get instruments from map
+        instrumentIds: instrumentsMap[profile.id] || [],
         balance: 0, // TODO: Fetch balance separately or integrate later
         isActive: profile.status === 'active',
     }));
@@ -247,26 +239,29 @@ export const fetchStudents = async ({
     };
 };
 
-// --- Fetch Teachers ---
+// --- fetchTeachers ---
+// Fetches paginated teachers
 export const fetchTeachers = async ({
     page = 1,
-    limit = 10,
-  }: { page?: number, limit?: number } = {}): Promise<ProfilesApiResponse> => {
+    limit = 20, // Default page size
+ }: { page?: number, limit?: number } = {}): Promise<ProfilesApiResponse> => {
       // Reuse the generic fetch function
       return fetchProfilesByRole({ page, limit, role: 'teacher' });
 };
 
-// --- Fetch Parents ---
+// --- fetchParents ---
+// Fetches paginated parents
 export const fetchParents = async ({
     page = 1,
-    limit = 10,
+    limit = 20, // Default page size
  }: { page?: number, limit?: number } = {}): Promise<ProfilesApiResponse> => {
      // Reuse the generic fetch function
      return fetchProfilesByRole({ page, limit, role: 'parent' });
 };
 
 
-// --- Fetch Single User Profile (more complete) ---
+// --- fetchUserProfile ---
+// Fetches a single complete user profile by ID, including linked data
 export const fetchUserProfile = async (userId: string): Promise<User | null> => {
     const client = getSupabase();
     console.log(`[Supabase] Fetching profile for user: ${userId}`);
@@ -288,7 +283,7 @@ export const fetchUserProfile = async (userId: string): Promise<User | null> => 
         throw new Error(`Failed to fetch profile: ${error.message}`);
     }
 
-    if (!profile) return null; // Should be handled by single() error check, but belt-and-suspenders
+    if (!profile) return null; // Should be handled by single() error check
 
     // Fetch linked data and map to the full User type
     return mapProfileToUser(profile, client);
@@ -297,191 +292,164 @@ export const fetchUserProfile = async (userId: string): Promise<User | null> => 
 
 // --- Write Operations ---
 
-// TODO: createUser needs to handle auth.users creation FIRST, then profiles.
-// This requires Admin privileges on Supabase (`service_role` key or Edge Function).
-// For now, this function will likely fail without proper setup or if RLS blocks anon inserts
-// into auth.users (which it should).
-export const createUser = async (userData: Omit<User, 'id' | 'status'>): Promise<User> => {
-    const client = getSupabase();
-    console.warn('[Supabase] createUser: Attempting profile creation. Ensure RLS allows and consider auth.users creation.');
-    // This function needs significant rework when Auth is added.
-    // It cannot create the auth.users entry from the client with just anon key.
+// *** UPDATED createUser TO CALL EDGE FUNCTION ***
+export const createUser = async (
+    // Payload structure should match the Edge Function's expected input
+    // This includes potentially optional fields like nickname, instrumentIds, linkedTeacherIds
+    // And 'initialPin' only if role is student (though handled internally in function now)
+    userData: Omit<User, 'id' | 'status'> & { initialPin?: string }
+): Promise<User> => {
+  const client = getSupabase();
+  console.log('[API] Calling createUser Edge Function with payload:', userData);
 
-    // TEMPORARY: Assume profile insert works due to permissive RLS for dev testing UI flow.
-    const profileData = {
-        // id: ??? Needs ID from auth.users
-        role: userData.role,
-        first_name: userData.firstName,
-        last_name: userData.lastName,
-        nickname: userData.nickname,
-        status: 'active', // Default status
-    };
+  // Use supabase.functions.invoke() to call the deployed function
+  const { data, error } = await client.functions.invoke('createUser', {
+    body: userData, // Pass the client-side data structure as the body
+  });
 
-    // This will fail without an ID linked to auth.users
-    // For now, let's simulate success by throwing a specific error if needed
-    // Or, modify RLS on profiles temporarily to not require the FK during testing
+  if (error) {
+    console.error('[API] Error invoking createUser function:', error);
+    // Attempt to extract a more specific error message from the function response
+    let detailedError = error.message || 'Unknown function error';
+    if (error.context && typeof error.context === 'object' && error.context !== null && 'error' in error.context) {
+        detailedError = String((error.context as any).error) || detailedError;
+    } else {
+        try {
+            const parsed = JSON.parse(error.message);
+            if (parsed && parsed.error) detailedError = String(parsed.error);
+        } catch (e) { /* Ignore parsing error */ }
+    }
+    // Add context if available
+    if (error.context?.message) {
+        detailedError += ` (Context: ${error.context.message})`;
+    }
+    throw new Error(`User creation failed: ${detailedError}`);
+  }
 
-    // Let's throw an error indicating the limitation
-    console.error("[Supabase] createUser Limitation: Cannot create auth.users entry from client. This requires server-side logic (Edge Function or Admin SDK).");
-    throw new Error("User creation requires server-side implementation.");
+  // Assuming the function returns the created User object matching the User type
+  console.log('[API] createUser Edge Function returned successfully:', data);
 
-    /*
-    // Hypothetical future structure (inside Edge Function):
-    // 1. Create auth user: const { data: authUser, error: authError } = await supabase.auth.admin.createUser({...});
-    // 2. If success, insert profile: const { data: profile, error: profileError } = await supabase.from('profiles').insert({ id: authUser.user.id, ...profileData }).select().single();
-    // 3. If profile insert success, add links: await supabase.from('student_instruments').insert([...]);
-    // 4. Return mapped User object
-    */
+  // Basic validation of the returned data structure
+  if (!data || typeof data !== 'object' || !data.id || !data.role || !data.firstName || !data.lastName || !data.status) {
+      console.error('[API] createUser Edge Function returned unexpected data structure:', data);
+      throw new Error('User creation function returned invalid data format.');
+  }
 
-   // Temporary return for type check (will not be reached due to throw)
-   // return {} as User;
+  // Cast the returned data to the User type
+  return data as User;
 };
+// *** END UPDATED createUser ***
 
-// updateUser primarily modifies the profiles table. Link table updates might need separate logic or transactions.
+
+// --- updateUser ---
+// Updates profile fields. Link table updates are currently deferred/logged as warnings.
 export const updateUser = async ({
   userId,
   updates,
 }: {
   userId: string;
-  updates: Partial<Omit<User, 'id' | 'role' | 'status'>>; // Can update name, nickname, links
+  updates: Partial<Omit<User, 'id' | 'role' | 'status'>>;
 }): Promise<User> => {
     const client = getSupabase();
     console.log(`[Supabase] Updating profile for user ${userId}:`, updates);
 
     // Prepare payload for 'profiles' table update
     const profileUpdates: { first_name?: string; last_name?: string; nickname?: string | null } = {};
-    let needsProfileUpdate = false; // Flag to track if DB update is needed
+    let needsProfileUpdate = false;
 
-    if (updates.firstName !== undefined) {
-        profileUpdates.first_name = updates.firstName;
-        needsProfileUpdate = true;
-    }
-    if (updates.lastName !== undefined) {
-        profileUpdates.last_name = updates.lastName;
-        needsProfileUpdate = true;
-    }
-    // Use hasOwnProperty to correctly handle setting nickname to null or empty string
-    if (updates.hasOwnProperty('nickname')) {
-        profileUpdates.nickname = updates.nickname || null; // Set db field to null if nickname is empty/null/undefined
-        needsProfileUpdate = true;
-    }
+    if (updates.firstName !== undefined) { profileUpdates.first_name = updates.firstName; needsProfileUpdate = true; }
+    if (updates.lastName !== undefined) { profileUpdates.last_name = updates.lastName; needsProfileUpdate = true; }
+    if (updates.hasOwnProperty('nickname')) { profileUpdates.nickname = updates.nickname || null; needsProfileUpdate = true; }
 
     // --- Execute Profile Update if Needed ---
     if (needsProfileUpdate) {
         console.log(`[Supabase] Updating profile fields for ${userId}:`, profileUpdates);
-        // Directly await the update operation
-        const { error: profileError } = await client
-            .from('profiles')
-            .update(profileUpdates)
-            .eq('id', userId);
-
-        // Check for error after awaiting
-        if (profileError) {
-            console.error(`[Supabase] Error updating profile for ${userId}:`, profileError.message);
-            // Throw the error with the correct message
-            throw new Error(`Failed to update profile: ${profileError.message}`);
-        }
+        const { error: profileError } = await client.from('profiles').update(profileUpdates).eq('id', userId);
+        if (profileError) { throw new Error(`Failed to update profile: ${profileError.message}`); }
         console.log(`[Supabase] Profile fields updated successfully for ${userId}.`);
-    } else {
-        console.log(`[Supabase] No profile fields needed updating for ${userId}.`);
-    }
-    // --- End Profile Update ---
+    } else { console.log(`[Supabase] No profile fields needed updating for ${userId}.`); }
+
+    // --- Handle Link Table Updates (Deferred - Log Warnings) ---
+    // TODO: Implement Edge Function or dedicated API calls for link table updates
+    if (updates.instrumentIds !== undefined) { console.warn(`[Supabase] updateUser: Updating instrumentIds for ${userId} requires server-side logic (deferred).`); }
+    if (updates.linkedTeacherIds !== undefined) { console.warn(`[Supabase] updateUser: Updating linkedTeacherIds for ${userId} requires server-side logic (deferred).`); }
+    if (updates.linkedStudentIds !== undefined) { console.warn(`[Supabase] updateUser: Updating linkedStudentIds for ${userId} requires server-side logic (deferred).`); }
 
 
-    // Handle link table updates (Deferred - Warnings remain)
-    if (updates.instrumentIds !== undefined) {
-         console.warn(`[Supabase] updateUser: Updating instrumentIds for ${userId} not fully implemented yet.`);
-         // Requires fetching current links, comparing, deleting removed, inserting added.
-    }
-    if (updates.linkedTeacherIds !== undefined) {
-         console.warn(`[Supabase] updateUser: Updating linkedTeacherIds for ${userId} not fully implemented yet.`);
-    }
-     if (updates.linkedStudentIds !== undefined) {
-         console.warn(`[Supabase] updateUser: Updating linkedStudentIds for ${userId} not fully implemented yet.`);
-    }
-
-
-    // Re-fetch the complete user profile after updates (or if no updates were needed but caller expects the user back)
+    // Re-fetch the complete user profile after updates
     console.log(`[Supabase] Re-fetching full profile for ${userId} after update attempt.`);
     const updatedUser = await fetchUserProfile(userId);
-    if (!updatedUser) {
-        // This is more concerning if an update supposedly succeeded
-        console.error(`[Supabase] Failed to re-fetch user profile for ${userId} after update attempt.`);
-        throw new Error(`Update might have succeeded, but failed to re-fetch profile for ${userId}.`);
-    }
+    if (!updatedUser) { throw new Error(`Update might have succeeded, but failed to re-fetch profile for ${userId}.`); }
 
     console.log(`[Supabase] User ${userId} update process finished.`);
     return updatedUser;
 };
 
-// deleteUser needs Admin privileges to delete from auth.users. The profile delete will cascade.
-// Client-side delete with anon key likely won't work on auth.users.
+// --- deleteUser ---
+// Deferred - Requires server-side implementation (Edge Function)
 export const deleteUser = async (userId: string): Promise<void> => {
-     const client = getSupabase();
-     console.warn(`[Supabase] deleteUser: Attempting delete for ${userId}. Requires Admin privileges/Edge Function for auth.users removal.`);
-
-     // TEMPORARY: Assume profile delete works due to permissive RLS (will cascade from auth delete later)
-     // This won't actually delete the user from Supabase Auth.
-     const { error: profileDeleteError } = await client
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
-
-      if (profileDeleteError) {
-        console.error(`[Supabase] Error deleting profile for ${userId} (Auth user likely still exists):`, profileDeleteError.message);
-        throw new Error(`Failed to delete profile (Auth user may remain): ${profileDeleteError.message}`);
-      }
-
-     // Proper implementation requires Admin SDK call:
-     // await supabase.auth.admin.deleteUser(userId);
-     console.error("[Supabase] deleteUser Limitation: Cannot delete auth.users entry from client. Profile possibly deleted, but Auth User remains.");
-     throw new Error("User deletion requires server-side implementation.");
-
-     // console.log(`[Supabase] User ${userId} deleted successfully.`); // Only if auth delete worked
+     console.error("[API] deleteUser called, but implementation is deferred to Edge Function.");
+     throw new Error("User deletion requires server-side implementation (Edge Function).");
+     // Placeholder/Previous logic:
+     // const client = getSupabase();
+     // console.warn(`[Supabase] deleteUser: Requires Admin privileges/Edge Function for auth.users removal.`);
+     // const { error: profileDeleteError } = await client.from('profiles').delete().eq('id', userId);
+     // if (profileDeleteError) { throw new Error(`Failed to delete profile (Auth user may remain): ${profileDeleteError.message}`); }
 };
 
-// toggleUserStatus updates the 'status' field in the 'profiles' table.
+// --- toggleUserStatus ---
+// Updates the 'status' field in the 'profiles' table.
 export const toggleUserStatus = async (userId: string): Promise<User> => {
     const client = getSupabase();
     console.log(`[Supabase] Toggling status for user ${userId}`);
 
     // 1. Fetch current status
-    const { data: currentProfile, error: fetchError } = await client
-        .from('profiles')
-        .select('status')
-        .eq('id', userId)
-        .single();
-
-    if (fetchError || !currentProfile) {
-        console.error(`[Supabase] Error fetching current status for ${userId}:`, fetchError?.message);
-        throw new Error(`Failed to fetch user status: ${fetchError?.message || 'User not found'}`);
-    }
+    const { data: currentProfile, error: fetchError } = await client.from('profiles').select('status').eq('id', userId).single();
+    if (fetchError || !currentProfile) { throw new Error(`Failed to fetch user status: ${fetchError?.message || 'User not found'}`); }
 
     // 2. Determine new status
     const newStatus: UserStatus = currentProfile.status === 'active' ? 'inactive' : 'active';
 
     // 3. Update the status
-    const { data: updatedProfileData, error: updateError } = await client
-        .from('profiles')
-        .update({ status: newStatus })
-        .eq('id', userId)
-        .select('id') // Only need to confirm update happened
-        .single();
-
-    if (updateError || !updatedProfileData) {
-        console.error(`[Supabase] Error updating status for ${userId}:`, updateError?.message);
-        throw new Error(`Failed to toggle status: ${updateError?.message || 'Update failed'}`);
-    }
+    const { data: updatedProfileData, error: updateError } = await client.from('profiles').update({ status: newStatus }).eq('id', userId).select('id').single();
+    if (updateError || !updatedProfileData) { throw new Error(`Failed to toggle status: ${updateError?.message || 'Update failed'}`); }
 
      console.log(`[Supabase] Status for user ${userId} toggled to ${newStatus}. Re-fetching profile...`);
 
      // 4. Re-fetch the full profile to return consistent User object
      const updatedUser = await fetchUserProfile(userId);
-     if (!updatedUser) {
-        // This shouldn't happen if the update succeeded, but handle defensively
-         console.error(`[Supabase] Failed to re-fetch profile for ${userId} after status toggle.`);
-         throw new Error(`Status updated, but failed to re-fetch profile.`);
-     }
+     if (!updatedUser) { throw new Error(`Status updated, but failed to re-fetch profile.`); }
 
     return updatedUser;
 };
+
+export const fetchActiveProfilesForDevSelector = async (): Promise<Pick<User, 'id' | 'role' | 'firstName' | 'lastName' | 'nickname' | 'status'>[]> => {
+    const client = getSupabase();
+    console.log(`[Supabase] Fetching Active Profiles for Dev Selector`);
+  
+    // Select only needed fields and filter for active users
+    const { data, error } = await client
+      .from('profiles')
+      .select('id, role, first_name, last_name, nickname, status')
+      .eq('status', 'active') // Only show active users in the selector
+      .order('role') // Group by role visually
+      .order('last_name')
+      .order('first_name');
+      // Add a reasonable limit if needed, e.g., .limit(100)
+  
+    if (error) {
+      console.error(`[Supabase] Error fetching active profiles for selector:`, error.message);
+      // Return empty array on error to avoid crashing the selector
+      return [];
+    }
+  
+    // Map snake_case to camelCase User subset
+    return (data || []).map(profile => ({
+      id: profile.id,
+      role: profile.role as UserRole,
+      firstName: profile.first_name,
+      lastName: profile.last_name,
+      nickname: profile.nickname ?? undefined,
+      status: profile.status as UserStatus, // Status will always be 'active' here
+    }));
+  };

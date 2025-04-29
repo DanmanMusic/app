@@ -22,6 +22,13 @@ COMMENT ON COLUMN public.task_library.base_tickets IS 'Default number of tickets
 -- == Enable RLS ==
 ALTER TABLE public.task_library ENABLE ROW LEVEL SECURITY;
 
+ALTER TABLE public.assigned_tasks
+  ADD CONSTRAINT fk_assigned_tasks_student FOREIGN KEY (student_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+ALTER TABLE public.assigned_tasks
+   ADD CONSTRAINT fk_assigned_tasks_assigner FOREIGN KEY (assigned_by_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
+ALTER TABLE public.assigned_tasks
+   ADD CONSTRAINT fk_assigned_tasks_verifier FOREIGN KEY (verified_by_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
 -- == Updated At Trigger ==
 -- Apply the existing updated_at trigger function
 DO $$

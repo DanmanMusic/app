@@ -18,7 +18,6 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
   onClose,
   studentId,
   studentName,
-  // currentBalance prop is removed
 }) => {
   const { currentUserId: adminUserId } = useAuth(); // Get admin ID for potential future use
   const queryClient = useQueryClient();

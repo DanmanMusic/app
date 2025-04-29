@@ -20,7 +20,7 @@ import { TaskLibraryItem } from '../../types/dataTypes'; // Type used by the que
 // Note: The props interface likely still expects the data and handlers
 // We will fetch the data here using useQuery
 
-export const AdminTasksSection: React.FC<Omit<AdminTasksSectionProps, 'taskLibrary' | 'isLoading' | 'isError' | 'error'>> = ({
+export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
   // Remove props that are now handled internally by useQuery
   onInitiateAssignTask,
   onInitiateCreateTask,

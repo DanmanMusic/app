@@ -1,4 +1,4 @@
--- supabase/migrations/YYYYMMDDHHMMSS_create_rewards_table.sql -- Replace YYYY... with actual timestamp
+-- supabase/migrations/YYYYMMDDHHMMSS_create_rewards_table.sql
 
 -- == Create Rewards Table ==
 
@@ -23,63 +23,75 @@ COMMENT ON COLUMN public.rewards.description IS 'Optional longer description of 
 ALTER TABLE public.rewards ENABLE ROW LEVEL SECURITY;
 
 -- == Updated At Trigger ==
--- Apply the existing updated_at trigger function (should exist from instruments migration)
--- Ensure the function exists before creating the trigger
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'handle_updated_at') THEN
+  -- Ensure the handle_updated_at function exists before creating the trigger.
+  -- This function should ideally be created in its own migration or a shared setup script.
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'handle_updated_at' AND pg_namespace.nspname = 'public') THEN
     CREATE TRIGGER on_reward_update
     BEFORE UPDATE ON public.rewards
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
+     RAISE NOTICE 'Trigger on_reward_update created for public.rewards.';
   ELSE
-    RAISE WARNING 'Function handle_updated_at() not found. Skipping trigger creation for rewards table.';
+    RAISE WARNING 'Function public.handle_updated_at() not found. Skipping trigger creation for rewards table.';
   END IF;
 END $$;
 
--- == Row Level Security (RLS) Policies ==
--- WARNING: TEMPORARY DEVELOPMENT POLICIES - Allow anonymous access. MUST BE REPLACED.
+-- == Row Level Security (RLS) Policies (SECURE VERSION) ==
+-- These policies assume a function `public.is_admin(uuid)` exists that returns true
+-- if the given user ID belongs to an active administrator.
 
--- 1. Public Read Access
+-- Clean up any potential old/temporary policies first
 DROP POLICY IF EXISTS "Allow public read access on rewards" ON public.rewards;
-CREATE POLICY "Allow public read access on rewards"
+DROP POLICY IF EXISTS "TEMP Allow anon insert access on rewards" ON public.rewards;
+DROP POLICY IF EXISTS "TEMP Allow anon update access on rewards" ON public.rewards;
+DROP POLICY IF EXISTS "TEMP Allow anon delete access on rewards" ON public.rewards;
+DROP POLICY IF EXISTS "Allow authenticated read access on rewards" ON public.rewards;
+DROP POLICY IF EXISTS "Allow admin users to insert rewards" ON public.rewards;
+DROP POLICY IF EXISTS "Allow admin users to update rewards" ON public.rewards;
+DROP POLICY IF EXISTS "Allow admin users to delete rewards" ON public.rewards;
+
+-- 1. SELECT Policy: Allow ANY authenticated user to read rewards
+CREATE POLICY "Allow authenticated users to read rewards"
 ON public.rewards
 FOR SELECT
-USING (true);
+TO authenticated -- Grant to logged-in users
+USING (true); -- Allows reading all reward rows
 
-COMMENT ON POLICY "Allow public read access on rewards" ON public.rewards
-IS 'Allows anyone (publicly) to read the list of rewards.';
+COMMENT ON POLICY "Allow authenticated users to read rewards" ON public.rewards
+IS 'Allows any logged-in user to view the rewards catalog.';
 
--- 2. Anonymous Insert Access (TEMPORARY)
-DROP POLICY IF EXISTS "TEMP Allow anon insert access on rewards" ON public.rewards;
-CREATE POLICY "TEMP Allow anon insert access on rewards"
+
+-- 2. INSERT Policy: Allow ONLY admins to create new rewards
+CREATE POLICY "Allow admin users to insert rewards"
 ON public.rewards
 FOR INSERT
-TO anon -- Grant to anonymous role
-WITH CHECK (true); -- No specific check for anon insert yet
+TO authenticated -- Apply to authenticated role pool...
+WITH CHECK (public.is_admin(auth.uid())); -- ...but only allow if they are admin
 
-COMMENT ON POLICY "TEMP Allow anon insert access on rewards" ON public.rewards
-IS 'TEMP DEV ONLY: Allows anonymous users to add rewards. MUST BE REPLACED with authenticated admin policy.';
+COMMENT ON POLICY "Allow admin users to insert rewards" ON public.rewards
+IS 'Allows users with the admin role (checked via is_admin function) to create rewards.';
 
--- 3. Anonymous Update Access (TEMPORARY)
-DROP POLICY IF EXISTS "TEMP Allow anon update access on rewards" ON public.rewards;
-CREATE POLICY "TEMP Allow anon update access on rewards"
+
+-- 3. UPDATE Policy: Allow ONLY admins to update existing rewards
+CREATE POLICY "Allow admin users to update rewards"
 ON public.rewards
 FOR UPDATE
-TO anon -- Grant to anonymous role
-USING (true)
-WITH CHECK (true);
+TO authenticated
+USING (public.is_admin(auth.uid())) -- User must be admin to attempt update
+WITH CHECK (public.is_admin(auth.uid())); -- User must still be admin during update
 
-COMMENT ON POLICY "TEMP Allow anon update access on rewards" ON public.rewards
-IS 'TEMP DEV ONLY: Allows anonymous users to update rewards. MUST BE REPLACED with authenticated admin policy.';
+COMMENT ON POLICY "Allow admin users to update rewards" ON public.rewards
+IS 'Allows users with the admin role to update existing rewards.';
 
--- 4. Anonymous Delete Access (TEMPORARY)
-DROP POLICY IF EXISTS "TEMP Allow anon delete access on rewards" ON public.rewards;
-CREATE POLICY "TEMP Allow anon delete access on rewards"
+
+-- 4. DELETE Policy: Allow ONLY admins to delete rewards
+CREATE POLICY "Allow admin users to delete rewards"
 ON public.rewards
 FOR DELETE
-TO anon -- Grant to anonymous role
-USING (true);
+TO authenticated
+USING (public.is_admin(auth.uid())); -- User must be admin to delete
 
-COMMENT ON POLICY "TEMP Allow anon delete access on rewards" ON public.rewards
-IS 'TEMP DEV ONLY: Allows anonymous users to delete rewards. MUST BE REPLACED with authenticated admin policy.';
+COMMENT ON POLICY "Allow admin users to delete rewards" ON public.rewards
+IS 'Allows users with the admin role to delete rewards.';

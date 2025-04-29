@@ -16,6 +16,7 @@ interface AssignedTasksListResponse {
 }
 
 // Helper to map DB row to AssignedTask type
+// IMPORTANT: Does not include profile data, as it's only needed for filtering in the query
 const mapDbRowToAssignedTask = (row: any): AssignedTask => ({
     id: row.id,
     studentId: row.student_id,
@@ -32,9 +33,10 @@ const mapDbRowToAssignedTask = (row: any): AssignedTask => ({
     actualPointsAwarded: row.actual_points_awarded ?? undefined,
 });
 
+
 export const fetchAssignedTasks = async ({
   page = 1,
-  limit = 10,
+  limit = 15, // Keep default limit consistent (or adjust globally)
   assignmentStatus = 'all',
   studentStatus = 'all', // UserStatus ('active' | 'inactive') or 'all'
   studentId,
@@ -53,8 +55,9 @@ export const fetchAssignedTasks = async ({
   const startIndex = (page - 1) * limit;
   const endIndex = startIndex + limit - 1;
 
-  // Base query targeting assigned_tasks
-  // Select all columns needed for AssignedTask type
+  // Select columns from assigned_tasks explicitly.
+  // Use explicit foreign table syntax: 'profiles:student_id(status)' to link for filtering.
+  // This relies on the Foreign Key being defined in the DB schema.
   let query = client
     .from('assigned_tasks')
     .select(`
@@ -71,9 +74,8 @@ export const fetchAssignedTasks = async ({
         verified_by_id,
         verified_date,
         actual_points_awarded,
-        profiles ( status ) -- Join profiles to filter by student status
-    `, { count: 'exact' }); // Count needed for pagination
-
+        profiles:student_id ( status )
+    `, { count: 'exact' }); // Ensure count is requested
 
   // --- Apply Filters ---
 
@@ -82,28 +84,28 @@ export const fetchAssignedTasks = async ({
     query = query.eq('student_id', studentId);
   }
 
-  // Filter by assignment status
+  // Filter by assignment status (remains the same)
   switch (assignmentStatus) {
     case 'assigned':
       query = query.eq('is_complete', false);
       break;
     case 'pending':
+      // Ensure verification_status is checked correctly (ENUM or text)
       query = query.eq('is_complete', true).eq('verification_status', 'pending');
       break;
     case 'completed':
-      // Assumes 'verified', 'partial', 'incomplete' are all considered "completed" states (post-pending)
+      // Assumes 'verified', 'partial', 'incomplete' are all considered "completed" states
       query = query.eq('is_complete', true).not('verification_status', 'eq', 'pending');
-       // Could also use .in('verification_status', ['verified', 'partial', 'incomplete']) if stricter
+       // Could also use .in('verification_status', ['verified', 'partial', 'incomplete'])
       break;
     // 'all' requires no specific filter here
   }
 
-  // Filter by student status (requires join on profiles)
+  // Filter using the explicitly referenced foreign table 'profiles' via 'student_id'
   if (studentStatus !== 'all') {
-    // The join is implicitly handled by selecting `profiles(status)`
-    // We filter on the joined table's column
-    query = query.eq('profiles.status', studentStatus);
+    query = query.eq('profiles.status', studentStatus); // Filter on the linked table's column
   }
+
 
   // Filter by teacherId (requires fetching linked students first, similar to fetchStudents)
   let studentIdsForTeacher: string[] | null = null;
@@ -147,7 +149,7 @@ export const fetchAssignedTasks = async ({
   const totalItems = count ?? 0;
   const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
 
-  // Map DB rows to AssignedTask objects
+  // Map DB rows to AssignedTask objects (does not include profile data)
   const tasks = (data || []).map(mapDbRowToAssignedTask);
 
   console.log(`[Supabase] Received ${tasks.length} assigned tasks. Total matching filters: ${totalItems}`);
@@ -155,56 +157,58 @@ export const fetchAssignedTasks = async ({
 };
 
 
+// --- createAssignedTask ---
+// NOTE: This is currently deferred until Edge Functions are implemented for proper assignment logic.
+// It will throw an error if called.
 export const createAssignedTask = async (
   assignmentData: Omit<AssignedTask, 'id' | 'isComplete' | 'verificationStatus' | 'assignedDate' | 'completedDate' | 'verifiedById' | 'verifiedDate' | 'actualPointsAwarded'> & { assignedById: string }
 ): Promise<AssignedTask> => {
+  console.error("createAssignedTask API called, but implementation is deferred to Edge Function.");
+  throw new Error("Task assignment functionality requires server-side implementation (Edge Function).");
+
+  /* // Conceptual Edge Function Logic / Previous Supabase Insert (for reference)
   const client = getSupabase();
   console.log('[Supabase] Assigning task:', assignmentData.taskTitle, 'to student', assignmentData.studentId);
 
-  // Validate required fields
   if (!assignmentData.studentId || !assignmentData.assignedById || !assignmentData.taskTitle || !assignmentData.taskDescription || assignmentData.taskBasePoints == null || assignmentData.taskBasePoints < 0) {
       throw new Error("Missing required fields for task assignment (studentId, assignedById, title, description, basePoints).");
   }
-
   const itemToInsert = {
       student_id: assignmentData.studentId,
       assigned_by_id: assignmentData.assignedById,
       task_title: assignmentData.taskTitle,
       task_description: assignmentData.taskDescription,
       task_base_points: assignmentData.taskBasePoints,
-      // assigned_date defaults to now() in DB
-      is_complete: false, // Default value
-      // Other fields are null/undefined initially
+      is_complete: false,
   };
-
   const { data, error } = await client
     .from('assigned_tasks')
     .insert(itemToInsert)
-    .select('*') // Select all columns after insert
+    .select('*')
     .single();
-
   if (error || !data) {
     console.error(`[Supabase] Error creating assigned task:`, error?.message);
     throw new Error(`Failed to assign task: ${error?.message || 'No data returned'}`);
   }
-
   const createdAssignment = mapDbRowToAssignedTask(data);
   console.log(`[Supabase] Task assigned successfully (ID: ${createdAssignment.id})`);
   return createdAssignment;
+  */
 };
 
-
+// --- updateAssignedTask ---
+// NOTE: Verification/points logic is currently deferred until Edge Functions.
+// This function currently only handles marking as complete (is_complete: true).
 export const updateAssignedTask = async ({
   assignmentId,
   updates,
 }: {
   assignmentId: string;
-  // Only allow updating fields relevant to completion and verification
+  // Allow updating isComplete (for student/parent) OR verification fields (for teacher/admin - deferred)
   updates: Partial<
     Pick<
       AssignedTask,
-      | 'isComplete' // Student/Parent marks complete
-      // Verification fields (Teacher/Admin)
+      | 'isComplete'
       | 'verificationStatus'
       | 'verifiedById'
       | 'actualPointsAwarded'
@@ -215,62 +219,70 @@ export const updateAssignedTask = async ({
   console.log(`[Supabase] Updating assigned task ${assignmentId}:`, updates);
 
   const updatePayload: any = {}; // Use any temporarily for easier snake_case mapping
-  let isVerificationUpdate = false;
+  let isVerificationUpdate = false; // Keep flag for potential future use
 
-  // Handle marking as complete
-  if (updates.isComplete === true) {
+  // Handle marking as complete ONLY (current capability)
+  if (updates.isComplete === true && updates.verificationStatus === undefined) {
+      console.log(`[Supabase] Marking task ${assignmentId} as complete (pending verification).`);
       updatePayload.is_complete = true;
       updatePayload.completed_date = new Date().toISOString();
-      // When marked complete, implicitly set status to pending verification
-      // This might overwrite an explicit 'pending' in updates, which is fine.
+      // When student marks complete, set status to pending verification
       updatePayload.verification_status = 'pending';
+  } else if (updates.verificationStatus) {
+     // --- Verification Logic DEFERRED ---
+     console.error(`updateAssignedTask API called for verification update on ${assignmentId}, but implementation is deferred to Edge Function.`);
+     throw new Error("Task verification/point awarding requires server-side implementation (Edge Function).");
+     // isVerificationUpdate = true; // Flag would be set here
+     // updatePayload.verification_status = updates.verificationStatus;
+     // updatePayload.verified_by_id = updates.verifiedById; // Assume passed
+     // updatePayload.verified_date = new Date().toISOString();
+     // if (updates.verificationStatus === 'verified' || updates.verificationStatus === 'partial') {
+     //     if (updates.actualPointsAwarded == null || updates.actualPointsAwarded < 0) { throw new Error(...); }
+     //     updatePayload.actual_points_awarded = updates.actualPointsAwarded;
+     // } else { // 'incomplete'
+     //     updatePayload.actual_points_awarded = null;
+     // }
+     // if (!updatePayload.is_complete) { updatePayload.is_complete = true; }
+     // --- END DEFERRED ---
+  } else if (updates.hasOwnProperty('isComplete') && updates.isComplete === false) {
+      // Handle edge case: Un-marking as complete?
+      console.warn(`[Supabase] Un-marking task ${assignmentId} as complete. Resetting related fields.`);
+      updatePayload.is_complete = false;
+      updatePayload.completed_date = null;
+      updatePayload.verification_status = null;
+      updatePayload.verified_by_id = null;
+      updatePayload.verified_date = null;
+      updatePayload.actual_points_awarded = null;
+  } else {
+      // If no specific update action applies (e.g., just passing isComplete: false when already false)
+      console.warn(`[Supabase] updateAssignedTask called for ${assignmentId} with no applicable changes.`);
+      // Fetch and return current task state if no changes made
+       const { data: currentData, error: currentError } = await client
+           .from('assigned_tasks')
+           .select('*')
+           .eq('id', assignmentId)
+           .single();
+       if (currentError || !currentData) {
+          throw new Error(`Failed to fetch current task ${assignmentId} for no-op update: ${currentError?.message || 'Not Found'}`);
+       }
+       return mapDbRowToAssignedTask(currentData);
   }
 
-  // Handle verification updates (only if status is provided)
-  if (updates.verificationStatus) {
-     isVerificationUpdate = true;
-     updatePayload.verification_status = updates.verificationStatus;
-     updatePayload.verified_by_id = updates.verifiedById; // Assume this is passed if status is passed
-     updatePayload.verified_date = new Date().toISOString();
 
-     // Only set points if status is verifying or partial
-     if (updates.verificationStatus === 'verified' || updates.verificationStatus === 'partial') {
-         if (updates.actualPointsAwarded == null || updates.actualPointsAwarded < 0) {
-             throw new Error('Valid non-negative points required for verified/partial status.');
-         }
-         updatePayload.actual_points_awarded = updates.actualPointsAwarded;
-     } else {
-         // For 'incomplete', explicitly null out points
-         updatePayload.actual_points_awarded = null;
-     }
-     // Ensure is_complete is true when verifying (should already be, but good practice)
-      if (!updatePayload.is_complete) {
-          updatePayload.is_complete = true;
-          // Optionally set completed_date if marking complete AND verifying simultaneously (less common)
-          // if (!updatePayload.completed_date) updatePayload.completed_date = new Date().toISOString();
-      }
-  }
-
+  // Perform the update only if updatePayload has keys
   if (Object.keys(updatePayload).length === 0) {
-    console.warn(`[Supabase] updateAssignedTask called for ${assignmentId} with no applicable changes.`);
-    // Fetch and return current task state if no changes made
-     const { data: currentData, error: currentError } = await client
-         .from('assigned_tasks')
-         .select('*')
-         .eq('id', assignmentId)
-         .single();
-     if (currentError || !currentData) {
-        throw new Error(`Failed to fetch current task ${assignmentId} for no-op update: ${currentError?.message || 'Not Found'}`);
-     }
-     return mapDbRowToAssignedTask(currentData);
+      // This case should be handled above, but as a fallback:
+       console.warn(`[Supabase] updateAssignedTask reached update block with empty payload for ${assignmentId}.`);
+       const { data: currentData, error: currentError } = await client.from('assigned_tasks').select('*').eq('id', assignmentId).single();
+       if (currentError || !currentData) throw new Error(`Failed to fetch current task ${assignmentId}: ${currentError?.message || 'Not Found'}`);
+       return mapDbRowToAssignedTask(currentData);
   }
 
-  // Perform the update
   const { data, error } = await client
     .from('assigned_tasks')
     .update(updatePayload)
     .eq('id', assignmentId)
-    .select('*')
+    .select('*') // Select all columns to return the updated task
     .single();
 
   if (error || !data) {
@@ -279,20 +291,9 @@ export const updateAssignedTask = async ({
   }
 
   // --- DEFERRED: Balance/History Update ---
-  // If this was a verification update that awarded points, trigger balance/history update here.
-  // This *should* ideally be an Edge Function call instead of direct client logic.
-  if (isVerificationUpdate && updatePayload.actual_points_awarded > 0) {
-      console.warn(`[Supabase] TODO: Implement balance update and history log for task ${assignmentId}, awarded ${updatePayload.actual_points_awarded} points.`);
-      // Example (Conceptual - Needs Edge Function):
-      // await client.rpc('award_task_points', {
-      //    p_assignment_id: assignmentId,
-      //    p_student_id: data.student_id,
-      //    p_points: updatePayload.actual_points_awarded,
-      //    p_verifier_id: updatePayload.verified_by_id,
-      //    p_task_title: data.task_title,
-      //    p_verification_status: data.verification_status
-      // });
-  }
+  // if (isVerificationUpdate && updatePayload.actual_points_awarded > 0) {
+  //     console.warn(`[Supabase] TODO: Implement balance update and history log via Edge Function for task ${assignmentId}.`);
+  // }
   // --- END DEFERRED ---
 
 
@@ -302,9 +303,14 @@ export const updateAssignedTask = async ({
 };
 
 
+// --- deleteAssignedTask ---
+// Simple delete, likely okay for client-side if RLS allows.
+// Consider if points need to be revoked if deleting a *verified* task (needs Edge Function).
 export const deleteAssignedTask = async (assignmentId: string): Promise<void> => {
   const client = getSupabase();
   console.log(`[Supabase] Deleting assigned task ${assignmentId}`);
+
+  // TODO: Consider implications if deleting a verified task. Should points be revoked?
 
   const { error } = await client
     .from('assigned_tasks')

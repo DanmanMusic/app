@@ -27,10 +27,7 @@ import { usePaginatedParents } from '../../hooks/usePaginatedParents';
 
 // Update Props: Remove data/pagination props, keep handlers and tab state
 // Instruments are still needed for AdminStudentItem
-export const AdminUsersSection: React.FC<Omit<AdminUsersSectionProps,
-    'displayData' | 'currentPage' | 'totalPages' | 'setPage' |
-    'isLoading' | 'isFetching' | 'isError' | 'error'
->> = ({
+export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   activeTab,
   setActiveTab,
   studentFilter,
