@@ -1,7 +1,7 @@
 // App.tsx
-import React, { useState } from 'react'; // Removed useEffect as initial load handled by AuthContext
-import { StyleSheet, Text, View, Button, ActivityIndicator } from 'react-native'; // Removed ScrollView if DevSelector removed
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; // Removed useQuery if DevSelector removed
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, Button, ActivityIndicator } from 'react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
@@ -129,7 +129,6 @@ const AppContent = () => {
 
       {renderMainView()}
 
-      {/* Render Modals */}
       <TaskVerificationModal
         visible={isVerificationModalVisible}
         task={taskToVerify}
@@ -137,9 +136,6 @@ const AppContent = () => {
       />
       <LoginModal visible={isLoginModalVisible} onClose={handleCloseLoginModal} />
 
-      {/* *** REMOVED Dev Reset Button *** */}
-
-      {/* Global Sign Out Button (Optional - useful during testing) */}
       {isAuthenticated && (
         <View style={styles.signOutButtonContainer}>
           <Button title="Sign Out" onPress={signOut} color={colors.danger} />
@@ -155,7 +151,6 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        {/* Wrap with the REAL AuthProvider */}
         <AuthProvider>
           <AppContent />
           <Toast />
@@ -164,7 +159,6 @@ export default function App() {
     </QueryClientProvider>
   );
 }
-// --- END App ---
 
 // Styles
 const styles = StyleSheet.create({
