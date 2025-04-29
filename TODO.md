@@ -11,28 +11,10 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 
 ## [x] Development Phase 1: Frontend Prototyping & TQ/MSW Migration
 *(All items previously checked remain checked)*
-- [x] Refine User Data Model (firstName, lastName, links, status, etc.)
-- [x] Set up Mock Data (`src/mocks/`)
-- [x] Implement Development View Selector
-- [x] Build Core Views (Public, Student, Teacher, Parent, Admin shells)
-- [x] Refine UI/UX (Modals, Images, Styles, Components)
-- [x] Implement `AuthContext`
-- [x] Implement `DataContext` (Initial version, now minimal)
-- [x] Refactor Task Assignment (Ad-Hoc vs Library)
-- [x] Implement User Deactivate/Delete Flow Modals
-- [x] Implement Pagination Architecture (Hooks, Controls)
-- [x] Install & Configure TanStack Query and MSW
-- [x] Create API Client Layer (`src/api/`)
-- [x] Create MSW Handlers (`src/mocks/handlers.ts`)
-- [x] Implement TQ/MSW User List Queries (`usePaginated*`, `AdminUsersSection`)
-- [x] Implement TQ/MSW User Mutations (CRUD, Status Toggle in Modals)
-- [x] Implement Search Features (Student Select, Admin Student List)
-- [x] Refactor Other List Queries w/ TQ/MSW (Task Lib, Rewards, Anncs, Instruments, Assigned Tasks, History)
-- [x] Implement Other CRUD Mutations w/ TQ/MSW (Task Lib, Rewards, Anncs, Instruments)
-- [x] Implement Assigned Task Mutations (Mark Complete, Delete)
+- ... (Previous items remain checked) ...
 - [x] Refactor Views (`PublicView`, `StudentView`, `ParentView`, `TeacherView`, `AdminView`) to use TQ Hooks/Mutations instead of `DataContext` (excluding DevSelector)
 - [x] Refactor Modals (`TaskVerificationModal`, `AssignTaskModal`, `CreateUserModal`, `EditUserModal`, `SetGoalModal`, etc.) to fetch own data/use internal mutations.
-- [x] Remove `DataContext` provider and most of its state/logic (Kept minimal `currentMockUsers` for Dev Selector).
+- [x] Remove `DataContext` provider and most of its state/logic.
 - [x] Implement Assigned Task: Task Verification (`PATCH /api/assigned-tasks/:id` via `TaskVerificationModal`).
 - [x] Implement Assigned Task: Re-assign (`POST /api/assigned-tasks` via `TaskVerificationModal`).
 - [x] Implement Assigned Task: Assign Task (`POST /api/assigned-tasks` via `AssignTaskModal`).
@@ -44,8 +26,8 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 
 ## [x] Development Phase 2: "Big Bang" Supabase Schema & Read/Basic-Write API Migration
 *(Focus: Migrate DB structure and client-side reads/simple writes, defer complex/auth-dependent writes)*
-
-- [x] **DB Schema:** Define and migrate schemas for all remaining core tables (`profiles`, `user_credentials`, `assigned_tasks`, `ticket_transactions`) and link tables (`student_instruments`, `student_teachers`, `parent_students`). Apply temporary permissive RLS policies. (`npx supabase db push`)
+*(All items previously checked remain checked)*
+- ... (Previous items remain checked) ...
 - [x] **Storage Buckets:** Create required public buckets (`instrument-icons`, `reward-icons`). Apply temporary permissive Storage RLS policies.
 - [x] **Remove MSW:** Delete `src/mocks/`, `handlers.ts`, update `App.tsx`, `metro.config.js`, `package.json`.
 - [x] **Refactor API Layer (`src/api/`)**:
@@ -83,34 +65,58 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
     - [x] `AssignTaskModal.tsx` (Fetch reads, disable action).
     - [x] `TaskVerificationModal.tsx` (Fetch profile, disable actions).
 
-## [ ] Development Phase 3: Authentication & Server-Side Logic
+## [In Progress] Development Phase 3: Authentication & Server-Side Logic
 
 - [ ] **Implement Authentication:**
-    - [ ] Backend: Define schema/logic for PIN hashing/storage/validation (`user_credentials`).
-    - [ ] Backend: Create Supabase Edge Function (`login-with-pin`) for Student/Parent login.
-    - [ ] Backend: Create Supabase Edge Function (`set-reset-pin`?) accessible by Admin/Teacher.
-    - [ ] Frontend: Build PIN Login UI screen.
-    - [ ] Frontend: Implement Email/Password login UI for Admin/Teacher (using Supabase Auth UI or custom).
-    - [ ] Frontend: Refactor `AuthContext` to handle real Supabase sessions (JWTs, refresh tokens, user state).
-    - [ ] Frontend: Remove `DevelopmentViewSelector` and related mock logic in `App.tsx`.
+    - [x] Backend: Define schema/logic for PIN storage/validation (`onetime_pins`, `active_refresh_tokens`). Remove old `pin_hash`.
+    - [ ] Backend: Create Supabase Edge Function (`login-with-pin`) for Student/Parent login. --> RENAMED to `claim-onetime-pin`
+    - [ ] Backend: Create Supabase Edge Function (`set-reset-pin`?) accessible by Admin/Teacher. --> RENAMED to `generate-onetime-pin`
+    - [x] Frontend: Build PIN Login UI screen (within `LoginModal.tsx`).
+    - [x] Frontend: Implement Email/Password login UI for Admin/Teacher (within `LoginModal.tsx`). Call `supabase.auth.signInWithPassword`.
+    - [ ] Frontend: Refactor `AuthContext` to handle real Supabase sessions (JWTs, refresh tokens, user state). *(Partially done by using `setMockAuthState` with real IDs/roles, but full session management pending).*
+    - [x] Frontend: Restore `DevelopmentRoleSelector` using live Supabase data. Remove forced Admin login button.
+    - [x] Frontend: Integrate `LoginModal` into `App.tsx` and trigger from `PublicView`.
 - [ ] **Implement Secure RLS:**
-    - [ ] Replace ALL temporary permissive RLS policies on database tables (`profiles`, `assigned_tasks`, etc.) with strict, role-based policies (`USING (auth.uid() = ...)` , checks on roles).
-    - [ ] Replace ALL temporary permissive RLS policies on Storage buckets (`instrument-icons`, `reward-icons`) with authenticated, role-based policies (e.g., only admins can write).
+    - [x] Apply secure RLS policies for Storage buckets (`instrument-icons`, `reward-icons`) using `is_admin()` helper.
+    - [x] Define `is_admin()` helper function in database.
+    - [x] Apply secure RLS policies for DB tables (`rewards`, `announcements`).
+    - [ ] Replace ALL remaining temporary permissive RLS policies on database tables (`profiles`, `assigned_tasks`, `onetime_pins`, `active_refresh_tokens`, link tables, etc.) with strict, role-based policies.
+- [ ] **Implement Edge Functions for Core Auth/User Management:**
+    - [x] `createUser` (handle `auth.admin.createUser`, profile insert, student links - NO PIN). Deployed & Integrated.
+    - [x] `generate-onetime-pin` (generate & store temporary PIN). Deployed & Integrated w/ Admin/Teacher UI.
+    - [x] `claim-onetime-pin` (validate PIN, gen tokens, store refresh hash). Deployed & Integrated w/ LoginModal. **Requires client refresh logic.**
+    - [x] `refresh-pin-session` (validate refresh token, gen new access token). Deployed. **Requires client refresh logic.**
+    - [x] `update-auth-credentials` (allow user to set email/password). Deployed. **Requires client UI.**
+    - [x] `deleteUser` (handle `auth.admin.deleteUser`). Deployed. **Requires client UI integration.**
 - [ ] **Implement Edge Functions for Deferred Actions:**
-    - [ ] `createUser` (handle `auth.admin.createUser`, profile insert, link tables insert).
-    - [ ] `deleteUser` (handle `auth.admin.deleteUser`, profile cascade should handle rest).
-    - [ ] `verifyTask` (update `assigned_tasks`, calculate/award points, insert `ticket_transactions`, update balance atomically).
-    - [ ] `assignTask` (handle insert into `assigned_tasks`).
+    - [ ] `verifyTask` (update `assigned_tasks`, award points, insert `ticket_transactions`, update balance atomically).
+    - [ ] `assignTask` (replace client-side attempt with function call for consistency/validation).
     - [ ] `adjustTickets` (check validity, update balance, insert `ticket_transactions` atomically).
     - [ ] `redeemReward` (check balance, fetch cost, update balance, insert `ticket_transactions` atomically).
 - [ ] **Update API Layer (`src/api/`)**:
-    - [ ] Modify deferred functions (`createUser`, `deleteUser`, `adjustTickets`, `redeemReward`, `updateAssignedTask` verification part, `createAssignedTask`) to securely call the corresponding Edge Functions using `supabase.functions.invoke()`.
+    - [x] Modify `createUser` API to call Edge Function.
+    - [x] Add `generatePinForUser` API to call Edge Function.
+    - [x] Add `claimPin` API to call Edge Function.
+    - [x] Add `refreshPinSession` API to call Edge Function.
+    - [ ] Add `updateAuthCredentials` API to call Edge Function.
+    - [ ] Update `deleteUser` API to call Edge Function.
+    - [ ] Update `assignTask`, `verifyTask` (part of `updateAssignedTask`), `adjustTickets`, `redeemReward` API functions to call respective Edge Functions once created.
 - [ ] **Update UI:**
-    - [ ] Re-enable buttons in modals (`CreateUserModal`, `ManualTicketAdjustmentModal`, `RedeemRewardModal`, `AssignTaskModal`, `TaskVerificationModal`, `DeactivateOrDeleteUserModal` delete button).
-    - [ ] Implement PIN management UI for Admin/Teacher.
+    - [x] Connect `CreateUserModal` to working `createUser` flow.
+    - [x] Connect `GeneratePinModal` to working `generatePinForUser` flow.
+    - [x] Connect `LoginModal` (PIN) to working `claimPin` flow.
+    - [x] Connect `LoginModal` (Email) to working `signInWithPassword` flow.
+    - [ ] Implement Client-Side Refresh Token Logic (e.g., using `onAuthStateChange` or interceptors) to call `refreshPinSession`.
+    - [ ] Build Settings UI to call `updateAuthCredentials`.
+    - [ ] Re-enable delete button in `DeactivateOrDeleteUserModal` to call `deleteUser` API.
+    - [ ] Re-enable buttons/logic for deferred actions (Task Verification points/reassign, Assign Task confirm, Ticket Adjust confirm, Redeem Reward confirm) once Edge Functions are ready.
 - [ ] **Implement Link Table Logic:**
-    - [ ] Refactor `updateUser` API or create dedicated Edge Functions/API calls to handle adding/removing rows in `student_instruments`, `student_teachers`, `parent_students` when editing users. Update `EditUserModal` accordingly.
+    - [ ] Refactor `updateUser` API/Edge Function OR create dedicated functions to handle adding/removing rows in `student_instruments`, `student_teachers`, `parent_students` when editing users. Update `EditUserModal` accordingly.
     - [ ] Implement Admin UI for linking Parents <-> Students.
+- [ ] **Security Hardening:**
+    *   [ ] Implement proper salting for `hashToken` function used for refresh tokens.
+    *   [ ] Consider implementing rolling refresh tokens in `refresh-pin-session`.
+    *   [ ] Review and tighten all RLS policies.
 
 ## [ ] Development Phase 4: Features, Refinements & Testing
 
@@ -126,13 +132,15 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 *   [ ] **Address Known Issues & TODOs:**
     *   [ ] Lint Errors.
     *   [ ] Dark Mode support.
-    *   [ ] Ensure balance display is consistent and updates correctly after actions.
+    *   [ ] Ensure balance display is consistent and updates correctly after actions (requires atomic functions).
+    *   [ ] Review parent `viewing_student_id` logic during session refresh.
 *   [ ] **Refinements & Thorough Testing:**
     *   Test all user role workflows end-to-end with real authentication and Supabase backend.
-    *   Refine UI/UX based on testing.
+    *   Refine UI/UX based on testing (including button styles).
     *   Optimize Supabase queries/functions/views if needed (e.g., for balance calculation, fetching linked data).
     *   Add unit/integration tests (Optional).
 
 ## [ ] Supporting Features (Post-MVP / Lower Priority)
 *   [ ] Frontend: Design and implement `PublicView` welcome/landing page using provided store assets.
 *   [ ] Frontend: Evaluate and potentially implement opaque background images using provided assets.
+*   [ ] Refine button styles (wood grain, abalone border).
