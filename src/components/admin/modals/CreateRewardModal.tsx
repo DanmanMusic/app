@@ -162,8 +162,6 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
               keyboardType="numeric"
               editable={!mutation.isPending}
             />
-
-            {}
             <Text style={commonSharedStyles.label}>Image (Optional):</Text>
             <View style={modalSharedStyles.iconPreviewContainer}>
               {imageUri ? (

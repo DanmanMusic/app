@@ -120,13 +120,14 @@ export interface ManualTicketAdjustmentModalProps {
   studentName: string;
 }
 
-type UserTab = 'students' | 'teachers' | 'parents' | 'admins';
+export type UserTab = 'students' | 'teachers' | 'parents' | 'admins';
+
 type StudentFilter = UserStatus | 'all';
 
 export interface AdminUsersSectionProps {
   instruments: Instrument[];
   activeTab: UserTab;
-  setActiveTab: (tab: UserTab) => void;
+  setActiveTab: React.Dispatch<React.SetStateAction<UserTab>>;
   studentFilter?: StudentFilter;
   setStudentFilter?: (filter: StudentFilter) => void;
   studentSearchTerm?: string;

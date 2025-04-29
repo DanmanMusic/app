@@ -92,7 +92,6 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
             For User: {displayName} ({userActualRole})
           </Text>
 
-          {}
           {isLoading && (
             <View style={modalSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -100,10 +99,8 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
             </View>
           )}
 
-          {}
           {generatedPin && !isLoading && (
             <View style={styles.pinDisplayContainer}>
-              {}
               <Text style={styles.pinLabel}>Generated PIN for {generatedForRole}:</Text>
               <Text style={styles.pinValue}>{generatedPin}</Text>
               <Text style={styles.pinInstructions}>
@@ -112,11 +109,8 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
             </View>
           )}
 
-          {}
           {!generatedPin && !isLoading && (
             <View style={modalSharedStyles.buttonContainer}>
-              {}
-              {}
               {(userActualRole === 'student' ||
                 userActualRole === 'teacher' ||
                 userActualRole === 'admin') && (
@@ -127,7 +121,6 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
                 />
               )}
 
-              {}
               {userActualRole === 'student' && (
                 <Button
                   title={`Generate PIN for Parent Login`}
@@ -139,7 +132,6 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
             </View>
           )}
 
-          {}
           <View style={modalSharedStyles.footerButton}>
             <Button
               title={generatedPin ? 'Close' : 'Cancel'}

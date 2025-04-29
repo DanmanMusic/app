@@ -242,9 +242,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
 
   return (
     <>
-      {}
       <ScrollView style={appSharedStyles.container}>
-        {}
         <Text style={appSharedStyles.sectionTitle}>Student Details</Text>
         <Text style={appSharedStyles.itemDetailText}>Name: {studentDisplayName}</Text>
         <Text style={appSharedStyles.itemDetailText}>ID: {student.id}</Text>
@@ -275,8 +273,6 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
             Balance: {balance} Tickets
           </Text>
         )}
-
-        {}
         <View
           style={[adminSharedStyles.adminStudentActions, commonSharedStyles.actionButtonsContainer]}
         >
@@ -300,7 +296,6 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
           {onInitiateStatusUser && (
             <Button title="Manage Status" onPress={handleStatusClick} color={colors.secondary} />
           )}
-          {}
           {onInitiatePinGeneration && (
             <Button
               title="Login (PIN)"
@@ -310,8 +305,6 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
             />
           )}
         </View>
-
-        {}
         <Text style={appSharedStyles.sectionTitle}>Assigned Tasks ({totalTasksCount})</Text>
         {studentTasksLoading && <ActivityIndicator style={styles.listLoader} />}
         {studentTasksError && (
@@ -406,8 +399,6 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
             contentContainerStyle={{ paddingBottom: 10 }}
           />
         )}
-
-        {}
         <Text style={appSharedStyles.sectionTitle}>History ({totalHistoryCount})</Text>
         {studentHistoryLoading && <ActivityIndicator style={styles.listLoader} />}
         {studentHistoryError && (
@@ -441,10 +432,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
           />
         )}
         <View style={{ height: 30 }} />
-        {}
       </ScrollView>
-
-      {}
       <ConfirmationModal
         visible={isDeleteTaskConfirmVisible}
         title="Confirm Remove Task"

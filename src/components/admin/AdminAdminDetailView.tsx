@@ -124,7 +124,6 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
 
   return (
     <ScrollView style={appSharedStyles.container}>
-      {}
       <Text style={appSharedStyles.sectionTitle}>Admin Details</Text>
       <Text style={appSharedStyles.itemDetailText}>Name: {adminDisplayName}</Text>
       <Text style={appSharedStyles.itemDetailText}>ID: {adminProfile.id}</Text>
@@ -134,31 +133,23 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
           {adminProfile.status}
         </Text>
       </Text>
-      {}
       <Text style={appSharedStyles.itemDetailText}>
         Email:{' '}
         {adminAuthDetails?.email ??
           (authDetailsError ? '(Error Fetching)' : '(Not Found/No Email)')}
       </Text>
-      {}
       {!needsPinLogin && !authDetailsError && adminAuthDetails?.email && (
         <Text style={styles.infoText}>(Email/Password login appears to be set up)</Text>
       )}
-
-      {}
       <View
         style={[adminSharedStyles.adminStudentActions, commonSharedStyles.actionButtonsContainer]}
       >
-        {}
         <Button
           title="Manage Status"
           onPress={handleStatus}
           color={colors.secondary}
           disabled={adminProfile.id === currentUserId}
         />
-
-        {}
-        {}
         {onInitiatePinGeneration && needsPinLogin && (
           <Button
             title="Generate Login PIN"
@@ -167,20 +158,17 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
             disabled={!isAdminActive}
           />
         )}
-        {}
         {onInitiatePinGeneration && authDetailsError && (
           <Text style={commonSharedStyles.errorText}>
             PIN availability unknown (Auth fetch error)
           </Text>
         )}
-        {}
         {onInitiatePinGeneration &&
           !needsPinLogin &&
           !authDetailsError &&
           adminAuthDetails?.email && <Text style={styles.infoText}>(PIN login not needed)</Text>}
       </View>
       <View style={{ height: 30 }} />
-      {}
     </ScrollView>
   );
 };

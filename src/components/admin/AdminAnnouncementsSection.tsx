@@ -101,12 +101,9 @@ export const AdminAnnouncementsSection = () => {
 
   return (
     <View>
-      {}
       <Text style={appSharedStyles.sectionTitle}>
         Announcements & Challenges ({announcements.length})
       </Text>
-
-      {}
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button
           title="Create New Announcement"
@@ -114,28 +111,21 @@ export const AdminAnnouncementsSection = () => {
           disabled={isLoading || deleteMutation.isPending}
         />
       </View>
-
-      {}
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
       )}
-
-      {}
       {isError && !isLoading && (
         <View style={commonSharedStyles.errorContainer}>
           <Text style={commonSharedStyles.errorText}>{getErrorMessage()}</Text>
         </View>
       )}
-
-      {}
       {!isLoading && !isError && (
         <FlatList
           data={announcements}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <View style={appSharedStyles.itemContainer}>
-              <AnnouncementListItem item={item} /> {}
-              {}
+              <AnnouncementListItem item={item} />
               <View style={adminSharedStyles.itemActions}>
                 <Button
                   title="Edit"
@@ -158,8 +148,6 @@ export const AdminAnnouncementsSection = () => {
           )}
         />
       )}
-
-      {}
       <CreateAnnouncementModal visible={isCreateModalVisible} onClose={closeCreateModal} />
       <EditAnnouncementModal
         visible={isEditModalVisible}

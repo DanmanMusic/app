@@ -53,7 +53,7 @@ import {
   UserRole,
   UserStatus,
 } from '../types/dataTypes';
-import { AdminViewProps } from '../types/componentProps';
+import { AdminViewProps, UserTab } from '../types/componentProps';
 
 import { getUserDisplayName } from '../utils/helpers';
 import { adminSharedStyles } from '../styles/adminSharedStyles';
@@ -72,7 +72,6 @@ type AdminSection =
   | 'history'
   | 'announcements'
   | 'instruments';
-type UserTab = 'students' | 'teachers' | 'parents';
 
 export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId: adminUserId } = useAuth();
@@ -486,7 +485,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      {}
       <View style={appSharedStyles.headerContainer}>
         <View style={appSharedStyles.headerSideContainer}>
           {showBackButton ? (
@@ -498,7 +496,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         <Text style={appSharedStyles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
           {getHeaderTitle()}
         </Text>
-        {}
         <View style={appSharedStyles.headerSideContainer}>
           {!viewingUserId && (
             <Button
@@ -510,10 +507,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         </View>
       </View>
 
-      {}
       {!viewingUserId ? (
         <ScrollView style={appSharedStyles.contentArea}>
-          {}
           <View style={adminSharedStyles.adminNav}>
             <Button
               title="Dashboard"
@@ -551,9 +546,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
               disabled={viewingSection === 'instruments'}
             />
           </View>
-          {}
           {renderMainContent()}
-          {}
           {viewingSection === 'tasks' && (
             <View
               style={{
@@ -572,7 +565,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         <View style={appSharedStyles.contentArea}>{renderMainContent()}</View>
       )}
 
-      {}
       <CreateUserModal
         visible={isCreateUserModalVisible}
         onClose={() => setIsCreateUserModalVisible(false)}
@@ -621,6 +613,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         user={userForPin}
         onClose={handleClosePinGeneration}
       />
+
       {userToManage?.role === 'student' && adminUserId && (
         <ManualTicketAdjustmentModal
           visible={isAdjustmentModalVisible}
@@ -629,6 +622,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           studentName={getUserDisplayName(userToManage)}
         />
       )}
+
       {userToManage?.role === 'student' && adminUserId && (
         <RedeemRewardModal
           visible={isRedeemModalVisible}
@@ -638,7 +632,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           redeemerId={adminUserId}
         />
       )}
-      {}
+
       <SetEmailPasswordModal
         visible={isSetCredentialsModalVisible}
         onClose={handleCloseSetCredentialsModal}

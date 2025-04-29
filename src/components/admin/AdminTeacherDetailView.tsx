@@ -111,7 +111,6 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
 
   return (
     <ScrollView style={appSharedStyles.container}>
-      {}
       <Text style={appSharedStyles.sectionTitle}>Teacher Details</Text>
       <Text style={appSharedStyles.itemDetailText}>Name: {teacherDisplayName}</Text>
       <Text style={appSharedStyles.itemDetailText}>ID: {teacher.id}</Text>
@@ -121,14 +120,11 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
           {teacher.status}
         </Text>
       </Text>
-
-      {}
       <View
         style={[adminSharedStyles.adminStudentActions, commonSharedStyles.actionButtonsContainer]}
       >
         <Button title="Edit Info" onPress={handleEdit} color={colors.warning} />
         <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
-        {}
         {onInitiatePinGeneration && (
           <Button
             title="Login (PIN)"
@@ -138,8 +134,6 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
           />
         )}
       </View>
-
-      {}
       <Text style={appSharedStyles.sectionTitle}>Linked Students ({linkedStudents.length})</Text>
       {isLoadingLinkedStudents && (
         <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />

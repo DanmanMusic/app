@@ -102,7 +102,6 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
       <View style={modalSharedStyles.centeredView}>
         <View style={modalSharedStyles.modalView}>
           <Text style={modalSharedStyles.modalTitle}>Create New Library Task</Text>
-          {}
           <ScrollView style={modalSharedStyles.scrollView}>
             <Text style={commonSharedStyles.label}>Task Title:</Text>
             <TextInput
@@ -141,7 +140,6 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
             />
           </ScrollView>
 
-          {}
           {mutation.isPending && (
             <View style={modalSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -149,7 +147,6 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
             </View>
           )}
 
-          {}
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
               Error:{' '}
@@ -157,7 +154,6 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
             </Text>
           )}
 
-          {}
           <View style={modalSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Task'}

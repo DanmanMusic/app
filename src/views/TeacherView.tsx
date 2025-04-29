@@ -243,7 +243,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      {}
       <View style={appSharedStyles.headerContainer}>
         <View style={appSharedStyles.headerSideContainer}>
           {showBackButton ? (
@@ -258,10 +257,8 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
         <View style={appSharedStyles.headerSideContainer} />
       </View>
 
-      {}
       {renderMainContent()}
 
-      {}
       <SetEmailPasswordModal
         visible={isSetCredentialsModalVisible}
         onClose={() => setIsSetCredentialsModalVisible(false)}
@@ -271,7 +268,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
         onClose={handleAssignTaskModalClose}
         preselectedStudentId={assignTaskTargetStudentId}
       />
-      {}
       <EditUserModal
         visible={isEditStudentModalVisible}
         userToEdit={studentToEdit}

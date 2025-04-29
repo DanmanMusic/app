@@ -132,8 +132,6 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             autoCapitalize="words"
             editable={!mutation.isPending}
           />
-
-          {}
           <Text style={commonSharedStyles.label}>Icon (Optional):</Text>
           <View style={modalSharedStyles.iconPreviewContainer}>
             {imageUri ? (

@@ -102,10 +102,7 @@ export const AdminRewardsSection = () => {
 
   return (
     <View>
-      {}
       <Text style={appSharedStyles.sectionTitle}>Rewards Catalog ({rewardsCatalog.length})</Text>
-
-      {}
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button
           title="Add New Reward"
@@ -113,20 +110,14 @@ export const AdminRewardsSection = () => {
           disabled={deleteMutation.isPending}
         />
       </View>
-
-      {}
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
       )}
-
-      {}
       {isError && !isLoading && (
         <View style={commonSharedStyles.errorContainer}>
           <Text style={commonSharedStyles.errorText}>{getErrorMessage()}</Text>
         </View>
       )}
-
-      {}
       {!isLoading && !isError && (
         <FlatList
           data={rewardsCatalog}
@@ -146,8 +137,6 @@ export const AdminRewardsSection = () => {
           )}
         />
       )}
-
-      {}
       <CreateRewardModal visible={isCreateModalVisible} onClose={closeCreateModal} />
       <EditRewardModal
         visible={isEditModalVisible}

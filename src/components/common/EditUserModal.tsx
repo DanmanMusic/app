@@ -221,7 +221,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
           </Text>
 
           <ScrollView style={modalSharedStyles.scrollView}>
-            {}
             <Text style={commonSharedStyles.label}>First Name:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -246,20 +245,18 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
               editable={!mutation.isPending}
             />
 
-            {}
             {isStudentRole && (
               <>
-                {}
                 <View style={modalSharedStyles.roleSpecificSection}>
                   <Text style={modalSharedStyles.roleSectionTitle}>Instruments</Text>
-                  {}
+
                   {isLoadingInstruments && <ActivityIndicator color={colors.primary} />}
                   {isErrorInstruments && (
                     <Text style={commonSharedStyles.errorText}>
                       Error loading instruments: {errorInstrumentsMsg?.message}
                     </Text>
                   )}
-                  {}
+
                   {!isLoadingInstruments && !isErrorInstruments && (
                     <View style={commonSharedStyles.selectionContainer}>
                       {instruments.length > 0 ? (
@@ -285,8 +282,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
                     Note: Instrument link saving is currently deferred in API.
                   </Text>
                 </View>
-
-                {}
                 <View style={modalSharedStyles.roleSpecificSection}>
                   <Text style={modalSharedStyles.roleSectionTitle}>Linked Teachers</Text>
                   {isLoadingTeachers && <ActivityIndicator color={colors.primary} />}
@@ -324,7 +319,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
             )}
           </ScrollView>
 
-          {}
           {mutation.isPending && (
             <View style={modalSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -338,7 +332,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
             </Text>
           )}
 
-          {}
           <View style={modalSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}

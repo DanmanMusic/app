@@ -166,7 +166,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
             />
           </ScrollView>
 
-          {}
           {mutation.isPending && (
             <View style={modalSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -174,7 +173,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
             </View>
           )}
 
-          {}
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
               Error:{' '}
@@ -182,7 +180,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
             </Text>
           )}
 
-          {}
           <View style={modalSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}

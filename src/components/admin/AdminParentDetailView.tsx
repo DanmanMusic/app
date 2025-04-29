@@ -116,7 +116,6 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
         <Text style={commonSharedStyles.errorText}>
           Error loading parent details: {parentErrorMsg?.message || 'Parent not found.'}
         </Text>
-        {}
       </View>
     );
   }
@@ -131,7 +130,6 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
 
   return (
     <ScrollView style={appSharedStyles.container}>
-      {}
       <Text style={appSharedStyles.sectionTitle}>Parent Details</Text>
       <Text style={appSharedStyles.itemDetailText}>Name: {parentDisplayName}</Text>
       <Text style={appSharedStyles.itemDetailText}>ID: {parent.id}</Text>
@@ -141,26 +139,21 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
           {parent.status}
         </Text>
       </Text>
-      {}
       <View
         style={[adminSharedStyles.adminStudentActions, commonSharedStyles.actionButtonsContainer]}
       >
-        {}
         <Button title="Edit Info (Limited)" onPress={handleEdit} color={colors.warning} />
         <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
-        {}
         <Button
           title="Link Another Student (TODO)"
           onPress={handleLinkStudent}
           color={colors.info}
         />
       </View>
-      {}
       <Text style={appSharedStyles.sectionTitle}>Linked Students ({linkedStudents.length})</Text>
       {isLoadingLinkedStudents && (
         <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
       )}
-      {}
       {isErrorLinkedStudents && !isLoadingLinkedStudents && (
         <Text style={commonSharedStyles.errorText}>
           Error loading details for one or more linked students.
@@ -186,7 +179,6 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
                 </Text>
               </Text>
               <View style={styles.linkedStudentActions}>
-                {}
                 <Button title="View Profile" onPress={() => onViewStudentProfile(studentItem.id)} />
               </View>
             </View>
@@ -200,7 +192,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
           )}
         />
       )}
-      <View style={{ height: 30 }} /> {}
+      <View style={{ height: 30 }} />
     </ScrollView>
   );
 };

@@ -226,8 +226,6 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
               keyboardType="numeric"
               editable={!mutation.isPending}
             />
-
-            {}
             <Text style={commonSharedStyles.label}>Image:</Text>
             <View style={modalSharedStyles.iconPreviewContainer}>
               {previewSource ? (
@@ -246,7 +244,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
                   disabled={mutation.isPending}
                   color={colors.info}
                 />
-                {}
+
                 {(initialImageUrl || imageUri) && (
                   <Button
                     title="Remove Image"

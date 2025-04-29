@@ -196,8 +196,6 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
             autoCapitalize="words"
             editable={!mutation.isPending}
           />
-
-          {}
           <Text style={commonSharedStyles.label}>Icon:</Text>
           <View style={modalSharedStyles.iconPreviewContainer}>
             {previewSource ? (

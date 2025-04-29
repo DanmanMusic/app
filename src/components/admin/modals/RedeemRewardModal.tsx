@@ -150,11 +150,11 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
             <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
               {item.cost} Tickets
             </Text>
-            {}
+
             {canAfford === false && (
               <Text style={styles.cannotAffordText}>(Need {item.cost - currentBalance} more)</Text>
             )}
-            {}
+
             {canAfford === null && (
               <Text style={styles.loadingAffordText}>(Checking balance...)</Text>
             )}
@@ -200,10 +200,6 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
               }
             />
           )}
-
-          {}
-          {}
-          {}
 
           <View style={modalSharedStyles.buttonContainer}>
             <Button

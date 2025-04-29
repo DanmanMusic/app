@@ -38,10 +38,7 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
 
   return (
     <View>
-      {}
       <Text style={appSharedStyles.sectionTitle}>Task Management</Text>
-
-      {}
       <View style={{ alignItems: 'flex-start', marginBottom: 20, gap: 5 }}>
         <Button
           title="Assign Task to Student"
@@ -49,8 +46,6 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
           disabled={deleteTaskMutationPending}
         />
       </View>
-
-      {}
       <Text style={adminSharedStyles.sectionSubTitle}>Task Library ({taskLibrary.length})</Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button
@@ -59,20 +54,14 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
           disabled={deleteTaskMutationPending || isLoading}
         />
       </View>
-
-      {}
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
       )}
-
-      {}
       {isError && !isLoading && (
         <View style={commonSharedStyles.errorContainer}>
           <Text style={commonSharedStyles.errorText}>{getErrorMessage()}</Text>
         </View>
       )}
-
-      {}
       {!isLoading && !isError && (
         <FlatList
           data={taskLibrary}

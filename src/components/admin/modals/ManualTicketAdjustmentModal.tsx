@@ -158,11 +158,6 @@ const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = 
           <Text style={modalSharedStyles.previewText}>
             New Balance Preview: {newBalancePreview} Tickets
           </Text>
-
-          {}
-          {}
-          {}
-
           <View style={modalSharedStyles.buttonContainer}>
             <Button
               title={confirmButtonText}

@@ -18,8 +18,6 @@ import { usePaginatedTeachers } from '../../hooks/usePaginatedTeachers';
 import { usePaginatedParents } from '../../hooks/usePaginatedParents';
 import { usePaginatedAdmins } from '../../hooks/usePaginatedAdmins';
 
-type UserTab = 'students' | 'teachers' | 'parents' | 'admins';
-
 export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   activeTab,
   setActiveTab,
@@ -187,43 +185,35 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
 
   return (
     <View>
-      {}
       <View style={appSharedStyles.tabContainer}>
-        {}
         <Button
           title={`Students (${studentTotalItems})`}
           onPress={() => setActiveTab('students')}
           color={activeTab === 'students' ? colors.primary : colors.secondary}
         />
-        {}
         <Button
           title={`Teachers (${teacherTotalItems})`}
           onPress={() => setActiveTab('teachers')}
           color={activeTab === 'teachers' ? colors.primary : colors.secondary}
         />
-        {}
         <Button
           title={`Parents (${parentTotalItems})`}
           onPress={() => setActiveTab('parents')}
           color={activeTab === 'parents' ? colors.primary : colors.secondary}
         />
-        {}
         <Button
           title={`Admins (${adminTotalItems})`}
           onPress={() => setActiveTab('admins')}
           color={activeTab === 'admins' ? colors.primary : colors.secondary}
         />
-        {}
         <Button title="Create User" onPress={onInitiateCreateUser} />
       </View>
 
-      {}
       {activeTab === 'students' &&
         studentFilter !== undefined &&
         setStudentFilter &&
         setStudentSearchTerm && (
           <View style={appSharedStyles.filterAndSearchContainer}>
-            {}
             <View style={appSharedStyles.filterContainer}>
               <Text style={appSharedStyles.filterLabel}>Show:</Text>
               <Button
@@ -242,7 +232,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
                 color={studentFilter === 'all' ? colors.info : colors.secondary}
               />
             </View>
-            {}
             <TextInput
               style={commonSharedStyles.searchInput}
               placeholder="Search Students by Name..."
@@ -254,24 +243,18 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
             />
           </View>
         )}
-      {}
+
       {activeTab !== 'students' && <View style={{ height: 5 }} />}
 
-      {}
       <View style={appSharedStyles.listArea}>
-        {}
         {(isLoading || isFetching) && (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
         )}
-
-        {}
         {isError && !isLoading && (
           <View style={commonSharedStyles.errorContainer}>
             <Text style={commonSharedStyles.errorText}>{getErrorMessage()}</Text>
           </View>
         )}
-
-        {}
         {!isLoading && !isError && (
           <FlatList
             data={displayData}
@@ -281,7 +264,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
             ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
             ListEmptyComponent={() => (
               <Text style={appSharedStyles.emptyListText}>
-                {}
                 {activeTab === 'students'
                   ? 'No students match filters/search.'
                   : activeTab === 'teachers'

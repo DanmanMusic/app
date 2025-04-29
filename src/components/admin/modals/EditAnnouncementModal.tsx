@@ -169,9 +169,6 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
             editable={!mutation.isPending}
           />
 
-          {}
-
-          {}
           {mutation.isPending && (
             <View style={modalSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -179,7 +176,6 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
             </View>
           )}
 
-          {}
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
               Error:{' '}
@@ -187,7 +183,6 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
             </Text>
           )}
 
-          {}
           <View style={modalSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}

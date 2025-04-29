@@ -454,14 +454,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
 
           {renderStepContent()}
 
-          {}
-          {}
-          {}
-          {}
-
-          {}
           <View style={modalSharedStyles.buttonContainer}>
-            {}
             {step === 3 && (
               <Button
                 title={'Confirm & Assign (Disabled)'}
@@ -469,7 +462,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                 disabled={true}
               />
             )}
-            {}
+
             {((step > 1 && !preselectedStudentId) ||
               step === 3 ||
               (step === 2 && preselectedStudentId)) && (
@@ -480,7 +473,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                 disabled={mutation.isPending}
               />
             )}
-            {}
+
             <Button
               title="Cancel"
               onPress={onClose}

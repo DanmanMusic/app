@@ -175,7 +175,6 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
           <Text style={modalSharedStyles.modalTitle}>Create New User</Text>
 
           <ScrollView style={modalSharedStyles.scrollView}>
-            {}
             <Text style={commonSharedStyles.label}>First Name:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -203,8 +202,6 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
               onChangeText={setNickname}
               editable={!mutation.isPending}
             />
-
-            {}
             <Text style={commonSharedStyles.label}>Role:</Text>
             <View style={styles.roleButtonContainer}>
               {CREATABLE_ROLES.map(r => (
@@ -218,14 +215,9 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
               ))}
             </View>
 
-            {}
             {isStudentRoleSelected && (
               <View style={modalSharedStyles.modalSubSection}>
                 <Text style={modalSharedStyles.roleSectionTitle}>Student Details (Optional)</Text>
-
-                {}
-
-                {}
                 <Text style={commonSharedStyles.label}>Instruments:</Text>
                 {isLoadingInstruments && <ActivityIndicator color={colors.primary} />}
                 {isErrorInstruments && (
@@ -255,7 +247,6 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
                   </View>
                 )}
 
-                {}
                 <Text style={[commonSharedStyles.label, { marginTop: 15 }]}>Link Teachers:</Text>
                 {isLoadingTeachers && <ActivityIndicator color={colors.primary} />}
                 {isErrorTeachers && (
@@ -290,7 +281,6 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
             )}
           </ScrollView>
 
-          {}
           {mutation.isPending && (
             <View style={modalSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -304,7 +294,6 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
             </Text>
           )}
 
-          {}
           <View style={modalSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create User'}

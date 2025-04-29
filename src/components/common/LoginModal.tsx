@@ -120,8 +120,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
       <View style={modalSharedStyles.centeredView}>
         <View style={modalSharedStyles.modalView}>
           <Text style={modalSharedStyles.modalTitle}>Login</Text>
-
-          {}
           <View style={styles.toggleContainer}>
             <TouchableOpacity
               style={[styles.toggleButton, mode === 'email' && styles.toggleButtonActive]}
@@ -147,7 +145,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
             </TouchableOpacity>
           </View>
 
-          {}
           {mode === 'email' && (
             <View style={styles.formContainer}>
               <Text style={commonSharedStyles.label}>Email:</Text>
@@ -207,7 +204,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
             </View>
           )}
 
-          {}
           {isLoading && (
             <View style={modalSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -218,7 +214,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
             <Text style={[commonSharedStyles.errorText, { marginTop: 10 }]}> Error: {error} </Text>
           )}
 
-          {}
           <View style={modalSharedStyles.footerButton}>
             <Button
               title="Cancel"

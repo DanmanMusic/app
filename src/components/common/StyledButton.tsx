@@ -58,7 +58,6 @@ export const StyledButton: React.FC<StyledButtonProps> = ({
             imageStyle={styles.backgroundImageStyle}
             resizeMode="cover"
           >
-            {}
             <ImageBackground
               source={innerWoodSource}
               style={styles.contentBackground}
@@ -76,7 +75,6 @@ export const StyledButton: React.FC<StyledButtonProps> = ({
               </Text>
             </ImageBackground>
 
-            {}
             {isPressedOverlayActive && (
               <View
                 style={[
@@ -89,7 +87,6 @@ export const StyledButton: React.FC<StyledButtonProps> = ({
                 ]}
               />
             )}
-            {}
           </ImageBackground>
         );
       }}

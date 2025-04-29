@@ -146,7 +146,6 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
 
   return (
     <>
-      {}
       <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={onClose}>
         <View style={modalSharedStyles.centeredView}>
           <View style={modalSharedStyles.modalView}>
@@ -159,7 +158,6 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
               </Text>
             </Text>
 
-            {}
             {toggleStatusMutation.isPending && (
               <View style={modalSharedStyles.loadingContainer}>
                 <ActivityIndicator size="small" color={colors.primary} />
@@ -167,7 +165,6 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
               </View>
             )}
 
-            {}
             {toggleStatusMutation.isError && (
               <Text style={commonSharedStyles.errorText}>
                 Status update failed:{' '}
@@ -176,8 +173,6 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
                   : 'Unknown error'}
               </Text>
             )}
-
-            {}
             <View style={modalSharedStyles.buttonContainer}>
               <Button
                 title={toggleButtonText}
@@ -192,13 +187,9 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
                 disabled={isDeleteDisabled}
               />
             </View>
-
-            {}
             <Text style={styles.infoText}>
               Note: Permanent deletion requires server-side setup and is currently disabled.
             </Text>
-
-            {}
             <View style={modalSharedStyles.footerButton}>
               <Button
                 title="Close"
@@ -210,9 +201,6 @@ const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = 
           </View>
         </View>
       </Modal>
-
-      {}
-      {}
       <ConfirmationModal
         visible={isConfirmDeleteVisible}
         title="Confirm Permanent Deletion"

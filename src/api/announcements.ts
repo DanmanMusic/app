@@ -1,25 +1,18 @@
 import { getSupabase } from '../lib/supabaseClient';
 import { Announcement, AnnouncementType } from '../types/dataTypes';
 
-/**
- * Fetches all announcements from Supabase, ordered by date descending.
- */
 export const fetchAnnouncements = async (): Promise<Announcement[]> => {
   const client = getSupabase();
   console.log(`[Supabase] Fetching Announcements`);
-
   const { data, error } = await client
     .from('announcements')
     .select('id, type, title, message, date, related_student_id')
     .order('date', { ascending: false });
-
   if (error) {
     console.error(`[Supabase] Error fetching announcements:`, error.message);
     throw new Error(`Failed to fetch announcements: ${error.message}`);
   }
-
   console.log(`[Supabase] Received ${data?.length ?? 0} announcement items.`);
-
   const announcements: Announcement[] = (data || []).map(item => ({
     id: item.id,
     type: item.type as AnnouncementType,
@@ -28,23 +21,17 @@ export const fetchAnnouncements = async (): Promise<Announcement[]> => {
     date: item.date,
     relatedStudentId: item.related_student_id ?? undefined,
   }));
-
   return announcements;
 };
 
-/**
- * Creates a new announcement item in Supabase.
- */
 export const createAnnouncement = async (
   announcementData: Omit<Announcement, 'id' | 'date'>
 ): Promise<Announcement> => {
   const client = getSupabase();
   console.log('[Supabase] Creating announcement:', announcementData.title);
-
   const trimmedTitle = announcementData.title?.trim();
   const trimmedMessage = announcementData.message?.trim();
   const type = announcementData.type;
-
   if (!trimmedTitle) {
     throw new Error('Announcement title cannot be empty.');
   }
@@ -54,25 +41,21 @@ export const createAnnouncement = async (
   if (!type) {
     throw new Error('Announcement type must be selected.');
   }
-
   const itemToInsert = {
     type: type,
     title: trimmedTitle,
     message: trimmedMessage,
     related_student_id: announcementData.relatedStudentId ?? null,
   };
-
   const { data, error } = await client
     .from('announcements')
     .insert(itemToInsert)
     .select('id, type, title, message, date, related_student_id')
     .single();
-
   if (error || !data) {
     console.error(`[Supabase] Error creating announcement:`, error?.message);
     throw new Error(`Failed to create announcement: ${error?.message || 'No data returned'}`);
   }
-
   const createdAnnouncement: Announcement = {
     id: data.id,
     type: data.type as AnnouncementType,
@@ -81,14 +64,10 @@ export const createAnnouncement = async (
     date: data.date,
     relatedStudentId: data.related_student_id ?? undefined,
   };
-
   console.log(`[Supabase] Announcement created successfully (ID: ${createdAnnouncement.id})`);
   return createdAnnouncement;
 };
 
-/**
- * Updates an existing announcement item in Supabase.
- */
 export const updateAnnouncement = async ({
   announcementId,
   updates,
@@ -98,7 +77,6 @@ export const updateAnnouncement = async ({
 }): Promise<Announcement> => {
   const client = getSupabase();
   console.log(`[Supabase] Updating announcement ${announcementId}:`, updates);
-
   const updatePayload: {
     type?: AnnouncementType;
     title?: string;
@@ -106,7 +84,6 @@ export const updateAnnouncement = async ({
     related_student_id?: string | null;
   } = {};
   let hasChanges = false;
-
   if (updates.type !== undefined) {
     updatePayload.type = updates.type;
     hasChanges = true;
@@ -127,10 +104,8 @@ export const updateAnnouncement = async ({
     updatePayload.related_student_id = updates.relatedStudentId ?? null;
     hasChanges = true;
   }
-
   if (!hasChanges) {
     console.warn(`[Supabase] updateAnnouncement called for ${announcementId} with no changes.`);
-
     const { data: currentData, error: currentError } = await client
       .from('announcements')
       .select('id, type, title, message, date, related_student_id')
@@ -178,9 +153,6 @@ export const updateAnnouncement = async ({
   return updatedAnnouncement;
 };
 
-/**
- * Deletes an announcement item from Supabase.
- */
 export const deleteAnnouncement = async (announcementId: string): Promise<void> => {
   const client = getSupabase();
   console.log(`[Supabase] Deleting announcement ${announcementId}`);

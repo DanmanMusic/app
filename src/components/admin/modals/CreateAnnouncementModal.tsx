@@ -93,10 +93,7 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
           <Text style={modalSharedStyles.modalTitle}>Create New Announcement</Text>
 
           <Text style={commonSharedStyles.label}>Type:</Text>
-          {}
           <View style={commonSharedStyles.input}>
-            {' '}
-            {}
             <Picker
               selectedValue={type}
               onValueChange={itemValue => setType(itemValue as AnnouncementType)}
@@ -137,7 +134,6 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
             editable={!mutation.isPending}
           />
 
-          {}
           {/*
           <Text style={commonSharedStyles.label}>Related Student ID (Optional):</Text>
           <TextInput
@@ -150,7 +146,6 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
           />
           */}
 
-          {}
           {mutation.isPending && (
             <View style={modalSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -158,7 +153,6 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
             </View>
           )}
 
-          {}
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
               Error:{' '}
@@ -168,7 +162,6 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
             </Text>
           )}
 
-          {}
           <View style={modalSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Announcement'}

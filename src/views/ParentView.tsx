@@ -107,7 +107,6 @@ export const ParentView = () => {
           <Text style={commonSharedStyles.errorText}>
             Error loading parent data: {errorParent?.message || 'Parent not found.'}
           </Text>
-          {}
         </View>
       </SafeAreaView>
     );
@@ -118,7 +117,6 @@ export const ParentView = () => {
       <SafeAreaView style={appSharedStyles.safeArea}>
         <View style={appSharedStyles.container}>
           <Text style={commonSharedStyles.errorText}>Error: Logged in user is not a parent.</Text>
-          {}
         </View>
       </SafeAreaView>
     );
@@ -140,7 +138,6 @@ export const ParentView = () => {
             <View style={styles.centered}>
               <ActivityIndicator size="large" color={colors.primary} />
               <Text>Loading Student Details...</Text>
-              {}
               <Button title="Back to Students" onPress={() => setViewingStudentId(null)} />
             </View>
           </SafeAreaView>
@@ -168,15 +165,11 @@ export const ParentView = () => {
           <Text style={appSharedStyles.parentHeaderText} numberOfLines={1} ellipsizeMode="tail">
             Viewing: {getUserDisplayName(studentToView)}
           </Text>
-          {}
           {hasMultipleStudents && (
             <Button title="Select Student" onPress={() => setViewingStudentId(null)} />
           )}
         </View>
-        {}
         <StudentView studentIdToView={viewingStudentId} />
-
-        {}
         <SetEmailPasswordModal
           visible={isSetCredentialsModalVisible}
           onClose={() => setIsSetCredentialsModalVisible(false)}
@@ -188,12 +181,10 @@ export const ParentView = () => {
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
       <View style={appSharedStyles.container}>
-        {}
         <View style={appSharedStyles.parentHeader}>
           <Text style={appSharedStyles.parentHeaderText} numberOfLines={1} ellipsizeMode="tail">
             Parent: {getUserDisplayName(parentUser)}
           </Text>
-          {}
           <Button
             title="Set Login"
             onPress={() => setIsSetCredentialsModalVisible(true)}
@@ -202,16 +193,12 @@ export const ParentView = () => {
         </View>
 
         <Text style={appSharedStyles.sectionTitle}>Your Students</Text>
-
-        {}
         {isLoadingStudents && (
           <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
         )}
         {isErrorStudents && !isLoadingStudents && (
           <Text style={commonSharedStyles.errorText}>Error loading student details.</Text>
         )}
-
-        {}
         {!isLoadingStudents && !isErrorStudents && linkedStudents.length > 0 ? (
           <FlatList
             data={linkedStudents.sort((a, b) =>
@@ -228,7 +215,6 @@ export const ParentView = () => {
           <Text style={appSharedStyles.emptyListText}>No students linked to your account.</Text>
         ) : null}
 
-        {}
         <View style={{ marginTop: 20 }}>
           <Button
             title="Link Another Student (Mock QR)"
@@ -237,8 +223,6 @@ export const ParentView = () => {
           />
         </View>
       </View>
-
-      {}
       <SetEmailPasswordModal
         visible={isSetCredentialsModalVisible}
         onClose={() => setIsSetCredentialsModalVisible(false)}

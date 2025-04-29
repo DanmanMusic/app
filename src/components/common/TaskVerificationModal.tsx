@@ -258,7 +258,6 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             </Text>
 
             <Text style={modalSharedStyles.stepTitle}>Step 2: Award Tickets</Text>
-            {}
             {selectedStatus !== 'incomplete' ? (
               <>
                 <View style={modalSharedStyles.pointsInputContainer}>
@@ -289,11 +288,6 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             <Text style={styles.infoText}>
               Note: Point awarding requires server-side setup and is currently disabled.
             </Text>
-
-            {}
-            {}
-            {}
-
             <View style={modalSharedStyles.buttonContainer}>
               <Button
                 title={'Confirm Tickets (Disabled)'}
@@ -328,7 +322,6 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
         <View style={modalSharedStyles.centeredView}>
           <View style={modalSharedStyles.modalView}>
-            {}
             <Text style={modalSharedStyles.modalTitle}>Verification Step Complete</Text>
             <Text style={modalSharedStyles.taskTitle}>{taskTitle}</Text>
             <Text>Student: {studentNameDisplay}</Text>
@@ -351,11 +344,6 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             <Text style={styles.infoText}>
               Note: Re-assigning requires server-side setup and is currently disabled.
             </Text>
-
-            {}
-            {}
-            {}
-
             <View style={modalSharedStyles.buttonContainer}>
               <Button
                 title={'Re-assign Task (Disabled)'}

@@ -242,10 +242,10 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
       <View style={appSharedStyles.container}>
-        {}
         {!studentIdToView && (
           <Text style={appSharedStyles.header}>Welcome, {studentDisplayName}!</Text>
         )}
+
         <Text style={appSharedStyles.instrumentText}>
           Instrument(s):{' '}
           {instrumentsError ? 'Error' : getInstrumentNames(user.instrumentIds, instruments)}
@@ -264,9 +264,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           </Text>
         )}
 
-        {}
         <View style={appSharedStyles.tabContainer}>
-          {}
           <Button
             title="Dashboard"
             onPress={() => setActiveTab('dashboard')}
@@ -288,8 +286,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
             color={activeTab === 'announcements' ? colors.primary : colors.secondary}
           />
         </View>
-
-        {}
         <View style={appSharedStyles.contentArea}>
           {activeTab === 'dashboard' && (
             <ScrollView>
@@ -298,7 +294,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                 onPress={() => setIsSetCredentialsModalVisible(true)}
                 color={colors.info}
               />
-              {}
               <Text style={appSharedStyles.sectionTitle}>My Goal</Text>
               {rewardsLoading && <ActivityIndicator color={colors.primary} />}
               {rewardsError && (
@@ -387,7 +382,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           )}
           {activeTab === 'tasks' && (
             <>
-              {}
               {tasksLoading && (
                 <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
               )}
@@ -437,7 +431,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           )}
           {activeTab === 'rewards' && (
             <>
-              {}
               {rewardsLoading && (
                 <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
               )}
@@ -469,7 +462,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           )}
           {activeTab === 'announcements' && (
             <>
-              {}
               {announcementsLoading && (
                 <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
               )}

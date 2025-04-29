@@ -146,7 +146,6 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
             editable={!mutation.isPending}
           />
 
-          {}
           {mutation.isPending && (
             <View style={modalSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -159,7 +158,6 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
             </Text>
           )}
 
-          {}
           <View style={modalSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Credentials'}

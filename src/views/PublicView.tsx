@@ -54,16 +54,12 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress }) => {
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
       <View style={styles.outerContainer}>
-        {' '}
-        {}
-        {}
         <View style={styles.headerSection}>
           <Text style={[appSharedStyles.header, appSharedStyles.publicHeader]}>
             Danmans Music School
           </Text>
           <Text style={appSharedStyles.subheader}>Virtual Ticket Rewards Program</Text>
         </View>
-        {}
         <View style={appSharedStyles.tabContainer}>
           <Button
             title="Welcome"
@@ -81,8 +77,6 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress }) => {
             color={activeTab === 'rewards' ? colors.primary : colors.secondary}
           />
         </View>
-        {}
-        {}
         <View style={styles.contentArea}>
           {activeTab === 'welcome' && (
             <View style={styles.welcomeContainer}>
@@ -90,7 +84,6 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress }) => {
                 Welcome! Check out the latest announcements and the cool rewards you can earn.
               </Text>
               <Text style={styles.welcomeText}>Login required to track progress.</Text>
-              {}
             </View>
           )}
 
@@ -166,10 +159,8 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress }) => {
             </>
           )}
         </View>
-        {}
         <View style={styles.footerContainer}>
           <Text style={appSharedStyles.footer}>Ready to track progress?</Text>
-          {}
           <Button title="Login / Enter PIN" onPress={onLoginPress} color={colors.primary} />
         </View>
       </View>
