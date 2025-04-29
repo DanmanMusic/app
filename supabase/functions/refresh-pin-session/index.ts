@@ -2,6 +2,8 @@
 
 import { createClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
+// Import JWT library functions
+import { create, getNumericDate, Header } from "djwt";
 
 // Define expected request body
 interface RefreshTokenPayload {
@@ -11,13 +13,15 @@ interface RefreshTokenPayload {
 // Define response structure for success
 interface RefreshTokenSuccessResponse {
   access_token: string;
-  // refresh_token?: string; // Optional: Implement rolling refresh tokens later
+  // refresh_token?: string; // Optional: Include if implementing rolling refresh tokens
   expires_in: number;
+  token_type: 'bearer';
   user_id: string;
-  role: string; // Need to fetch role again
+  role: string; // Application role from profiles
+  viewing_student_id?: string; // Include if parent role
 }
 
-// Helper to hash the refresh token (MUST match the hashing in claim-onetime-pin)
+// Helper to hash the refresh token (MUST match claim-onetime-pin)
 // IMPORTANT: Use a strong, salted hash in production.
 async function hashToken(token: string): Promise<string> {
     const encoder = new TextEncoder();
@@ -25,7 +29,7 @@ async function hashToken(token: string): Promise<string> {
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    console.log(`Hashing refresh token (length ${token.length}) for comparison.`);
+    // console.log(`Hashing refresh token (length ${token.length}) for comparison.`); // Reduced logging
     return hashHex;
 }
 
@@ -33,19 +37,22 @@ async function hashToken(token: string): Promise<string> {
 Deno.serve(async (req: Request) => {
   // 1. Handle Preflight CORS request
   if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS request');
     return new Response('ok', { headers: corsHeaders });
   }
+   // Allow only POST requests
+   if (req.method !== 'POST') {
+       return new Response(JSON.stringify({ error: `Method ${req.method} Not Allowed` }), { status: 405, headers: { ...corsHeaders }});
+   }
 
-  console.log(`Received ${req.method} request for refresh-pin-session`);
-
-  // Initialize Supabase Admin Client (needed for DB access)
+  // Initialize Supabase Admin Client & Get Secrets
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  const jwtSecret = Deno.env.get('SUPABASE_JWT_SECRET'); // Needed if manually signing JWTs
+  // *** Use the manually set secret ***
+  const jwtSecret = Deno.env.get('CLIENT_JWT_SECRET');
 
+  // Check necessary environment variables
   if (!supabaseUrl || !serviceRoleKey || !jwtSecret) {
-     console.error("Missing Supabase environment variables (URL, SERVICE_ROLE_KEY, JWT_SECRET).");
+     console.error(`Check Failed: Environment variable issue. Vars - URL: ${!!supabaseUrl}, SRK: ${!!serviceRoleKey}, CLIENT_JWT: ${!!jwtSecret}`);
      return new Response(JSON.stringify({ error: "Server configuration error." }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
   }
 
@@ -53,40 +60,35 @@ Deno.serve(async (req: Request) => {
       auth: { autoRefreshToken: false, persistSession: false },
       global: { fetch: fetch }
   });
-  console.log('Supabase Admin Client initialized.');
 
   try {
     // 2. Parse Request Body
     let payload: RefreshTokenPayload;
-    try {
-        payload = await req.json();
-        console.log('Received payload with refresh_token (length):', payload.refresh_token?.length);
-    } catch (jsonError) {
+    try { payload = await req.json(); }
+    catch (jsonError) {
          console.error("Failed to parse request body:", jsonError);
-         return new Response(JSON.stringify({ error: "Invalid request body: Must be JSON." }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
+         return new Response(JSON.stringify({ error: "Invalid request body." }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
     }
 
     // 3. Validate Payload
     if (!payload.refresh_token || typeof payload.refresh_token !== 'string') {
-        console.warn("Payload validation failed: Missing or invalid refresh_token.");
       return new Response(JSON.stringify({ error: 'Missing or invalid refresh_token.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
     }
     const receivedRefreshToken = payload.refresh_token;
 
-    // 4. Hash the received token to compare with DB
+    // 4. Hash the received token
     const receivedTokenHash = await hashToken(receivedRefreshToken);
     console.log(`Looking up refresh token hash ending with: ...${receivedTokenHash.slice(-6)}`);
 
     // 5. Find matching token hash in the database
     const { data: tokenData, error: tokenFetchError } = await supabaseAdminClient
         .from('active_refresh_tokens')
-        .select('id, user_id, expires_at, last_used_at') // Select necessary fields
+        .select('id, user_id, expires_at, last_used_at')
         .eq('token_hash', receivedTokenHash)
-        .single(); // Expect exactly one match
+        .single();
 
     if (tokenFetchError || !tokenData) {
         console.warn(`Refresh token hash not found or DB error: ${tokenFetchError?.message}`);
-        // Even if not found, return 401 to prevent leaking info
         return new Response(JSON.stringify({ error: 'Invalid refresh token.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
     }
 
@@ -95,55 +97,70 @@ Deno.serve(async (req: Request) => {
     const expiry = new Date(tokenData.expires_at);
     if (now > expiry) {
         console.warn(`Refresh token ${tokenData.id} for user ${tokenData.user_id} expired at ${tokenData.expires_at}. Deleting.`);
-        // Clean up expired token
-        await supabaseAdminClient.from('active_refresh_tokens').delete().eq('id', tokenData.id);
+        await supabaseAdminClient.from('active_refresh_tokens').delete().eq('id', tokenData.id); // Clean up expired
         return new Response(JSON.stringify({ error: 'Refresh token expired.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
     }
 
     const targetUserId = tokenData.user_id;
-    console.log(`Refresh token valid for user ${targetUserId}.`);
+    console.log(`Refresh token valid for user ${targetUserId}. Fetching user details...`);
 
-    // 7. Fetch User Role from profiles (needed for new access token claims)
-     const { data: profileData, error: profileError } = await supabaseAdminClient
-      .from('profiles')
-      .select('role')
-      .eq('id', targetUserId)
-      .single();
+    // 7. Fetch User Profile Role & Auth Email
+     let userRole = '';
+     let userEmail = `${targetUserId}@placeholder.app`;
+     try {
+        const { data: profileData, error: profileError } = await supabaseAdminClient.from('profiles').select('role').eq('id', targetUserId).single();
+        if (profileError || !profileData) throw profileError || new Error('Profile not found');
+        userRole = profileData.role;
 
-     if (profileError || !profileData) {
-       console.error(`Failed to fetch profile for user ${targetUserId} during refresh: ${profileError?.message}`);
-       // If profile doesn't exist, the token is essentially invalid
-       await supabaseAdminClient.from('active_refresh_tokens').delete().eq('id', tokenData.id); // Clean up
-       return new Response(JSON.stringify({ error: 'Associated user profile not found.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
+        const { data: authUser, error: getAuthUserError } = await supabaseAdminClient.auth.admin.getUserById(targetUserId);
+        if (!getAuthUserError && authUser?.user?.email && !authUser.user.email.endsWith('@placeholder.app')) { userEmail = authUser.user.email; }
+     } catch (fetchErr: any) {
+        console.error(`Failed to fetch profile/auth details for user ${targetUserId} during refresh: ${fetchErr?.message}`);
+        await supabaseAdminClient.from('active_refresh_tokens').delete().eq('id', tokenData.id);
+        return new Response(JSON.stringify({ error: 'Associated user not found or invalid.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
      }
-     const userRole = profileData.role;
-     console.log(`User role determined as: ${userRole}`);
+     console.log(`User role: ${userRole}, Email: ${userEmail}`);
 
-
-    // 8. Generate NEW Short-Lived Access Token JWT
-    // ---> MAJOR TODO: Implement proper JWT signing using JWT Secret! <---
-    console.warn("TODO: Implement proper JWT Access Token signing using JWT Secret!");
-    const newAccessToken = `MOCK_ACCESS_TOKEN_FOR_${targetUserId}_${Date.now()}`; // Placeholder!
+    // 8. Generate NEW Signed Short-Lived Access Token JWT
     const accessTokenExpirySeconds = 3600; // 1 hour
+    const accessTokenExpiresIn = getNumericDate(accessTokenExpirySeconds);
+    const jwtHeader: Header = { alg: "HS256", typ: "JWT" };
+    const jwtPayload = {
+      aud: "authenticated", exp: accessTokenExpiresIn, sub: targetUserId, email: userEmail, role: "authenticated",
+      app_metadata: { role: userRole, ...(userRole === 'parent' && { viewing_student_id: targetUserId }) }, // Revisit parent viewing logic if needed
+    };
 
-    // 9. OPTIONAL: Implement Rolling Refresh Tokens
-    // If desired, generate a NEW refresh token, hash it, update the DB record,
-    // and return the new refresh token along with the new access token.
-    // For simplicity, we'll reuse the existing refresh token for now.
-    console.log(`Reusing existing refresh token for user ${targetUserId}. Updating last_used_at.`);
-     await supabaseAdminClient
+    // *** IMPORT KEY CORRECTLY ***
+    const key = await crypto.subtle.importKey(
+        "raw",
+        new TextEncoder().encode(jwtSecret), // Use the retrieved secret
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign", "verify"]
+    );
+    // *** END IMPORT KEY ***
+
+    // *** SIGN USING THE IMPORTED KEY ***
+    const newAccessToken = await create(jwtHeader, jwtPayload, key);
+    console.log('Generated new signed Access Token JWT during refresh.');
+    // *** END SIGNING ***
+
+    // 9. Update last_used_at timestamp
+    const { error: updateLastError } = await supabaseAdminClient
        .from('active_refresh_tokens')
        .update({ last_used_at: now.toISOString() })
-       .eq('id', tokenData.id);
-
+       .eq('id', tokenData.id); // Use the specific record ID
+     if (updateLastError) { console.warn(`Failed to update last_used_at for refresh token ${tokenData.id}: ${updateLastError.message}`); }
+     // else { console.log(`Updated last_used_at for refresh token ${tokenData.id}.`); } // Reduced logging
 
     // 10. Prepare Success Response
     const responseBody: RefreshTokenSuccessResponse = {
-        access_token: newAccessToken, // Placeholder
-        // refresh_token: newRefreshToken, // Include if rolling tokens
+        access_token: newAccessToken, // Use REAL token
         expires_in: accessTokenExpirySeconds,
+        token_type: 'bearer',
         user_id: targetUserId,
         role: userRole,
+        ...(userRole === 'parent' && { viewing_student_id: targetUserId }),
     };
 
     console.log(`Session refreshed successfully for user ${targetUserId}.`);
@@ -154,11 +171,12 @@ Deno.serve(async (req: Request) => {
 
   } catch (error) {
     console.error('Unhandled Refresh PIN Session Function Error:', error);
+    const isAuthError = error.message?.includes('Invalid refresh token') || error.message?.includes('expired');
     return new Response(JSON.stringify({ error: error.message || 'An unexpected error occurred during refresh.' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
+      status: isAuthError ? 401 : 500,
     });
   }
 });
 
-console.log('Refresh-pin-session function initialized.');
+// console.log('Refresh-pin-session function initialized.'); // Optional

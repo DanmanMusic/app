@@ -8,21 +8,22 @@ import {
   TextInput,
   ActivityIndicator,
   StyleSheet,
-  TouchableOpacity, // For the toggle buttons
-  Keyboard, // To dismiss keyboard
-  TouchableWithoutFeedback // To dismiss keyboard
+  TouchableOpacity,
+  Keyboard,
+  TouchableWithoutFeedback
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-import { getSupabase } from '../../lib/supabaseClient'; // To call Supabase auth eventually
-import { useAuth } from '../../contexts/AuthContext'; // To set the mock state on simulated login
-import { fetchUserProfile } from '../../api/users'; // To get role after real email login
+import { getSupabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../contexts/AuthContext';
+import { fetchUserProfile } from '../../api/users';
+// Import the new API function for claiming PIN
+import { claimPin } from '../../api/auth'; // Assuming you create this file/function
 import { colors } from '../../styles/colors';
 import { modalSharedStyles } from '../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { UserRole } from '../../types/dataTypes'; // Import UserRole
+import { UserRole } from '../../types/dataTypes';
 
-// Define props (simple for now)
 interface LoginModalProps {
   visible: boolean;
   onClose: () => void;
@@ -31,91 +32,92 @@ interface LoginModalProps {
 type LoginMode = 'email' | 'pin';
 
 export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
-  const { setMockAuthState } = useAuth();
-  const supabase = getSupabase(); // Get Supabase client instance
+  const { setMockAuthState } = useAuth(); // Still use this to update app state post-login
+  const supabase = getSupabase();
 
-  const [mode, setMode] = useState<LoginMode>('email'); // Default to email/password
+  const [mode, setMode] = useState<LoginMode>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [pin, setPin] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Reset state when modal visibility changes
   useEffect(() => {
     if (visible) {
-      // Reset fields when opened
-      setMode('email');
-      setEmail('');
-      setPassword('');
-      setPin('');
-      setError(null);
-      setIsLoading(false);
+      setMode('email'); setEmail(''); setPassword(''); setPin('');
+      setError(null); setIsLoading(false);
     }
   }, [visible]);
 
-  // --- Email/Password Login Handler ---
+  // --- Email/Password Login Handler (No changes needed here) ---
   const handleEmailLogin = async () => {
-    Keyboard.dismiss(); // Dismiss keyboard
-    if (!email.trim() || !password.trim()) {
-      setError('Please enter both email and password.');
+    Keyboard.dismiss();
+    if (!email.trim() || !password.trim()) { setError('Please enter both email and password.'); return; }
+    setError(null); setIsLoading(true);
+    try {
+        console.log('[LoginModal] Attempting Supabase email/password sign in...');
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password: password });
+        if (signInError) throw new Error(signInError.message || 'Invalid login credentials.');
+        if (!data.user) throw new Error('Login failed. Please try again.');
+        console.log(`[LoginModal] Sign In Success for user: ${data.user.id}. Fetching profile...`);
+        const userProfile = await fetchUserProfile(data.user.id);
+        if (!userProfile) { await supabase.auth.signOut(); throw new Error('Login failed: User profile not found.'); }
+        console.log(`[LoginModal] Profile fetched. Role: ${userProfile.role}. Updating context.`);
+        setMockAuthState({ role: userProfile.role, userId: userProfile.id });
+        Toast.show({ type: 'success', text1: 'Login Successful!' });
+        onClose();
+    } catch (catchError: any) {
+      setError(catchError.message);
+      Toast.show({ type: 'error', text1: 'Login Failed', text2: catchError.message });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // --- PIN Login Handler (Calls REAL API function) ---
+  const handlePinLogin = async () => {
+    Keyboard.dismiss();
+    const trimmedPin = pin.trim();
+    if (!trimmedPin || trimmedPin.length < 4) {
+      setError('Please enter a valid PIN.');
       return;
     }
     setError(null);
     setIsLoading(true);
 
     try {
-        console.log('[LoginModal] Attempting Supabase email/password sign in...');
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({
-            email: email.trim(),
-            password: password, // Don't trim password
-        });
+      console.log(`[LoginModal] Calling API to claim PIN ending in ...${trimmedPin.slice(-2)}`);
 
-        if (signInError) {
-            console.error('[LoginModal] Supabase Sign In Error:', signInError.message);
-            // Provide user-friendly messages for common errors
-            let userMessage = 'Invalid login credentials.';
-            if (signInError.message.toLowerCase().includes('email not confirmed')) {
-                userMessage = 'Please confirm your email address first.';
-            }
-            throw new Error(userMessage);
-        }
+      // Call the API helper function which invokes the Edge Function
+      const sessionData = await claimPin(trimmedPin); // Assumes claimPin returns necessary data
 
-        if (!data.user) {
-             console.error('[LoginModal] Sign In Error: No user data returned.');
-            throw new Error('Login failed. Please try again.');
-        }
+      // Assuming claimPin was successful and returned tokens and user info
+      console.log('[LoginModal] PIN Claim successful via API:', sessionData);
 
-        console.log(`[LoginModal] Sign In Success for user: ${data.user.id}. Fetching profile...`);
+      // IMPORTANT: Set the session in the Supabase client
+      await supabase.auth.setSession({
+          access_token: sessionData.access_token,
+          refresh_token: sessionData.refresh_token,
+      });
+       console.log('[LoginModal] Supabase session set with tokens from claimPin.');
 
-        // Fetch profile to get the application role
-        const userProfile = await fetchUserProfile(data.user.id);
-        if (!userProfile) {
-             console.error(`[LoginModal] Profile fetch error: No profile found for user ${data.user.id}.`);
-             // Log out the potentially partial session for safety
-             await supabase.auth.signOut();
-             throw new Error('Login failed: User profile not found.');
-        }
+      // Update the application's Auth context
+      setMockAuthState({
+        role: sessionData.role as UserRole, // Cast role from response
+        userId: sessionData.user_id,
+        viewingStudentId: sessionData.viewing_student_id, // Pass this if returned for parents
+      });
 
-         console.log(`[LoginModal] Profile fetched. Role: ${userProfile.role}. Updating context.`);
-
-        // IMPORTANT: Update AuthContext with REAL userId and fetched role
-        // Use setMockAuthState for consistency with dev flow, but it now contains real data
-        setMockAuthState({
-            role: userProfile.role,
-            userId: userProfile.id,
-            // No viewingStudentId on direct Admin/Teacher login
-        });
-
-        Toast.show({ type: 'success', text1: 'Login Successful!' });
-        onClose(); // Close modal on success
+      Toast.show({ type: 'success', text1: 'Login Successful via PIN!' });
+      onClose(); // Close modal on success
 
     } catch (catchError: any) {
-      setError(catchError.message || 'An unexpected error occurred.');
+      console.error('[LoginModal] Error claiming PIN via API:', catchError);
+      setError(catchError.message || 'An error occurred during PIN login.');
       Toast.show({
         type: 'error',
-        text1: 'Login Failed',
-        text2: catchError.message || 'An unexpected error occurred.',
+        text1: 'PIN Login Failed',
+        text2: catchError.message || 'Invalid PIN or server error.',
         position: 'bottom',
       });
     } finally {
@@ -123,46 +125,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
     }
   };
 
-  // --- PIN Login Handler (Simulated - Student Only) ---
-  const handlePinLogin = async () => {
-    Keyboard.dismiss();
-    const trimmedPin = pin.trim(); // Trim PIN
-    if (!trimmedPin || trimmedPin.length < 4) { // Basic validation
-      setError('Please enter a valid PIN.');
-      return;
-    }
-    setError(null);
-    setIsLoading(true);
-
-    // --- SIMULATION / DEFERRED ACTION ---
-    console.log(`[LoginModal] Simulating PIN login with PIN: ${trimmedPin} as STUDENT`);
-    Toast.show({
-      type: 'info',
-      text1: 'PIN Login Simulation (Student)', // Indicate role
-      text2: 'Feature requires server-side setup.',
-      visibilityTime: 3000,
-    });
-
-    const simulatedUserId = 'SIMULATED_PIN_STUDENT_ID'; // More specific ID
-
-    // Wait a tiny bit to make loading indicator visible
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    setMockAuthState({
-      role: 'student', // Directly set role
-      userId: simulatedUserId,
-      viewingStudentId: undefined, // No viewing ID needed for student
-    });
-    // --- END SIMULATION ---
-
-    setIsLoading(false);
-    onClose();
-  };
-
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-        {/* Wrap with TouchableWithoutFeedback to dismiss keyboard on tap outside */}
             <View style={modalSharedStyles.centeredView}>
                 <View style={modalSharedStyles.modalView}>
                 <Text style={modalSharedStyles.modalTitle}>Login</Text>
@@ -192,85 +157,41 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
                 {/* Login Forms */}
                 {mode === 'email' && (
                     <View style={styles.formContainer}>
-                    <Text style={commonSharedStyles.label}>Email:</Text>
-                    <TextInput
-                        style={commonSharedStyles.input}
-                        value={email}
-                        onChangeText={setEmail}
-                        placeholder="Enter your email"
-                        placeholderTextColor={colors.textLight}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        autoComplete="email"
-                        editable={!isLoading}
-                    />
-                    <Text style={commonSharedStyles.label}>Password:</Text>
-                    <TextInput
-                        style={commonSharedStyles.input}
-                        value={password}
-                        onChangeText={setPassword}
-                        placeholder="Enter your password"
-                        placeholderTextColor={colors.textLight}
-                        secureTextEntry={true} // Hide password
-                        autoComplete="password"
-                        editable={!isLoading}
-                    />
-                     <View style={modalSharedStyles.buttonContainer}>
-                        <Button
-                            title={isLoading ? "Logging In..." : "Login with Email"}
-                            onPress={handleEmailLogin}
-                            disabled={isLoading}
-                        />
-                    </View>
+                        <Text style={commonSharedStyles.label}>Email:</Text>
+                        <TextInput style={commonSharedStyles.input} value={email} onChangeText={setEmail} placeholder="Enter your email" placeholderTextColor={colors.textLight} keyboardType="email-address" autoCapitalize="none" autoComplete="email" editable={!isLoading}/>
+                        <Text style={commonSharedStyles.label}>Password:</Text>
+                        <TextInput style={commonSharedStyles.input} value={password} onChangeText={setPassword} placeholder="Enter your password" placeholderTextColor={colors.textLight} secureTextEntry={true} autoComplete="password" editable={!isLoading} />
+                        <View style={modalSharedStyles.buttonContainer}>
+                            <Button title={isLoading ? "Logging In..." : "Login with Email"} onPress={handleEmailLogin} disabled={isLoading} />
+                        </View>
                     </View>
                 )}
 
                 {mode === 'pin' && (
                     <View style={styles.formContainer}>
-                    <Text style={commonSharedStyles.label}>One-Time PIN:</Text>
-                    <TextInput
-                        style={commonSharedStyles.input}
-                        value={pin}
-                        onChangeText={setPin}
-                        placeholder="Enter PIN from Admin"
-                        placeholderTextColor={colors.textLight}
-                        keyboardType="number-pad" // Numeric keyboard
-                        maxLength={6} // Assume 6-digit PINs
-                        editable={!isLoading}
-                        secureTextEntry={true} // Optionally obscure PIN input
-                    />
-                    <View style={modalSharedStyles.buttonContainer}>
-                        <Button
-                            title={isLoading ? "Verifying..." : "Login with PIN (Simulated)"}
-                            onPress={handlePinLogin}
-                            disabled={isLoading}
-                        />
-                    </View>
+                        <Text style={commonSharedStyles.label}>One-Time PIN:</Text>
+                        <TextInput style={commonSharedStyles.input} value={pin} onChangeText={setPin} placeholder="Enter PIN from Admin" placeholderTextColor={colors.textLight} keyboardType="number-pad" maxLength={6} editable={!isLoading} secureTextEntry={true} />
+                        <View style={modalSharedStyles.buttonContainer}>
+                            {/* Update button text to reflect real action */}
+                            <Button title={isLoading ? "Verifying..." : "Login with PIN"} onPress={handlePinLogin} disabled={isLoading} />
+                        </View>
                     </View>
                 )}
 
                 {/* Loading and Error Display */}
                 {isLoading && (
                     <View style={modalSharedStyles.loadingContainer}>
-                    <ActivityIndicator size="small" color={colors.primary} />
-                    <Text style={modalSharedStyles.loadingText}>Processing...</Text>
+                        <ActivityIndicator size="small" color={colors.primary} />
+                        <Text style={modalSharedStyles.loadingText}>Processing...</Text>
                     </View>
                 )}
                 {error && (
-                    <Text style={[commonSharedStyles.errorText, { marginTop: 10 }]}>
-                    Error: {error}
-                    </Text>
+                    <Text style={[commonSharedStyles.errorText, { marginTop: 10 }]}> Error: {error} </Text>
                 )}
-
 
                 {/* Footer Cancel Button */}
                 <View style={modalSharedStyles.footerButton}>
-                    <Button
-                    title="Cancel"
-                    onPress={onClose}
-                    color={colors.secondary}
-                    disabled={isLoading}
-                    />
+                    <Button title="Cancel" onPress={onClose} color={colors.secondary} disabled={isLoading} />
                 </View>
                 </View>
             </View>
@@ -286,7 +207,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.primary,
     borderRadius: 6,
-    overflow: 'hidden', // Keep text inside rounded corners
+    overflow: 'hidden',
   },
   toggleButton: {
     flex: 1,
@@ -310,7 +231,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
       width: '100%',
-      alignItems: 'stretch', // Ensure inputs take full width
+      alignItems: 'stretch',
   }
 });
 

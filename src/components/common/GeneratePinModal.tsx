@@ -7,9 +7,13 @@ import {
     Button,
     ActivityIndicator,
     StyleSheet,
-    Alert // Use Alert for temporary feedback
+    Platform,
+    // Removed Alert as we use Toast/API calls now
 } from 'react-native';
 import Toast from 'react-native-toast-message';
+
+// Import the new API function
+import { generatePinForUser } from '../../api/users'; // Adjust path if needed
 
 import { User } from '../../types/dataTypes';
 import { getUserDisplayName } from '../../utils/helpers';
@@ -19,9 +23,8 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 interface GeneratePinModalProps {
   visible: boolean;
-  user: User | null; // User for whom the PIN is generated (Student or Teacher)
+  user: User | null; // User for whom the PIN is generated
   onClose: () => void;
-  // We'll add onGeneratePin later when calling the Edge Function
 }
 
 export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({
@@ -46,53 +49,47 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({
      // Reset generated PIN if the target user changes while modal is open
      setGeneratedPin(null);
      setTargetRole(null);
+     setIsLoading(false); // Also reset loading if user changes
   }, [user]);
 
 
+  // Updated handler to call the API function
   const handleGeneratePin = async (role: 'student' | 'parent') => {
-    if (!user) return;
+    if (!user || isLoading) return; // Prevent multiple clicks or calls without user
 
     setTargetRole(role);
     setIsLoading(true);
     setGeneratedPin(null); // Clear previous pin
 
-    // --- SIMULATION / DEFERRED ACTION ---
-    console.log(`[GeneratePinModal] Simulating PIN generation for user ${user.id}, target role: ${role}`);
-    const fakePin = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit fake PIN
-
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 750));
-
-    setGeneratedPin(fakePin); // Display the fake PIN
-    Toast.show({
-        type: 'success', // Use success to show the PIN clearly
-        text1: `Generated PIN for ${role}`,
-        text2: `Tell ${role === 'parent' ? 'Parent' : getUserDisplayName(user)} to use: ${fakePin}`,
-        visibilityTime: 15000, // Show longer so Admin can read it
-        position: 'bottom',
-    });
-    console.log(`[GeneratePinModal] Simulated PIN: ${fakePin}`);
-    // --- END SIMULATION ---
-
-    /* // --- FUTURE IMPLEMENTATION ---
     try {
-        // const { data, error } = await supabase.functions.invoke('generate-onetime-pin', {
-        //     body: { userId: user.id, targetRole: role }
-        // });
-        // if (error) throw error;
-        // if (!data || !data.pin) throw new Error("Failed to get PIN from function.");
-        // setGeneratedPin(data.pin);
-        // Toast.show({ ... show success with real pin ... });
+        console.log(`[GeneratePinModal] Calling API to generate PIN for user ${user.id}, target role: ${role}`);
+        // Call the API function
+        const pinFromApi = await generatePinForUser(user.id, role);
+
+        setGeneratedPin(pinFromApi); // Display the PIN from the API response
+        Toast.show({
+            type: 'success',
+            text1: `Generated PIN for ${role}`,
+            text2: `Tell ${role === 'parent' ? 'Parent' : getUserDisplayName(user)} to use: ${pinFromApi}`,
+            visibilityTime: 20000, // Show even longer for readability
+            position: 'bottom',
+        });
+        console.log(`[GeneratePinModal] Received PIN from API: ${pinFromApi}`);
+
     } catch (error: any) {
-        console.error("Error generating PIN:", error);
-        Toast.show({ type: 'error', text1: 'PIN Generation Failed', text2: error.message });
-        setGeneratedPin(null);
-        setTargetRole(null);
+        console.error("Error generating PIN via API:", error);
+        Toast.show({
+            type: 'error',
+            text1: 'PIN Generation Failed',
+            text2: error.message || 'Could not generate PIN.',
+            position: 'bottom',
+            visibilityTime: 5000,
+        });
+        setGeneratedPin(null); // Clear pin display on error
+        setTargetRole(null); // Clear target role on error
     } finally {
-        setIsLoading(false);
+        setIsLoading(false); // Ensure loading state is turned off
     }
-    */
-    setIsLoading(false); // End loading after simulation
   };
 
   if (!user) return null; // Don't render if user object isn't provided
@@ -107,6 +104,7 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({
             <Text style={modalSharedStyles.modalTitle}>Generate Login PIN</Text>
             <Text style={modalSharedStyles.modalContextInfo}>For User: {displayName} ({user.role})</Text>
 
+            {/* Show loading indicator while API call is in progress */}
             {isLoading && (
                 <View style={modalSharedStyles.loadingContainer}>
                     <ActivityIndicator size="small" color={colors.primary} />
@@ -114,31 +112,32 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({
                 </View>
             )}
 
-            {/* Display generated PIN if available */}
+            {/* Display generated PIN if available and not loading */}
             {generatedPin && !isLoading && (
                  <View style={styles.pinDisplayContainer}>
                      <Text style={styles.pinLabel}>Generated PIN for {targetRole}:</Text>
                      <Text style={styles.pinValue}>{generatedPin}</Text>
-                     <Text style={styles.pinInstructions}>Provide this PIN to the {targetRole} for login. It will expire shortly.</Text>
+                     <Text style={styles.pinInstructions}>Provide this PIN to the {targetRole} for login. It will expire shortly (approx. 5 minutes).</Text>
                  </View>
             )}
 
-            {/* Action Buttons - Only show generation buttons if PIN hasn't been generated yet in this instance */}
+            {/* Action Buttons - Only show generation buttons if PIN hasn't been generated yet in this modal instance */}
              {!generatedPin && !isLoading && (
                  <View style={modalSharedStyles.buttonContainer}>
                     {/* Button for the user themselves (Student or Teacher) */}
+                    {/* Teachers currently can only generate for themselves, students generate for student role */}
                     <Button
                         title={`Generate PIN for ${displayName}`}
-                        onPress={() => handleGeneratePin('student')} // Assuming target is 'student' role for their own login
+                        onPress={() => handleGeneratePin('student')} // Target role is 'student' for self-login
                         disabled={isLoading}
                     />
                     {/* Conditionally show button for Parent (only if user is a Student) */}
                     {isStudent && (
                         <Button
                         title={`Generate PIN for Parent`}
-                        onPress={() => handleGeneratePin('parent')}
+                        onPress={() => handleGeneratePin('parent')} // Target role is 'parent'
                         disabled={isLoading}
-                        color={colors.success} // Different color for distinction
+                        color={colors.success}
                         />
                     )}
                 </View>
@@ -148,10 +147,11 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({
             {/* Footer Close Button */}
             <View style={modalSharedStyles.footerButton}>
                 <Button
-                title={generatedPin ? "Close" : "Cancel"} // Change button text after generation
+                title={generatedPin ? "Close" : "Cancel"} // Change button text
                 onPress={onClose}
                 color={colors.secondary}
-                // disabled={isLoading} // Allow closing even if somehow loading? Or disable? Let's allow it.
+                // Allow closing while loading? Maybe disable if needed.
+                // disabled={isLoading}
                 />
             </View>
             </View>
@@ -180,8 +180,9 @@ const styles = StyleSheet.create({
         fontSize: 32,
         fontWeight: 'bold',
         color: colors.primary,
-        letterSpacing: 3, // Space out digits
+        letterSpacing: 3,
         marginBottom: 10,
+        fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace', // Monospace font
     },
     pinInstructions: {
         fontSize: 13,

@@ -115,22 +115,27 @@ Deno.serve(async (req: Request) => {
     // 7. Store PIN temporarily in the database
     // Note: This uses plain text PIN as primary key. Consider hashing if using for longer or if required by security policy.
     // Using ON CONFLICT DO NOTHING handles potential (though unlikely) PIN collisions.
+    console.log(`Attempting to insert PIN ${pin} into onetime_pins...`);
     const { error: insertError } = await supabaseAdminClient
-        .from('onetime_pins')
-        .insert({
-            pin: pin,
-            user_id: payload.userId,
-            target_role: payload.targetRole,
-            expires_at: expiresAt,
-        })
-        .onConflict('pin') // Assumes 'pin' is the primary key or has a unique constraint
-        .ignore(); // If PIN somehow already exists (extremely unlikely), ignore the insert
-
-        // Alternative if ON CONFLICT isn't set up or preferred:
-        // Check if pin exists first, regenerate if needed (adds complexity)
-
+      .from('onetime_pins')
+      .insert({
+          pin: pin,
+          user_id: payload.userId,
+          target_role: payload.targetRole,
+          expires_at: expiresAt,
+      });
+      // REMOVED: .onConflict('pin').ignore();
+    
     if (insertError) {
+        // Error handling remains the same, will now catch unique constraint violation if it happens
         console.error('Error inserting PIN into database:', insertError);
+        // Check if it's a unique constraint violation (code 23505)
+        if (insertError.code === '23505') {
+             console.warn(`PIN collision occurred for PIN ${pin}. This is highly unlikely.`);
+             // Optionally, you could retry generating a new PIN here, but let's fail for now.
+             return new Response(JSON.stringify({ error: `Failed to store temporary PIN due to unlikely collision. Please try again.` }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
+        }
+        // Otherwise, return a generic server error
         return new Response(JSON.stringify({ error: `Failed to store temporary PIN: ${insertError.message}` }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
     }
     console.log(`PIN ${pin} successfully stored.`);

@@ -1,4 +1,4 @@
--- supabase/migrations/20250426232946_create_announcements_table.sql -- Replace YYYY... with actual timestamp
+-- supabase/migrations/YYYYMMDDHHMMSS_create_announcements_table.sql
 
 -- Define ENUM type for announcement types
 DROP TYPE IF EXISTS public.announcement_type;
@@ -15,11 +15,11 @@ CREATE TABLE public.announcements (
     title text NOT NULL,
     message text NOT NULL,
     date timestamptz NOT NULL DEFAULT now(),
-    related_student_id uuid NULL, -- Create the column, but NO foreign key constraint yet
+    related_student_id uuid NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
-    updated_at timestamptz NOT NULL DEFAULT now()
-    -- Constraint to be added later if profiles table and feature are confirmed:
-    -- CONSTRAINT fk_announcements_related_student FOREIGN KEY (related_student_id) REFERENCES public.profiles(id) ON DELETE SET NULL
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    -- Add FK constraint now that profiles table exists
+    CONSTRAINT fk_announcements_related_student FOREIGN KEY (related_student_id) REFERENCES public.profiles(id) ON DELETE SET NULL
 );
 
 -- == Comments ==
@@ -28,7 +28,7 @@ COMMENT ON COLUMN public.announcements.type IS 'Categorizes the announcement.';
 COMMENT ON COLUMN public.announcements.title IS 'The headline of the announcement.';
 COMMENT ON COLUMN public.announcements.message IS 'The main content body of the announcement.';
 COMMENT ON COLUMN public.announcements.date IS 'The primary date associated with the announcement (e.g., publish date).';
-COMMENT ON COLUMN public.announcements.related_student_id IS 'Optional link to a student profile (FK to profiles table TBD).'; -- Updated comment
+COMMENT ON COLUMN public.announcements.related_student_id IS 'Optional link to a student profile (e.g., for redemption celebrations).';
 
 -- == Enable RLS ==
 ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
@@ -36,56 +36,78 @@ ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
 -- == Updated At Trigger ==
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'handle_updated_at') THEN
+  -- Ensure the handle_updated_at function exists before creating the trigger.
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'handle_updated_at' AND pg_namespace.nspname = 'public') THEN
     CREATE TRIGGER on_announcement_update
     BEFORE UPDATE ON public.announcements
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
+     RAISE NOTICE 'Trigger on_announcement_update created for public.announcements.';
   ELSE
-    RAISE WARNING 'Function handle_updated_at() not found. Skipping trigger creation for announcements table.';
+    RAISE WARNING 'Function public.handle_updated_at() not found. Skipping trigger creation for announcements table.';
   END IF;
 END $$;
 
 -- == Indexes ==
 CREATE INDEX idx_announcements_type_date ON public.announcements (type, date DESC);
-CREATE INDEX idx_announcements_related_student ON public.announcements (related_student_id); -- Index is still useful even without FK
+CREATE INDEX idx_announcements_related_student ON public.announcements (related_student_id);
 
 
--- == Row Level Security (RLS) Policies ==
--- WARNING: TEMPORARY DEVELOPMENT POLICIES - Allow anonymous access. MUST BE REPLACED.
+-- == Row Level Security (RLS) Policies (SECURE VERSION) ==
+-- Assumes a function `public.is_admin(uuid)` exists.
 
--- 1. Public Read Access
+-- Clean up any potential old/temporary policies first
 DROP POLICY IF EXISTS "Allow public read access on announcements" ON public.announcements;
-CREATE POLICY "Allow public read access on announcements"
+DROP POLICY IF EXISTS "TEMP Allow anon insert access on announcements" ON public.announcements;
+DROP POLICY IF EXISTS "TEMP Allow anon update access on announcements" ON public.announcements;
+DROP POLICY IF EXISTS "TEMP Allow anon delete access on announcements" ON public.announcements;
+DROP POLICY IF EXISTS "Allow authenticated read access on announcements" ON public.announcements; -- If added previously
+DROP POLICY IF EXISTS "Allow admin users to insert announcements" ON public.announcements;
+DROP POLICY IF EXISTS "Allow admin users to update announcements" ON public.announcements;
+DROP POLICY IF EXISTS "Allow admin users to delete announcements" ON public.announcements;
+
+
+-- 1. SELECT Policy: Allow ANY authenticated user to read announcements
+--    (Change to `USING (true)` for public access if needed)
+CREATE POLICY "Allow authenticated users to read announcements"
 ON public.announcements
 FOR SELECT
-USING (true);
-COMMENT ON POLICY "Allow public read access on announcements" ON public.announcements IS 'Allows anyone (publicly) to read announcements.';
+TO authenticated
+USING (true); -- Allows reading all announcements
 
--- 2. Anonymous Insert Access (TEMPORARY)
-DROP POLICY IF EXISTS "TEMP Allow anon insert access on announcements" ON public.announcements;
-CREATE POLICY "TEMP Allow anon insert access on announcements"
+COMMENT ON POLICY "Allow authenticated users to read announcements" ON public.announcements
+IS 'Allows any logged-in user to view announcements.';
+
+
+-- 2. INSERT Policy: Allow ONLY admins to create new announcements
+CREATE POLICY "Allow admin users to insert announcements"
 ON public.announcements
 FOR INSERT
-TO anon
-WITH CHECK (true);
-COMMENT ON POLICY "TEMP Allow anon insert access on announcements" ON public.announcements IS 'TEMP DEV ONLY: Allows anonymous users to add announcements. MUST BE REPLACED with authenticated admin policy.';
+TO authenticated
+WITH CHECK (public.is_admin(auth.uid()));
 
--- 3. Anonymous Update Access (TEMPORARY)
-DROP POLICY IF EXISTS "TEMP Allow anon update access on announcements" ON public.announcements;
-CREATE POLICY "TEMP Allow anon update access on announcements"
+COMMENT ON POLICY "Allow admin users to insert announcements" ON public.announcements
+IS 'Allows users with the admin role to create announcements.';
+
+
+-- 3. UPDATE Policy: Allow ONLY admins to update existing announcements
+CREATE POLICY "Allow admin users to update announcements"
 ON public.announcements
 FOR UPDATE
-TO anon
-USING (true)
-WITH CHECK (true);
-COMMENT ON POLICY "TEMP Allow anon update access on announcements" ON public.announcements IS 'TEMP DEV ONLY: Allows anonymous users to update announcements. MUST BE REPLACED with authenticated admin policy.';
+TO authenticated
+USING (public.is_admin(auth.uid()))
+WITH CHECK (public.is_admin(auth.uid()));
 
--- 4. Anonymous Delete Access (TEMPORARY)
-DROP POLICY IF EXISTS "TEMP Allow anon delete access on announcements" ON public.announcements;
-CREATE POLICY "TEMP Allow anon delete access on announcements"
+COMMENT ON POLICY "Allow admin users to update announcements" ON public.announcements
+IS 'Allows users with the admin role to update existing announcements.';
+
+
+-- 4. DELETE Policy: Allow ONLY admins to delete announcements
+CREATE POLICY "Allow admin users to delete announcements"
 ON public.announcements
 FOR DELETE
-TO anon
-USING (true);
-COMMENT ON POLICY "TEMP Allow anon delete access on announcements" ON public.announcements IS 'TEMP DEV ONLY: Allows anonymous users to delete announcements. MUST BE REPLACED with authenticated admin policy.';
+TO authenticated
+USING (public.is_admin(auth.uid()));
+
+COMMENT ON POLICY "Allow admin users to delete announcements" ON public.announcements
+IS 'Allows users with the admin role to delete announcements.';

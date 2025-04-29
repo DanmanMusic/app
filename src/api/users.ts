@@ -453,3 +453,60 @@ export const fetchActiveProfilesForDevSelector = async (): Promise<Pick<User, 'i
       status: profile.status as UserStatus, // Status will always be 'active' here
     }));
   };
+
+
+// *** NEW FUNCTION: Generate One-Time PIN ***
+/**
+ * Calls the Edge Function to generate a short-lived, one-time login PIN for a user.
+ * Requires the caller (Admin/Teacher) to be authenticated.
+ * @param targetUserId The ID of the user (Student/Teacher) for whom the PIN is generated.
+ * @param targetRole The role ('student' or 'parent') the user will assume upon claiming the PIN.
+ * @returns The generated plain-text PIN.
+ */
+export const generatePinForUser = async (
+    targetUserId: string,
+    targetRole: 'student' | 'parent'
+): Promise<string> => {
+    const client = getSupabase();
+    console.log(`[API] Calling generate-onetime-pin Edge Function for user ${targetUserId}, role ${targetRole}`);
+
+    // Prepare payload for the Edge Function
+    const payload = {
+        userId: targetUserId,
+        targetRole: targetRole,
+    };
+
+    // Invoke the Edge Function
+    // Function name must match deployment ('generate-onetime-pin')
+    const { data, error } = await client.functions.invoke('generate-onetime-pin', {
+        body: payload,
+        // Authorization header (JWT) is automatically included by supabase-js client
+    });
+
+    if (error) {
+        console.error('[API] Error invoking generate-onetime-pin function:', error);
+        // Attempt to extract a more specific error message
+        let detailedError = error.message || 'Unknown function error';
+        if (error.context && typeof error.context === 'object' && error.context !== null && 'error' in error.context) {
+            detailedError = String((error.context as any).error) || detailedError;
+        } else {
+            try {
+                const parsed = JSON.parse(error.message);
+                if (parsed && parsed.error) detailedError = String(parsed.error);
+            } catch (e) { /* Ignore */ }
+        }
+        if (error.context?.message) {
+             detailedError += ` (Context: ${error.context.message})`;
+         }
+        throw new Error(`PIN generation failed: ${detailedError}`);
+    }
+
+    // Assuming the function returns { pin: "123456" } on success
+    console.log('[API] generate-onetime-pin Edge Function returned:', data);
+    if (!data || typeof data !== 'object' || typeof data.pin !== 'string' || !data.pin) {
+        console.error('[API] generate-onetime-pin function returned unexpected data:', data);
+        throw new Error('PIN generation function returned invalid data format.');
+    }
+
+    return data.pin;
+};
