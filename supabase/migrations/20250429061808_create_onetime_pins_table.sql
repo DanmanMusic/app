@@ -5,7 +5,7 @@
 CREATE TABLE public.onetime_pins (
     pin TEXT PRIMARY KEY, -- The PIN itself, acts as unique identifier while active
     user_id uuid NOT NULL,
-    target_role TEXT NOT NULL CHECK (target_role IN ('student', 'parent')),
+    target_role TEXT NOT NULL CHECK (target_role IN ('student', 'parent', 'teacher', 'admin')),
     expires_at timestamptz NOT NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
     claimed_at timestamptz NULL, -- Timestamp when the PIN was successfully used

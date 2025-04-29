@@ -1,9 +1,7 @@
-// src/components/admin/modals/EditTaskLibraryModal.tsx
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 
-// Import the refactored API function
 import { updateTaskLibraryItem } from '../../../api/taskLibrary';
 
 import { TaskLibraryItem } from '../../../types/dataTypes';
@@ -18,21 +16,22 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
   taskToEdit,
   onClose,
 }) => {
-  // State for form fields, initialized empty
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [baseTickets, setBaseTickets] = useState<number | ''>('');
 
   const queryClient = useQueryClient();
 
-  // Mutation hook using the Supabase API function
   const mutation = useMutation({
-    mutationFn: updateTaskLibraryItem, // Point to the Supabase function
+    mutationFn: updateTaskLibraryItem,
     onSuccess: updatedTask => {
-      console.log('[EditTaskLibraryModal] Task library item updated successfully via mutation:', updatedTask);
-      // Invalidate the query for the task library list so it refetches
+      console.log(
+        '[EditTaskLibraryModal] Task library item updated successfully via mutation:',
+        updatedTask
+      );
+
       queryClient.invalidateQueries({ queryKey: ['task-library'] });
-      onClose(); // Close modal on success
+      onClose();
       Toast.show({
         type: 'success',
         text1: 'Success',
@@ -41,11 +40,14 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       });
     },
     onError: (error, variables) => {
-      console.error(`[EditTaskLibraryModal] Error updating task library item ${variables.taskId} via mutation:`, error);
+      console.error(
+        `[EditTaskLibraryModal] Error updating task library item ${variables.taskId} via mutation:`,
+        error
+      );
       Toast.show({
         type: 'error',
         text1: 'Update Failed',
-        // Display specific error message from the API function if available
+
         text2: error instanceof Error ? error.message : 'Could not update task library item.',
         position: 'bottom',
         visibilityTime: 4000,
@@ -53,41 +55,44 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     },
   });
 
-  // Effect to populate form fields when modal opens or taskToEdit changes
   useEffect(() => {
     if (visible && taskToEdit) {
       setTitle(taskToEdit.title);
-      setDescription(taskToEdit.description); // Will be '' if description was empty
+      setDescription(taskToEdit.description);
       setBaseTickets(taskToEdit.baseTickets);
-      mutation.reset(); // Reset mutation state
+      mutation.reset();
     } else {
-      // Clear fields if modal closes or no task provided
       setTitle('');
       setDescription('');
       setBaseTickets('');
     }
-  }, [visible, taskToEdit]); // Depend on visibility and the task object
+  }, [visible, taskToEdit]);
 
-  // Handler for the save button press
   const handleSave = () => {
-    if (!taskToEdit) return; // Should not happen if modal is visible with a task
+    if (!taskToEdit) return;
 
     const trimmedTitle = title.trim();
     const trimmedDescription = description.trim();
-    const numericTickets = typeof baseTickets === 'number' ? baseTickets : parseInt(String(baseTickets || '-1'), 10);
+    const numericTickets =
+      typeof baseTickets === 'number' ? baseTickets : parseInt(String(baseTickets || '-1'), 10);
 
-    // --- Basic Client-Side Validation ---
     if (!trimmedTitle) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Task Title cannot be empty.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Task Title cannot be empty.',
+      });
       return;
     }
     if (isNaN(numericTickets) || numericTickets < 0 || !Number.isInteger(numericTickets)) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Base Tickets must be a whole number (0 or greater).' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Base Tickets must be a whole number (0 or greater).',
+      });
       return;
     }
-    // --- End Validation ---
 
-    // Build the updates object, only including fields that changed
     const updates: Partial<Omit<TaskLibraryItem, 'id'>> = {};
     let hasChanges = false;
 
@@ -96,7 +101,7 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       hasChanges = true;
     }
     if (trimmedDescription !== taskToEdit.description) {
-      updates.description = trimmedDescription; // Send trimmed description (can be empty)
+      updates.description = trimmedDescription;
       hasChanges = true;
     }
     if (numericTickets !== taskToEdit.baseTickets) {
@@ -104,7 +109,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       hasChanges = true;
     }
 
-    // If nothing actually changed, just close the modal
     if (!hasChanges) {
       console.log('[EditTaskLibraryModal] No changes detected.');
       onClose();
@@ -112,14 +116,13 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     }
 
     console.log('[EditTaskLibraryModal] Calling mutation with updates:', updates);
-    // Execute the mutation with the task ID and the changes
+
     mutation.mutate({ taskId: taskToEdit.id, updates });
   };
 
-  // Determine if the save button should be disabled
-  const isSaveDisabled = mutation.isPending || !title.trim() || baseTickets === '' || baseTickets < 0;
+  const isSaveDisabled =
+    mutation.isPending || !title.trim() || baseTickets === '' || baseTickets < 0;
 
-  // Conditional rendering if taskToEdit is somehow null while visible
   if (!taskToEdit) return null;
 
   return (
@@ -144,7 +147,7 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
               style={commonSharedStyles.input}
               value={String(baseTickets)}
               onChangeText={text =>
-                setBaseTickets(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) ?? 0)
+                setBaseTickets(text === '' ? '' : (parseInt(text.replace(/[^0-9]/g, ''), 10) ?? 0))
               }
               placeholderTextColor={colors.textLight}
               keyboardType="numeric"
@@ -163,7 +166,7 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
             />
           </ScrollView>
 
-          {/* Loading Indicator */}
+          {}
           {mutation.isPending && (
             <View style={modalSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -171,19 +174,20 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
             </View>
           )}
 
-          {/* Error Message Display */}
+          {}
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
-              Error: {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
+              Error:{' '}
+              {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
             </Text>
           )}
 
-          {/* Action Buttons */}
+          {}
           <View style={modalSharedStyles.buttonContainer}>
             <Button
-              title={mutation.isPending ? "Saving..." : "Save Changes"}
+              title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
-              disabled={isSaveDisabled} // Use combined disabled state
+              disabled={isSaveDisabled}
             />
           </View>
           <View style={modalSharedStyles.footerButton}>
@@ -191,7 +195,7 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
-              disabled={mutation.isPending} // Disable cancel while saving
+              disabled={mutation.isPending}
             />
           </View>
         </View>

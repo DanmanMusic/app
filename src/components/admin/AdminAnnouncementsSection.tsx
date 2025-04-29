@@ -1,26 +1,22 @@
-// src/components/admin/AdminAnnouncementsSection.tsx
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 
-// Import Supabase-backed API functions
-import { fetchAnnouncements, deleteAnnouncement } from '../../api/announcements'; // These now hit Supabase
+import { fetchAnnouncements, deleteAnnouncement } from '../../api/announcements';
 
 import { Announcement } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
-import { commonSharedStyles } from '../../styles/commonSharedStyles'; // For error display
-import { adminSharedStyles } from '../../styles/adminSharedStyles'; // For item actions layout
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { colors } from '../../styles/colors';
 
-// Import Modals & List Item (Modals are refactored)
 import ConfirmationModal from '../common/ConfirmationModal';
-import CreateAnnouncementModal from './modals/CreateAnnouncementModal'; // Uses Supabase create
-import EditAnnouncementModal from './modals/EditAnnouncementModal';     // Uses Supabase update
-import { AnnouncementListItem } from '../common/AnnouncementListItem'; // Displays data
+import CreateAnnouncementModal from './modals/CreateAnnouncementModal';
+import EditAnnouncementModal from './modals/EditAnnouncementModal';
+import { AnnouncementListItem } from '../common/AnnouncementListItem';
 import Toast from 'react-native-toast-message';
 
 export const AdminAnnouncementsSection = () => {
-  // State for managing modals
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
@@ -29,26 +25,24 @@ export const AdminAnnouncementsSection = () => {
 
   const queryClient = useQueryClient();
 
-  // Fetch Announcements using React Query (calls Supabase fetchAnnouncements)
   const {
-    data: announcements = [], // Default to empty array
+    data: announcements = [],
     isLoading,
     isError,
     error,
   } = useQuery<Announcement[], Error>({
-    queryKey: ['announcements'], // Query key remains the same
-    queryFn: fetchAnnouncements, // Uses the Supabase API function
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    queryKey: ['announcements'],
+    queryFn: fetchAnnouncements,
+    staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 
-  // Mutation for deleting an announcement (calls Supabase deleteAnnouncement)
   const deleteMutation = useMutation({
     mutationFn: deleteAnnouncement,
     onSuccess: (_, deletedAnnouncementId) => {
       console.log(`[AdminAnnSection] Announcement ${deletedAnnouncementId} deleted successfully.`);
-      queryClient.invalidateQueries({ queryKey: ['announcements'] }); // Refetch the list
-      closeDeleteModal(); // Close confirmation modal
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      closeDeleteModal();
       Toast.show({
         type: 'success',
         text1: 'Success',
@@ -69,7 +63,6 @@ export const AdminAnnouncementsSection = () => {
     },
   });
 
-  // --- Modal Visibility Handlers ---
   const handleAddPress = () => setIsCreateModalVisible(true);
 
   const handleEditPress = (announcement: Announcement) => {
@@ -92,77 +85,73 @@ export const AdminAnnouncementsSection = () => {
   const closeDeleteModal = () => {
     setIsDeleteModalVisible(false);
     setAnnouncementToDelete(null);
-    deleteMutation.reset(); // Reset mutation state
+    deleteMutation.reset();
   };
 
-  // --- Action Handler ---
   const handleDeleteConfirm = () => {
     if (announcementToDelete && !deleteMutation.isPending) {
       deleteMutation.mutate(announcementToDelete.id);
     }
   };
 
-  // Helper for error message display
   const getErrorMessage = () => {
     if (!error) return 'An unknown error occurred.';
     return `Error loading announcements: ${error.message}`;
   };
 
-  // --- Render Logic ---
   return (
     <View>
-      {/* Section Title */}
+      {}
       <Text style={appSharedStyles.sectionTitle}>
         Announcements & Challenges ({announcements.length})
       </Text>
 
-      {/* Add Button */}
+      {}
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button
           title="Create New Announcement"
           onPress={handleAddPress}
-          disabled={isLoading || deleteMutation.isPending} // Disable if loading or deleting
+          disabled={isLoading || deleteMutation.isPending}
         />
       </View>
 
-      {/* Loading State */}
+      {}
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
       )}
 
-      {/* Error State */}
+      {}
       {isError && !isLoading && (
         <View style={commonSharedStyles.errorContainer}>
           <Text style={commonSharedStyles.errorText}>{getErrorMessage()}</Text>
         </View>
       )}
 
-      {/* Data Display */}
+      {}
       {!isLoading && !isError && (
         <FlatList
-          data={announcements} // Data from useQuery (Supabase)
+          data={announcements}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            // Container View for each item + actions
             <View style={appSharedStyles.itemContainer}>
-              <AnnouncementListItem item={item} /> {/* Displays announcement content */}
-              {/* Action buttons specific to admin */}
+              <AnnouncementListItem item={item} /> {}
+              {}
               <View style={adminSharedStyles.itemActions}>
                 <Button
                   title="Edit"
                   onPress={() => handleEditPress(item)}
-                  disabled={deleteMutation.isPending} // Disable during delete
+                  disabled={deleteMutation.isPending}
                 />
                 <Button
                   title="Delete"
                   onPress={() => handleDeletePress(item)}
                   color={colors.danger}
-                  disabled={deleteMutation.isPending} // Disable during delete
+                  disabled={deleteMutation.isPending}
                 />
               </View>
             </View>
           )}
-          scrollEnabled={false} // Assuming parent ScrollView
+          scrollEnabled={false}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
           ListEmptyComponent={() => (
             <Text style={appSharedStyles.emptyListText}>No announcements found.</Text>
@@ -170,11 +159,8 @@ export const AdminAnnouncementsSection = () => {
         />
       )}
 
-      {/* Modals */}
-      <CreateAnnouncementModal
-        visible={isCreateModalVisible}
-        onClose={closeCreateModal}
-      />
+      {}
+      <CreateAnnouncementModal visible={isCreateModalVisible} onClose={closeCreateModal} />
       <EditAnnouncementModal
         visible={isEditModalVisible}
         announcementToEdit={announcementToEdit}

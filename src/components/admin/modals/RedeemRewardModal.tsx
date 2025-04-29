@@ -1,6 +1,5 @@
-// src/components/admin/modals/RedeemRewardModal.tsx
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; // Added useQuery
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Modal,
   View,
@@ -13,14 +12,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-// API Imports
-import { fetchRewards } from '../../../api/rewards'; // Uses Supabase
-import { fetchStudentBalance, redeemReward } from '../../../api/tickets'; // Use fetchStudentBalance, redeemReward is deferred
+import { fetchRewards } from '../../../api/rewards';
+import { fetchStudentBalance, redeemReward } from '../../../api/tickets';
 
 import { RewardItem } from '../../../types/dataTypes';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
-import { RedeemRewardModalProps } from '../../../types/componentProps'; // Uses updated props
+import { RedeemRewardModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
@@ -35,22 +33,19 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
   const queryClient = useQueryClient();
   const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
 
-  // --- Fetch Current Balance ---
   const {
-      data: currentBalance = 0,
-      isLoading: balanceLoading,
-      isError: balanceError,
-      error: balanceErrorMsg,
+    data: currentBalance = 0,
+    isLoading: balanceLoading,
+    isError: balanceError,
+    error: balanceErrorMsg,
   } = useQuery<number, Error>({
-      queryKey: ['balance', studentId, { context: 'redeemModal' }],
-      queryFn: () => fetchStudentBalance(studentId),
-      enabled: visible && !!studentId, // Fetch only when modal is visible
-      staleTime: 30 * 1000,
-      gcTime: 2 * 60 * 1000,
+    queryKey: ['balance', studentId, { context: 'redeemModal' }],
+    queryFn: () => fetchStudentBalance(studentId),
+    enabled: visible && !!studentId,
+    staleTime: 30 * 1000,
+    gcTime: 2 * 60 * 1000,
   });
-  // --- End Balance Fetch ---
 
-  // Fetch Rewards Catalog (already uses Supabase)
   const {
     data: rewardsCatalog = [],
     isLoading: isLoadingRewards,
@@ -60,53 +55,48 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
     queryKey: ['rewards'],
     queryFn: fetchRewards,
     staleTime: 10 * 60 * 1000,
-    enabled: visible, // Fetch only when modal is visible
+    enabled: visible,
   });
 
-  // Redeem Mutation (points to deferred API)
   const redeemMutation = useMutation({
     mutationFn: redeemReward,
-    // onSuccess/onError won't run as mutate is disabled
   });
 
-  // Reset state when modal opens
   useEffect(() => {
     if (visible) {
       setSelectedRewardId(null);
       redeemMutation.reset();
-      // Optionally invalidate balance on open
-      // queryClient.invalidateQueries({ queryKey: ['balance', studentId] });
     }
-  }, [visible, studentId]); // Add studentId dependency
+  }, [visible, studentId]);
 
-  // Handle selecting an item in the list
   const handleSelectItem = (reward: RewardItem) => {
-    // Allow selection even if balance is loading/error initially, check on confirm
     if (!balanceLoading && currentBalance >= reward.cost) {
       setSelectedRewardId(reward.id);
     } else if (!balanceLoading && currentBalance < reward.cost) {
-      Toast.show({ type: 'error', text1: 'Insufficient Tickets', text2: `Need ${reward.cost - currentBalance} more.` });
-      setSelectedRewardId(null); // Deselect if cannot afford
+      Toast.show({
+        type: 'error',
+        text1: 'Insufficient Tickets',
+        text2: `Need ${reward.cost - currentBalance} more.`,
+      });
+      setSelectedRewardId(null);
     } else {
-        // Balance might be loading or error, allow selection optimistically
-        setSelectedRewardId(reward.id);
+      setSelectedRewardId(reward.id);
     }
   };
 
-  // Handle confirm button press - NOW SHOWS ERROR/ALERT
   const handleConfirmRedemption = () => {
     if (!selectedRewardId) {
       Toast.show({ type: 'error', text1: 'Error', text2: 'No reward selected.' });
       return;
     }
-    // Re-check balance now that it should be loaded
+
     if (balanceLoading) {
-       Toast.show({ type: 'info', text1: 'Please wait', text2: 'Balance still loading.' });
-       return;
+      Toast.show({ type: 'info', text1: 'Please wait', text2: 'Balance still loading.' });
+      return;
     }
     if (balanceError) {
-       Toast.show({ type: 'error', text1: 'Error', text2: 'Could not verify balance.' });
-       return;
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Could not verify balance.' });
+      return;
     }
 
     const selectedReward = rewardsCatalog.find(r => r.id === selectedRewardId);
@@ -116,46 +106,40 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
     }
 
     if (currentBalance < selectedReward.cost) {
-      Toast.show({ type: 'error', text1: 'Insufficient Tickets', text2: `Cannot redeem ${selectedReward.name}.` });
+      Toast.show({
+        type: 'error',
+        text1: 'Insufficient Tickets',
+        text2: `Cannot redeem ${selectedReward.name}.`,
+      });
       return;
     }
 
-    // --- DEFERRED ACTION ---
     Toast.show({
-        type: 'info',
-        text1: 'Feature Not Implemented',
-        text2: 'Reward redemption requires server-side logic (Edge Function).',
-        visibilityTime: 5000,
+      type: 'info',
+      text1: 'Feature Not Implemented',
+      text2: 'Reward redemption requires server-side logic (Edge Function).',
+      visibilityTime: 5000,
     });
-    console.warn("Attempted to redeem reward, but API implementation is deferred.");
-    // redeemMutation.mutate({ // DO NOT CALL MUTATE YET
-    //   studentId,
-    //   rewardId: selectedRewardId,
-    //   redeemerId,
-    // });
-    // --- END DEFERRED ACTION ---
+    console.warn('Attempted to redeem reward, but API implementation is deferred.');
   };
 
   const selectedReward = rewardsCatalog.find(r => r.id === selectedRewardId);
-  // Always disable confirm button as API is deferred
+
   const isConfirmDisabled = true;
-  // const isConfirmDisabled = !selectedRewardId || isLoadingRewards || redeemMutation.isPending || balanceLoading || balanceError;
 
   const renderRewardItem = ({ item }: { item: RewardItem }) => {
-    // Determine affordability based on fetched balance (handle loading/error state)
-    const canAfford = balanceLoading ? null : balanceError ? false : currentBalance >= item.cost; // null if loading
+    const canAfford = balanceLoading ? null : balanceError ? false : currentBalance >= item.cost;
     const isSelected = item.id === selectedRewardId;
 
     return (
       <TouchableOpacity
         onPress={() => handleSelectItem(item)}
-        // Disable interaction if balance loading error prevents affordability check OR if redeeming
         disabled={balanceLoading || balanceError || redeemMutation.isPending}
       >
         <View
           style={[
             styles.rewardItemBase,
-            // Style based on affordability *if* balance is loaded and not error
+
             canAfford === false && styles.rewardItemUnaffordable,
             isSelected && styles.rewardItemSelected,
           ]}
@@ -166,12 +150,14 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
             <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
               {item.cost} Tickets
             </Text>
-            {/* Show affordability message only if balance loaded and cannot afford */}
+            {}
             {canAfford === false && (
               <Text style={styles.cannotAffordText}>(Need {item.cost - currentBalance} more)</Text>
             )}
-             {/* Indicate loading state per item if needed */}
-            {canAfford === null && <Text style={styles.loadingAffordText}>(Checking balance...)</Text>}
+            {}
+            {canAfford === null && (
+              <Text style={styles.loadingAffordText}>(Checking balance...)</Text>
+            )}
           </View>
           {isSelected && <Text style={styles.checkmark}>✓</Text>}
         </View>
@@ -186,10 +172,12 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
           <Text style={modalSharedStyles.modalTitle}>Redeem Reward</Text>
           <Text style={modalSharedStyles.modalContextInfo}>For: {studentName}</Text>
           <Text style={modalSharedStyles.modalContextInfo}>
-             Balance: {balanceLoading ? 'Loading...' : balanceError ? 'Error' : `${currentBalance} Tickets`}
+            Balance:{' '}
+            {balanceLoading ? 'Loading...' : balanceError ? 'Error' : `${currentBalance} Tickets`}
           </Text>
-           {balanceError && <Text style={commonSharedStyles.errorText}>{balanceErrorMsg?.message}</Text>}
-
+          {balanceError && (
+            <Text style={commonSharedStyles.errorText}>{balanceErrorMsg?.message}</Text>
+          )}
 
           {isLoadingRewards && (
             <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
@@ -203,7 +191,7 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
           {!isLoadingRewards && !isErrorRewards && (
             <FlatList
               style={modalSharedStyles.modalListContainer}
-              data={rewardsCatalog} // Already sorted by API
+              data={rewardsCatalog}
               renderItem={renderRewardItem}
               keyExtractor={item => item.id}
               ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -213,22 +201,22 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
             />
           )}
 
-           {/* Remove mutation loading/error display */}
-           {/* {redeemMutation.isPending && ... } */}
-           {/* {redeemMutation.isError && ... } */}
+          {}
+          {}
+          {}
 
           <View style={modalSharedStyles.buttonContainer}>
             <Button
-              title={`Redeem Selected (Disabled)`} // Update text
-              onPress={handleConfirmRedemption} // Still calls validation/shows info toast
-              disabled={isConfirmDisabled} // Always disabled
+              title={`Redeem Selected (Disabled)`}
+              onPress={handleConfirmRedemption}
+              disabled={isConfirmDisabled}
               color={colors.success}
             />
             <Button
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
-              disabled={redeemMutation.isPending} // Keep potentially disabling cancel
+              disabled={redeemMutation.isPending}
             />
           </View>
         </View>
@@ -237,7 +225,6 @@ const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
   );
 };
 
-// Styles remain mostly the same, maybe add one for loading state
 const styles = StyleSheet.create({
   rewardItemBase: {
     flexDirection: 'row',
@@ -263,9 +250,9 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSecondary,
   },
   rewardName: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
-  cannotAffordText: { fontSize: 12, color: colors.danger, fontStyle: 'italic', marginTop: 2 }, // Make red
-  loadingAffordText: { fontSize: 12, color: colors.textLight, fontStyle: 'italic', marginTop: 2 }, // Style for loading
-  checkmark: { fontSize: 24, color: colors.primary, marginLeft: 'auto' }, // Pushed to right
+  cannotAffordText: { fontSize: 12, color: colors.danger, fontStyle: 'italic', marginTop: 2 },
+  loadingAffordText: { fontSize: 12, color: colors.textLight, fontStyle: 'italic', marginTop: 2 },
+  checkmark: { fontSize: 24, color: colors.primary, marginLeft: 'auto' },
   separator: { height: 8 },
 });
 

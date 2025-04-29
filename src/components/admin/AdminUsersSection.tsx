@@ -1,32 +1,25 @@
-// src/components/admin/AdminUsersSection.tsx
-import React from 'react'; // Removed useEffect as data fetching is in hooks
+import React from 'react';
 import { View, Text, Button, FlatList, TextInput, ActivityIndicator } from 'react-native';
 
-// Import shared styles
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 
-// Import prop types and data types
 import { AdminUsersSectionProps } from '../../types/componentProps';
-import { SimplifiedStudent, User, UserRole, UserStatus } from '../../types/dataTypes'; // Import relevant types
+import { SimplifiedStudent, User, UserRole, UserStatus, Instrument } from '../../types/dataTypes';
 
-// Import common list item components
 import { AdminUserItem } from '../common/AdminUserItem';
 import { AdminStudentItem } from '../common/AdminStudentItem';
 
-// Import pagination controls
 import PaginationControls from './PaginationControls';
+
 import { usePaginatedStudents } from '../../hooks/usePaginatedStudents';
 import { usePaginatedTeachers } from '../../hooks/usePaginatedTeachers';
 import { usePaginatedParents } from '../../hooks/usePaginatedParents';
+import { usePaginatedAdmins } from '../../hooks/usePaginatedAdmins';
 
-// Note: This component NO LONGER takes paginated data/state as props.
-// It will call the specific hooks internally based on the activeTab.
-// It still needs handlers passed down from AdminView for actions.
+type UserTab = 'students' | 'teachers' | 'parents' | 'admins';
 
-// Update Props: Remove data/pagination props, keep handlers and tab state
-// Instruments are still needed for AdminStudentItem
 export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   activeTab,
   setActiveTab,
@@ -34,55 +27,59 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   setStudentFilter,
   studentSearchTerm,
   setStudentSearchTerm,
-  instruments, // Keep instruments prop
+  instruments,
   onViewManageUser,
   onInitiateAssignTaskForStudent,
   onInitiateCreateUser,
-  // We'll get loading/error/data from the specific hooks below
 }) => {
-
-  // Conditionally use the appropriate hook based on the active tab
-  // Note: Hooks must be called unconditionally at the top level.
-  // We will use the data from the relevant hook based on activeTab later.
   const {
-      students,
-      currentPage: studentCurrentPage,
-      totalPages: studentTotalPages,
-      totalItems: studentTotalItems,
-      setPage: setStudentPage,
-      // Filter/Search setters are passed via props now
-      isLoading: isStudentLoading,
-      isFetching: isStudentFetching,
-      isError: isStudentError,
-      error: studentError,
-  } = usePaginatedStudents(); // Always call the hook
-
-   const {
-      teachers,
-      currentPage: teacherCurrentPage,
-      totalPages: teacherTotalPages,
-      totalItems: teacherTotalItems,
-      setPage: setTeacherPage,
-      isLoading: isTeacherLoading,
-      isFetching: isTeacherFetching,
-      isError: isTeacherError,
-      error: teacherError,
-  } = usePaginatedTeachers(); // Always call the hook
+    students,
+    currentPage: studentCurrentPage,
+    totalPages: studentTotalPages,
+    totalItems: studentTotalItems,
+    setPage: setStudentPage,
+    isLoading: isStudentLoading,
+    isFetching: isStudentFetching,
+    isError: isStudentError,
+    error: studentError,
+  } = usePaginatedStudents();
 
   const {
-      parents,
-      currentPage: parentCurrentPage,
-      totalPages: parentTotalPages,
-      totalItems: parentTotalItems,
-      setPage: setParentPage,
-      isLoading: isParentLoading,
-      isFetching: isParentFetching,
-      isError: isParentError,
-      error: parentError,
-  } = usePaginatedParents(); // Always call the hook
+    teachers,
+    currentPage: teacherCurrentPage,
+    totalPages: teacherTotalPages,
+    totalItems: teacherTotalItems,
+    setPage: setTeacherPage,
+    isLoading: isTeacherLoading,
+    isFetching: isTeacherFetching,
+    isError: isTeacherError,
+    error: teacherError,
+  } = usePaginatedTeachers();
 
+  const {
+    parents,
+    currentPage: parentCurrentPage,
+    totalPages: parentTotalPages,
+    totalItems: parentTotalItems,
+    setPage: setParentPage,
+    isLoading: isParentLoading,
+    isFetching: isParentFetching,
+    isError: isParentError,
+    error: parentError,
+  } = usePaginatedParents();
 
-  // Determine which data and pagination state to use based on the activeTab
+  const {
+    admins,
+    currentPage: adminCurrentPage,
+    totalPages: adminTotalPages,
+    totalItems: adminTotalItems,
+    setPage: setAdminPage,
+    isLoading: isAdminLoading,
+    isFetching: isAdminFetching,
+    isError: isAdminError,
+    error: adminError,
+  } = usePaginatedAdmins();
+
   let displayData: Array<User | SimplifiedStudent>;
   let currentPage: number;
   let totalPages: number;
@@ -127,7 +124,19 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
       isError = isParentError;
       error = parentError;
       break;
-    default: // Should not happen
+
+    case 'admins':
+      displayData = admins;
+      currentPage = adminCurrentPage;
+      totalPages = adminTotalPages;
+      totalItems = adminTotalItems;
+      setPage = setAdminPage;
+      isLoading = isAdminLoading;
+      isFetching = isAdminFetching;
+      isError = isAdminError;
+      error = adminError;
+      break;
+    default:
       displayData = [];
       currentPage = 1;
       totalPages = 1;
@@ -139,160 +148,159 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
       error = null;
   }
 
-
-  // Render function for FlatList items
   const renderUserItem = ({ item }: { item: User | SimplifiedStudent }) => {
-    // Determine role based on activeTab for rendering correct item component
     if (activeTab === 'students') {
       return (
         <AdminStudentItem
           student={item as SimplifiedStudent}
-          instruments={instruments} // Pass instruments down
-          onViewManage={onViewManageUser} // Pass handler down
-          onInitiateAssignTask={onInitiateAssignTaskForStudent} // Pass handler down
+          instruments={instruments}
+          onViewManage={onViewManageUser}
+          onInitiateAssignTask={onInitiateAssignTaskForStudent}
         />
       );
     } else {
-      // Teachers and Parents use AdminUserItem
-      return (
-         <AdminUserItem
-            user={item as User}
-            onViewManage={onViewManageUser} // Pass handler down
-         />
-      );
+      return <AdminUserItem user={item as User} onViewManage={onViewManageUser} />;
     }
   };
 
-  // Error message helper
   const getErrorMessage = () => {
     if (!error) return 'An unknown error occurred.';
-    const resource = activeTab; // students, teachers, parents
+    const resource = activeTab;
     return `Error loading ${resource}: ${error.message}`;
   };
 
-  // Handler for student filter change (passed down from AdminView)
   const handleFilterChange = (filter: UserStatus | 'all') => {
     if (setStudentFilter) {
       setStudentFilter(filter);
+    } else {
+      console.warn('setStudentFilter handler not provided to AdminUsersSection');
     }
   };
 
-  // Handler for student search term change (passed down from AdminView)
   const handleSearchTermChange = (term: string) => {
-      if (setStudentSearchTerm) {
-          setStudentSearchTerm(term);
-      }
+    if (setStudentSearchTerm) {
+      setStudentSearchTerm(term);
+    } else {
+      console.warn('setStudentSearchTerm handler not provided to AdminUsersSection');
+    }
   };
-
 
   return (
     <View>
-      {/* Tab Buttons */}
+      {}
       <View style={appSharedStyles.tabContainer}>
-        {/* Simplified Tab Buttons */}
+        {}
         <Button
-          title={`Students (${studentTotalItems})`} // Show count
+          title={`Students (${studentTotalItems})`}
           onPress={() => setActiveTab('students')}
           color={activeTab === 'students' ? colors.primary : colors.secondary}
         />
+        {}
         <Button
-          title={`Teachers (${teacherTotalItems})`} // Show count
+          title={`Teachers (${teacherTotalItems})`}
           onPress={() => setActiveTab('teachers')}
           color={activeTab === 'teachers' ? colors.primary : colors.secondary}
         />
+        {}
         <Button
-          title={`Parents (${parentTotalItems})`} // Show count
+          title={`Parents (${parentTotalItems})`}
           onPress={() => setActiveTab('parents')}
           color={activeTab === 'parents' ? colors.primary : colors.secondary}
         />
-        {/* Create User button remains */}
+        {}
         <Button
-            title="Create User"
-            onPress={onInitiateCreateUser}
-            // Disable while any list is initially loading? Optional.
-            // disabled={isStudentLoading || isTeacherLoading || isParentLoading}
-         />
+          title={`Admins (${adminTotalItems})`}
+          onPress={() => setActiveTab('admins')}
+          color={activeTab === 'admins' ? colors.primary : colors.secondary}
+        />
+        {}
+        <Button title="Create User" onPress={onInitiateCreateUser} />
       </View>
 
-      {/* Student Filters & Search (Conditional) */}
-      {activeTab === 'students' && studentFilter !== undefined && setStudentFilter && setStudentSearchTerm && (
-        <View style={appSharedStyles.filterAndSearchContainer}>
-          {/* Filter Buttons */}
-          <View style={appSharedStyles.filterContainer}>
-            <Text style={appSharedStyles.filterLabel}>Show:</Text>
-            <Button
-              title="Active"
-              onPress={() => handleFilterChange('active')}
-              color={studentFilter === 'active' ? colors.success : colors.secondary}
-            />
-            <Button
-              title="Inactive"
-              onPress={() => handleFilterChange('inactive')}
-              color={studentFilter === 'inactive' ? colors.warning : colors.secondary}
-            />
-            <Button
-              title="All"
-              onPress={() => handleFilterChange('all')}
-              color={studentFilter === 'all' ? colors.info : colors.secondary}
+      {}
+      {activeTab === 'students' &&
+        studentFilter !== undefined &&
+        setStudentFilter &&
+        setStudentSearchTerm && (
+          <View style={appSharedStyles.filterAndSearchContainer}>
+            {}
+            <View style={appSharedStyles.filterContainer}>
+              <Text style={appSharedStyles.filterLabel}>Show:</Text>
+              <Button
+                title="Active"
+                onPress={() => handleFilterChange('active')}
+                color={studentFilter === 'active' ? colors.success : colors.secondary}
+              />
+              <Button
+                title="Inactive"
+                onPress={() => handleFilterChange('inactive')}
+                color={studentFilter === 'inactive' ? colors.warning : colors.secondary}
+              />
+              <Button
+                title="All"
+                onPress={() => handleFilterChange('all')}
+                color={studentFilter === 'all' ? colors.info : colors.secondary}
+              />
+            </View>
+            {}
+            <TextInput
+              style={commonSharedStyles.searchInput}
+              placeholder="Search Students by Name..."
+              placeholderTextColor={colors.textLight}
+              value={studentSearchTerm}
+              onChangeText={handleSearchTermChange}
+              autoCapitalize="none"
+              autoCorrect={false}
             />
           </View>
-          {/* Search Input */}
-          <TextInput
-            style={commonSharedStyles.searchInput}
-            placeholder="Search Students by Name..."
-            placeholderTextColor={colors.textLight}
-            value={studentSearchTerm}
-            onChangeText={handleSearchTermChange} // Use handler
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-        </View>
-      )}
-      {/* Spacer if not showing student filters */}
+        )}
+      {}
       {activeTab !== 'students' && <View style={{ height: 5 }} />}
 
-      {/* List Area */}
+      {}
       <View style={appSharedStyles.listArea}>
-        {/* Loading Indicator: Show if initial load OR fetching subsequent pages */}
+        {}
         {(isLoading || isFetching) && (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
         )}
 
-        {/* Error Display */}
-        {isError && !isLoading && ( // Show error only if not also loading initially
+        {}
+        {isError && !isLoading && (
           <View style={commonSharedStyles.errorContainer}>
             <Text style={commonSharedStyles.errorText}>{getErrorMessage()}</Text>
           </View>
         )}
 
-        {/* User List */}
+        {}
         {!isLoading && !isError && (
           <FlatList
             data={displayData}
-            keyExtractor={item => item.id} // Use item ID as key
-            renderItem={renderUserItem} // Use the conditional render function
-            scrollEnabled={false} // Assuming parent ScrollView
+            keyExtractor={item => item.id}
+            renderItem={renderUserItem}
+            scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
             ListEmptyComponent={() => (
               <Text style={appSharedStyles.emptyListText}>
+                {}
                 {activeTab === 'students'
                   ? 'No students match filters/search.'
                   : activeTab === 'teachers'
                     ? 'No teachers found.'
-                    : 'No parents found.'}
+                    : activeTab === 'parents'
+                      ? 'No parents found.'
+                      : 'No admins found.'}
               </Text>
             )}
-            // Conditional Pagination Controls
             ListFooterComponent={
               totalPages > 1 ? (
                 <PaginationControls
                   currentPage={currentPage}
                   totalPages={totalPages}
-                  onPageChange={setPage} // Use the correct setter for the active tab
+                  onPageChange={setPage}
                 />
-              ) : null // No controls if only one page
+              ) : null
             }
-            contentContainerStyle={{ paddingBottom: 10 }} // Padding at list bottom
+            contentContainerStyle={{ paddingBottom: 10 }}
           />
         )}
       </View>

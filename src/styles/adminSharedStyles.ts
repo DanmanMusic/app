@@ -40,24 +40,23 @@ export const adminSharedStyles = StyleSheet.create({
     marginBottom: 0,
   },
   pickerContainer: {
-    height: 50, // Set height for the container
+    height: 50,
     borderColor: colors.borderPrimary,
     borderWidth: 1,
     borderRadius: 5,
-    marginBottom: 15, // Match input margin bottom
-    justifyContent: 'center', // Center Picker vertically
-    backgroundColor: colors.backgroundPrimary, // Match input background
+    marginBottom: 15,
+    justifyContent: 'center',
+    backgroundColor: colors.backgroundPrimary,
   },
   picker: {
-      width: '100%',
-      height: Platform.OS === 'android' ? 50 : undefined, // Android needs explicit height sometimes
-      color: colors.textPrimary, // Match input text color
+    width: '100%',
+    height: Platform.OS === 'android' ? 50 : undefined,
+    color: colors.textPrimary,
   },
   pickerItem: {
-      // iOS specific styling for items in the dropdown list
-      height: 120, // Example height, adjust as needed for iOS list rows
-      fontSize: 16,
-  },  
+    height: 120,
+    fontSize: 16,
+  },
   pendingDetail: {
     color: colors.textSecondary,
     fontSize: 14,

@@ -120,7 +120,7 @@ export interface ManualTicketAdjustmentModalProps {
   studentName: string;
 }
 
-type UserTab = 'students' | 'teachers' | 'parents';
+type UserTab = 'students' | 'teachers' | 'parents' | 'admins';
 type StudentFilter = UserStatus | 'all';
 
 export interface AdminUsersSectionProps {
@@ -156,7 +156,7 @@ export interface AdminStudentDetailViewProps {
   onInitiateStatusUser?: (user: User) => void;
   onInitiateTicketAdjustment?: (user: User) => void;
   onInitiateRedemption?: (user: User) => void;
-  onInitiatePinGeneration?: (user: User) => void; // Add prop for PIN generation
+  onInitiatePinGeneration?: (user: User) => void;
 }
 
 export interface ViewAllAssignedTasksModalProps {
@@ -210,8 +210,7 @@ export interface AdminTeacherDetailViewProps {
   onInitiateEditUser: (user: User) => void;
   onInitiateStatusUser: (user: User) => void;
   onViewStudentProfile: (studentId: string) => void;
-  onInitiatePinGeneration?: (user: User) => void; // Add PIN handler prop (optional for Admin)
-
+  onInitiatePinGeneration?: (user: User) => void;
 }
 
 export interface AdminParentDetailViewProps {
@@ -226,4 +225,10 @@ export interface AdminInstrumentItemProps {
   onEdit: (instrument: Instrument) => void;
   onDelete: (instrument: Instrument) => void;
   disabled?: boolean;
+}
+
+export interface AdminAdminDetailViewProps {
+  viewingUserId: string;
+  onInitiateStatusUser: (user: User) => void;
+  onInitiatePinGeneration?: (user: User) => void;
 }

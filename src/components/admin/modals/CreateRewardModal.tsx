@@ -1,4 +1,3 @@
-// src/components/admin/modals/CreateRewardModal.tsx
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -9,12 +8,12 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
-  Image, // Added
-  Platform, // Added
-  Alert, // Added
+  Image,
+  Platform,
+  Alert,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker'; // Added
-import { createReward } from '../../../api/rewards'; // Updated API import
+import * as ImagePicker from 'expo-image-picker';
+import { createReward } from '../../../api/rewards';
 import { colors } from '../../../styles/colors';
 import { CreateRewardModalProps } from '../../../types/componentProps';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
@@ -25,14 +24,14 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
   const [name, setName] = useState('');
   const [cost, setCost] = useState<number | ''>('');
   const [description, setDescription] = useState('');
-  // const [imageUrl, setImageUrl] = useState(''); // REMOVED - We use imageUri now
-  const [imageUri, setImageUri] = useState<string | null>(null); // ADDED - State for picker URI
-  const [mimeType, setMimeType] = useState<string | undefined>(undefined); // ADDED - State for image type
+
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [mimeType, setMimeType] = useState<string | undefined>(undefined);
 
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: createReward, // Use the Supabase API function
+    mutationFn: createReward,
     onSuccess: createdReward => {
       console.log('[CreateRewardModal] Reward created successfully via mutation:', createdReward);
       queryClient.invalidateQueries({ queryKey: ['rewards'] });
@@ -58,30 +57,31 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
 
   useEffect(() => {
     if (visible) {
-      // Reset all fields when modal becomes visible
       setName('');
       setCost('');
       setDescription('');
-      setImageUri(null); // Reset image state
+      setImageUri(null);
       setMimeType(undefined);
       mutation.reset();
     }
   }, [visible]);
 
-  // Image Picker Function (similar to instruments)
   const pickImage = async () => {
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Camera roll permissions are needed to choose an image.');
+        Alert.alert(
+          'Permission Required',
+          'Camera roll permissions are needed to choose an image.'
+        );
         return;
       }
     }
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'], // Correct usage
+        mediaTypes: ['images'],
         allowsEditing: true,
-        aspect: [1, 1], // Keep it square-ish
+        aspect: [1, 1],
         quality: 0.8,
       });
 
@@ -89,44 +89,48 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
         const selectedAsset = result.assets[0];
         setImageUri(selectedAsset.uri);
         setMimeType(selectedAsset.mimeType);
-        console.log('Selected Reward Image URI:', selectedAsset.uri, 'MIME Type:', selectedAsset.mimeType);
+        console.log(
+          'Selected Reward Image URI:',
+          selectedAsset.uri,
+          'MIME Type:',
+          selectedAsset.mimeType
+        );
       }
     } catch (error) {
-      console.error("Error picking reward image: ", error);
+      console.error('Error picking reward image: ', error);
       Alert.alert('Image Pick Error', 'An error occurred selecting the image.');
     }
   };
 
   const handleCreate = () => {
     const trimmedName = name.trim();
-    const numericCost = typeof cost === 'number' ? cost : parseInt(String(cost || '-1'), 10); // Use -1 to fail validation if empty
+    const numericCost = typeof cost === 'number' ? cost : parseInt(String(cost || '-1'), 10);
 
-    // Validation
     if (!trimmedName) {
       Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Reward Name is required.' });
       return;
     }
     if (isNaN(numericCost) || numericCost < 0) {
-       Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Please enter a valid, non-negative Ticket Cost.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Please enter a valid, non-negative Ticket Cost.',
+      });
       return;
     }
-    // Image is optional for creation, but if provided, URI must exist
-    // (API handles upload logic)
 
-    // Prepare data for the Supabase API function
     const newRewardData = {
       name: trimmedName,
       cost: numericCost,
-      description: description.trim() || undefined, // Pass undefined if empty
-      imageUri: imageUri, // Pass the picker URI
-      mimeType: mimeType, // Pass the MIME type
+      description: description.trim() || undefined,
+      imageUri: imageUri,
+      mimeType: mimeType,
     };
 
     console.log('[CreateRewardModal] Calling mutation with data:', newRewardData);
     mutation.mutate(newRewardData);
   };
 
-  // Determine if create button should be disabled
   const isCreateDisabled = mutation.isPending || !name.trim() || cost === '' || cost < 0;
 
   return (
@@ -149,9 +153,8 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
             <Text style={commonSharedStyles.label}>Ticket Cost:</Text>
             <TextInput
               style={commonSharedStyles.input}
-              value={String(cost)} // Ensure value is string for TextInput
+              value={String(cost)}
               onChangeText={text =>
-                // Allow empty string, otherwise parse integer
                 setCost(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)
               }
               placeholder="e.g., 10000"
@@ -160,21 +163,27 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
               editable={!mutation.isPending}
             />
 
-             {/* Image Picker Button and Preview */}
-             <Text style={commonSharedStyles.label}>Image (Optional):</Text>
-             <View style={modalSharedStyles.iconPreviewContainer}>
-                {imageUri ? (
-                   <Image source={{ uri: imageUri }} style={modalSharedStyles.iconPreview} resizeMode="contain" />
-                 ) : (
-                   <Text style={{ color: colors.textLight, fontStyle: 'italic' }}>No image selected</Text>
-                 )}
-                <Button
-                   title={imageUri ? "Change Image" : "Choose Image"}
-                   onPress={pickImage}
-                   disabled={mutation.isPending}
-                   color={colors.info}
-                 />
-             </View>
+            {}
+            <Text style={commonSharedStyles.label}>Image (Optional):</Text>
+            <View style={modalSharedStyles.iconPreviewContainer}>
+              {imageUri ? (
+                <Image
+                  source={{ uri: imageUri }}
+                  style={modalSharedStyles.iconPreview}
+                  resizeMode="contain"
+                />
+              ) : (
+                <Text style={{ color: colors.textLight, fontStyle: 'italic' }}>
+                  No image selected
+                </Text>
+              )}
+              <Button
+                title={imageUri ? 'Change Image' : 'Choose Image'}
+                onPress={pickImage}
+                disabled={mutation.isPending}
+                color={colors.info}
+              />
+            </View>
 
             <Text style={commonSharedStyles.label}>Description (Optional):</Text>
             <TextInput
@@ -202,10 +211,10 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
           )}
           <View style={modalSharedStyles.buttonContainer}>
             <Button
-                title={mutation.isPending ? "Creating..." : "Create Reward"}
-                onPress={handleCreate}
-                disabled={isCreateDisabled}
-             />
+              title={mutation.isPending ? 'Creating...' : 'Create Reward'}
+              onPress={handleCreate}
+              disabled={isCreateDisabled}
+            />
           </View>
           <View style={modalSharedStyles.footerButton}>
             <Button

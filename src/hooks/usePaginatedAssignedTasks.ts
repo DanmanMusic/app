@@ -1,20 +1,16 @@
-// src/hooks/usePaginatedAssignedTasks.ts
 import { useState, useCallback, useEffect } from 'react';
-import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query'; // Added useQueryClient
+import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
-// Import the Supabase-backed API function and types
 import {
   fetchAssignedTasks,
-  TaskAssignmentFilterStatusAPI, // Type used by API
-  StudentTaskFilterStatusAPI,    // Type used by API
+  TaskAssignmentFilterStatusAPI,
+  StudentTaskFilterStatusAPI,
 } from '../api/assignedTasks';
 import { AssignedTask, UserStatus } from '../types/dataTypes';
 
-// Types used by the hook caller (can be simpler than API types if desired)
 export type TaskAssignmentFilterStatus = 'all' | 'assigned' | 'pending' | 'completed';
-export type StudentTaskFilterStatus = UserStatus | 'all'; // 'active' | 'inactive' | 'all'
+export type StudentTaskFilterStatus = UserStatus | 'all';
 
-// Interface for the hook's return value remains the same
 export interface UsePaginatedAssignedTasksReturn {
   tasks: AssignedTask[];
   currentPage: number;
@@ -31,22 +27,16 @@ export interface UsePaginatedAssignedTasksReturn {
   isError: boolean;
   error: Error | null;
 
-  // Keep studentId filtering capability if needed by specific admin views
   studentId?: string | null;
   setStudentId?: (id: string | null) => void;
-  // Add teacherId if needed for filtering in admin view (optional)
-  // teacherId?: string | null;
-  // setTeacherId?: (id: string | null) => void;
 }
 
-// Production-ready page size for task lists
-const ITEMS_PER_PAGE = 15; // Adjusted from 10
+const ITEMS_PER_PAGE = 15;
 
 export const usePaginatedAssignedTasks = (
   initialAssignmentFilter: TaskAssignmentFilterStatus = 'pending',
   initialStudentStatusFilter: StudentTaskFilterStatus = 'active',
-  initialStudentId: string | null = null,
-  // initialTeacherId: string | null = null // Add if implementing teacher filter here
+  initialStudentId: string | null = null
 ): UsePaginatedAssignedTasksReturn => {
   const queryClient = useQueryClient();
   const [assignmentFilter, setAssignmentFilter] =
@@ -55,94 +45,90 @@ export const usePaginatedAssignedTasks = (
     initialStudentStatusFilter
   );
   const [studentId, setStudentId] = useState<string | null>(initialStudentId);
-  // const [teacherId, setTeacherId] = useState<string | null>(initialTeacherId); // Add if implementing
+
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Define the query key including all filter parameters
   const queryKey = [
-    'assigned-tasks', // Base key
-    { // Parameters object
+    'assigned-tasks',
+    {
       page: currentPage,
       limit: ITEMS_PER_PAGE,
       assignmentStatus: assignmentFilter,
       studentStatus: studentStatusFilter,
       studentId: studentId,
-      // teacherId: teacherId // Add if implementing
     },
   ];
 
   const queryResult = useQuery({
     queryKey: queryKey,
-    queryFn: () => fetchAssignedTasks({ // Use the Supabase API function
+    queryFn: () =>
+      fetchAssignedTasks({
         page: currentPage,
         limit: ITEMS_PER_PAGE,
-        // Cast local filter types to the API types if they differ (currently they align)
+
         assignmentStatus: assignmentFilter as TaskAssignmentFilterStatusAPI,
         studentStatus: studentStatusFilter as StudentTaskFilterStatusAPI,
-        studentId: studentId ?? undefined, // Pass undefined if null
-        // teacherId: teacherId ?? undefined // Add if implementing
+        studentId: studentId ?? undefined,
       }),
     placeholderData: keepPreviousData,
-    staleTime: 1 * 60 * 1000, // Cache for 1 minute (tasks might change often)
+    staleTime: 1 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });
 
   const { data, isLoading, isFetching, isError, error, isPlaceholderData } = queryResult;
 
-  // Extract data or default
   const tasks = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
   const totalItems = data?.totalItems ?? 0;
 
-  // Effect to reset page when filters change
   useEffect(() => {
     if (currentPage !== 1) {
-        console.log(`[usePaginatedAssignedTasks] Filters changed, resetting page to 1.`);
-        setCurrentPage(1);
+      console.log(`[usePaginatedAssignedTasks] Filters changed, resetting page to 1.`);
+      setCurrentPage(1);
     }
-    // Query refetches automatically due to key change
-  }, [assignmentFilter, studentStatusFilter, studentId /*, teacherId */]); // Add teacherId if implementing
+  }, [assignmentFilter, studentStatusFilter, studentId]);
 
-  // --- Prefetching Logic (Optional) ---
   useEffect(() => {
     const effectiveTotalPages = totalPages >= 1 ? totalPages : 1;
     const prefetchParamsBase = {
-        limit: ITEMS_PER_PAGE,
-        assignmentStatus: assignmentFilter as TaskAssignmentFilterStatusAPI,
-        studentStatus: studentStatusFilter as StudentTaskFilterStatusAPI,
-        studentId: studentId ?? undefined,
-        // teacherId: teacherId ?? undefined,
+      limit: ITEMS_PER_PAGE,
+      assignmentStatus: assignmentFilter as TaskAssignmentFilterStatusAPI,
+      studentStatus: studentStatusFilter as StudentTaskFilterStatusAPI,
+      studentId: studentId ?? undefined,
     };
 
-    // Prefetch next page
     if (!isPlaceholderData && currentPage < effectiveTotalPages && !isFetching) {
-       const nextPage = currentPage + 1;
-       const nextQueryKey = ['assigned-tasks', { ...prefetchParamsBase, page: nextPage }];
-       console.log(`[usePaginatedAssignedTasks] Prefetching next page: ${nextPage}`);
-       queryClient.prefetchQuery({
-           queryKey: nextQueryKey,
-           queryFn: () => fetchAssignedTasks({ ...prefetchParamsBase, page: nextPage }),
-           staleTime: 1 * 60 * 1000,
-       });
+      const nextPage = currentPage + 1;
+      const nextQueryKey = ['assigned-tasks', { ...prefetchParamsBase, page: nextPage }];
+      console.log(`[usePaginatedAssignedTasks] Prefetching next page: ${nextPage}`);
+      queryClient.prefetchQuery({
+        queryKey: nextQueryKey,
+        queryFn: () => fetchAssignedTasks({ ...prefetchParamsBase, page: nextPage }),
+        staleTime: 1 * 60 * 1000,
+      });
     }
-    // Prefetch previous page
+
     if (!isPlaceholderData && currentPage > 1 && !isFetching) {
-        const prevPage = currentPage - 1;
-        const prevQueryKey = ['assigned-tasks', { ...prefetchParamsBase, page: prevPage }];
-        console.log(`[usePaginatedAssignedTasks] Prefetching previous page: ${prevPage}`);
-        queryClient.prefetchQuery({
-            queryKey: prevQueryKey,
-            queryFn: () => fetchAssignedTasks({ ...prefetchParamsBase, page: prevPage }),
-            staleTime: 1 * 60 * 1000,
-        });
+      const prevPage = currentPage - 1;
+      const prevQueryKey = ['assigned-tasks', { ...prefetchParamsBase, page: prevPage }];
+      console.log(`[usePaginatedAssignedTasks] Prefetching previous page: ${prevPage}`);
+      queryClient.prefetchQuery({
+        queryKey: prevQueryKey,
+        queryFn: () => fetchAssignedTasks({ ...prefetchParamsBase, page: prevPage }),
+        staleTime: 1 * 60 * 1000,
+      });
     }
   }, [
-      currentPage, totalPages, isPlaceholderData, isFetching, queryClient,
-      assignmentFilter, studentStatusFilter, studentId, /* teacherId */ // Include all query params
+    currentPage,
+    totalPages,
+    isPlaceholderData,
+    isFetching,
+    queryClient,
+    assignmentFilter,
+    studentStatusFilter,
+    studentId,
   ]);
-  // --- End Prefetching Logic ---
 
-  // Callback to change page
   const setPage = useCallback(
     (page: number) => {
       console.log(`[usePaginatedAssignedTasks] setPage called with: ${page}`);
@@ -153,14 +139,14 @@ export const usePaginatedAssignedTasks = (
       } else if (page > effectiveTotalPages) {
         targetPage = effectiveTotalPages;
       }
-       if (targetPage !== currentPage) {
-          console.log(`[usePaginatedAssignedTasks] Setting current page to: ${targetPage}`);
-          setCurrentPage(targetPage);
-       } else {
-          console.log(`[usePaginatedAssignedTasks] Already on page ${targetPage}.`);
-       }
+      if (targetPage !== currentPage) {
+        console.log(`[usePaginatedAssignedTasks] Setting current page to: ${targetPage}`);
+        setCurrentPage(targetPage);
+      } else {
+        console.log(`[usePaginatedAssignedTasks] Already on page ${targetPage}.`);
+      }
     },
-    [totalPages, currentPage] // Add currentPage dependency
+    [totalPages, currentPage]
   );
 
   return {
@@ -178,11 +164,8 @@ export const usePaginatedAssignedTasks = (
     isPlaceholderData,
     isError,
     error: error instanceof Error ? error : null,
-    // Optional studentId filter controls
+
     studentId,
     setStudentId,
-    // Optional teacherId filter controls
-    // teacherId,
-    // setTeacherId,
   };
 };

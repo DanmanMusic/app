@@ -1,8 +1,17 @@
-// src/components/admin/modals/CreateInstrumentModal.tsx
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Modal, View, Text, Button, TextInput, ActivityIndicator, Image, Platform, Alert } from 'react-native'; // Added Image, Platform, Alert
-import * as ImagePicker from 'expo-image-picker'; // Import ImagePicker
+import {
+  Modal,
+  View,
+  Text,
+  Button,
+  TextInput,
+  ActivityIndicator,
+  Image,
+  Platform,
+  Alert,
+} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { createInstrument } from '../../../api/instruments';
 import { Instrument } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
@@ -13,13 +22,13 @@ import Toast from 'react-native-toast-message';
 
 const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');
-  const [imageUri, setImageUri] = useState<string | null>(null); // State for selected image URI
-  const [mimeType, setMimeType] = useState<string | undefined>(undefined); // State for MIME type
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [mimeType, setMimeType] = useState<string | undefined>(undefined);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: createInstrument,
-    onSuccess: (createdInstrument) => {
+    onSuccess: createdInstrument => {
       queryClient.invalidateQueries({ queryKey: ['instruments'] });
       onClose();
       Toast.show({
@@ -29,7 +38,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
         position: 'bottom',
       });
     },
-    onError: (error) => {
+    onError: error => {
       Toast.show({
         type: 'error',
         text1: 'Creation Failed',
@@ -43,66 +52,65 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
   useEffect(() => {
     if (visible) {
       setName('');
-      setImageUri(null); // Reset image state
+      setImageUri(null);
       setMimeType(undefined);
       mutation.reset();
     }
   }, [visible]);
 
-  // Function to handle picking an image
   const pickImage = async () => {
-      // Request permissions if on native
-      if (Platform.OS !== 'web') {
-          const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-          if (status !== 'granted') {
-              Alert.alert('Permission Required', 'Sorry, we need camera roll permissions to make this work!');
-              return;
-          }
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'Sorry, we need camera roll permissions to make this work!'
+        );
+        return;
       }
+    }
 
-      try {
-          let result = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ['images'],
-              allowsEditing: true,
-              aspect: [1, 1], // Keep it square
-              quality: 0.8, // Reduce quality slightly for faster uploads
-          });
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
 
-          console.log('ImagePicker Result:', result);
+      console.log('ImagePicker Result:', result);
 
-          if (!result.canceled && result.assets && result.assets.length > 0) {
-              const selectedAsset = result.assets[0];
-              setImageUri(selectedAsset.uri);
-              setMimeType(selectedAsset.mimeType); // Store the MIME type
-              console.log('Selected Image URI:', selectedAsset.uri, 'MIME Type:', selectedAsset.mimeType);
-          } else {
-              console.log('Image picking cancelled or failed.');
-          }
-      } catch (error) {
-          console.error("Error picking image: ", error);
-          Alert.alert('Image Pick Error', 'An error occurred while picking the image.');
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const selectedAsset = result.assets[0];
+        setImageUri(selectedAsset.uri);
+        setMimeType(selectedAsset.mimeType);
+        console.log('Selected Image URI:', selectedAsset.uri, 'MIME Type:', selectedAsset.mimeType);
+      } else {
+        console.log('Image picking cancelled or failed.');
       }
+    } catch (error) {
+      console.error('Error picking image: ', error);
+      Alert.alert('Image Pick Error', 'An error occurred while picking the image.');
+    }
   };
-
 
   const handleCreate = () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
       Toast.show({
-          type: 'error',
-          text1: 'Validation Error',
-          text2: 'Instrument name cannot be empty.',
-          position: 'bottom',
-          visibilityTime: 4000,
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Instrument name cannot be empty.',
+        position: 'bottom',
+        visibilityTime: 4000,
       });
       return;
     }
 
-    // Pass name and image details to the mutation
     const instrumentData = {
-        name: trimmedName,
-        imageUri: imageUri, // Pass the URI
-        mimeType: mimeType, // Pass the mime type
+      name: trimmedName,
+      imageUri: imageUri,
+      mimeType: mimeType,
     };
 
     mutation.mutate(instrumentData);
@@ -125,20 +133,24 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             editable={!mutation.isPending}
           />
 
-          {/* Image Picker Button and Preview */}
+          {}
           <Text style={commonSharedStyles.label}>Icon (Optional):</Text>
           <View style={modalSharedStyles.iconPreviewContainer}>
-             {imageUri ? (
-                <Image source={{ uri: imageUri }} style={modalSharedStyles.iconPreview} resizeMode="contain" />
-              ) : (
-                <Text style={{ color: colors.textLight, fontStyle: 'italic' }}>No icon selected</Text>
-              )}
-             <Button
-                title={imageUri ? "Change Icon" : "Choose Icon"}
-                onPress={pickImage}
-                disabled={mutation.isPending}
-                color={colors.info}
+            {imageUri ? (
+              <Image
+                source={{ uri: imageUri }}
+                style={modalSharedStyles.iconPreview}
+                resizeMode="contain"
               />
+            ) : (
+              <Text style={{ color: colors.textLight, fontStyle: 'italic' }}>No icon selected</Text>
+            )}
+            <Button
+              title={imageUri ? 'Change Icon' : 'Choose Icon'}
+              onPress={pickImage}
+              disabled={mutation.isPending}
+              color={colors.info}
+            />
           </View>
 
           {mutation.isPending && (
@@ -149,12 +161,15 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
           )}
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
-              Error: {mutation.error instanceof Error ? mutation.error.message : 'Failed to create instrument'}
+              Error:{' '}
+              {mutation.error instanceof Error
+                ? mutation.error.message
+                : 'Failed to create instrument'}
             </Text>
           )}
           <View style={modalSharedStyles.buttonContainer}>
             <Button
-              title={mutation.isPending ? "Creating..." : "Create Instrument"}
+              title={mutation.isPending ? 'Creating...' : 'Create Instrument'}
               onPress={handleCreate}
               disabled={mutation.isPending || !name.trim()}
             />

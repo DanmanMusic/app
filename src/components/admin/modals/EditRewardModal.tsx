@@ -1,4 +1,3 @@
-// src/components/admin/modals/EditRewardModal.tsx
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -9,12 +8,12 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
-  Image, // Added
-  Platform, // Added
-  Alert, // Added
+  Image,
+  Platform,
+  Alert,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker'; // Added
-import { updateReward } from '../../../api/rewards'; // Updated API import
+import * as ImagePicker from 'expo-image-picker';
+import { updateReward } from '../../../api/rewards';
 import { RewardItem } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { EditRewardModalProps } from '../../../types/componentProps';
@@ -23,26 +22,24 @@ import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
 
 const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit, onClose }) => {
-  // State for editable fields
   const [name, setName] = useState('');
   const [cost, setCost] = useState<number | ''>('');
   const [description, setDescription] = useState('');
 
-  // State for image handling
-  const [imageUri, setImageUri] = useState<string | null>(null); // Current URI (from picker or initial)
-  const [mimeType, setMimeType] = useState<string | undefined>(undefined); // Type of picked image
-  const [initialImageUrl, setInitialImageUrl] = useState<string | null>(null); // Original URL from rewardToEdit
-  const [imageIntent, setImageIntent] = useState<'keep' | 'replace' | 'remove'>('keep'); // Track user intent for image
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [mimeType, setMimeType] = useState<string | undefined>(undefined);
+  const [initialImageUrl, setInitialImageUrl] = useState<string | null>(null);
+  const [imageIntent, setImageIntent] = useState<'keep' | 'replace' | 'remove'>('keep');
 
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: updateReward, // Use the Supabase API function
+    mutationFn: updateReward,
     onSuccess: updatedReward => {
       console.log('[EditRewardModal] Reward updated successfully via mutation:', updatedReward);
-      // Invalidate rewards query to refetch the list
+
       queryClient.invalidateQueries({ queryKey: ['rewards'] });
-      onClose(); // Close modal on success
+      onClose();
       Toast.show({
         type: 'success',
         text1: 'Success',
@@ -51,7 +48,10 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
       });
     },
     onError: (error, variables) => {
-      console.error(`[EditRewardModal] Error updating reward ${variables.rewardId} via mutation:`, error);
+      console.error(
+        `[EditRewardModal] Error updating reward ${variables.rewardId} via mutation:`,
+        error
+      );
       Toast.show({
         type: 'error',
         text1: 'Update Failed',
@@ -62,36 +62,33 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
     },
   });
 
-  // Effect to populate fields when modal opens or rewardToEdit changes
   useEffect(() => {
     if (visible && rewardToEdit) {
       setName(rewardToEdit.name);
       setCost(rewardToEdit.cost);
       setDescription(rewardToEdit.description || '');
 
-      // Handle initial image state
-      const initialUrl = rewardToEdit.imageUrl && rewardToEdit.imageUrl.startsWith('http')
+      const initialUrl =
+        rewardToEdit.imageUrl && rewardToEdit.imageUrl.startsWith('http')
           ? rewardToEdit.imageUrl
           : null;
       setInitialImageUrl(initialUrl);
-      setImageUri(initialUrl); // Start preview with initial image
-      setImageIntent('keep'); // Default intent is to keep the image
-      setMimeType(undefined); // Reset mime type
+      setImageUri(initialUrl);
+      setImageIntent('keep');
+      setMimeType(undefined);
 
-      mutation.reset(); // Reset mutation state
+      mutation.reset();
     } else {
-        // Clear state if modal closes or no reward is being edited
-        setName('');
-        setCost('');
-        setDescription('');
-        setImageUri(null);
-        setInitialImageUrl(null);
-        setImageIntent('keep');
-        setMimeType(undefined);
+      setName('');
+      setCost('');
+      setDescription('');
+      setImageUri(null);
+      setInitialImageUrl(null);
+      setImageIntent('keep');
+      setMimeType(undefined);
     }
-  }, [visible, rewardToEdit]); // Rerun when visibility or the reward object changes
+  }, [visible, rewardToEdit]);
 
-  // Image Picker Function
   const pickImage = async () => {
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -110,42 +107,47 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const selectedAsset = result.assets[0];
-        setImageUri(selectedAsset.uri); // Update preview and current URI
+        setImageUri(selectedAsset.uri);
         setMimeType(selectedAsset.mimeType);
-        setImageIntent('replace'); // User intends to replace the image
-        console.log('Selected New Reward Image URI:', selectedAsset.uri, 'MIME Type:', selectedAsset.mimeType);
+        setImageIntent('replace');
+        console.log(
+          'Selected New Reward Image URI:',
+          selectedAsset.uri,
+          'MIME Type:',
+          selectedAsset.mimeType
+        );
       }
     } catch (error) {
-      console.error("Error picking reward image: ", error);
+      console.error('Error picking reward image: ', error);
       Alert.alert('Image Pick Error', 'An error occurred selecting the image.');
     }
   };
 
-  // Function to handle image removal intent
   const handleRemoveImage = () => {
-      setImageUri(null); // Clear preview
-      setMimeType(undefined);
-      setImageIntent('remove'); // User intends to remove the image
+    setImageUri(null);
+    setMimeType(undefined);
+    setImageIntent('remove');
   };
 
-  // Handle Save Logic
   const handleSave = () => {
-    if (!rewardToEdit) return; // Should not happen if modal is visible
+    if (!rewardToEdit) return;
 
     const trimmedName = name.trim();
     const numericCost = typeof cost === 'number' ? cost : parseInt(String(cost || '-1'), 10);
 
-    // Validation
     if (!trimmedName) {
-       Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Reward Name is required.' });
-       return;
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Reward Name is required.' });
+      return;
     }
     if (isNaN(numericCost) || numericCost < 0) {
-       Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Please enter a valid, non-negative Ticket Cost.' });
-       return;
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Please enter a valid, non-negative Ticket Cost.',
+      });
+      return;
     }
 
-    // Determine changes
     const updates: Partial<Omit<RewardItem, 'id' | 'imageUrl'>> = {};
     let needsUpdate = false;
 
@@ -160,48 +162,42 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
     const currentDesc = rewardToEdit.description || '';
     const newDesc = description.trim();
     if (newDesc !== currentDesc) {
-      updates.description = newDesc || undefined; // Send undefined if cleared
+      updates.description = newDesc || undefined;
       needsUpdate = true;
     }
 
-    // Determine image changes for the API call
-    let apiImageUri: string | null | undefined = undefined; // undefined means no change intent for image
+    let apiImageUri: string | null | undefined = undefined;
 
     if (imageIntent === 'replace' && imageUri) {
-      // Only pass if intent is replace AND we have a new URI
       apiImageUri = imageUri;
       needsUpdate = true;
     } else if (imageIntent === 'remove') {
-      // Pass null if intent is remove
       apiImageUri = null;
       needsUpdate = true;
     }
-    // If intent is 'keep', apiImageUri remains undefined, API won't touch image
 
     if (!needsUpdate) {
       console.log('[EditRewardModal] No changes detected.');
-      onClose(); // Close if nothing changed
+      onClose();
       return;
     }
 
-    // Prepare data for the Supabase API function
     const updateData = {
       rewardId: rewardToEdit.id,
-      updates: updates, // Contains name, cost, description changes
-      imageUri: apiImageUri, // Contains new URI, null for removal, or undefined for no change
-      mimeType: imageIntent === 'replace' ? mimeType : undefined, // Only pass mimeType if replacing
+      updates: updates,
+      imageUri: apiImageUri,
+      mimeType: imageIntent === 'replace' ? mimeType : undefined,
     };
 
     console.log('[EditRewardModal] Calling mutation with data:', updateData);
     mutation.mutate(updateData);
   };
 
-  // Determine if save button should be disabled
-   const isSaveDisabled = mutation.isPending || !name.trim() || cost === '' || cost < 0;
-   // Determine preview source (show newly picked URI if available, else initial)
-   const previewSource = imageUri ? { uri: imageUri } : null;
+  const isSaveDisabled = mutation.isPending || !name.trim() || cost === '' || cost < 0;
 
-   if (!rewardToEdit) return null; // Should already be handled by visible check, but good practice
+  const previewSource = imageUri ? { uri: imageUri } : null;
+
+  if (!rewardToEdit) return null;
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -231,32 +227,36 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
               editable={!mutation.isPending}
             />
 
-            {/* Image Picker/Preview/Remove */}
-             <Text style={commonSharedStyles.label}>Image:</Text>
-             <View style={modalSharedStyles.iconPreviewContainer}>
-                {previewSource ? (
-                   <Image source={previewSource} style={modalSharedStyles.iconPreview} resizeMode="contain" />
-                 ) : (
-                   <Text style={{ color: colors.textLight, fontStyle: 'italic' }}>No image set</Text>
-                 )}
-                 <View style={{ flexDirection: 'row', gap: 10 }}>
-                    <Button
-                       title={initialImageUrl || imageUri ? "Change Image" : "Choose Image"}
-                       onPress={pickImage}
-                       disabled={mutation.isPending}
-                       color={colors.info}
-                     />
-                     {/* Show Remove button only if there's currently an image (initial or newly picked) */}
-                     {(initialImageUrl || imageUri) && (
-                        <Button
-                            title="Remove Image"
-                            onPress={handleRemoveImage}
-                            disabled={mutation.isPending}
-                            color={colors.warning}
-                        />
-                     )}
-                 </View>
-             </View>
+            {}
+            <Text style={commonSharedStyles.label}>Image:</Text>
+            <View style={modalSharedStyles.iconPreviewContainer}>
+              {previewSource ? (
+                <Image
+                  source={previewSource}
+                  style={modalSharedStyles.iconPreview}
+                  resizeMode="contain"
+                />
+              ) : (
+                <Text style={{ color: colors.textLight, fontStyle: 'italic' }}>No image set</Text>
+              )}
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Button
+                  title={initialImageUrl || imageUri ? 'Change Image' : 'Choose Image'}
+                  onPress={pickImage}
+                  disabled={mutation.isPending}
+                  color={colors.info}
+                />
+                {}
+                {(initialImageUrl || imageUri) && (
+                  <Button
+                    title="Remove Image"
+                    onPress={handleRemoveImage}
+                    disabled={mutation.isPending}
+                    color={colors.warning}
+                  />
+                )}
+              </View>
+            </View>
 
             <Text style={commonSharedStyles.label}>Description (Optional):</Text>
             <TextInput
@@ -283,10 +283,10 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
           )}
           <View style={modalSharedStyles.buttonContainer}>
             <Button
-               title={mutation.isPending ? "Saving..." : "Save Changes"}
-               onPress={handleSave}
-               disabled={isSaveDisabled}
-             />
+              title={mutation.isPending ? 'Saving...' : 'Save Changes'}
+              onPress={handleSave}
+              disabled={isSaveDisabled}
+            />
           </View>
           <View style={modalSharedStyles.footerButton}>
             <Button

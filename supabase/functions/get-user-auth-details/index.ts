@@ -1,39 +1,39 @@
-// supabase/functions/deleteUser/index.ts
+// supabase/functions/get-user-auth-details/index.ts
 
 import { createClient, SupabaseClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
 
 // Define expected request body structure
-interface DeleteUserPayload {
-  userIdToDelete: string; // The ID of the user to be deleted
+interface GetAuthDetailsPayload {
+  targetUserId: string; // The ID of the user whose details are requested
+}
+
+// Define expected success response structure
+interface AuthDetailsResponse {
+  email: string | null; // Return only the email (or null if not found/error)
+  // Add other safe-to-expose fields if needed in the future
 }
 
 // Helper function to check if the caller is an Admin
+// Assumes is_admin() function exists in your DB
 async function isAdmin(supabaseClient: SupabaseClient, callerUserId: string): Promise<boolean> {
-  console.log('[deleteUser] isAdmin Check: Checking profile for caller ID:', callerUserId);
+  // Reusing the same helper logic from deleteUser/createUser
+  console.log('[getAuthDetails] isAdmin Check: Checking profile for caller ID:', callerUserId);
   try {
-    const { data, error, status } = await supabaseClient
+    const { data, error } = await supabaseClient
       .from('profiles')
       .select('role')
       .eq('id', callerUserId)
       .single();
-
     if (error) {
-      if (error.code === 'PGRST116') {
-        console.warn(`[deleteUser] isAdmin Check: Profile not found for caller ${callerUserId}`);
-      } else {
-        console.error('[deleteUser] isAdmin Check Error:', error.message, `(Status: ${status})`);
-      }
-      return false;
+      throw error;
     }
     const role = data?.role;
-    console.log(
-      `[deleteUser] isAdmin Check: Found profile role: ${role} for caller ${callerUserId}`
-    );
+    console.log(`[getAuthDetails] isAdmin Check: Found role: ${role} for caller ${callerUserId}`);
     return role === 'admin';
   } catch (err) {
-    console.error('[deleteUser] isAdmin Check Exception:', err);
-    return false;
+    console.error('[getAuthDetails] isAdmin Check Exception:', err.message);
+    return false; // Default to false on error
   }
 }
 
@@ -41,21 +41,19 @@ async function isAdmin(supabaseClient: SupabaseClient, callerUserId: string): Pr
 Deno.serve(async (req: Request) => {
   // 1. Handle Preflight CORS request
   if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS request');
     return new Response('ok', { headers: corsHeaders });
   }
-  // Only allow POST requests for deletion for clarity, though DELETE method is also common
+  // Only allow POST requests
   if (req.method !== 'POST') {
-    console.warn(`Received non-POST request: ${req.method}`);
     return new Response(JSON.stringify({ error: `Method ${req.method} Not Allowed` }), {
       status: 405,
       headers: { ...corsHeaders },
     });
   }
 
-  console.log(`Received ${req.method} request for deleteUser`);
+  console.log(`Received ${req.method} request for get-user-auth-details`);
 
-  // Initialize Supabase Admin Client (needed for admin delete user call)
+  // Initialize Supabase Admin Client
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!supabaseUrl || !serviceRoleKey) {
@@ -75,20 +73,21 @@ Deno.serve(async (req: Request) => {
     // 2. Verify Caller is Authenticated and Admin
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.warn('Missing or invalid Authorization header.');
       return new Response(JSON.stringify({ error: 'Authentication required.' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
     const token = authHeader.replace('Bearer ', '');
+    // Use the *Admin* client to validate the token, as the user might be calling this function
     const {
       data: { user: callerUser },
       error: userError,
     } = await supabaseAdminClient.auth.getUser(token);
+
     if (userError || !callerUser) {
       console.error(
-        'Auth token validation error:',
+        'Caller Auth token validation error:',
         userError?.message || 'User not found for token'
       );
       return new Response(JSON.stringify({ error: 'Invalid or expired token.' }), {
@@ -100,16 +99,16 @@ Deno.serve(async (req: Request) => {
 
     const callerIsAdmin = await isAdmin(supabaseAdminClient, callerUser.id);
     if (!callerIsAdmin) {
-      console.warn(`User ${callerUser.id} attempted delete action without admin role.`);
+      console.warn(`User ${callerUser.id} attempted getAuthDetails without admin role.`);
       return new Response(JSON.stringify({ error: 'Permission denied: Admin role required.' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    console.log(`Admin delete action authorized for user ${callerUser.id}.`);
+    console.log(`Admin action authorized for user ${callerUser.id}.`);
 
     // 3. Parse Request Body
-    let payload: DeleteUserPayload;
+    let payload: GetAuthDetailsPayload;
     try {
       payload = await req.json();
       console.log('Received payload:', payload);
@@ -122,59 +121,52 @@ Deno.serve(async (req: Request) => {
     }
 
     // 4. Validate Payload
-    if (!payload.userIdToDelete || typeof payload.userIdToDelete !== 'string') {
-      console.warn('Payload validation failed: Missing or invalid userIdToDelete.');
-      return new Response(JSON.stringify({ error: 'Missing or invalid userIdToDelete.' }), {
+    if (!payload.targetUserId || typeof payload.targetUserId !== 'string') {
+      console.warn('Payload validation failed: Missing or invalid targetUserId.');
+      return new Response(JSON.stringify({ error: 'Missing or invalid targetUserId.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    const userIdToDelete = payload.userIdToDelete;
+    const targetUserId = payload.targetUserId;
 
-    // ** Sanity Check: Prevent Admin from deleting themselves via this function? **
-    if (callerUser.id === userIdToDelete) {
-      console.warn(`Admin user ${callerUser.id} attempted to delete themselves.`);
-      return new Response(
-        JSON.stringify({ error: 'Cannot delete your own account via this function.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // 5. Call Supabase Admin API to Get Target User Auth Details
+    console.log(`Attempting to fetch auth details for target user: ${targetUserId}`);
+    const { data: targetAuthData, error: getAuthError } =
+      await supabaseAdminClient.auth.admin.getUserById(targetUserId);
 
-    // 5. Call Supabase Admin API to Delete User by ID
-    console.log(`Attempting to permanently delete user: ${userIdToDelete}`);
-    const { data: deleteResult, error: deleteError } =
-      await supabaseAdminClient.auth.admin.deleteUser(
-        userIdToDelete
-        // Set shouldSoftDelete to false (default) for permanent deletion
-        // { shouldSoftDelete: false }
-      );
+    let responseEmail: string | null = null;
 
-    if (deleteError) {
-      console.error(`Supabase Auth Delete Error for user ${userIdToDelete}:`, deleteError);
-      // Handle potential errors like user not found
-      const errorMessage = deleteError.message.toLowerCase().includes('not found')
-        ? 'User to delete was not found.'
-        : `Failed to delete user: ${deleteError.message}`;
-      return new Response(JSON.stringify({ error: errorMessage }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }); // Use 404 if not found
-    }
-
-    // Deletion from auth.users successful. Cascade should handle profiles etc.
-    console.log(`User ${userIdToDelete} deleted successfully from auth.users.`);
-
-    // 6. Return Success Response
-    return new Response(
-      JSON.stringify({ message: `User ${userIdToDelete} deleted successfully.` }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200, // OK (or 204 No Content if preferred for deletes)
+    if (getAuthError) {
+      console.error(`Supabase Auth GetUserById Error for user ${targetUserId}:`, getAuthError);
+      // Handle user not found specifically, but still return 200 with null email
+      if (getAuthError.message.toLowerCase().includes('not found')) {
+        console.warn(`Target auth user not found: ${targetUserId}`);
+        // Set email to null, but don't throw a 500 error for this case
+      } else {
+        // For other errors, maybe still return 500? Or just null email? Let's return null email.
+        console.error(`Failed to fetch auth details for ${targetUserId}: ${getAuthError.message}`);
       }
-    );
+    } else if (!targetAuthData || !targetAuthData.user) {
+      console.warn(`No auth user data returned for ${targetUserId}, but no error?`);
+    } else {
+      // Successfully fetched user, extract email
+      responseEmail = targetAuthData.user.email ?? null;
+      console.log(`Successfully fetched auth details for ${targetUserId}. Email: ${responseEmail}`);
+    }
+
+    // 6. Prepare and Return Success Response (even if email is null)
+    const responseBody: AuthDetailsResponse = {
+      email: responseEmail,
+    };
+
+    return new Response(JSON.stringify(responseBody), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200, // OK - Return 200 even if user/email not found, indicates function worked
+    });
   } catch (error) {
     // Catch errors from initial setup/auth/validation etc.
-    console.error('Unhandled Delete User Function Error:', error);
+    console.error('Unhandled Get User Auth Details Function Error:', error);
     const statusCode = error.message.includes('required')
       ? 403
       : error.message.includes('Authentication') || error.message.includes('token')
@@ -190,4 +182,4 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-console.log('DeleteUser function initialized.');
+console.log('Get-user-auth-details function initialized.');

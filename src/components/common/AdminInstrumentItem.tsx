@@ -1,4 +1,3 @@
-// src/components/common/AdminInstrumentItem.tsx
 import { Button, Image, Text, View } from 'react-native';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { colors } from '../../styles/colors';
@@ -7,7 +6,7 @@ import { appSharedStyles } from '../../styles/appSharedStyles';
 import { getInstrumentIconSource } from '../../utils/helpers';
 import { AdminInstrumentItemProps } from '../../types/componentProps';
 
-export const AdminInstrumentItem: React.FC<AdminInstrumentItemProps> = ({ // Use React.FC
+export const AdminInstrumentItem: React.FC<AdminInstrumentItemProps> = ({
   item,
   onEdit,
   onDelete,

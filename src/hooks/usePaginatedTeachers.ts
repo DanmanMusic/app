@@ -1,12 +1,9 @@
-// src/hooks/usePaginatedTeachers.ts
 import { useState, useCallback, useEffect } from 'react';
-import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query'; // Added useQueryClient
+import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
-// Import the Supabase-backed API function and types
 import { fetchTeachers } from '../api/users';
 import { User } from '../types/dataTypes';
 
-// Interface for the hook's return value remains the same
 interface UsePaginatedTeachersReturn {
   teachers: User[];
   currentPage: number;
@@ -20,35 +17,31 @@ interface UsePaginatedTeachersReturn {
   error: Error | null;
 }
 
-// Production-ready default page size
-const ITEMS_PER_PAGE = 20; // Consistent page size
+const ITEMS_PER_PAGE = 20;
 
 export const usePaginatedTeachers = (): UsePaginatedTeachersReturn => {
-  const queryClient = useQueryClient(); // Get query client instance
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Define the query key incorporating pagination parameters
   const queryKey = ['teachers', { page: currentPage, limit: ITEMS_PER_PAGE }];
 
   const queryResult = useQuery({
     queryKey: queryKey,
-    queryFn: () => fetchTeachers({ page: currentPage, limit: ITEMS_PER_PAGE }), // Call Supabase API
+    queryFn: () => fetchTeachers({ page: currentPage, limit: ITEMS_PER_PAGE }),
     placeholderData: keepPreviousData,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 
   const { data, isLoading, isFetching, isError, error, isPlaceholderData } = queryResult;
 
-  // Extract data or default to empty values
-  const teachers = data?.items ?? []; // Assuming fetchTeachers returns { items: User[] }
+  const teachers = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
   const totalItems = data?.totalItems ?? 0;
 
-  // --- Prefetching Logic (Optional) ---
   useEffect(() => {
     const effectiveTotalPages = totalPages >= 1 ? totalPages : 1;
-    // Prefetch the next page
+
     if (!isPlaceholderData && currentPage < effectiveTotalPages && !isFetching) {
       const nextQueryKey = ['teachers', { page: currentPage + 1, limit: ITEMS_PER_PAGE }];
       console.log(`[usePaginatedTeachers] Prefetching next page: ${currentPage + 1}`);
@@ -58,20 +51,18 @@ export const usePaginatedTeachers = (): UsePaginatedTeachersReturn => {
         staleTime: 5 * 60 * 1000,
       });
     }
-     // Prefetch the previous page
-     if (!isPlaceholderData && currentPage > 1 && !isFetching) {
-        const prevQueryKey = ['teachers', { page: currentPage - 1, limit: ITEMS_PER_PAGE }];
-        console.log(`[usePaginatedTeachers] Prefetching previous page: ${currentPage - 1}`);
-        queryClient.prefetchQuery({
-            queryKey: prevQueryKey,
-            queryFn: () => fetchTeachers({ page: currentPage - 1, limit: ITEMS_PER_PAGE }),
-            staleTime: 5 * 60 * 1000,
-        });
-     }
-  }, [currentPage, totalPages, isPlaceholderData, isFetching, queryClient]);
-  // --- End Prefetching Logic ---
 
-  // Callback to change the current page
+    if (!isPlaceholderData && currentPage > 1 && !isFetching) {
+      const prevQueryKey = ['teachers', { page: currentPage - 1, limit: ITEMS_PER_PAGE }];
+      console.log(`[usePaginatedTeachers] Prefetching previous page: ${currentPage - 1}`);
+      queryClient.prefetchQuery({
+        queryKey: prevQueryKey,
+        queryFn: () => fetchTeachers({ page: currentPage - 1, limit: ITEMS_PER_PAGE }),
+        staleTime: 5 * 60 * 1000,
+      });
+    }
+  }, [currentPage, totalPages, isPlaceholderData, isFetching, queryClient]);
+
   const setPage = useCallback(
     (page: number) => {
       console.log(`[usePaginatedTeachers] setPage called with: ${page}`);
@@ -83,16 +74,15 @@ export const usePaginatedTeachers = (): UsePaginatedTeachersReturn => {
         targetPage = effectiveTotalPages;
       }
       if (targetPage !== currentPage) {
-          console.log(`[usePaginatedTeachers] Setting current page to: ${targetPage}`);
-          setCurrentPage(targetPage);
+        console.log(`[usePaginatedTeachers] Setting current page to: ${targetPage}`);
+        setCurrentPage(targetPage);
       } else {
-           console.log(`[usePaginatedTeachers] Already on page ${targetPage}, not changing.`);
+        console.log(`[usePaginatedTeachers] Already on page ${targetPage}, not changing.`);
       }
     },
-    [totalPages, currentPage] // Add currentPage dependency
+    [totalPages, currentPage]
   );
 
-  // Return the hook's state and setters
   return {
     teachers,
     currentPage,

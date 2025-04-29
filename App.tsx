@@ -1,13 +1,14 @@
 // App.tsx
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, Button, ActivityIndicator, ScrollView } from 'react-native';
-import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react'; // Removed useEffect as initial load handled by AuthContext
+import { StyleSheet, Text, View, Button, ActivityIndicator } from 'react-native'; // Removed ScrollView if DevSelector removed
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; // Removed useQuery if DevSelector removed
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
 // Component & Context Imports
 import TaskVerificationModal from './src/components/common/TaskVerificationModal';
+// Import the REAL AuthProvider and useAuth
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { AdminView } from './src/views/AdminView';
 import { ParentView } from './src/views/ParentView';
@@ -15,69 +16,37 @@ import { PublicView } from './src/views/PublicView';
 import { StudentView } from './src/views/StudentView';
 import { TeacherView } from './src/views/TeacherView';
 import LoginModal from './src/components/common/LoginModal';
-
-// API Function for Selector
-import { fetchActiveProfilesForDevSelector } from './src/api/users';
+// Removed API function for Dev Selector
+// import { fetchActiveProfilesForDevSelector } from './src/api/users';
 
 // Type Imports
-import { AssignedTask, User, UserRole } from './src/types/dataTypes';
+import { AssignedTask } from './src/types/dataTypes'; // Removed User, UserRole if DevSelector removed
 
 // Style & Helper Imports
 import { colors } from './src/styles/colors';
-import { getUserDisplayName } from './src/utils/helpers';
+// Removed unused helpers/styles if DevSelector removed
+// import { getUserDisplayName } from './src/utils/helpers';
 import { commonSharedStyles } from './src/styles/commonSharedStyles';
-import { appSharedStyles } from './src/styles/appSharedStyles';
-
+// import { appSharedStyles } from './src/styles/appSharedStyles'; // Keep if used elsewhere
 
 const queryClient = new QueryClient();
 
-// --- Development Role Selector ---
-const DevelopmentRoleSelector = () => {
-  const { setMockAuthState } = useAuth();
-  const { data: activeUsers = [], isLoading, isError, error } = useQuery({
-    queryKey: ['activeProfilesForDevSelector'],
-    queryFn: fetchActiveProfilesForDevSelector,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const handleSelectUser = (user: Pick<User, 'id' | 'role' | 'firstName' | 'lastName' | 'nickname'>) => {
-     console.log(`[DEV] Switching view to: ${getUserDisplayName(user)} (${user.role})`);
-    setMockAuthState({ role: user.role, userId: user.id });
-  };
-
-  return (
-    <ScrollView contentContainerStyle={styles.selectorContainer}>
-      <Text style={styles.selectorTitle}>Development Mode: Select User</Text>
-      <Button
-        title="View as Public (Not Logged In)"
-        onPress={() => setMockAuthState({ role: 'public' })}
-        color={colors.secondary}
-      />
-      {isLoading && <ActivityIndicator size="large" color={colors.primary} />}
-      {isError && (<Text style={commonSharedStyles.errorText}>Error loading users: {error?.message}</Text>)}
-      {!isLoading && !isError && activeUsers.map(user => (
-        <Button
-          key={user.id}
-          title={`Login as ${getUserDisplayName(user)} (${user.role})`}
-          onPress={() => handleSelectUser(user)}
-          color={
-              user.role === 'admin' ? colors.danger
-              : user.role === 'teacher' ? colors.primary
-              : user.role === 'parent' ? colors.success
-              : user.role === 'student' ? colors.gold
-              : colors.secondary
-          }
-        />
-      ))}
-    </ScrollView>
-  );
-};
-// --- END Development Role Selector ---
+// --- Development Role Selector REMOVED ---
+// const DevelopmentRoleSelector = () => { ... };
+// --- END Development Role Selector REMOVED ---
 
 // --- Main Application Content Component ---
-// This component contains the core logic for rendering views and modals
 const AppContent = () => {
-  const { mockAuthState, setMockAuthState, currentUserRole } = useAuth();
+  // Use REAL auth state from context - remove mock override related state/setters
+  const {
+    isLoading: authIsLoading,
+    isAuthenticated,
+    currentUserRole,
+    error: authError,
+    signOut, // Keep signOut if needed for testing/buttons
+  } = useAuth();
+
+  // State for modals remains the same
   const [isVerificationModalVisible, setIsVerificationModalVisible] = useState(false);
   const [taskToVerify, setTaskToVerify] = useState<AssignedTask | null>(null);
   const [isLoginModalVisible, setIsLoginModalVisible] = useState(false);
@@ -94,14 +63,40 @@ const AppContent = () => {
   const handleOpenLoginModal = () => setIsLoginModalVisible(true);
   const handleCloseLoginModal = () => setIsLoginModalVisible(false);
 
-  // Define renderMainView INSIDE AppContent where state/props are accessible
+  // Removed handler for resetting mock view
+
+  // Define renderMainView INSIDE AppContent
   const renderMainView = () => {
-    if (__DEV__ && !mockAuthState) {
-      return <DevelopmentRoleSelector />;
+    // Show initial loading indicator
+    if (authIsLoading) {
+      return (
+        <View style={styles.centeredLoader}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading Session...</Text>
+        </View>
+      );
     }
 
+    // Show error if auth context failed
+    if (authError) {
+      return (
+        <View style={styles.centeredLoader}>
+          <Text style={commonSharedStyles.errorText}>
+            Authentication Error: {authError.message}
+          </Text>
+          <Button title="Try Login" onPress={handleOpenLoginModal} color={colors.primary} />
+          {/* Optional: Add sign out button maybe? */}
+          {/* <Button title="Sign Out" onPress={signOut} color={colors.danger} /> */}
+        </View>
+      );
+    }
+
+    // *** REMOVED Dev Selector logic ***
+
+    // Use currentUserRole directly from context
     switch (currentUserRole) {
       case 'public':
+        // Show PublicView if not authenticated
         return <PublicView onLoginPress={handleOpenLoginModal} />;
       case 'student':
         return <StudentView />;
@@ -112,18 +107,26 @@ const AppContent = () => {
       case 'admin':
         return <AdminView onInitiateVerificationModal={handleInitiateVerificationModal} />;
       default:
-        return <Text>Loading or Invalid Role...</Text>;
+        // This case should ideally not be reached if role is always defined
+        console.error('Reached default case in renderMainView, role:', currentUserRole);
+        return (
+          <View style={styles.centeredLoader}>
+            <Text>Error: Invalid Role or State</Text>
+            <Text style={{ color: colors.textLight, marginBottom: 10 }}>
+              (Role: {currentUserRole ?? 'undefined'})
+            </Text>
+            <Button title="Sign Out" onPress={signOut} color={colors.danger} />
+          </View>
+        );
     }
   };
 
-  const showDevResetButton = __DEV__ && mockAuthState;
+  // *** REMOVED showDevResetButton logic ***
 
   return (
-    // This View wraps the actual content displayed
     <View style={styles.container}>
       <StatusBar style="auto" />
 
-      {/* Call the render function defined above */}
       {renderMainView()}
 
       {/* Render Modals */}
@@ -132,19 +135,14 @@ const AppContent = () => {
         task={taskToVerify}
         onClose={handleCloseVerificationModal}
       />
-      <LoginModal
-         visible={isLoginModalVisible}
-         onClose={handleCloseLoginModal}
-       />
+      <LoginModal visible={isLoginModalVisible} onClose={handleCloseLoginModal} />
 
-      {/* Dev Reset Button */}
-      {showDevResetButton && (
-        <View style={styles.resetButtonContainer}>
-          <Button
-            title="Reset Mock View"
-            onPress={() => setMockAuthState(null)}
-            color={colors.secondary}
-          />
+      {/* *** REMOVED Dev Reset Button *** */}
+
+      {/* Global Sign Out Button (Optional - useful during testing) */}
+      {isAuthenticated && (
+        <View style={styles.signOutButtonContainer}>
+          <Button title="Sign Out" onPress={signOut} color={colors.danger} />
         </View>
       )}
     </View>
@@ -152,17 +150,15 @@ const AppContent = () => {
 };
 // --- END AppContent ---
 
-
 // --- Main App Component (Entry Point) ---
-// This is the component registered with Expo. It sets up providers.
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
+        {/* Wrap with the REAL AuthProvider */}
         <AuthProvider>
-          {/* Render AppContent, which holds the view logic */}
           <AppContent />
-          <Toast /> {/* Global Toast provider */}
+          <Toast />
         </AuthProvider>
       </SafeAreaProvider>
     </QueryClientProvider>
@@ -170,31 +166,36 @@ export default function App() {
 }
 // --- END App ---
 
-
 // Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundPrimary,
+    backgroundColor: colors.backgroundPrimary, // Use primary background
   },
-  selectorContainer: {
-    flexGrow: 1,
+  centeredLoader: {
+    // Style for initial loading/error
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 20,
-    alignItems: 'stretch',
-    gap: 10,
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.backgroundSecondary, // Use secondary for loading bg
   },
-  selectorTitle: {
-    fontSize: 18,
-    marginBottom: 20,
-    textAlign: 'center',
-    fontWeight: 'bold',
-    color: colors.textPrimary,
+  loadingText: {
+    // Added style for loading text
+    marginTop: 10,
+    color: colors.textSecondary,
+    fontSize: 16,
   },
-  resetButtonContainer: {
+  // *** REMOVED selectorContainer and selectorTitle styles ***
+  // *** REMOVED resetButtonContainer style ***
+  signOutButtonContainer: {
+    // Kept optional sign out button style
     position: 'absolute',
-    top: 40,
-    right: 10,
-    zIndex: 10,
+    bottom: 15, // Adjusted position slightly
+    right: 15,
+    zIndex: 100,
+    backgroundColor: 'rgba(200, 0, 0, 0.6)', // Reddish background
+    borderRadius: 5,
+    padding: 3,
   },
 });

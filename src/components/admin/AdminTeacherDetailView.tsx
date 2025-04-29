@@ -1,4 +1,3 @@
-// src/components/admin/AdminTeacherDetailView.tsx
 import React, { useMemo } from 'react';
 import {
   View,
@@ -11,13 +10,10 @@ import {
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 
-// Import Supabase-backed API functions
 import { fetchStudents, fetchUserProfile } from '../../api/users';
 
-// Import Types and Props
 import { User, SimplifiedStudent } from '../../types/dataTypes';
 
-// Import Styles and Helpers
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
@@ -30,10 +26,8 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
   onInitiateEditUser,
   onInitiateStatusUser,
   onViewStudentProfile,
-  onInitiatePinGeneration, // Receive PIN handler
+  onInitiatePinGeneration,
 }) => {
-
-  // --- Data Fetching ---
   const {
     data: teacher,
     isLoading: teacherLoading,
@@ -52,8 +46,12 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
     isError: isErrorLinkedStudents,
     error: errorLinkedStudents,
   } = useQuery({
-    queryKey: ['students', { teacherId: viewingUserId, filter: 'all', context: 'teacherDetailView' }],
-    queryFn: () => fetchStudents({
+    queryKey: [
+      'students',
+      { teacherId: viewingUserId, filter: 'all', context: 'teacherDetailView' },
+    ],
+    queryFn: () =>
+      fetchStudents({
         teacherId: viewingUserId,
         filter: 'all',
         limit: 9999,
@@ -64,30 +62,27 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
   });
 
   const linkedStudents: SimplifiedStudent[] = useMemo(() => {
-      return linkedStudentsResult?.students ?? [];
+    return linkedStudentsResult?.students ?? [];
   }, [linkedStudentsResult]);
 
-
-  // --- Memos ---
-  const teacherDisplayName = useMemo(() => teacher ? getUserDisplayName(teacher) : 'Loading...', [teacher]);
+  const teacherDisplayName = useMemo(
+    () => (teacher ? getUserDisplayName(teacher) : 'Loading...'),
+    [teacher]
+  );
   const isTeacherActive = useMemo(() => teacher?.status === 'active', [teacher]);
 
-
-  // --- Event Handlers ---
   const handleEdit = () => {
     if (teacher) onInitiateEditUser(teacher);
   };
   const handleStatus = () => {
     if (teacher) onInitiateStatusUser(teacher);
   };
-  const handlePinGenerationClick = () => { // Handler for the new button
-      if (teacher && onInitiatePinGeneration) {
-          onInitiatePinGeneration(teacher);
-      }
+  const handlePinGenerationClick = () => {
+    if (teacher && onInitiatePinGeneration) {
+      onInitiatePinGeneration(teacher);
+    }
   };
 
-
-  // --- Loading & Error States ---
   if (teacherLoading) {
     return (
       <View style={[styles.centered]}>
@@ -106,19 +101,17 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
       </View>
     );
   }
-   if (teacher.role !== 'teacher') {
-       return (
-          <View style={appSharedStyles.container}>
-             <Text style={commonSharedStyles.errorText}>Error: User found but is not a teacher.</Text>
-          </View>
-        );
-   }
+  if (teacher.role !== 'teacher') {
+    return (
+      <View style={appSharedStyles.container}>
+        <Text style={commonSharedStyles.errorText}>Error: User found but is not a teacher.</Text>
+      </View>
+    );
+  }
 
-
-  // --- Render Logic ---
   return (
     <ScrollView style={appSharedStyles.container}>
-      {/* Teacher Details Section */}
+      {}
       <Text style={appSharedStyles.sectionTitle}>Teacher Details</Text>
       <Text style={appSharedStyles.itemDetailText}>Name: {teacherDisplayName}</Text>
       <Text style={appSharedStyles.itemDetailText}>ID: {teacher.id}</Text>
@@ -129,22 +122,24 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
         </Text>
       </Text>
 
-      {/* Action Buttons */}
-      <View style={[adminSharedStyles.adminStudentActions, commonSharedStyles.actionButtonsContainer]}>
+      {}
+      <View
+        style={[adminSharedStyles.adminStudentActions, commonSharedStyles.actionButtonsContainer]}
+      >
         <Button title="Edit Info" onPress={handleEdit} color={colors.warning} />
         <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
-        {/* Add PIN generation button */}
+        {}
         {onInitiatePinGeneration && (
-            <Button
-                title="Login (PIN)"
-                onPress={handlePinGenerationClick}
-                color={colors.info}
-                disabled={!isTeacherActive} // Only for active teachers
-            />
+          <Button
+            title="Login (PIN)"
+            onPress={handlePinGenerationClick}
+            color={colors.info}
+            disabled={!isTeacherActive}
+          />
         )}
       </View>
 
-      {/* Linked Students Section */}
+      {}
       <Text style={appSharedStyles.sectionTitle}>Linked Students ({linkedStudents.length})</Text>
       {isLoadingLinkedStudents && (
         <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
@@ -162,7 +157,10 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
             <View style={[appSharedStyles.itemContainer, styles.linkedStudentItem]}>
               <Text style={appSharedStyles.itemTitle}>{item.name}</Text>
               <Text style={appSharedStyles.itemDetailText}>
-                Status: <Text style={item.isActive ? styles.activeStatus : styles.inactiveStatus}>{item.isActive ? 'Active' : 'Inactive'}</Text>
+                Status:{' '}
+                <Text style={item.isActive ? styles.activeStatus : styles.inactiveStatus}>
+                  {item.isActive ? 'Active' : 'Inactive'}
+                </Text>
               </Text>
               <View style={styles.linkedStudentActions}>
                 <Button title="View Profile" onPress={() => onViewStudentProfile(item.id)} />
@@ -172,31 +170,32 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
           scrollEnabled={false}
           ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
           ListEmptyComponent={() => (
-             <Text style={appSharedStyles.emptyListText}>No students currently linked to this teacher.</Text>
+            <Text style={appSharedStyles.emptyListText}>
+              No students currently linked to this teacher.
+            </Text>
           )}
         />
       )}
-       <View style={{ height: 30 }} />
+      <View style={{ height: 30 }} />
     </ScrollView>
   );
 };
 
-// Local Styles
 const styles = StyleSheet.create({
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20, // Add padding if used as top-level view in error/loading
+    padding: 20,
   },
-   activeStatus: {
-        fontWeight: 'bold',
-        color: colors.success,
-    },
-    inactiveStatus: {
-         fontWeight: 'bold',
-         color: colors.secondary,
-    },
+  activeStatus: {
+    fontWeight: 'bold',
+    color: colors.success,
+  },
+  inactiveStatus: {
+    fontWeight: 'bold',
+    color: colors.secondary,
+  },
   linkedStudentItem: {
     backgroundColor: colors.backgroundSecondary,
   },

@@ -1,7 +1,5 @@
-// src/api/stats.ts
 import { getSupabase } from '../lib/supabaseClient';
 
-// Interfaces remain the same
 export interface UserCounts {
   studentCount: number;
   teacherCount: number;
@@ -13,15 +11,13 @@ export interface TaskStats {
   pendingVerificationCount: number;
 }
 
-// --- Fetch User Counts from Supabase ---
 export const fetchUserCounts = async (): Promise<UserCounts> => {
   const client = getSupabase();
   console.log(`[Supabase] Fetching User Counts`);
 
-  // Use Supabase count aggregation for efficiency
   const { count: studentCount, error: studentError } = await client
     .from('profiles')
-    .select('*', { count: 'exact', head: true }) // head: true optimizes by not fetching data
+    .select('*', { count: 'exact', head: true })
     .eq('role', 'student');
 
   const { count: teacherCount, error: teacherError } = await client
@@ -40,17 +36,17 @@ export const fetchUserCounts = async (): Promise<UserCounts> => {
     .eq('role', 'student')
     .eq('status', 'active');
 
-  // Basic error handling - could be more granular
   if (studentError || teacherError || parentError || activeStudentError) {
-    console.error(
-        "[Supabase] Error fetching user counts:",
-        { studentError, teacherError, parentError, activeStudentError }
-    );
-    // Decide how to handle partial failures - throw generic error for now
+    console.error('[Supabase] Error fetching user counts:', {
+      studentError,
+      teacherError,
+      parentError,
+      activeStudentError,
+    });
+
     throw new Error(`Failed to fetch one or more user counts.`);
   }
 
-  // Construct the result object
   const userCounts: UserCounts = {
     studentCount: studentCount ?? 0,
     teacherCount: teacherCount ?? 0,
@@ -62,7 +58,6 @@ export const fetchUserCounts = async (): Promise<UserCounts> => {
   return userCounts;
 };
 
-// --- Fetch Pending Task Count from Supabase ---
 export const fetchPendingTaskCount = async (): Promise<TaskStats> => {
   const client = getSupabase();
   console.log(`[Supabase] Fetching Pending Task Count`);
@@ -71,11 +66,11 @@ export const fetchPendingTaskCount = async (): Promise<TaskStats> => {
     .from('assigned_tasks')
     .select('*', { count: 'exact', head: true })
     .eq('is_complete', true)
-    .eq('verification_status', 'pending'); // Match the status enum/text used in DB
+    .eq('verification_status', 'pending');
 
   if (error) {
-     console.error("[Supabase] Error fetching pending task count:", error.message);
-     throw new Error(`Failed to fetch pending task count: ${error.message}`);
+    console.error('[Supabase] Error fetching pending task count:', error.message);
+    throw new Error(`Failed to fetch pending task count: ${error.message}`);
   }
 
   const taskStats: TaskStats = {
