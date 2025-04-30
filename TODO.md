@@ -1,7 +1,6 @@
 # TODO: Project Development & Release
 
 ## Gemini Rules/Notes
-
 - When requested to print out file content, provide the full content of the file while be mindful to inflate sections of code commented out during iterations.
 - Absolute hard rule of no comments in any code. If code has comments please remove!
 - Assume developers are experts but are open to suggestions for better libraries, approaches, or solutions to technical challenges.
@@ -10,100 +9,92 @@
 Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 
 ## [x] Development Phase 1: Frontend Prototyping & TQ/MSW Migration
-
-_(All items previously checked remain checked)_
+*(All items previously checked remain checked)*
 
 ## [x] Development Phase 2: "Big Bang" Supabase Schema & Read/Basic-Write API Migration
+*(All items previously checked remain checked)*
 
-_(All items previously checked remain checked)_
+## [x] Development Phase 3: Authentication & Server-Side Logic
 
-## [In Progress] Development Phase 3: Authentication & Server-Side Logic
+- [x] **Implement Authentication:**
+    - [x] Backend: Define schema/logic for PIN storage/validation (`onetime_pins`, `active_refresh_tokens`).
+    - [x] Backend: Create Supabase Edge Function (`claim-onetime-pin`).
+    - [x] Backend: Create Supabase Edge Function (`generate-onetime-pin`).
+    - [x] Frontend: Build PIN Login UI (`LoginModal.tsx`).
+    - [x] Frontend: Implement Email/Password login UI (`LoginModal.tsx`).
+    - [x] Frontend: Refactor `AuthContext` for real Supabase sessions.
+    - [x] Frontend: Implement Client-Side Custom PIN Refresh Logic (`AuthContext`). *(Workaround in place for Chrome)*.
+    *   [x] Frontend: Integrate `LoginModal` into `App.tsx`. *(Works, Chrome refresh/logout has workarounds)*.
+*   [x] **Implement Secure RLS:**
+    *   [x] Apply secure RLS policies for Storage buckets (`instrument-icons`, `reward-icons`).
+    *   [x] Define `is_admin()` helper function.
+    *   [x] Apply secure RLS policies for DB tables (`rewards`, `announcements`, `profiles`, `instruments`, `task_library`, `assigned_tasks`, `student_instruments`, `student_teachers`, `parent_students`, `ticket_transactions`).
+    *   [x] Restrict sensitive auth tables (`onetime_pins`, `active_refresh_tokens`, `user_credentials`) to service_role access only (no client policies).
+    *   [x] Created `can_student_or_parent_mark_task_complete()` helper function for RLS.
+    *   [x] Resolved RLS recursion issues on `assigned_tasks` and `profiles` updates.
+*   [x] **Implement Edge Functions for Core Auth/User Management:**
+    *   [x] `createUser` (handle `auth.admin.createUser`, profile insert, student links).
+    *   [x] `generate-onetime-pin`.
+    *   [x] `claim-onetime-pin`.
+    *   [x] `refresh-pin-session`.
+    *   [x] `update-auth-credentials`.
+    *   [x] `get-user-auth-details`.
+    *   [x] `deleteUser` (incl. protected admin check).
+    *   [x] `updateUserWithLinks` (handles profile & link tables, respects Teacher permissions).
+    *   [x] `toggleUserStatus` (moved from client API to EF due to RLS recursion).
+*   [x] **Implement Edge Functions for Core Workflow Actions:**
+    *   [x] `assignTask` (Admin/Teacher assign).
+    *   [x] `verifyTask` (Admin/Teacher verify, includes transaction log insert).
+    *   [x] `adjustTickets` (Admin manual adjustment, includes transaction log insert).
+    *   [x] `redeemReward` (Admin redemption, includes transaction log insert, uses RPC).
+    *   [x] `deleteAssignedTask` (Admin/Teacher delete unverified).
+*   [x] **Update API Layer (`src/api/`)**:
+    *   [x] Updated `createUser`, `generatePinForUser`, `claimPin`, `refreshPinSession`, `updateAuthCredentials`, `fetchAuthUser`, `updateUser`, `toggleUserStatus`, `deleteUser`, `createAssignedTask`, `updateAssignedTask` (for verify), `deleteAssignedTask`, `adjustTickets`, `redeemReward` to call respective Edge Functions.
+*   [x] **Update UI:**
+    *   [x] Connected Modals (`CreateUser`, `GeneratePin`, `Login`, `SetCredentials`, `EditUser`, `DeactivateOrDeleteUser`, `AssignTask`, `TaskVerification`, `ManualTicketAdjustment`, `RedeemReward`) to working API/Edge Function flows.
+    *   [x] Added 'Admins' tab and integration.
+    *   [x] Created and integrated `AdminAdminDetailView`.
+    *   [x] Enabled delete button in `DeactivateOrDeleteUserModal`.
+    *   [x] Enabled confirm buttons/logic for verification, assign task, adjust tickets, redeem reward.
+    *   [x] Fixed `EditUserModal` pre-selection issue.
+    *   [x] Fixed UI state sync issue for "Mark Complete" button.
+*   [ ] **Implement Link Table Logic (Admin Parent-Student Linking):**
+    *   [ ] Design and implement Admin UI for linking Parents <-> Students.
+    *   [ ] Create necessary API/Edge Function (or use generic Admin update) to manage `parent_students` table entries.
+*   [ ] **Security Hardening:**
+    *   [ ] Implement proper salting for `hashToken` function used for refresh tokens (in `claim-onetime-pin` and `refresh-pin-session`).
+    *   [ ] Consider implementing rolling refresh tokens in `refresh-pin-session`.
+    *   [ ] Final review and potential tightening of all RLS policies (post-feature completion).
+*   [ ] **Debugging & Known Issues:**
+    *   [ ] **BUG:** Investigate/Monitor Chrome/Expo Web session refresh/logout behavior. Current workarounds (`signOut({ scope: 'local' })`, decoupled profile fetch in `AuthContext`) seem stable but root cause in `supabase-js` or environment interaction remains. *(GitHub Issue #1401 Created)*.
+    *   [ ] **TODO:** Refactor `verifyTask` and potentially `adjustTickets`/`redeemReward` Edge Functions to use atomic PostgreSQL RPC functions instead of sequential DB calls for maximum data integrity.
+    *   [ ] **TODO:** Refactor `get_student_balance` RPC to potentially use a dedicated balance column on `profiles` (updated by triggers/functions) instead of summing transactions, for performance if history grows large.
+    *   [ ] **TODO:** Add more specific RLS `WITH CHECK` clauses to Student/Parent `assigned_tasks` update policy (`Student/Parent Update - Mark Complete Via Function`) to prevent modification of other fields besides `is_complete`, `completed_date`, `verification_status`, once core functionality is stable.
+    *   [x] **BUG:** Fix "Text strings must be rendered within a <Text> component" warning. *(Fixed)*.
+    *   [x] **BUG:** Fix `AdminView` resetting to 'Dashboard' tab on refocus. *(Fixed by stabilizing AuthContext loading state)*.
 
-- [ ] **Implement Authentication:**
-  - [x] Backend: Define schema/logic for PIN storage/validation (`onetime_pins`, `active_refresh_tokens`). Remove old `pin_hash`. Updated `onetime_pins` role constraint.
-  - [x] Backend: Create Supabase Edge Function (`claim-onetime-pin`) for Student/Parent/Admin/Teacher login.
-  - [x] Backend: Create Supabase Edge Function (`generate-onetime-pin`) accessible by Admin/Teacher (Supports all roles).
-  - [x] Frontend: Build PIN Login UI screen (within `LoginModal.tsx`).
-  - [x] Frontend: Implement Email/Password login UI for Admin/Teacher (within `LoginModal.tsx`). Call `supabase.auth.signInWithPassword`.
-  - [x] Frontend: Refactor `AuthContext` to handle real Supabase sessions (JWTs, refresh tokens, user state). (Removed mock state).
-  - [x] Frontend: Implement Client-Side Refresh Token Logic (via `onAuthStateChange` in `AuthContext`). _(Temporarily disabled for debugging)_
-  - [ ] Frontend: Restore custom PIN refresh logic in `AuthContext` once browser refresh issue is resolved.
-  - [ ] Frontend: Integrate `LoginModal` into `App.tsx` and trigger from `PublicView`. _(Done, but refresh behavior needs fix)_.
-- [ ] **Implement Secure RLS:**
-  - [x] Apply secure RLS policies for Storage buckets (`instrument-icons`, `reward-icons`) using `is_admin()` helper.
-  - [x] Define `is_admin()` helper function in database.
-  - [x] Apply secure RLS policies for DB tables (`rewards`, `announcements`, `profiles`).
-  - [ ] Replace ALL remaining temporary permissive RLS policies on database tables (`assigned_tasks`, link tables, `onetime_pins`, `active_refresh_tokens`, etc.) with strict, role-based policies.
-- [ ] **Implement Edge Functions for Core Auth/User Management:**
-  - [x] `createUser` (handle `auth.admin.createUser`, profile insert, student links - NO PIN). Deployed & Integrated.
-  - [x] `generate-onetime-pin` (generate & store temporary PIN for any role). Deployed & Integrated w/ Admin/Teacher UI.
-  - [x] `claim-onetime-pin` (validate PIN, gen tokens w/ correct role, store refresh hash). Deployed & Integrated w/ LoginModal.
-  - [x] `refresh-pin-session` (validate refresh token, gen new access token). Deployed. _(Integration temporarily disabled in AuthContext)_.
-  - [x] `update-auth-credentials` (allow user to set email/password). Deployed. Integrated w/ UI.
-  - [x] `get-user-auth-details` (securely fetch email for Admin views). Deployed & Integrated.
-  - [x] `deleteUser` (handle `auth.admin.deleteUser`). Deployed. **Requires client UI integration.**
-- [ ] **Implement Edge Functions for Deferred Actions:**
-  - [ ] `verifyTask` (update `assigned_tasks`, award points, insert `ticket_transactions`, update balance atomically).
-  - [ ] `assignTask` (replace client-side attempt with function call for consistency/validation).
-  - [ ] `adjustTickets` (check validity, update balance, insert `ticket_transactions` atomically).
-  - [ ] `redeemReward` (check balance, fetch cost, update balance, insert `ticket_transactions` atomically).
-- [ ] **Update API Layer (`src/api/`)**:
-  - [x] Modify `createUser` API to call Edge Function.
-  - [x] Add `generatePinForUser` API to call Edge Function.
-  - [x] Add `claimPin` API to call Edge Function.
-  - [x] Add `refreshPinSession` API to call Edge Function. _(Usage temporarily disabled in AuthContext)_.
-  - [x] Add `updateAuthCredentials` API to call Edge Function.
-  - [x] Refactor `fetchAuthUser` API to call Edge Function.
-  - [ ] Update `deleteUser` API to call Edge Function.
-  - [ ] Update `assignTask`, `verifyTask` (part of `updateAssignedTask`), `adjustTickets`, `redeemReward` API functions to call respective Edge Functions once created.
-- [ ] **Update UI:**
-  - [x] Connect `CreateUserModal` to working `createUser` flow.
-  - [x] Connect `GeneratePinModal` to working `generatePinForUser` flow.
-  - [x] Connect `LoginModal` (PIN) to working `claimPin` flow.
-  - [x] Connect `LoginModal` (Email) to working `signInWithPassword` flow.
-  - [x] Build Settings UI to call `updateAuthCredentials` (via `SetEmailPasswordModal` integrated into `StudentView`, `TeacherView`, `ParentView`, `AdminView`).
-  - [x] Add 'Admins' tab to `AdminUsersSection` and hook integration.
-  - [x] Create and integrate `AdminAdminDetailView` with conditional PIN button.
-  - [ ] Re-enable delete button in `DeactivateOrDeleteUserModal` to call `deleteUser` API.
-  - [ ] Re-enable buttons/logic for deferred actions (Task Verification points/reassign, Assign Task confirm, Ticket Adjust confirm, Redeem Reward confirm) once Edge Functions are ready.
-- [ ] **Implement Link Table Logic:**
-  - [ ] Refactor `updateUser` API/Edge Function OR create dedicated functions to handle adding/removing rows in `student_instruments`, `student_teachers`, `parent_students` when editing users. Update `EditUserModal` accordingly.
-  - [ ] Implement Admin UI for linking Parents <-> Students.
-- [ ] **Security Hardening:**
-  - [ ] Implement proper salting for `hashToken` function used for refresh tokens.
-  - [ ] Consider implementing rolling refresh tokens in `refresh-pin-session`.
-  - [ ] Review and tighten all RLS policies.
-- [ ] **Debugging:**
-  - [ ] **BUG:** Fix "Text strings must be rendered within a <Text> component" warning appearing in Expo Go (likely within AdminView section components).
-  - [ ] **BUG:** Investigate and fix issue where session doesn't load correctly on browser refresh/tab refocus (specifically Chrome, possibly others) - currently hangs on "Loading Session...". _(Custom refresh logic temporarily disabled)_.
 
 ## [ ] Development Phase 4: Features, Refinements & Testing
-
-_(Dependent on resolving Phase 3 issues)_
-
-- [ ] **Address Pending Decisions & Implement Chosen Features:** (Based on Dan Lefler's input from Phase 2 TODOs)
-  - [ ] Task Link URLs?
-  - [ ] Avatars?
-  - [ ] Mandatory Reward Images?
-  - [ ] Auto-Redemption Announcements?
-  - [ ] Challenge Feature?
-  - [ ] Finalize field requirements (descriptions, etc.).
-  - [ ] Parent Reminders?
-  - [ ] Finalize Data Deletion Policy details.
-
-* [ ] **Address Known Issues & TODOs:**
-  - [ ] Lint Errors.
-  - [ ] Dark Mode support.
-  - [ ] Ensure balance display is consistent and updates correctly after actions (requires atomic functions).
-  - [ ] Review parent `viewing_student_id` logic during session refresh (especially standard refresh).
-* [ ] **Refinements & Thorough Testing:**
-  - Test all user role workflows end-to-end with real authentication and Supabase backend.
-  - Refine UI/UX based on testing (including button styles).
-  - Optimize Supabase queries/functions/views if needed (e.g., for balance calculation, fetching linked data).
-  - Add unit/integration tests (Optional).
+*(Dependent on resolving/stabilizing Phase 3 issues)*
+- [ ] **Address Pending Decisions & Implement Chosen Features:** (Based on Dan Lefler's input from `SPECIFICATION.md` Section 10)
+    *   [ ] Task Link URLs?
+    *   [ ] Avatars?
+    *   [ ] Mandatory Reward Images?
+    *   [ ] Auto-Redemption Announcements?
+    *   [ ] Challenge Feature?
+    *   [ ] Finalize field requirements (descriptions, etc.).
+    *   [ ] Parent Reminders?
+    *   [ ] Finalize Data Deletion Policy details (Cascade vs Set Null for `assigned_tasks`, `ticket_transactions`). *(Need to add FKs with chosen policy)*.
+    *   [ ] Finalize PIN Login Identifier (Name? Username?) & Parent differentiation logic.
+    *   [ ] Offer Email/Password for Students/Parents too?
+*   [ ] **Refinements & Thorough Testing:**
+    *   [ ] Test all user role workflows end-to-end.
+    *   [ ] Refine UI/UX (including button styles).
+    *   [ ] Add Foreign Key constraints with appropriate ON DELETE actions (CASCADE/SET NULL) for remaining relationships (e.g., `assigned_tasks` FKs, `ticket_transactions` FK). Create new migration(s).
+    *   [ ] Add database indexes for common query patterns (e.g., filtering tasks by status/teacher/student). *(Some added, review needed)*.
+    *   [ ] Consider adding database-level checks (e.g., check constraints) to ensure role consistency in link tables if not handled sufficiently by app logic/RLS.
+    *   [ ] Unit/integration tests (Optional).
 
 ## [ ] Supporting Features (Post-MVP / Lower Priority)
-
-- [ ] Frontend: Design and implement `PublicView` welcome/landing page using provided store assets.
-- [ ] Frontend: Evaluate and potentially implement opaque background images using provided assets.
-- [ ] Refine button styles (wood grain, abalone border).
+*   [ ] Frontend: Design and implement `PublicView` welcome/landing page using provided store assets.
+*   [ ] Frontend: Evaluate and potentially implement opaque background images using provided assets.

@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-This document outlines the functional requirements for the Danmans Virtual Ticket App, a mobile application designed to manage student rewards using a virtual ticket system within a music school or similar educational setting. The app caters to different user roles: **Admin**, **Teacher**, **Student**, and **Parent**. Data fetching and state management are primarily handled using TanStack Query, interacting with defined API endpoints (initially mocked via MSW, target backend: Supabase).
+This document outlines the functional requirements for the Danmans Virtual Ticket App, a mobile application designed to manage student rewards using a virtual ticket system within a music school or similar educational setting. The app caters to different user roles: **Admin**, **Teacher**, **Student**, and **Parent**. Data fetching and state management are primarily handled using TanStack Query, interacting with defined API endpoints that trigger secure Supabase Edge Functions for core operations and rely on Supabase's REST API (protected by Row Level Security) for data retrieval.
 
 The primary goal is to provide an engaging system for students to track progress and earn virtual tickets redeemable for rewards, complementing the physical ticket system. Key features include virtual ticket tracking, task assignment/completion/verification, a rewards catalog, transaction history, and announcements.
 
@@ -10,198 +10,153 @@ Future considerations, pending discussion and decisions, include features like p
 
 ## 2. User Creation, Linking, and Authentication
 
-- **Account Creation:** Exclusively performed by the **Admin** role via a secure Admin interface. Admin creates accounts for **Admin**, **Teacher**, and **Student** users (likely creating entries in both `auth.users` and `profiles`). (Parents are not explicitly created via this interface). Requires first name, last name, role selection. Nickname is optional. For Students, Admin can link initial Teacher(s) and Instrument(s) via link tables, and sets an initial numerical login PIN. Uses backend API (e.g., Supabase functions/direct inserts).
-- **User Linking:** Relationships (Student<->Teacher, Student<->Instrument, Parent<->Student) are managed via **link tables** in the database (e.g., `student_teachers`, `student_instruments`, `parent_students`). Admin manages Teacher/Instrument links via the Admin UI (likely through update operations modifying link tables). Parent linking mechanism relies on backend logic associating parent profiles with student profiles (details TBD, potentially via Admin action or a separate Parent registration flow linked to student).
+- **Account Creation:** Exclusively performed by the **Admin** role via a secure Admin interface, invoking the `createUser` Supabase Edge Function. Admin creates accounts for **Admin**, **Teacher**, and **Student** users (creating entries in both `auth.users` and `profiles`). Requires first name, last name, role selection. Nickname is optional. For Students, Admin can link initial Teacher(s) and Instrument(s) via the `updateUserWithLinks` Edge Function. **Initial PINs are not set at creation; they are generated on demand.**
+- **User Linking:** Relationships (Student<->Teacher, Student<->Instrument, Parent<->Student) are managed via **link tables** (`student_teachers`, `student_instruments`, `parent_students`). Admin manages Teacher/Instrument/Parent links via the Admin UI, invoking the `updateUserWithLinks` Edge Function or potentially dedicated linking functions.
 - **User Deactivation/Deletion (Admin Action):**
-  - Admins can manage user accounts via their interface.
-  - **Deactivation/Reactivation (Primary):** Uses backend API (e.g., `PATCH` to update `profiles.status` or Supabase equivalent). A confirmation modal should appear. Deactivation sets `status` to `'inactive'`, prevents login, removes from active lists. Data is retained. Reactivation sets status to `'active'`. Cascading logic (Sec 8) is a backend concern.
-  - **Permanent Deletion (Secondary):** Uses backend API (e.g., `DELETE` targeting `auth.users` and `profiles` or Supabase equivalent). Requires explicit confirmation via dedicated modal. Removes user record and associated data (backend policy). Cascading logic (Sec 8) is a backend concern.
-- **Authentication (Admin/Teacher):**
-  - Login via a dedicated secure mechanism (e.g., email/password) managed by the backend authentication system (e.g., Supabase Auth). Requires a distinct login interface. Backend returns a JWT session token upon successful login.
-- **Authentication (Student/Parent - PIN-Based):**
-  - **PIN Setting & Management:** A unique numerical PIN (e.g., 4-6 digits) is initially set by the **Admin** upon Student account creation. The PIN can subsequently be viewed or reset by the **Admin** or by any **Teacher** linked to that student, via their respective UI interfaces. PINs must be stored securely (e.g., hashed) on the backend (likely in the `user_credentials` table).
-  - **Login Flow:**
-    1.  The mobile app presents a login screen requesting a student identifier (**Decision Pending:** e.g., First Name + Last Name, generated username, email?) and the numerical PIN.
-    2.  The user (Student or Parent) enters the identifier and PIN.
-    3.  The app sends these credentials to a dedicated backend login endpoint (e.g., a Supabase Edge Function).
-    4.  The backend endpoint:
-        - Finds the student based on the identifier.
-        - Validates the provided PIN against the stored (hashed) PIN for that student (from `user_credentials`).
-        - **If validation succeeds:**
-          - Determines the context: If the login is for the student directly, or if it's a parent accessing the student profile (**Decision Pending:** How is parent context identified if using child credentials?).
-          - Generates a standard JWT (JSON Web Token) session token containing relevant claims (e.g., `user_id` from `auth.users`, `role` ('student' or 'parent'), potentially `viewing_student_id` if parent). This token is signed by the backend (Supabase handles signing via Admin SDK).
-          - Returns the generated JWT session token and necessary context (role, user ID, viewing student ID) to the app.
-        - **If validation fails:** Returns an authentication error.
+  - **Deactivation/Reactivation:** Managed via the Admin interface, invoking the `toggleUserStatus` Supabase Edge Function (which updates `profiles.status`). Deactivation sets `status` to `'inactive'`, preventing login and filtering user from active lists. Reactivation sets status to `'active'`. Links persist during deactivation.
+  - **Permanent Deletion:** Managed via the Admin interface, invoking the `deleteUser` Supabase Edge Function. This function performs authorization checks (caller is Admin, not deleting self, not deleting protected Admins) and calls `auth.admin.deleteUser`. Deletion relies on **database `ON DELETE CASCADE` rules** set on foreign keys referencing `profiles.id` to remove associated data (profile, credentials, links, potentially tasks/history depending on FK setup).
+- **Authentication (Admin/Teacher - Standard):**
+  - Login via a dedicated secure mechanism (e.g., email/password) managed by Supabase Auth. Requires a distinct login interface section. Uses standard `supabase.auth.signInWithPassword`. Backend returns standard Supabase JWT session upon success. Session refresh handled automatically by the Supabase client library. Credentials can be updated via the `updateAuthCredentials` Edge Function.
+- **Authentication (Student/Parent/Teacher/Admin - PIN-Based):**
+  - **PIN Generation & Management:** A short-lived, one-time numerical PIN (e.g., 6 digits) is generated **on demand** by an **Admin** or a **Teacher** via their UI, invoking the `generate-onetime-pin` Supabase Edge Function. This function requires the target user ID and the intended `targetRole` ('student', 'parent', 'teacher', or 'admin') the user will assume upon claiming the PIN. PINs are stored temporarily and securely in the `onetime_pins` table. *There is no persistent PIN stored for users.*
+  - **Login Flow (PIN):**
+    1.  The mobile app presents a login screen section requesting the numerical PIN. (**Decision Pending:** How is the target user identified if multiple users might use PINs? For Student/Parent, the PIN implicitly links to a user via the `onetime_pins` table. For Teacher/Admin PIN login, how is the user specified?).
+    2.  User enters the PIN.
+    3.  App calls the `claim-onetime-pin` Supabase Edge Function, sending the plain-text PIN.
+    4.  The Edge Function:
+        - Validates the PIN against the `onetime_pins` table (checks existence, expiry, claimed status).
+        - Retrieves the associated `user_id` and `target_role`.
+        - Marks the PIN as claimed in the database.
+        - Generates a **custom JWT access token** signed with a server-side secret (`CLIENT_JWT_SECRET`). The JWT payload includes standard claims (`sub`, `aud`, `exp`) and `app_metadata` containing the `role` (matching the `target_role` from the PIN record) and, if `targetRole` is 'parent', the `viewing_student_id` (set to the student's ID).
+        - Generates an **opaque refresh token** and stores its hash securely in the `active_refresh_tokens` table.
+        - Returns the access token, refresh token, user ID, and effective role to the app.
     5.  **App Handling (on Success):**
-        - The app securely stores the received JWT session token (e.g., using `expo-secure-store`).
-        - The app updates the `AuthContext` state with the user's role, user ID, viewing student ID (if applicable), and marks the user as authenticated.
-        - Subsequent API calls (to Supabase or Edge Functions) will include this JWT in the `Authorization: Bearer <token>` header. Supabase automatically verifies this token for database access based on RLS policies and function security settings.
-    6.  **App Handling (on Failure):** The app displays an error message.
-- **Session Management:**
-  - The JWT token stored on the device represents the user's session.
-  - The app should attempt to load the session token on startup. If a valid token exists, the user is considered logged in.
-  - Tokens have an expiration time set by the backend (Supabase defaults). The app might need to handle token refresh logic (Supabase client library often assists) or prompt for re-login upon expiration.
-  - `AuthContext` manages the application's auth state based on the presence and validity of the session token.
-  - Logout involves clearing the stored token and resetting the `AuthContext` state.
+        - Stores the received **custom refresh token** securely using the `storageHelper` (`SecureStore` on native, `localStorage` on web).
+        - Uses `supabase.auth.setSession()` to load the received access and refresh tokens into the Supabase client's state.
+        - The `AuthContext` listener (`onAuthStateChange`) detects the `SIGNED_IN` event and fetches the user's profile based on the user ID from the session. The context determines the `currentUserRole` and `currentViewingStudentId` based on the JWT's `app_metadata`.
+    6.  **App Handling (on Failure):** Displays an error message.
+- **Session Management (PIN Flow):**
+    - The custom JWT access token is short-lived.
+    - On app startup or when the access token expires, the `AuthContext` attempts to retrieve the stored **custom refresh token**.
+    - If found, it calls the `refreshPinSession` Supabase Edge Function.
+    - `refreshPinSession` validates the custom refresh token against the stored hash in `active_refresh_tokens` and issues a *new* custom JWT access token (but typically reuses the same refresh token).
+    *   The app updates the Supabase client session using `setSession` with the new access token and the existing refresh token.
+    *   Logout (`signOut`): Clears the custom refresh token from local storage and calls `supabase.auth.signOut({ scope: 'local' })` to clear the client-side Supabase session state. On web, a page reload is forced as a workaround for a client bug. Authorization and access control rely heavily on server-side **Row Level Security (RLS)** policies and **Edge Function logic**.
 
 ## 3. Core Features by Role
 
+*(Roles remain largely the same, but emphasize API calls now trigger Edge Functions)*
+
 ### 3.1. Admin
 
-- **User Management:** CRUD operations on user profiles (`profiles` table) and links (link tables) via API/backend functions. Manages user status (active/inactive) and permanent deletion. Pagination handled via hooks.
-- **PIN Management:** Set/Reset Student PINs via Admin UI controls (primary responsibility).
-- **Instrument Management:** CRUD via API (`/api/instruments` or Supabase equivalent).
-- **Task Library Management:** CRUD via API (`/api/task-library` or Supabase equivalent).
-- **Task Assignment:** Assigns tasks via API (`POST /api/assigned-tasks`). Can use library items or create Ad-Hoc tasks.
-- **Task Verification:** Views pending tasks, approves/rejects via API (`PATCH /api/assigned-tasks/:id`).
-- **Rewards Catalog Management:** CRUD via API (`/api/rewards`).
-- **Ticket Adjustments:** Manually adjusts via API (`POST /api/ticket-adjustments`).
-- **History Viewing:** Views global history via API (`GET /api/ticket-history`). Pagination handled via hook.
-- **Announcements:** CRUD via API (`/api/announcements`).
-- **Challenge Management (TBD):** _If the Challenge feature is approved,_ Admins would gain capabilities to create, manage, and target challenges.
-- **Manage Avatar (TBD):** _If Avatars are approved for roles,_ Admin might manage avatars for users.
+- **User Management:** CRUD operations via invoking Edge Functions (`createUser`, `updateUserWithLinks`, `deleteUser`, `toggleUserStatus`). Manages links via `updateUserWithLinks`. Pagination handled via hooks fetching data protected by RLS.
+- **PIN Management:** Generates temporary login PINs for any user/role via UI controls invoking `generate-onetime-pin` Edge Function.
+- **Instrument Management:** CRUD via API (`fetchInstruments`, `createInstrument`, `updateInstrument`, `deleteInstrument`) protected by Admin RLS.
+- **Task Library Management:** CRUD via API (`fetchTaskLibrary`, `createTaskLibraryItem`, `updateTaskLibraryItem`, `deleteTaskLibraryItem`) protected by Admin RLS.
+- **Task Assignment:** Assigns tasks via UI invoking `assignTask` Edge Function. Can use library items or create Ad-Hoc tasks.
+- **Task Verification:** Views pending tasks, approves/rejects via UI invoking `verifyTask` Edge Function.
+- **Rewards Catalog Management:** CRUD via API (`fetchRewards`, `createReward`, `updateReward`, `deleteReward`) protected by Admin RLS.
+- **Ticket Adjustments:** Manually adjusts via UI invoking `adjustTickets` Edge Function.
+- **Reward Redemption:** Redeems rewards for students via UI invoking `redeemReward` Edge Function.
+- **History Viewing:** Views global history via API (`fetchTicketHistory`) protected by Admin RLS. Pagination handled via hook.
+- **Announcements:** CRUD via API (`fetchAnnouncements`, `createAnnouncement`, `updateAnnouncement`, `deleteAnnouncement`) protected by Admin RLS.
+- **Challenge Management (TBD):** *If implemented.*
+- **Manage Avatar (TBD):** *If implemented.*
 
 ### 3.2. Teacher
 
-- **View Linked Students:** Fetches students linked via `student_teachers` table. Displays key details (name, instruments, balance).
-- **View Student Profile:** Navigates to a view fetching student profile, assigned tasks, and history. Pagination handled by hooks.
-- **PIN Management:** Can view and reset the PIN for their **linked students** via Teacher UI controls.
-- **Task Assignment:** Assigns via API (`POST /api/assigned-tasks`).
-- **Task Verification:** Views pending tasks for linked students, verifies via API (`PATCH /api/assigned-tasks/:id`).
-- **Challenge Creation/Management (TBD):** _If the Challenge feature is approved,_ Teachers might create/manage challenges, potentially targeted. (Specific permissions TBD).
-- **Manage Own Avatar (TBD):** _If Teacher Avatars are approved._
+- **View Linked Students:** Fetches students via API (`fetchStudents` with `teacherId` filter) protected by RLS. Displays key details.
+- **View Student Profile:** Navigates to a view fetching student profile (`fetchUserProfile`), assigned tasks (`fetchAssignedTasks`), and history (`fetchTicketHistory`), protected by RLS checking teacher-student link. Pagination handled by hooks.
+- **PIN Management:** Generates temporary login PINs for **linked students** (role 'student' or 'parent') or **themselves** (role 'teacher') via UI controls invoking `generate-onetime-pin` Edge Function.
+- **Task Assignment:** Assigns tasks via UI invoking `assignTask` Edge Function (authorization checked server-side).
+- **Task Verification:** Views pending tasks for linked students, verifies via UI invoking `verifyTask` Edge Function (authorization checked server-side).
+- **Challenge Creation/Management (TBD):** *If implemented.*
+- **Manage Own Avatar (TBD):** *If implemented.*
+- **Manage Own Credentials:** Can update own Email/Password (if applicable) via UI invoking `updateAuthCredentials` Edge Function.
 
 ### 3.3. Student
 
-- **Dashboard:** Fetches own profile data, balance, goal info, recent history/tasks.
-- **Task List:** Fetches assigned tasks, displays status. Marks complete via API (`PATCH /api/assigned-tasks/:id`). Pagination handled by hook. Accepted challenges (if implemented) appear here.
-- **View Task Links (TBD):** _If Task URLs are approved,_ Students would see/click links in tasks.
-- **Rewards Catalog:** Fetches via API (`GET /api/rewards`). Views progress, sets goal (local state or TBD). Redemption (TBD - requires flow/button).
-- **Ticket History:** Fetches personal history via API (`GET /api/ticket-history?studentId=...`). Pagination handled by hook.
-- **Announcements:** Fetches via API (`GET /api/announcements`).
-- **View Available Challenges (TBD):** _If the Challenge feature is approved,_ fetches relevant challenges.
-- **Accept Challenge (TBD):** _If the Challenge feature is approved,_ action via API (`POST /api/challenges/:id/accept`) adds the challenge to their task list.
-- **Manage Own Avatar (TBD):** _If Student Avatars are approved._
+- **Dashboard:** Fetches own profile data (`fetchUserProfile`), balance (`fetchStudentBalance`), goal info, recent history/tasks via API protected by RLS.
+- **Task List:** Fetches own assigned tasks (`fetchAssignedTasks`), displays status. Marks complete via API (`updateAssignedTask` RLS allows this specific update). Pagination handled by hook.
+- **View Task Links (TBD):** *If implemented.*
+- **Rewards Catalog:** Fetches via API (`fetchRewards`). Views progress, sets goal (local state). Redemption (TBD - likely requires Admin action currently).
+- **Ticket History:** Fetches personal history (`fetchTicketHistory`), protected by RLS. Pagination handled by hook.
+- **Announcements:** Fetches via API (`fetchAnnouncements`).
+- **View Available Challenges (TBD):** *If implemented.*
+- **Accept Challenge (TBD):** *If implemented.*
+- **Manage Own Avatar (TBD):** *If implemented.*
+- **Manage Own Credentials:** Can update own Email/Password (if applicable) via UI invoking `updateAuthCredentials` Edge Function.
 
 ### 3.4. Parent
 
-- **Student Selection:** If linked to multiple students, selects which child's profile to view.
-- **View Student Dashboard:** Renders `StudentView` component for the selected child. Fetches parent profile to get linked student IDs.
-- **Mark Tasks Complete:** Can mark selected child's tasks complete via API (`PATCH /api/assigned-tasks/:id`).
-- **Link Additional Students:** Mechanism TBD (likely Admin action).
-- **Send Reminders (TBD):** _Functionality subject to decision._
-- **Manage Own Avatar (TBD):** _If Parent Avatars are approved._
-- **Manage Child's Avatar (TBD):** _If Student Avatars are approved and Parent permission decided._
+- **Student Selection:** If linked to multiple students (fetched via `fetchUserProfile` for parent), selects which child's profile to view.
+- **View Student Dashboard:** Renders `StudentView` component for the selected child. Data fetched using child's ID, protected by RLS checking parent-child link.
+- **Mark Tasks Complete:** Can mark selected child's tasks complete via API (`updateAssignedTask` RLS allows this specific update).
+- **Link Additional Students:** Mechanism TBD (likely Admin action via `updateUserWithLinks` or similar).
+- **Send Reminders (TBD):** *Functionality subject to decision.*
+- **Manage Own Avatar (TBD):** *If implemented.*
+- **Manage Child's Avatar (TBD):** *If implemented.*
+- **Manage Own Credentials:** Can update own Email/Password (if applicable) via UI invoking `updateAuthCredentials` Edge Function.
 
 ## 4. Task & Challenge Workflow
 
-- **Challenge Sub-Workflow (TBD):** _If the Challenge feature is approved:_
-  1.  **Challenge Creation:** Admin/Teacher creates a `Challenge` record.
-  2.  **Challenge Discovery:** Student views available challenges.
-  3.  **Challenge Acceptance:** Student accepts. Backend creates a new `AssignedTask` record linked to the challenge.
-  4.  The generated `AssignedTask` follows the standard task workflow below.
+*(Challenge Sub-Workflow remains TBD)*
+
 - **Standard Task Workflow:**
-  1.  **Creation/Assignment:** `POST /api/assigned-tasks`. (Can be manual or from challenge acceptance).
-  2.  **Completion:** Student/Parent marks complete (`PATCH /api/assigned-tasks/:id` sets `isComplete: true`).
-  3.  **Verification Queue:** Task appears in Teacher/Admin queues (`GET /api/assigned-tasks?assignmentStatus=pending`).
-  4.  **Verification:** Teacher/Admin verifies (`PATCH /api/assigned-tasks/:id` sets `verificationStatus`, `verifiedById`, `verifiedDate`, `actualPointsAwarded`). Ticket balance updated on backend.
-  5.  **Re-assign (Optional):** Can be triggered post-verification.
-  6.  **History:** Backend logs `TicketTransaction` on successful verification/adjustment/redemption.
+  1.  **Creation/Assignment:** Admin/Teacher UI calls `assignTask` Edge Function.
+  2.  **Completion:** Student/Parent UI calls `updateAssignedTask` API (direct DB update allowed by RLS). Sets `is_complete=true`, `verification_status='pending'`.
+  3.  **Verification Queue:** Task appears in Teacher/Admin queues (fetched via `fetchAssignedTasks` with status filters).
+  4.  **Verification:** Teacher/Admin UI calls `verifyTask` Edge Function. Sets final `verificationStatus`, `verifiedById`, `verifiedDate`, `actualPointsAwarded`. Function inserts `ticket_transactions` if points > 0.
+  5.  **Re-assign (Optional):** Could be triggered by calling `assignTask` again.
+  6.  **History:** `ticket_transactions` table logged by `verifyTask`, `adjustTickets`, `redeemReward` Edge Functions.
 
 ## 5. Ticket Economy
 
-- **Earning:** Task completion (via Verification step), Manual adjustment (`POST /api/ticket-adjustments`).
-- **Spending (Redemption):** `POST /api/reward-redemptions`. Redemption flow for students TBD. Upon successful redemption, an `Announcement` _might_ be automatically generated for significant rewards (_Decision Pending_).
-- **Balance:** Fetched via API (`GET /api/students/:id/balance`). Updated implicitly by backend logic/functions during task verification, adjustments, redemptions.
-- **History:** Logged by backend. Fetched via API (`GET /api/ticket-history`).
+- **Earning:** Task verification (via `verifyTask` Edge Function), Manual adjustment (via `adjustTickets` Edge Function).
+- **Spending (Redemption):** Admin redemption via UI calling `redeemReward` Edge Function. Student redemption flow TBD. `redeemReward` logs transaction. Automatic redemption announcements TBD.
+- **Balance:** Fetched via API (`fetchStudentBalance`) which calls database RPC function `get_student_balance` (summing `ticket_transactions`). Balance implicitly updated by Edge Functions logging transactions.
+- **History:** Logged by Edge Functions into `ticket_transactions`. Fetched via API (`fetchTicketHistory`), protected by RLS.
 
 ## 6. Data Entities & Concepts
 
-The application manages several core data entities. The specific database table structure, columns, types, and relationships are detailed in the separate **[MODEL.md](./MODEL.md)** file. Conceptually, the main entities are:
-
-- **User Profiles:** Represents all individuals using the app (Admins, Teachers, Students, Parents). Linked to the core authentication identity and stores common information like name, role, and status. May potentially include user avatars (_Decision Pending_).
-- **User Credentials:** Stores specific login information not suitable for the main profile, currently planned for securely storing hashed Student PINs.
-- **Instruments:** A list of musical instruments taught or played. May potentially include icons/images (_Decision Pending_).
-- **Task Library:** A predefined list of reusable tasks with titles, descriptions (_Decision Pending_), base ticket values, and potentially external links (_Decision Pending_).
-- **Rewards:** The catalog of items redeemable with tickets, including name, cost, potentially mandatory images (_Decision Pending_), and descriptions (_Decision Pending_).
-- **Assigned Tasks:** Represents a specific task instance assigned to a particular student by a teacher or admin, or accepted from a challenge (_Challenge Feature TBD_). Tracks completion and verification status, points awarded, and potentially links (_Decision Pending_).
-- **Ticket Transactions:** A historical log of all events that change a student's ticket balance (task awards, manual adjustments, redemptions).
-- **Announcements:** Store-wide or targeted messages (e.g., challenges, redemption celebrations (_Auto-generation TBD_)). Field requirements and types need final confirmation (_Decision Pending_).
-- **Challenges (TBD):** A potential feature for opt-in tasks targeted at specific student groups (_Decision Pending_).
-- **Relationships:** Connections between entities (like Students-Teachers, Students-Instruments, Parents-Students) are managed using standard relational database link tables (see `MODEL.md`).
+The application manages several core data entities detailed in **[MODEL.md](./MODEL.md)**. Key entities include User Profiles, User Credentials (legacy), Instruments, Task Library, Rewards, Assigned Tasks, Ticket Transactions, Announcements, and various Link Tables. Access and modification are controlled by **Row Level Security** and **Supabase Edge Functions**.
 
 ## 7. Non-Functional Requirements
 
-- **Platform:** Mobile App (iOS & Android via React Native/Expo). Potential for Admin web interface later.
-- **Security:** Secure storage of credentials/JWTs. Secure PIN hashing (backend). Input validation. Role-based access control enforced by backend RLS policies. Supabase security best practices.
-- **Usability:** Intuitive navigation, clear feedback to users. Offline capability is NOT a requirement for V1.
-- **Performance:** App should be responsive. Lists should handle moderate amounts of data smoothly (pagination/virtualization for large lists). Database queries optimized.
+*(Largely unchanged, but reinforce RLS/Edge Functions)*
+- **Platform:** Mobile App (iOS & Android via React Native/Expo).
+- **Security:** Secure storage of credentials/JWTs (standard Supabase client for email/pass, `storageHelper` for custom PIN refresh tokens). Secure PIN generation/claim/refresh flow via Edge Functions. Input validation (client & server). Role-based access control enforced primarily by **server-side RLS policies** and **Edge Function authorization logic**.
+- **Usability:** Intuitive navigation, clear feedback. Offline NOT required for V1.
+- **Performance:** Responsive app, lists handle moderate data (pagination). Database queries/functions optimized (RPC for balance, potentially needed for task/ticket atomicity).
 
-## 8. Cascading Logic for Deactivation/Deletion (Backend Implementation)
+## 8. Cascading Logic for Deactivation/Deletion (Server-Side Implementation)
 
-- **Deactivating a User (Student/Teacher/Parent/Admin):** Backend sets `status` on `profiles` to 'inactive'. User cannot log in. RLS policies might restrict access further. Associated data (tasks, history, links) generally remain but might be filtered in UI displays. Reactivation sets status to 'active'. Link table entries are NOT automatically removed/restored upon status change.
-- **Permanently Deleting a User:** Backend removes the `auth.users` record and the corresponding `profiles` record (ideally using `ON DELETE CASCADE` on the `profiles.id` FK). Associated entries in _link tables_ (`student_teachers`, `parent_students`, `student_instruments`) should also be removed via `ON DELETE CASCADE`. **Decision Pending:** Should related `assigned_tasks` and `ticket_transactions` be cascade deleted or anonymized (e.g., `student_id` set to NULL if allowed)? `created_by_id`, `assigned_by_id` etc. fields referencing the deleted user might need handling (e.g., set NULL or keep reference).
+- **Deactivating a User:** Handled by `toggleUserStatus` Edge Function updating `profiles.status`. Does *not* cascade delete links. Other functions/RLS should check `status`.
+- **Permanently Deleting a User:** Handled by `deleteUser` Edge Function calling `auth.admin.deleteUser`. Relies on **database `ON DELETE CASCADE` / `ON DELETE SET NULL`** foreign key constraints defined in migrations to manage associated data removal/cleanup across tables (`profiles`, `user_credentials`, `onetime_pins`, `active_refresh_tokens`, link tables, potentially `assigned_tasks`, `ticket_transactions`). *Ensure FK constraints are correctly defined in migrations.*
 
 ## 9. Asset Requirements & Handover (Action: Dan)
 
-To create a visually engaging public-facing view and potentially themed backgrounds within the app, the following assets are required:
-
-- **Storefront Photos:** High-quality images of the Danmans Music Store exterior.
-- **Interior Photos:** High-quality images showcasing the general interior, retail areas, etc.
-- **Lesson Room Photos:** High-quality images of the various soundproofed lesson rooms.
-
-**Handover:** Dan Lefler to provide these image assets to the development team.
-
-**Usage:** These assets will be used primarily for:
-
-- Creating a compelling visual design for the `PublicView` welcome/landing page.
-- Potentially being used as subtle, opaque background elements in various app views to enhance branding and feel (implementation TBD).
+- Storefront Photos
+- Interior Photos
+- Lesson Room Photos
+- Handover: Dan Lefler to provide.
+- Usage: `PublicView` design, potentially themed backgrounds.
 
 ## 10. Pending Decisions (Input Required: Dan)
 
-The following features and details require discussion and **explicit decisions from Dan Lefler** before final specification and implementation:
+*(Largely unchanged, but added clarity on PIN identifier)*
 
-1.  **Task Link URL:**
-    - Should an optional `link_url` field be added to tasks (library and assigned) for external resources?
-    - _(Example: Should teachers be able to add a link like `https://www.ultimateguitar.com/tabs/1234` to a "Learn Song X" task?)._
-2.  **Image Requirements & Avatars:**
-    - **Instruments:** Require stored images (`image_path`), or is the current hardcoded icon approach sufficient?
-    - _(Example: Show actual pictures of instruments available as rewards, or just generic icons like now?)._
-    - **Avatars:** Implement user avatars? For which roles (Teacher? Student? Parent? Admin?)?
-    - _(Example: Allow students and/or teachers to upload profile pictures?)._
-    - **Rewards:** Is an image (`image_path`) mandatory for _all_ rewards?
-    - _(Example: Is it okay if some rewards, like a 'Snickers Bar', don't have a specific image uploaded?)._
-3.  **Automated Redemption Announcements:**
-    - Should the system _automatically_ generate a public announcement when a "significant" reward is redeemed?
-    - _(Example: When a student redeems the 'Fender Stratocaster' (cost 10000), should an announcement automatically appear saying "🎉 Alice redeemed a Fender Stratocaster! 🎉"? Or only if Admin manually creates it?)._
-    - If yes, how is "significant" defined (cost threshold, specific items)?
-    - If yes, what should the message format be?
-4.  **Challenge Feature (Go/No-Go):**
-    - Should the distinct "Challenge" system (opt-in tasks, potentially targeted) be implemented in V1?
-    - _(Example: Should teachers be able to post 'challenges' like "Learn 3 new scales this month for 50 bonus tickets" that *any* relevant student can choose to accept and attempt?)._
-    - _If Yes to Challenges:_
-      - Can Teachers target challenges only to their own students, or more broadly?
-      - Is an `expiry_date` needed for challenges?
-      - Should accepted challenges look different in the student's task list?
-      - Who is the `assigned_by_id` for tasks generated from accepted challenges?
-5.  **Task/Reward/Announcement Fields:**
-    - Confirm necessity/optionality of `description` fields for Task Library items and Rewards.
-    - _(Example: Is just 'Practice 15 mins' enough, or do we need the extra description text field? Same for rewards?)._
-    - Finalize Announcement fields (`message` requirement?), types (sufficient?), and `relatedStudentId` usage (only redemptions?).
-    - _(Example: Is the 'message' field always needed? Are 'announcement', 'challenge', 'redemption' types enough?)._
+1.  **Task Link URL:** Implement `link_url` field?
+2.  **Image Requirements & Avatars:** Require stored images for Instruments? Avatars (which roles)? Mandatory Reward images?
+3.  **Automated Redemption Announcements:** Auto-generate on significant reward redemption? Definition of "significant"? Message format?
+4.  **Challenge Feature (Go/No-Go):** Implement distinct "Challenge" system in V1? (If yes, requires detailed specs on targeting, expiry, acceptance flow).
+5.  **Task/Reward/Announcement Fields:** Confirm necessity of `description` fields? Finalize Announcement fields/types? (`relatedStudentId` usage confirmed for redemptions, others needed?).
 6.  **PIN Login Details:**
-    - What identifier (Name, Username, Email?) is used with the PIN for Student/Parent login?
-    - _(Example: How does a student identify themselves with their PIN? By typing `Alice Wonder` + PIN, or `alice.w` + PIN, or `alice.wonder@email.com` + PIN?)._
-    - How is a Parent session differentiated from a Student session when using the child's credentials?
-    - _(Example: If Mom Wonder logs in using `Alice Wonder` + Alice's PIN, how does the app confirm she's a Parent to show the Parent view? Does the backend check linked parents during login?)._
-7.  **Additional Login Methods:** Offer Email/Password for Students/Parents too?
-    - _(Example: Should students *also* be able to set an email/password to log in, as an alternative to their Identifier+PIN? What about Parents having their own separate email/password login instead of using child credentials?)._
-8.  **Parent Reminders Feature (Go/No-Go):**
-    - Should the "Parent Reminders" feature be implemented in V1? (If yes, requires detailed specs).
-    - _(Example: Should parents have a button like "Nudge Alice about 'Practice Scales'" that shows a reminder in Alice's app?)._
-9.  **Data Deletion Policy:**
-    - When an Admin permanently deletes a student, should their associated `assigned_tasks` and `ticket_transactions` be cascade deleted or anonymized (e.g., `student_id` set to NULL)?
-    - _(Example: If Admin deletes student 'Bob', should all records of tasks Bob completed and tickets he earned disappear forever, or should they remain but just say 'Deleted Student' instead of 'Bob'?)._
+    - *What identifier is used WITH the PIN?* Currently, the PIN itself identifies the user via the `onetime_pins` table lookup. Is an additional identifier (Name, Username?) needed on the login screen, or just the PIN field?
+    - *Parent Session Differentiation:* Confirmed: Handled by `generate-onetime-pin` setting `targetRole='parent'` and `claim-onetime-pin` setting appropriate `app_metadata` in the JWT. `AuthContext` reads this metadata.
+7.  **Additional Login Methods:** Offer Email/Password for Students/Parents as alternative/replacement to PIN flow? (Requires `updateAuthCredentials` usage by them).
+8.  **Parent Reminders Feature (Go/No-Go):** Implement in V1?
+9.  **Data Deletion Policy:** Confirm `ON DELETE` actions for `assigned_tasks` and `ticket_transactions` foreign keys referencing `profiles.id` (CASCADE or SET NULL?).
 
 ## 11. Potential Future Enhancements (Beyond V1 Scope / Pending Interest)
 
