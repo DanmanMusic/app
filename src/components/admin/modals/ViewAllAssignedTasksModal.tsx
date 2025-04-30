@@ -1,20 +1,31 @@
+// src/components/admin/modals/ViewAllAssignedTasksModal.tsx
 import React, { useState, useMemo } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Modal, View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
-import { fetchStudents, fetchTeachers } from '../../../api/users';
+import Toast from 'react-native-toast-message';
+
+// Import API functions
+import { fetchStudents, fetchTeachers, fetchAdmins, fetchUserProfile } from '../../../api/users';
 import { deleteAssignedTask } from '../../../api/assignedTasks';
+
+// Import Hooks
 import { usePaginatedAssignedTasks } from '../../../hooks/usePaginatedAssignedTasks';
+
+// Import Components
+import { AssignedTaskDetailItem } from '../../common/AssignedTaskDetailItem';
 import ConfirmationModal from '../../common/ConfirmationModal';
 import PaginationControls from '../PaginationControls';
-import { AssignedTaskDetailItem } from '../../common/AssignedTaskDetailItem';
+
+// Import Types
+import { User } from '../../../types/dataTypes'; // Added UserRole
 import { ViewAllAssignedTasksModalProps } from '../../../types/componentProps';
-import { User } from '../../../types/dataTypes';
+
+// Import Styles & Helpers
 import { getUserDisplayName } from '../../../utils/helpers';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
-import Toast from 'react-native-toast-message';
 
 export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps> = ({
   visible,
@@ -22,10 +33,10 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
   onInitiateVerification,
 }) => {
   const queryClient = useQueryClient();
-
   const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
   const [taskToDeleteId, setTaskToDeleteId] = useState<string | null>(null);
 
+  // Hook for paginated tasks
   const {
     tasks,
     currentPage,
@@ -40,44 +51,46 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
     isFetching: isFetchingTasks,
     isError: isErrorTasks,
     error: errorTasks,
-  } = usePaginatedAssignedTasks('pending', 'active');
+  } = usePaginatedAssignedTasks('pending', 'active'); // Default filters
 
+  // --- Fetch all necessary user data for lookups when modal is visible ---
+
+  // Fetch Students (Simplified initially, then fetch full profiles)
   const { data: allStudentsData, isLoading: isLoadingStudents } = useQuery<User[], Error>({
-    queryKey: ['users', { role: 'student', limit: 9999, context: 'allTasksModal' }],
+    queryKey: ['students', { filter: 'all', limit: 9999, context: 'allTasksModalLookup' }],
     queryFn: async () => {
       const result = await fetchStudents({ page: 1, limit: 9999, filter: 'all' });
-
-      const studentResponses = await Promise.all(
-        (result?.students || []).map(s =>
-          fetch(`/api/users/${s.id}`).then(res => (res.ok ? res.json() : null))
-        )
-      );
-      return studentResponses.filter(u => u !== null) as User[];
+      // Fetch full profiles for lookup - consider performance implications
+      const students = await Promise.all((result?.students || []).map(s => fetchUserProfile(s.id)));
+      return students.filter((u): u is User => u !== null); // Filter out any null results
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: 10 * 60 * 1000, // Cache for 10 mins
+    enabled: visible, // Only run when modal is visible
   });
 
+  // Fetch Teachers
   const { data: allTeachersData, isLoading: isLoadingTeachers } = useQuery<User[], Error>({
-    queryKey: ['users', { role: 'teacher', limit: 9999, context: 'allTasksModal' }],
+    queryKey: ['teachers', { limit: 9999, context: 'allTasksModalLookup' }],
     queryFn: async () => {
-      const result = await fetchTeachers({ page: 1 });
-
+      const result = await fetchTeachers({ page: 1, limit: 9999 });
       return result?.items || [];
     },
     staleTime: 10 * 60 * 1000,
+    enabled: visible,
   });
 
+  // Fetch Admins
   const { data: allAdminsData, isLoading: isLoadingAdmins } = useQuery<User[], Error>({
-    queryKey: ['users', { role: 'admin', limit: 9999, context: 'allTasksModal' }],
+    queryKey: ['admins', { limit: 9999, context: 'allTasksModalLookup' }],
     queryFn: async () => {
-      const response = await fetch('/api/users?role=admin&limit=1000');
-      if (!response.ok) return [];
-      const result = await response.json();
-      return result.items || [];
+      const result = await fetchAdmins({ page: 1, limit: 9999 });
+      return result?.items || [];
     },
     staleTime: 10 * 60 * 1000,
+    enabled: visible,
   });
 
+  // Create a lookup map for user names and statuses
   const userLookup = useMemo(() => {
     const lookup: Record<string, { name: string; status: 'active' | 'inactive' | 'unknown' }> = {};
     const allUsers = [
@@ -89,27 +102,24 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
       if (user && user.id) {
         lookup[user.id] = {
           name: getUserDisplayName(user),
-          status: user.status || 'unknown',
+          status: user.status || 'unknown', // Handle potential missing status
         };
       }
     });
     return lookup;
   }, [allStudentsData, allTeachersData, allAdminsData]);
 
+  // Combined loading state for all user lookups
   const isLoadingUsers = isLoadingStudents || isLoadingTeachers || isLoadingAdmins;
 
+  // Mutation for deleting an assigned task
   const deleteMutation = useMutation({
     mutationFn: deleteAssignedTask,
     onSuccess: (_, deletedId) => {
       console.log(`Task ${deletedId} deleted from All Tasks modal.`);
-      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] }); // Invalidate relevant queries
       closeDeleteConfirmModal();
-      Toast.show({
-        type: 'success',
-        text1: 'Success',
-        text2: 'Assigned task removed.',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'success', text1: 'Success', text2: 'Assigned task removed.' });
     },
     onError: error => {
       console.error('Error deleting task:', error);
@@ -118,12 +128,11 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
         type: 'error',
         text1: 'Removal Failed',
         text2: error instanceof Error ? error.message : 'Could not remove task.',
-        position: 'bottom',
-        visibilityTime: 4000,
       });
     },
   });
 
+  // Handlers
   const handleDeleteTask = (assignmentId: string) => {
     setTaskToDeleteId(assignmentId);
     setIsDeleteConfirmVisible(true);
@@ -139,8 +148,10 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
     deleteMutation.reset();
   };
 
+  // Find the task object to show in the delete confirmation modal
   const taskToDeleteObject = tasks.find(task => task.id === taskToDeleteId);
 
+  // Combined loading state for the main view
   const isDataLoading = isLoadingTasks || isLoadingUsers;
 
   return (
@@ -148,6 +159,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
         <View style={modalSharedStyles.centeredView}>
           <View style={modalSharedStyles.modalView}>
+            {/* Header */}
             <View style={modalSharedStyles.modalHeader}>
               <Text style={modalSharedStyles.modalTitle}>Assigned Tasks ({totalItems})</Text>
               {isFetchingTasks && !isLoadingTasks && (
@@ -158,6 +170,8 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                 />
               )}
             </View>
+
+            {/* Filters */}
             <View style={modalSharedStyles.filterSection}>
               <View style={modalSharedStyles.filterRow}>
                 <Text style={modalSharedStyles.filterLabel}>Task Status:</Text>
@@ -202,6 +216,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
               </View>
             </View>
 
+            {/* Loading Indicator */}
             {isDataLoading && (
               <ActivityIndicator
                 size="large"
@@ -210,6 +225,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
               />
             )}
 
+            {/* Error Display */}
             {isErrorTasks && !isLoadingTasks && (
               <View style={commonSharedStyles.errorContainer}>
                 <Text style={commonSharedStyles.errorText}>
@@ -217,7 +233,19 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                 </Text>
               </View>
             )}
+            {/* Sub-loading indicator for user lookup */}
+            {!isDataLoading && isLoadingUsers && (
+              <Text
+                style={[
+                  commonSharedStyles.textCenter,
+                  { color: colors.textLight, marginVertical: 10 },
+                ]}
+              >
+                Loading user details...
+              </Text>
+            )}
 
+            {/* Task List */}
             {!isDataLoading && !isErrorTasks && (
               <FlatList
                 style={modalSharedStyles.modalListContainer}
@@ -257,6 +285,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
               />
             )}
 
+            {/* Footer with Pagination and Close Button */}
             <View style={modalSharedStyles.footer}>
               {!isDataLoading && !isErrorTasks && totalPages > 1 && (
                 <PaginationControls
@@ -270,13 +299,15 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                   title="Close"
                   onPress={onClose}
                   color={colors.secondary}
-                  disabled={deleteMutation.isPending}
+                  disabled={deleteMutation.isPending} // Disable close if delete is happening? Or allow? Allowing for now.
                 />
               </View>
             </View>
           </View>
         </View>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
       <ConfirmationModal
         visible={isDeleteConfirmVisible}
         title="Confirm Removal"

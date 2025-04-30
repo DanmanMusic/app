@@ -8,42 +8,33 @@ import Toast from 'react-native-toast-message';
 
 // Component & Context Imports
 import TaskVerificationModal from './src/components/common/TaskVerificationModal';
-// Import the REAL AuthProvider and useAuth
-import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import { AuthProvider, useAuth } from './src/contexts/AuthContext'; // Using AuthProvider
 import { AdminView } from './src/views/AdminView';
 import { ParentView } from './src/views/ParentView';
 import { PublicView } from './src/views/PublicView';
 import { StudentView } from './src/views/StudentView';
 import { TeacherView } from './src/views/TeacherView';
 import LoginModal from './src/components/common/LoginModal';
-// Removed API function for Dev Selector
-// import { fetchActiveProfilesForDevSelector } from './src/api/users';
 
 // Type Imports
-import { AssignedTask } from './src/types/dataTypes'; // Removed User, UserRole if DevSelector removed
+import { AssignedTask } from './src/types/dataTypes';
 
 // Style & Helper Imports
 import { colors } from './src/styles/colors';
-// Removed unused helpers/styles if DevSelector removed
-// import { getUserDisplayName } from './src/utils/helpers';
 import { commonSharedStyles } from './src/styles/commonSharedStyles';
-// import { appSharedStyles } from './src/styles/appSharedStyles'; // Keep if used elsewhere
+// Removed appSharedStyles import if only used for test button styles
 
 const queryClient = new QueryClient();
 
-// --- Development Role Selector REMOVED ---
-// const DevelopmentRoleSelector = () => { ... };
-// --- END Development Role Selector REMOVED ---
-
 // --- Main Application Content Component ---
 const AppContent = () => {
-  // Use REAL auth state from context - remove mock override related state/setters
+  // Use REAL auth state from context
   const {
     isLoading: authIsLoading,
     isAuthenticated,
     currentUserRole,
     error: authError,
-    signOut, // Keep signOut if needed for testing/buttons
+    signOut,
   } = useAuth();
 
   // State for modals remains the same
@@ -62,8 +53,6 @@ const AppContent = () => {
 
   const handleOpenLoginModal = () => setIsLoginModalVisible(true);
   const handleCloseLoginModal = () => setIsLoginModalVisible(false);
-
-  // Removed handler for resetting mock view
 
   // Define renderMainView INSIDE AppContent
   const renderMainView = () => {
@@ -85,13 +74,9 @@ const AppContent = () => {
             Authentication Error: {authError.message}
           </Text>
           <Button title="Try Login" onPress={handleOpenLoginModal} color={colors.primary} />
-          {/* Optional: Add sign out button maybe? */}
-          {/* <Button title="Sign Out" onPress={signOut} color={colors.danger} /> */}
         </View>
       );
     }
-
-    // *** REMOVED Dev Selector logic ***
 
     // Use currentUserRole directly from context
     switch (currentUserRole) {
@@ -121,8 +106,6 @@ const AppContent = () => {
     }
   };
 
-  // *** REMOVED showDevResetButton logic ***
-
   return (
     <View style={styles.container}>
       <StatusBar style="auto" />
@@ -135,6 +118,8 @@ const AppContent = () => {
         onClose={handleCloseVerificationModal}
       />
       <LoginModal visible={isLoginModalVisible} onClose={handleCloseLoginModal} />
+
+      {/* Removed Test Fetch Button View */}
 
       {isAuthenticated && (
         <View style={styles.signOutButtonContainer}>
@@ -180,12 +165,10 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 16,
   },
-  // *** REMOVED selectorContainer and selectorTitle styles ***
-  // *** REMOVED resetButtonContainer style ***
   signOutButtonContainer: {
     // Kept optional sign out button style
     position: 'absolute',
-    bottom: 15, // Adjusted position slightly
+    bottom: 15,
     right: 15,
     zIndex: 100,
     backgroundColor: 'rgba(200, 0, 0, 0.6)', // Reddish background

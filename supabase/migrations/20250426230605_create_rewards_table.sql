@@ -42,56 +42,58 @@ END $$;
 -- These policies assume a function `public.is_admin(uuid)` exists that returns true
 -- if the given user ID belongs to an active administrator.
 
--- Clean up any potential old/temporary policies first
+-- Clean up potentially existing policies (including TEMP/old/authenticated ones)
+DROP POLICY IF EXISTS "Rewards: Allow authenticated read access" ON public.rewards;
+DROP POLICY IF EXISTS "Rewards: Allow public read access" ON public.rewards;
+DROP POLICY IF EXISTS "Rewards: Allow admin insert access" ON public.rewards;
+DROP POLICY IF EXISTS "Rewards: Allow admin update access" ON public.rewards;
+DROP POLICY IF EXISTS "Rewards: Allow admin delete access" ON public.rewards;
 DROP POLICY IF EXISTS "Allow public read access on rewards" ON public.rewards;
-DROP POLICY IF EXISTS "TEMP Allow anon insert access on rewards" ON public.rewards;
-DROP POLICY IF EXISTS "TEMP Allow anon update access on rewards" ON public.rewards;
-DROP POLICY IF EXISTS "TEMP Allow anon delete access on rewards" ON public.rewards;
-DROP POLICY IF EXISTS "Allow authenticated read access on rewards" ON public.rewards;
+DROP POLICY IF EXISTS "Allow authenticated users to read rewards" ON public.rewards;
 DROP POLICY IF EXISTS "Allow admin users to insert rewards" ON public.rewards;
 DROP POLICY IF EXISTS "Allow admin users to update rewards" ON public.rewards;
 DROP POLICY IF EXISTS "Allow admin users to delete rewards" ON public.rewards;
+DROP POLICY IF EXISTS "TEMP Allow anon insert access on rewards" ON public.rewards;
+DROP POLICY IF EXISTS "TEMP Allow anon update access on rewards" ON public.rewards;
+DROP POLICY IF EXISTS "TEMP Allow anon delete access on rewards" ON public.rewards;
 
--- 1. SELECT Policy: Allow ANY authenticated user to read rewards
-CREATE POLICY "Allow authenticated users to read rewards"
+-- SELECT Policy: Allow ANYONE (public) to read the rewards catalog.
+CREATE POLICY "Rewards: Allow public read access"
 ON public.rewards
 FOR SELECT
-TO authenticated -- Grant to logged-in users
+-- TO public -- Implicitly public
 USING (true); -- Allows reading all reward rows
 
-COMMENT ON POLICY "Allow authenticated users to read rewards" ON public.rewards
-IS 'Allows any logged-in user to view the rewards catalog.';
+COMMENT ON POLICY "Rewards: Allow public read access" ON public.rewards
+IS 'Allows anyone (logged in or anonymous) to view the rewards catalog.';
 
-
--- 2. INSERT Policy: Allow ONLY admins to create new rewards
-CREATE POLICY "Allow admin users to insert rewards"
+-- INSERT Policy: Allow ONLY admins to create new rewards.
+CREATE POLICY "Rewards: Allow admin insert access"
 ON public.rewards
 FOR INSERT
-TO authenticated -- Apply to authenticated role pool...
-WITH CHECK (public.is_admin(auth.uid())); -- ...but only allow if they are admin
+TO authenticated
+WITH CHECK (public.is_admin(auth.uid()));
 
-COMMENT ON POLICY "Allow admin users to insert rewards" ON public.rewards
+COMMENT ON POLICY "Rewards: Allow admin insert access" ON public.rewards
 IS 'Allows users with the admin role (checked via is_admin function) to create rewards.';
 
-
--- 3. UPDATE Policy: Allow ONLY admins to update existing rewards
-CREATE POLICY "Allow admin users to update rewards"
+-- UPDATE Policy: Allow ONLY admins to update existing rewards.
+CREATE POLICY "Rewards: Allow admin update access"
 ON public.rewards
 FOR UPDATE
 TO authenticated
-USING (public.is_admin(auth.uid())) -- User must be admin to attempt update
-WITH CHECK (public.is_admin(auth.uid())); -- User must still be admin during update
+USING (public.is_admin(auth.uid()))
+WITH CHECK (public.is_admin(auth.uid()));
 
-COMMENT ON POLICY "Allow admin users to update rewards" ON public.rewards
+COMMENT ON POLICY "Rewards: Allow admin update access" ON public.rewards
 IS 'Allows users with the admin role to update existing rewards.';
 
-
--- 4. DELETE Policy: Allow ONLY admins to delete rewards
-CREATE POLICY "Allow admin users to delete rewards"
+-- DELETE Policy: Allow ONLY admins to delete rewards.
+CREATE POLICY "Rewards: Allow admin delete access"
 ON public.rewards
 FOR DELETE
 TO authenticated
-USING (public.is_admin(auth.uid())); -- User must be admin to delete
+USING (public.is_admin(auth.uid()));
 
-COMMENT ON POLICY "Allow admin users to delete rewards" ON public.rewards
+COMMENT ON POLICY "Rewards: Allow admin delete access" ON public.rewards
 IS 'Allows users with the admin role to delete rewards.';

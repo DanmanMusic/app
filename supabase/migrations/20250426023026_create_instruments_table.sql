@@ -16,7 +16,7 @@ ALTER TABLE public.instruments ENABLE ROW LEVEL SECURITY;
 COMMENT ON TABLE public.instruments IS 'Stores musical instruments offered or used in the school.';
 -- ... other comments ...
 
--- Trigger function for updated_at
+-- Trigger function for updated_at (Assuming it's defined elsewhere or created here if first time)
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -32,46 +32,58 @@ FOR EACH ROW
 EXECUTE FUNCTION public.handle_updated_at();
 
 
--- Define Row Level Security (RLS) Policies for instruments table
--- WARNING: These are overly permissive for development ONLY allowing anon access.
--- TODO: MUST be replaced with role-specific checks (e.g., is_admin()) before production.
+-- === RLS for public.instruments (with Public Read) ===
 
--- Allow public read access (Remains the same)
-CREATE POLICY "Allow public read access"
+-- Remove existing policies (including TEMP/old/authenticated ones)
+DROP POLICY IF EXISTS "Instruments: Allow public read access" ON public.instruments;
+DROP POLICY IF EXISTS "Instruments: Allow admin insert access" ON public.instruments;
+DROP POLICY IF EXISTS "Instruments: Allow admin update access" ON public.instruments;
+DROP POLICY IF EXISTS "Instruments: Allow admin delete access" ON public.instruments;
+DROP POLICY IF EXISTS "Allow public read access" ON public.instruments; -- Older name
+DROP POLICY IF EXISTS "TEMP Allow anon or auth insert access" ON public.instruments; -- Older TEMP name
+DROP POLICY IF EXISTS "TEMP Allow anon or auth update access" ON public.instruments; -- Older TEMP name
+DROP POLICY IF EXISTS "TEMP Allow anon or auth delete access" ON public.instruments; -- Older TEMP name
+DROP POLICY IF EXISTS "Allow authenticated insert access" ON public.instruments; -- Older name
+DROP POLICY IF EXISTS "Allow authenticated update access" ON public.instruments; -- Older name
+DROP POLICY IF EXISTS "Allow authenticated delete access" ON public.instruments; -- Older name
+
+-- SELECT Policy: Allow ANYONE (public) to read instruments.
+CREATE POLICY "Instruments: Allow public read access"
 ON public.instruments
 FOR SELECT
-USING (true);
+-- TO public -- Implicitly public
+USING (true); -- Allows reading all instrument rows
 
-COMMENT ON POLICY "Allow public read access" ON public.instruments
-IS 'Allows anyone to read the list of instruments.';
+COMMENT ON POLICY "Instruments: Allow public read access" ON public.instruments
+IS 'Allows anyone (logged in or anonymous) to view the list of instruments.';
 
--- *** MODIFIED: Allow INSERT for anon/authenticated users (TEMP) ***
-DROP POLICY IF EXISTS "Allow authenticated insert access" ON public.instruments; -- Drop old one if exists
-CREATE POLICY "TEMP Allow anon or auth insert access"
+-- INSERT Policy: Allow ONLY admins to create new instruments.
+CREATE POLICY "Instruments: Allow admin insert access"
 ON public.instruments
 FOR INSERT
-WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'anon');
+TO authenticated
+WITH CHECK (public.is_admin(auth.uid()));
 
-COMMENT ON POLICY "TEMP Allow anon or auth insert access" ON public.instruments
-IS 'TEMP DEV ONLY: Allows anon/auth users to add instruments. TODO: Restrict to admin role.';
+COMMENT ON POLICY "Instruments: Allow admin insert access" ON public.instruments
+IS 'Allows users with the admin role to create instruments.';
 
--- *** MODIFIED: Allow UPDATE for anon/authenticated users (TEMP) ***
-DROP POLICY IF EXISTS "Allow authenticated update access" ON public.instruments; -- Drop old one if exists
-CREATE POLICY "TEMP Allow anon or auth update access"
+-- UPDATE Policy: Allow ONLY admins to update existing instruments.
+CREATE POLICY "Instruments: Allow admin update access"
 ON public.instruments
 FOR UPDATE
-USING (auth.role() = 'authenticated' OR auth.role() = 'anon')
-WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'anon');
+TO authenticated
+USING (public.is_admin(auth.uid()))
+WITH CHECK (public.is_admin(auth.uid()));
 
-COMMENT ON POLICY "TEMP Allow anon or auth update access" ON public.instruments
-IS 'TEMP DEV ONLY: Allows anon/auth users to update instruments. TODO: Restrict to admin role.';
+COMMENT ON POLICY "Instruments: Allow admin update access" ON public.instruments
+IS 'Allows users with the admin role to update existing instruments.';
 
--- *** MODIFIED: Allow DELETE for anon/authenticated users (TEMP) ***
-DROP POLICY IF EXISTS "Allow authenticated delete access" ON public.instruments; -- Drop old one if exists
-CREATE POLICY "TEMP Allow anon or auth delete access"
+-- DELETE Policy: Allow ONLY admins to delete instruments.
+CREATE POLICY "Instruments: Allow admin delete access"
 ON public.instruments
 FOR DELETE
-USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
+TO authenticated
+USING (public.is_admin(auth.uid()));
 
-COMMENT ON POLICY "TEMP Allow anon or auth delete access" ON public.instruments
-IS 'TEMP DEV ONLY: Allows anon/auth users to delete instruments. TODO: Restrict to admin role.';
+COMMENT ON POLICY "Instruments: Allow admin delete access" ON public.instruments
+IS 'Allows users with the admin role to delete instruments.';

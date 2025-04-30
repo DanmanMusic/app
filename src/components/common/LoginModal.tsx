@@ -1,3 +1,4 @@
+// src/components/common/LoginModal.tsx
 import React, { useState, useEffect } from 'react';
 import {
   Modal,
@@ -13,8 +14,10 @@ import {
 import Toast from 'react-native-toast-message';
 
 import { getSupabase } from '../../lib/supabaseClient';
-
 import { claimPin } from '../../api/auth';
+// --- Import storage helpers ---
+import { storeItem, removeItem, CUSTOM_REFRESH_TOKEN_KEY } from '../../lib/storageHelper';
+
 import { colors } from '../../styles/colors';
 import { modalSharedStyles } from '../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
@@ -26,9 +29,10 @@ interface LoginModalProps {
 
 type LoginMode = 'email' | 'pin';
 
+// Key definition is now in storageHelper.ts
+
 export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
   const supabase = getSupabase();
-
   const [mode, setMode] = useState<LoginMode>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -57,6 +61,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
     setIsLoading(true);
     try {
       console.log('[LoginModal] Attempting Supabase email/password sign in...');
+      try {
+        // --- Use storage helper for cleanup ---
+        await removeItem(CUSTOM_REFRESH_TOKEN_KEY);
+        console.log('[LoginModal] Cleared any existing PIN refresh token.');
+      } catch (e) {
+        console.warn('Could not clear pin token on email login', e);
+      }
+
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password,
@@ -93,6 +105,27 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
       const sessionData = await claimPin(trimmedPin);
       console.log('[LoginModal] PIN Claim successful via API:', sessionData);
 
+      try {
+        // --- Use storage helper to store ---
+        await storeItem(CUSTOM_REFRESH_TOKEN_KEY, sessionData.refresh_token);
+        console.log('[LoginModal] Custom refresh token stored successfully.');
+      } catch (storeError) {
+        console.error('[LoginModal] Failed to store custom refresh token:', storeError);
+        Toast.show({
+          type: 'error',
+          text1: 'Session Error',
+          text2: 'Could not save session token locally.',
+        });
+        // --- Use storage helper for cleanup if store fails ---
+        try {
+          await removeItem(CUSTOM_REFRESH_TOKEN_KEY);
+        } catch (removeErr) {
+          console.error('Error removing partially stored token:', removeErr);
+        }
+        throw new Error('Failed to store session.');
+      }
+
+      // Set the Supabase session (still needed for immediate use)
       await supabase.auth.setSession({
         access_token: sessionData.access_token,
         refresh_token: sessionData.refresh_token,
@@ -102,8 +135,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
       Toast.show({ type: 'success', text1: 'Login Successful via PIN!' });
       onClose();
     } catch (catchError: any) {
-      console.error('[LoginModal] Error claiming PIN via API:', catchError);
+      console.error('[LoginModal] Error claiming PIN via API or storing token:', catchError);
       setError(catchError.message || 'An error occurred during PIN login.');
+      try {
+        // --- Use storage helper for cleanup on overall failure ---
+        await removeItem(CUSTOM_REFRESH_TOKEN_KEY);
+      } catch (e) {
+        console.warn('Could not clear pin token on failed login', e);
+      }
+
       Toast.show({
         type: 'error',
         text1: 'PIN Login Failed',

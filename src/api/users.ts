@@ -312,24 +312,10 @@ export const fetchUserProfile = async (userId: string): Promise<User | null> => 
 
     profile = data;
     console.log(`[fetchUserProfile] Profile data fetched for ${userId}.`);
-
-    /*
-      console.log(`[fetchUserProfile] Proceeding to map...`);
-      const mappedUser = await mapProfileToUser(profile, client);
-      console.log(`[fetchUserProfile] Successfully fetched and mapped profile for ${userId}.`);
-      return mappedUser;
-      */
-
-    const basicUser: User = {
-      id: profile.id,
-      role: profile.role as UserRole,
-      firstName: profile.first_name,
-      lastName: profile.last_name,
-      nickname: profile.nickname ?? undefined,
-      status: profile.status as UserStatus,
-    };
-    console.log('[fetchUserProfile] Returning BASIC user profile (mapping disabled).');
-    return basicUser;
+    console.log(`[fetchUserProfile] Proceeding to map...`);
+    const mappedUser = await mapProfileToUser(profile, client);
+    console.log(`[fetchUserProfile] Successfully fetched and mapped profile for ${userId}.`);
+    return mappedUser;
   } catch (catchError: any) {
     console.error(
       `[fetchUserProfile] CAUGHT ERROR fetching/mapping profile for ${userId}:`,
@@ -396,65 +382,83 @@ export const updateUser = async ({
   updates,
 }: {
   userId: string;
+  // The updates object now directly matches what the Edge Function expects
   updates: Partial<Omit<User, 'id' | 'role' | 'status'>>;
 }): Promise<User> => {
   const client = getSupabase();
-  console.log(`[Supabase] Updating profile for user ${userId}:`, updates);
+  console.log(
+    `[API updateUser] Calling Edge Function 'updateUserWithLinks' for user ${userId} with updates:`,
+    updates
+  );
 
-  const profileUpdates: { first_name?: string; last_name?: string; nickname?: string | null } = {};
-  let needsProfileUpdate = false;
+  // Prepare payload for the Edge Function
+  const payload = {
+    userIdToUpdate: userId,
+    updates: {
+      // Ensure the structure matches the Edge Function's expectation
+      firstName: updates.firstName,
+      lastName: updates.lastName,
+      // Pass null if nickname is empty string, otherwise pass trimmed or undefined
+      nickname: updates.nickname === '' ? null : updates.nickname?.trim(),
+      // Pass link arrays if they exist in the updates object
+      ...(updates.instrumentIds !== undefined && { instrumentIds: updates.instrumentIds }),
+      ...(updates.linkedTeacherIds !== undefined && { linkedTeacherIds: updates.linkedTeacherIds }),
+    },
+  };
 
-  if (updates.firstName !== undefined) {
-    profileUpdates.first_name = updates.firstName;
-    needsProfileUpdate = true;
-  }
-  if (updates.lastName !== undefined) {
-    profileUpdates.last_name = updates.lastName;
-    needsProfileUpdate = true;
-  }
-  if (updates.hasOwnProperty('nickname')) {
-    profileUpdates.nickname = updates.nickname || null;
-    needsProfileUpdate = true;
-  }
+  // Remove undefined keys from the inner 'updates' object to keep payload clean
+  Object.keys(payload.updates).forEach(
+    key =>
+      payload.updates[key as keyof typeof payload.updates] === undefined &&
+      delete payload.updates[key as keyof typeof payload.updates]
+  );
 
-  if (needsProfileUpdate) {
-    console.log(`[Supabase] Updating profile fields for ${userId}:`, profileUpdates);
-    const { error: profileError } = await client
-      .from('profiles')
-      .update(profileUpdates)
-      .eq('id', userId);
-    if (profileError) {
-      throw new Error(`Failed to update profile: ${profileError.message}`);
+  console.log('[API updateUser] Payload being sent:', JSON.stringify(payload));
+
+  const { data, error } = await client.functions.invoke('updateUserWithLinks', {
+    body: payload,
+  });
+
+  if (error) {
+    console.error('[API updateUser] Error invoking updateUserWithLinks function:', error);
+    // Attempt to parse nested error message if available
+    let detailedError = error.message || 'Unknown function error';
+    if (
+      error.context &&
+      typeof error.context === 'object' &&
+      error.context !== null &&
+      'error' in error.context
+    ) {
+      detailedError = String((error.context as any).error) || detailedError;
+    } else {
+      try {
+        const parsed = JSON.parse(error.message);
+        if (parsed && parsed.error) detailedError = String(parsed.error);
+      } catch (e) {}
     }
-    console.log(`[Supabase] Profile fields updated successfully for ${userId}.`);
-  } else {
-    console.log(`[Supabase] No profile fields needed updating for ${userId}.`);
+    if (error.context?.message) {
+      detailedError += ` (Context: ${error.context.message})`;
+    }
+
+    throw new Error(`User update failed: ${detailedError}`);
   }
 
-  if (updates.instrumentIds !== undefined) {
-    console.warn(
-      `[Supabase] updateUser: Updating instrumentIds for ${userId} requires server-side logic (deferred).`
-    );
-  }
-  if (updates.linkedTeacherIds !== undefined) {
-    console.warn(
-      `[Supabase] updateUser: Updating linkedTeacherIds for ${userId} requires server-side logic (deferred).`
-    );
-  }
-  if (updates.linkedStudentIds !== undefined) {
-    console.warn(
-      `[Supabase] updateUser: Updating linkedStudentIds for ${userId} requires server-side logic (deferred).`
-    );
-  }
+  console.log('[API updateUser] Edge Function returned successfully:', data);
 
-  console.log(`[Supabase] Re-fetching full profile for ${userId} after update attempt.`);
+  // Edge function currently only returns a message.
+  // For consistency, we should refetch the user profile after a successful update.
+  console.log(`[API updateUser] Update reported success for ${userId}. Re-fetching profile...`);
   const updatedUser = await fetchUserProfile(userId);
   if (!updatedUser) {
-    throw new Error(`Update might have succeeded, but failed to re-fetch profile for ${userId}.`);
+    // This case is less likely if the update succeeded, but handle it.
+    console.error(
+      `[API updateUser] Update succeeded, but failed to re-fetch profile for ${userId}.`
+    );
+    throw new Error(`Update succeeded, but failed to re-fetch profile.`);
   }
 
-  console.log(`[Supabase] User ${userId} update process finished.`);
-  return updatedUser;
+  console.log(`[API updateUser] User ${userId} update process finished.`);
+  return updatedUser; // Return the freshly fetched user profile
 };
 
 export const deleteUser = async (userId: string): Promise<void> => {

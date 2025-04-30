@@ -559,7 +559,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
               <Button title="View All Assigned Tasks" onPress={handleViewAllAssignedTasks} />
             </View>
           )}
-          <View style={{ height: 40 }} /> {}
+          <View style={{ height: 40 }} />
         </ScrollView>
       ) : (
         <View style={appSharedStyles.contentArea}>{renderMainContent()}</View>

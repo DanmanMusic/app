@@ -8,10 +8,6 @@ CREATE TABLE public.parent_students (
     student_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     created_at timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (parent_id, student_id)
-    -- Add constraint to ensure roles are correct (optional but good practice)
-    -- Deferring role check constraints for now.
-    -- CONSTRAINT check_parent_role CHECK (is_profile_role(parent_id, 'parent')),
-    -- CONSTRAINT check_student_role_in_parent CHECK (is_profile_role(student_id, 'student'))
 );
 
 -- == Comments ==
@@ -26,22 +22,40 @@ ALTER TABLE public.parent_students ENABLE ROW LEVEL SECURITY;
 CREATE INDEX idx_parent_students_parent_id ON public.parent_students (parent_id);
 CREATE INDEX idx_parent_students_student_id ON public.parent_students (student_id);
 
--- == Row Level Security (RLS) Policies ==
--- WARNING: TEMPORARY DEVELOPMENT POLICIES - Allow anonymous access. MUST BE REPLACED.
 
--- 1. TEMP Anon Select
-DROP POLICY IF EXISTS "TEMP Allow anon select on parent_students" ON public.parent_students;
-CREATE POLICY "TEMP Allow anon select on parent_students"
-ON public.parent_students FOR SELECT
-TO anon
-USING (true);
-COMMENT ON POLICY "TEMP Allow anon select on parent_students" ON public.parent_students IS 'TEMP DEV ONLY: Allows anon read access. MUST BE REPLACED.';
+-- === RLS for public.parent_students ===
 
--- 2. TEMP Anon Write (Insert/Delete/Update)
-DROP POLICY IF EXISTS "TEMP Allow anon write on parent_students" ON public.parent_students;
-CREATE POLICY "TEMP Allow anon write on parent_students"
-ON public.parent_students FOR ALL
-TO anon
-USING (true)
-WITH CHECK (true);
-COMMENT ON POLICY "TEMP Allow anon write on parent_students" ON public.parent_students IS 'TEMP DEV ONLY: Allows anon write access. MUST BE REPLACED.';
+-- Clean up existing policies (including TEMP/old ones)
+DROP POLICY IF EXISTS "Parent Students: Allow admin full access" ON public.parent_students;
+DROP POLICY IF EXISTS "Parent Students: Allow related read access" ON public.parent_students;
+DROP POLICY IF EXISTS "TEMP Allow anon select on parent_students" ON public.parent_students; -- If exists
+DROP POLICY IF EXISTS "TEMP Allow anon write on parent_students" ON public.parent_students; -- If exists
+
+
+-- SELECT Policy: Allow Admins, the linked Parent, or the linked Student to read.
+CREATE POLICY "Parent Students: Allow related read access"
+ON public.parent_students
+FOR SELECT
+TO authenticated
+USING (
+    public.is_admin(auth.uid()) -- Admins can read all
+    OR
+    auth.uid() = parent_id     -- The parent can see their own links
+    OR
+    auth.uid() = student_id    -- The student can see their own links
+);
+
+COMMENT ON POLICY "Parent Students: Allow related read access" ON public.parent_students
+IS 'Allows admins, the specific parent, or the specific student in the link to read the record.';
+
+
+-- WRITE Policy (INSERT, UPDATE, DELETE): Allow ONLY admins.
+CREATE POLICY "Parent Students: Allow admin write access"
+ON public.parent_students
+FOR ALL -- Covers INSERT, UPDATE, DELETE
+TO authenticated
+USING (public.is_admin(auth.uid())) -- Allow if the user IS an admin
+WITH CHECK (public.is_admin(auth.uid())); -- Ensure they remain admin during the operation
+
+COMMENT ON POLICY "Parent Students: Allow admin write access" ON public.parent_students
+IS 'Allows users with the admin role to create, update, and delete parent-student links.';

@@ -52,62 +52,56 @@ END $$;
 CREATE INDEX idx_announcements_type_date ON public.announcements (type, date DESC);
 CREATE INDEX idx_announcements_related_student ON public.announcements (related_student_id);
 
-
--- == Row Level Security (RLS) Policies (SECURE VERSION) ==
--- Assumes a function `public.is_admin(uuid)` exists.
-
--- Clean up any potential old/temporary policies first
-DROP POLICY IF EXISTS "Allow public read access on announcements" ON public.announcements;
+-- Remove potentially existing policies first (including old TEMP/authenticated ones)
+DROP POLICY IF EXISTS "Announcements: Allow authenticated read access" ON public.announcements;
+DROP POLICY IF EXISTS "Announcements: Allow public read access" ON public.announcements;
+DROP POLICY IF EXISTS "Announcements: Allow admin insert access" ON public.announcements;
+DROP POLICY IF EXISTS "Announcements: Allow admin update access" ON public.announcements;
+DROP POLICY IF EXISTS "Announcements: Allow admin delete access" ON public.announcements;
+DROP POLICY IF EXISTS "TEMP Allow anon select on announcements" ON public.announcements;
+DROP POLICY IF EXISTS "TEMP Allow anon write on announcements" ON public.announcements;
 DROP POLICY IF EXISTS "TEMP Allow anon insert access on announcements" ON public.announcements;
 DROP POLICY IF EXISTS "TEMP Allow anon update access on announcements" ON public.announcements;
 DROP POLICY IF EXISTS "TEMP Allow anon delete access on announcements" ON public.announcements;
-DROP POLICY IF EXISTS "Allow authenticated read access on announcements" ON public.announcements; -- If added previously
-DROP POLICY IF EXISTS "Allow admin users to insert announcements" ON public.announcements;
-DROP POLICY IF EXISTS "Allow admin users to update announcements" ON public.announcements;
-DROP POLICY IF EXISTS "Allow admin users to delete announcements" ON public.announcements;
 
 
--- 1. SELECT Policy: Allow ANY authenticated user to read announcements
---    (Change to `USING (true)` for public access if needed)
-CREATE POLICY "Allow authenticated users to read announcements"
+-- SELECT Policy: Allow ANYONE (public) to read announcements.
+CREATE POLICY "Announcements: Allow public read access"
 ON public.announcements
 FOR SELECT
-TO authenticated
-USING (true); -- Allows reading all announcements
+-- TO public -- Implicitly public if no TO clause and USING (true)
+USING (true); -- Allows reading all announcement rows
 
-COMMENT ON POLICY "Allow authenticated users to read announcements" ON public.announcements
-IS 'Allows any logged-in user to view announcements.';
+COMMENT ON POLICY "Announcements: Allow public read access" ON public.announcements
+IS 'Allows anyone (logged in or anonymous) to view announcements.';
 
-
--- 2. INSERT Policy: Allow ONLY admins to create new announcements
-CREATE POLICY "Allow admin users to insert announcements"
+-- INSERT Policy: Allow ONLY admins to create new announcements.
+CREATE POLICY "Announcements: Allow admin insert access"
 ON public.announcements
 FOR INSERT
 TO authenticated
 WITH CHECK (public.is_admin(auth.uid()));
 
-COMMENT ON POLICY "Allow admin users to insert announcements" ON public.announcements
+COMMENT ON POLICY "Announcements: Allow admin insert access" ON public.announcements
 IS 'Allows users with the admin role to create announcements.';
 
-
--- 3. UPDATE Policy: Allow ONLY admins to update existing announcements
-CREATE POLICY "Allow admin users to update announcements"
+-- UPDATE Policy: Allow ONLY admins to update existing announcements.
+CREATE POLICY "Announcements: Allow admin update access"
 ON public.announcements
 FOR UPDATE
 TO authenticated
 USING (public.is_admin(auth.uid()))
 WITH CHECK (public.is_admin(auth.uid()));
 
-COMMENT ON POLICY "Allow admin users to update announcements" ON public.announcements
+COMMENT ON POLICY "Announcements: Allow admin update access" ON public.announcements
 IS 'Allows users with the admin role to update existing announcements.';
 
-
--- 4. DELETE Policy: Allow ONLY admins to delete announcements
-CREATE POLICY "Allow admin users to delete announcements"
+-- DELETE Policy: Allow ONLY admins to delete announcements.
+CREATE POLICY "Announcements: Allow admin delete access"
 ON public.announcements
 FOR DELETE
 TO authenticated
 USING (public.is_admin(auth.uid()));
 
-COMMENT ON POLICY "Allow admin users to delete announcements" ON public.announcements
+COMMENT ON POLICY "Announcements: Allow admin delete access" ON public.announcements
 IS 'Allows users with the admin role to delete announcements.';

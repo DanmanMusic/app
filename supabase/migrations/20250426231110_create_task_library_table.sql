@@ -2,12 +2,12 @@
 
 -- == Create Task Library Table ==
 
+-- == Create Task Library Table ==
 CREATE TABLE public.task_library (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     title text NOT NULL,
-    description text NULL, -- Keeping description nullable as per current model/spec discussion
+    description text NULL,
     base_tickets integer NOT NULL CHECK (base_tickets >= 0),
-    -- Potential future field (Decision Pending in SPEC): link_url text NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -17,20 +17,24 @@ COMMENT ON TABLE public.task_library IS 'Stores predefined, reusable tasks that 
 COMMENT ON COLUMN public.task_library.title IS 'Short, display title of the task.';
 COMMENT ON COLUMN public.task_library.description IS 'Longer description or instructions for the task.';
 COMMENT ON COLUMN public.task_library.base_tickets IS 'Default number of tickets awarded for completing this task.';
--- COMMENT ON COLUMN public.task_library.link_url IS 'Optional external URL related to the task.';
 
 -- == Enable RLS ==
 ALTER TABLE public.task_library ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE public.assigned_tasks
-  ADD CONSTRAINT fk_assigned_tasks_student FOREIGN KEY (student_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
-ALTER TABLE public.assigned_tasks
-   ADD CONSTRAINT fk_assigned_tasks_assigner FOREIGN KEY (assigned_by_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
-ALTER TABLE public.assigned_tasks
-   ADD CONSTRAINT fk_assigned_tasks_verifier FOREIGN KEY (verified_by_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
+-- == Foreign Key Constraints for assigned_tasks (Moved here as it depends on profiles) ==
+-- Ensure this runs AFTER profiles table is created if separating migrations strictly
+-- ALTER TABLE public.assigned_tasks
+--   ADD CONSTRAINT fk_assigned_tasks_student FOREIGN KEY (student_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+-- ALTER TABLE public.assigned_tasks
+--   ADD CONSTRAINT fk_assigned_tasks_assigner FOREIGN KEY (assigned_by_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
+-- ALTER TABLE public.assigned_tasks
+--   ADD CONSTRAINT fk_assigned_tasks_verifier FOREIGN KEY (verified_by_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
+-- Note: It's generally better practice to put FK constraints in their own migration
+--       or in the migration of the table containing the FK column (`assigned_tasks` in this case).
+--       Leaving commented out here, assuming they are handled in the `assigned_tasks` migration.
+
 
 -- == Updated At Trigger ==
--- Apply the existing updated_at trigger function
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'handle_updated_at') THEN
@@ -43,49 +47,36 @@ BEGIN
   END IF;
 END $$;
 
--- == Row Level Security (RLS) Policies ==
--- WARNING: TEMPORARY DEVELOPMENT POLICIES - Allow anonymous access. MUST BE REPLACED.
 
--- 1. Public Read Access (Allow anyone, including students/teachers, to see the library)
+-- === RLS for public.task_library ===
+
+-- Clean up existing policies (including TEMP/old ones)
+DROP POLICY IF EXISTS "Task Library: Allow authenticated read access" ON public.task_library;
+DROP POLICY IF EXISTS "Task Library: Allow admin write access" ON public.task_library;
 DROP POLICY IF EXISTS "Allow public read access on task_library" ON public.task_library;
-CREATE POLICY "Allow public read access on task_library"
+DROP POLICY IF EXISTS "TEMP Allow anon insert access on task_library" ON public.task_library;
+DROP POLICY IF EXISTS "TEMP Allow anon update access on task_library" ON public.task_library;
+DROP POLICY IF EXISTS "TEMP Allow anon delete access on task_library" ON public.task_library;
+
+
+-- SELECT Policy: Allow ANY authenticated user to read the task library.
+CREATE POLICY "Task Library: Allow authenticated read access"
 ON public.task_library
 FOR SELECT
-USING (true);
+TO authenticated -- Grant read access to any logged-in user
+USING (true); -- Allows reading all library rows
 
-COMMENT ON POLICY "Allow public read access on task_library" ON public.task_library
-IS 'Allows anyone (publicly) to read the task library.';
+COMMENT ON POLICY "Task Library: Allow authenticated read access" ON public.task_library
+IS 'Allows any logged-in user (admin, teacher, student, parent) to view the task library.';
 
--- 2. Anonymous Insert Access (TEMPORARY)
-DROP POLICY IF EXISTS "TEMP Allow anon insert access on task_library" ON public.task_library;
-CREATE POLICY "TEMP Allow anon insert access on task_library"
+
+-- WRITE Policy (INSERT, UPDATE, DELETE): Allow ONLY admins.
+CREATE POLICY "Task Library: Allow admin write access"
 ON public.task_library
-FOR INSERT
-TO anon -- Grant to anonymous role
-WITH CHECK (true);
+FOR ALL -- Covers INSERT, UPDATE, DELETE
+TO authenticated -- Check only authenticated users
+USING (public.is_admin(auth.uid())) -- Allow if the user IS an admin
+WITH CHECK (public.is_admin(auth.uid())); -- Ensure they remain admin during the operation
 
-COMMENT ON POLICY "TEMP Allow anon insert access on task_library" ON public.task_library
-IS 'TEMP DEV ONLY: Allows anonymous users to add task library items. MUST BE REPLACED with authenticated admin policy.';
-
--- 3. Anonymous Update Access (TEMPORARY)
-DROP POLICY IF EXISTS "TEMP Allow anon update access on task_library" ON public.task_library;
-CREATE POLICY "TEMP Allow anon update access on task_library"
-ON public.task_library
-FOR UPDATE
-TO anon -- Grant to anonymous role
-USING (true)
-WITH CHECK (true);
-
-COMMENT ON POLICY "TEMP Allow anon update access on task_library" ON public.task_library
-IS 'TEMP DEV ONLY: Allows anonymous users to update task library items. MUST BE REPLACED with authenticated admin policy.';
-
--- 4. Anonymous Delete Access (TEMPORARY)
-DROP POLICY IF EXISTS "TEMP Allow anon delete access on task_library" ON public.task_library;
-CREATE POLICY "TEMP Allow anon delete access on task_library"
-ON public.task_library
-FOR DELETE
-TO anon -- Grant to anonymous role
-USING (true);
-
-COMMENT ON POLICY "TEMP Allow anon delete access on task_library" ON public.task_library
-IS 'TEMP DEV ONLY: Allows anonymous users to delete task library items. MUST BE REPLACED with authenticated admin policy.';
+COMMENT ON POLICY "Task Library: Allow admin write access" ON public.task_library
+IS 'Allows users with the admin role to create, update, and delete task library items.';

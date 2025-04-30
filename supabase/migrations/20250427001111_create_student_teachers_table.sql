@@ -2,14 +2,12 @@
 
 -- == Create Student Teachers Link Table ==
 -- Many-to-Many relationship between students and teachers (both profiles)
-
 CREATE TABLE public.student_teachers (
     student_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     teacher_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     created_at timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (student_id, teacher_id)
-    -- Add constraint to ensure roles are correct (optional but good practice)
-    -- This requires helper functions or more complex checks, deferring for now.
+    -- Optional role check constraints deferred
     -- CONSTRAINT check_student_role CHECK (is_profile_role(student_id, 'student')),
     -- CONSTRAINT check_teacher_role CHECK (is_profile_role(teacher_id, 'teacher'))
 );
@@ -26,22 +24,46 @@ ALTER TABLE public.student_teachers ENABLE ROW LEVEL SECURITY;
 CREATE INDEX idx_student_teachers_student_id ON public.student_teachers (student_id);
 CREATE INDEX idx_student_teachers_teacher_id ON public.student_teachers (teacher_id);
 
--- == Row Level Security (RLS) Policies ==
--- WARNING: TEMPORARY DEVELOPMENT POLICIES - Allow anonymous access. MUST BE REPLACED.
 
--- 1. TEMP Anon Select
-DROP POLICY IF EXISTS "TEMP Allow anon select on student_teachers" ON public.student_teachers;
-CREATE POLICY "TEMP Allow anon select on student_teachers"
-ON public.student_teachers FOR SELECT
-TO anon
-USING (true);
-COMMENT ON POLICY "TEMP Allow anon select on student_teachers" ON public.student_teachers IS 'TEMP DEV ONLY: Allows anon read access. MUST BE REPLACED.';
+-- === RLS for public.student_teachers ===
 
--- 2. TEMP Anon Write (Insert/Delete/Update)
-DROP POLICY IF EXISTS "TEMP Allow anon write on student_teachers" ON public.student_teachers;
-CREATE POLICY "TEMP Allow anon write on student_teachers"
-ON public.student_teachers FOR ALL
-TO anon
-USING (true)
-WITH CHECK (true);
-COMMENT ON POLICY "TEMP Allow anon write on student_teachers" ON public.student_teachers IS 'TEMP DEV ONLY: Allows anon write access. MUST BE REPLACED.';
+-- Clean up existing policies (including TEMP/old ones)
+DROP POLICY IF EXISTS "Student Teachers: Allow admin full access" ON public.student_teachers;
+DROP POLICY IF EXISTS "Student Teachers: Allow related read access" ON public.student_teachers;
+DROP POLICY IF EXISTS "TEMP Allow anon select on student_teachers" ON public.student_teachers; -- If exists
+DROP POLICY IF EXISTS "TEMP Allow anon write on student_teachers" ON public.student_teachers; -- If exists
+
+
+-- SELECT Policy: Allow Admins and related users (student, teacher, linked parent) to read.
+CREATE POLICY "Student Teachers: Allow related read access"
+ON public.student_teachers
+FOR SELECT
+TO authenticated
+USING (
+    public.is_admin(auth.uid()) -- Admins can read all
+    OR
+    auth.uid() = student_id     -- Student can see their teacher links
+    OR
+    auth.uid() = teacher_id     -- Teacher can see their student links
+    OR
+    EXISTS ( -- Parent can see their children's teacher links
+        SELECT 1 FROM public.parent_students ps
+        WHERE ps.parent_id = auth.uid() AND ps.student_id = student_teachers.student_id
+    )
+);
+
+COMMENT ON POLICY "Student Teachers: Allow related read access" ON public.student_teachers
+IS 'Allows admins, the student, the teacher, or the student''s linked parents to read the link.';
+
+
+-- WRITE Policy (INSERT, UPDATE, DELETE): Allow ONLY admins.
+-- Managed via updateUserWithLinks Edge Function.
+CREATE POLICY "Student Teachers: Allow admin write access"
+ON public.student_teachers
+FOR ALL -- Covers INSERT, UPDATE, DELETE
+TO authenticated
+USING (public.is_admin(auth.uid())) -- Allow if the user IS an admin
+WITH CHECK (public.is_admin(auth.uid())); -- Ensure they remain admin during the operation
+
+COMMENT ON POLICY "Student Teachers: Allow admin write access" ON public.student_teachers
+IS 'Allows users with the admin role to create, update, and delete student-teacher links.';
