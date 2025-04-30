@@ -1,34 +1,47 @@
+// src/components/common/TaskVerificationModal.tsx
 import React, { useState, useEffect } from 'react';
 import Slider from '@react-native-community/slider';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Modal, View, Text, Button, ActivityIndicator, StyleSheet } from 'react-native';
+import Toast from 'react-native-toast-message';
 
-import { updateAssignedTask, createAssignedTask } from '../../api/assignedTasks';
+// API Imports (Assuming updateAssignedTask will call the verifyTask Edge Function)
+import { updateAssignedTask } from '../../api/assignedTasks'; // Use the API function wrapper
 import { fetchUserProfile } from '../../api/users';
 
+// Context & Type Imports
 import { useAuth } from '../../contexts/AuthContext';
 import { AssignedTask, TaskVerificationStatus, User } from '../../types/dataTypes';
-import { colors } from '../../styles/colors';
 import { TaskVerificationModalProps } from '../../types/componentProps';
+
+// Style & Helper Imports
+import { colors } from '../../styles/colors';
 import { getUserDisplayName } from '../../utils/helpers';
 import { modalSharedStyles } from '../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import Toast from 'react-native-toast-message';
 
-const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
+// Possible statuses a Teacher/Admin can select
+const VERIFICATION_OPTIONS: TaskVerificationStatus[] = ['verified', 'partial', 'incomplete'];
+
+export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   visible,
   task,
   onClose,
 }) => {
-  const { currentUserId: verifierId } = useAuth();
+  const { currentUserId: verifierId } = useAuth(); // Verifier is the currently logged-in user
   const studentId = task?.studentId;
   const queryClient = useQueryClient();
 
+  // Modal state
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedStatus, setSelectedStatus] = useState<TaskVerificationStatus>(undefined);
+  const [selectedStatus, setSelectedStatus] = useState<VerificationStatusInput | undefined>(undefined); // Use the specific input type
   const [awardedPoints, setAwardedPoints] = useState<number>(0);
-  const [baseTickets, setBaseTickets] = useState<number>(0);
+  const [baseTickets, setBaseTickets] = useState<number>(0); // Store base tickets from task prop
 
+  // Type expected by the Edge function/API payload
+  type VerificationStatusInput = 'verified' | 'partial' | 'incomplete';
+
+  // Query to fetch student details for display
   const {
     data: student,
     isLoading: isLoadingStudent,
@@ -36,151 +49,129 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     error: studentFetchErrorMsg,
   } = useQuery<User | null, Error>({
     queryKey: ['userProfile', studentId, { context: 'verificationModal' }],
-    queryFn: () => fetchUserProfile(studentId!),
-    enabled: !!visible && !!studentId,
+    queryFn: () => studentId ? fetchUserProfile(studentId) : Promise.resolve(null),
+    enabled: !!visible && !!studentId, // Only fetch when modal is visible with a studentId
     staleTime: 5 * 60 * 1000,
   });
 
+  // Mutation to call the API function (which calls the Edge Function)
   const verifyMutation = useMutation({
-    mutationFn: updateAssignedTask,
-    onSuccess: updatedTask => {
-      console.log(`[TaskVerificationModal] Task ${updatedTask.id} verified (Simulated).`);
+    mutationFn: updateAssignedTask, // Use the existing API function wrapper
+    onSuccess: (updatedTask) => {
+      console.log(`[TaskVerificationModal] Task ${updatedTask.id} verification processed successfully via API/Edge Function.`);
+      // Invalidate queries to refresh task lists and potentially balance/history
+      queryClient.invalidateQueries({ queryKey: ['assigned-tasks', { studentId: updatedTask.studentId }] });
+      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] }); // Broader invalidation for lists
+      queryClient.invalidateQueries({ queryKey: ['balance', updatedTask.studentId] }); // Invalidate balance
+      queryClient.invalidateQueries({ queryKey: ['ticket-history', { studentId: updatedTask.studentId }] }); // Invalidate history
+      queryClient.invalidateQueries({ queryKey: ['ticket-history'] }); // Invalidate global history
+      queryClient.invalidateQueries({ queryKey: ['taskStats', 'pendingCount'] }); // Invalidate pending count
 
-      queryClient.invalidateQueries({
-        queryKey: ['assigned-tasks', { studentId: updatedTask.studentId }],
-      });
-      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
-
-      setCurrentStep(3);
+      setCurrentStep(3); // Move to confirmation step
     },
-    onError: (error: Error, variables) => {
-      console.error(
-        `[TaskVerificationModal] Error verifying task ${variables.assignmentId}:`,
-        error
-      );
+    onError: (error: Error) => { // Explicitly type error
+      console.error('[TaskVerificationModal] Error verifying task:', error);
       Toast.show({
         type: 'error',
-        text1: 'Verification Not Implemented',
+        text1: 'Verification Failed',
         text2: error.message || 'Could not verify task.',
+        position: 'bottom',
+        visibilityTime: 5000,
       });
+      // Optionally reset state or allow retry? For now, just show error.
+      // setCurrentStep(1); // Could send them back to step 1 on error
     },
   });
 
-  const reassignMutation = useMutation({
-    mutationFn: createAssignedTask,
-    onSuccess: createdAssignment => {
-      console.log(`[TaskVerificationModal] Task re-assigned (Simulated): ${createdAssignment.id}`);
-      queryClient.invalidateQueries({
-        queryKey: ['assigned-tasks', { studentId: createdAssignment.studentId }],
-      });
-      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
-      onClose();
-      Toast.show({
-        type: 'success',
-        text1: 'Success',
-        text2: `Task "${createdAssignment.taskTitle}" re-assign simulated.`,
-      });
-    },
-    onError: (error: Error) => {
-      console.error('[TaskVerificationModal] Error re-assigning task:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Re-assign Not Implemented',
-        text2: error.message || 'Could not re-assign task.',
-      });
-    },
-  });
+  // --- Reassign Mutation is NOT handled here anymore ---
+  // Reassigning would likely be a separate button/flow if needed after verification.
 
+  // Effect to reset state when modal opens or task changes
   useEffect(() => {
     if (visible && task) {
+      console.log('[TaskVerificationModal] Opening/Resetting for task:', task.id);
       setCurrentStep(1);
       setSelectedStatus(undefined);
-      const taskBasePoints = task.taskBasePoints || 0;
+      const taskBasePoints = task.taskBasePoints ?? 0; // Use ?? for safety
       setBaseTickets(taskBasePoints);
-      setAwardedPoints(0);
-      verifyMutation.reset();
-      reassignMutation.reset();
+      setAwardedPoints(0); // Reset points
+      verifyMutation.reset(); // Reset mutation status
     } else {
+      // Clear state if modal closed or task removed
       setCurrentStep(1);
       setSelectedStatus(undefined);
       setAwardedPoints(0);
       setBaseTickets(0);
     }
-  }, [visible, task]);
+  }, [visible, task]); // Depend on visibility and the task prop
 
-  const handleStatusSelect = (status: TaskVerificationStatus) => {
+  // Handler for selecting a verification status
+  const handleStatusSelect = (status: VerificationStatusInput) => {
     let initialPoints = 0;
-
     switch (status) {
-      case 'verified':
-        initialPoints = baseTickets;
-        break;
-      case 'partial':
-        initialPoints = Math.round(baseTickets * 0.5);
-        break;
-      case 'incomplete':
-        initialPoints = 0;
-        break;
+      case 'verified': initialPoints = baseTickets; break;
+      case 'partial': initialPoints = Math.round(baseTickets * 0.5); break; // Default to 50%
+      case 'incomplete': initialPoints = 0; break; // Always 0 for incomplete
     }
     setSelectedStatus(status);
     setAwardedPoints(initialPoints);
-    setCurrentStep(2);
+    setCurrentStep(2); // Move to points adjustment step
   };
 
+  // Handler for confirming the points and triggering the mutation
   const handleConfirmTickets = () => {
     if (!selectedStatus || !verifierId || !task) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Status, Verifier ID, or Task missing.' });
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Missing required data for verification.' });
       return;
     }
-    if (verifyMutation.isPending) return;
+    if (verifyMutation.isPending) return; // Prevent double submit
 
-    Toast.show({
-      type: 'info',
-      text1: 'Feature Not Implemented',
-      text2: 'Task verification/point awarding requires server-side logic.',
-      visibilityTime: 5000,
-    });
-    console.warn('Attempted task verification, but API implementation is deferred.');
-  };
-
-  const handleReassignTask = () => {
-    if (!task || !verifierId) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Original task data or Assigner ID missing.',
-      });
-      return;
+    // Validate points based on status
+    if (selectedStatus === 'incomplete' && awardedPoints !== 0) {
+         Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Points must be 0 for Incomplete status.' });
+         return;
     }
-    if (reassignMutation.isPending) return;
+     if (awardedPoints > baseTickets && selectedStatus !== 'verified') {
+         // Allow awarding MORE than base points only if fully 'verified'? Or cap at baseTickets?
+         // Let's cap at baseTickets for partial/incomplete for now.
+         // Could potentially allow exceeding base points for 'verified' if desired.
+         // For now, just ensure points are not negative and are integer
+          if (awardedPoints < 0 || !Number.isInteger(awardedPoints)) {
+              Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Points must be a non-negative whole number.' });
+              return;
+          }
+          // Optional: Cap points for non-verified statuses
+          // if (awardedPoints > baseTickets) { awardedPoints = baseTickets; }
+     }
+     if (awardedPoints < 0 || !Number.isInteger(awardedPoints)) {
+          Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Points must be a non-negative whole number.' });
+          return;
+     }
 
-    Toast.show({
-      type: 'info',
-      text1: 'Feature Not Implemented',
-      text2: 'Task re-assignment requires server-side logic.',
-      visibilityTime: 5000,
-    });
-    console.warn('Attempted task re-assignment, but API implementation is deferred.');
+    // Prepare the payload for the updateAssignedTask API function
+    const updatePayload = {
+      assignmentId: task.id,
+      updates: { // Structure expected by updateAssignedTask when verifying
+        verificationStatus: selectedStatus,
+        actualPointsAwarded: awardedPoints,
+        // verifiedById will be set by the Edge Function using the caller's token
+      }
+    };
+
+    console.log('[TaskVerificationModal] Calling verifyMutation with payload:', updatePayload);
+    verifyMutation.mutate(updatePayload);
   };
 
-  if (!visible || !task) {
-    return null;
-  }
+  // --- Rendering Logic ---
 
-  const studentNameDisplay = isLoadingStudent
-    ? 'Loading student...'
-    : studentFetchError
-      ? 'Error loading student'
-      : student
-        ? getUserDisplayName(student)
-        : 'Unknown Student';
+  if (!visible || !task) { return null; } // Don't render if not visible or no task
 
+  const studentNameDisplay = isLoadingStudent ? 'Loading student...' : studentFetchError ? 'Error loading student' : student ? getUserDisplayName(student) : 'Unknown Student';
   const taskTitle = task.taskTitle;
-  const completedDateTime = task.completedDate
-    ? new Date(task.completedDate).toLocaleString()
-    : 'N/A';
+  const completedDateTime = task.completedDate ? new Date(task.completedDate).toLocaleString() : 'N/A';
   const basePointsDisplay = baseTickets;
 
+  // Step 1: Select Status
   if (currentStep === 1) {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -188,39 +179,21 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
           <View style={modalSharedStyles.modalView}>
             <Text style={modalSharedStyles.modalTitle}>Verify Task</Text>
             <Text style={modalSharedStyles.taskTitle}>{taskTitle}</Text>
-            <Text>Student: {studentNameDisplay}</Text>
-            <Text>Potential Tickets: {basePointsDisplay}</Text>
-            <Text style={{ marginBottom: 20 }}>Completed: {completedDateTime}</Text>
+            <Text style={modalSharedStyles.modalContextInfo}>Student: {studentNameDisplay}</Text>
+            <Text style={modalSharedStyles.modalContextInfo}>Potential Tickets: {basePointsDisplay}</Text>
+            <Text style={[modalSharedStyles.modalContextInfo, { marginBottom: 20 }]}>Completed: {completedDateTime}</Text>
 
             <Text style={modalSharedStyles.stepTitle}>Step 1: Select Status</Text>
             {isLoadingStudent && <ActivityIndicator color={colors.primary} />}
-            {studentFetchError && (
-              <Text style={commonSharedStyles.errorText}>
-                Error: {studentFetchErrorMsg?.message}
-              </Text>
-            )}
+            {studentFetchError && <Text style={commonSharedStyles.errorText}>Error: {studentFetchErrorMsg?.message}</Text>}
 
             <View style={modalSharedStyles.buttonContainer}>
-              <Button
-                title="Verified"
-                onPress={() => handleStatusSelect('verified')}
-                disabled={isLoadingStudent}
-              />
-              <Button
-                title="Partial"
-                onPress={() => handleStatusSelect('partial')}
-                color={colors.warning}
-                disabled={isLoadingStudent}
-              />
-              <Button
-                title="Incomplete"
-                onPress={() => handleStatusSelect('incomplete')}
-                color={colors.danger}
-                disabled={isLoadingStudent}
-              />
+              <Button title="Verified" onPress={() => handleStatusSelect('verified')} disabled={isLoadingStudent || verifyMutation.isPending} />
+              <Button title="Partial" onPress={() => handleStatusSelect('partial')} color={colors.warning} disabled={isLoadingStudent || verifyMutation.isPending} />
+              <Button title="Incomplete" onPress={() => handleStatusSelect('incomplete')} color={colors.danger} disabled={isLoadingStudent || verifyMutation.isPending} />
             </View>
             <View style={modalSharedStyles.footerButton}>
-              <Button title="Cancel" onPress={onClose} color={colors.secondary} />
+              <Button title="Cancel" onPress={onClose} color={colors.secondary} disabled={verifyMutation.isPending}/>
             </View>
           </View>
         </View>
@@ -228,8 +201,9 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     );
   }
 
+  // Step 2: Adjust Points (if status selected)
   if (currentStep === 2 && selectedStatus) {
-    const isConfirmDisabled = true;
+    const isConfirmDisabled = verifyMutation.isPending; // Disable only while mutation runs
 
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -237,22 +211,10 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
           <View style={modalSharedStyles.modalView}>
             <Text style={modalSharedStyles.modalTitle}>Verify Task</Text>
             <Text style={modalSharedStyles.taskTitle}>{taskTitle}</Text>
-            <Text>Student: {studentNameDisplay}</Text>
-            <Text style={{ marginBottom: 10 }}>
+            <Text style={modalSharedStyles.modalContextInfo}>Student: {studentNameDisplay}</Text>
+            <Text style={[modalSharedStyles.modalContextInfo, { marginBottom: 10 }]}>
               Status Selected:{' '}
-              <Text
-                style={[
-                  styles.statusText,
-                  {
-                    color:
-                      selectedStatus === 'verified'
-                        ? colors.success
-                        : selectedStatus === 'partial'
-                          ? colors.warning
-                          : colors.danger,
-                  },
-                ]}
-              >
+              <Text style={[ styles.statusText, { color: selectedStatus === 'verified' ? colors.success : selectedStatus === 'partial' ? colors.warning : colors.danger } ]} >
                 {selectedStatus?.toUpperCase()}
               </Text>
             </Text>
@@ -267,6 +229,9 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
                 <Slider
                   style={modalSharedStyles.slider}
                   minimumValue={0}
+                  // Allow potentially higher points if 'verified', else cap at baseTickets?
+                  // For now, let's allow up to baseTickets * 1.5 for potential bonuses if fully verified? Or just baseTickets?
+                  // Let's cap at baseTickets for simplicity now. Can adjust later.
                   maximumValue={Math.max(1, basePointsDisplay)}
                   step={1}
                   value={awardedPoints}
@@ -278,19 +243,30 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
                 />
                 <View style={modalSharedStyles.rangeText}>
                   <Text>0</Text>
-                  <Text>Max: {basePointsDisplay}</Text>
+                  <Text>Base: {basePointsDisplay}</Text>
                 </View>
               </>
             ) : (
               <Text style={styles.infoText}>No points awarded for 'Incomplete' status.</Text>
             )}
 
-            <Text style={styles.infoText}>
-              Note: Point awarding requires server-side setup and is currently disabled.
-            </Text>
+            {/* Display mutation status */}
+             {verifyMutation.isPending && (
+                <View style={modalSharedStyles.loadingContainer}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={modalSharedStyles.loadingText}>Processing Verification...</Text>
+                </View>
+              )}
+              {verifyMutation.isError && (
+                <Text style={[commonSharedStyles.errorText, {marginTop: 10}]}>
+                    Verification Error: {verifyMutation.error instanceof Error ? verifyMutation.error.message : 'Unknown Error'}
+                </Text>
+              )}
+
+
             <View style={modalSharedStyles.buttonContainer}>
               <Button
-                title={'Confirm Tickets (Disabled)'}
+                title={verifyMutation.isPending ? 'Processing...' : 'Confirm Verification'}
                 onPress={handleConfirmTickets}
                 disabled={isConfirmDisabled}
               />
@@ -315,44 +291,29 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     );
   }
 
+  // Step 3: Confirmation / Done
   if (currentStep === 3) {
-    const isReassignDisabled = true;
-
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
         <View style={modalSharedStyles.centeredView}>
           <View style={modalSharedStyles.modalView}>
-            <Text style={modalSharedStyles.modalTitle}>Verification Step Complete</Text>
+            <Text style={modalSharedStyles.modalTitle}>Verification Complete</Text>
             <Text style={modalSharedStyles.taskTitle}>{taskTitle}</Text>
-            <Text>Student: {studentNameDisplay}</Text>
-            <Text style={{ marginBottom: 20 }}>
+            <Text style={modalSharedStyles.modalContextInfo}>Student: {studentNameDisplay}</Text>
+            <Text style={[modalSharedStyles.modalContextInfo, { marginBottom: 20 }]}>
               Status Recorded As:{' '}
               <Text style={{ fontWeight: 'bold' }}>{selectedStatus?.toUpperCase()}</Text>
-              {' - '} Points Set To:{' '}
-              <Text
-                style={{
-                  fontWeight: 'bold',
-                  color: awardedPoints > 0 ? colors.success : colors.textSecondary,
-                }}
-              >
+              {' - '} Points Awarded:{' '}
+              <Text style={{ fontWeight: 'bold', color: awardedPoints > 0 ? colors.success : colors.textSecondary }} >
                 {awardedPoints}
               </Text>
             </Text>
-            <Text style={styles.infoText}>(Note: Points were not actually awarded yet)</Text>
 
-            <Text style={modalSharedStyles.stepTitle}>Step 3: Re-assign?</Text>
-            <Text style={styles.infoText}>
-              Note: Re-assigning requires server-side setup and is currently disabled.
-            </Text>
+            {/* Removed Reassign option for simplicity - can be added back if needed */}
+            {/* <Text style={modalSharedStyles.stepTitle}>Step 3: Re-assign?</Text> */}
+
             <View style={modalSharedStyles.buttonContainer}>
-              <Button
-                title={'Re-assign Task (Disabled)'}
-                onPress={handleReassignTask}
-                disabled={isReassignDisabled}
-              />
-            </View>
-            <View style={modalSharedStyles.buttonContainer}>
-              <Button title="Done" onPress={onClose} disabled={reassignMutation.isPending} />
+              <Button title="Done" onPress={onClose} />
             </View>
           </View>
         </View>
@@ -360,19 +321,22 @@ const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     );
   }
 
+  // Fallback if state is somehow invalid
   return null;
 };
 
+// Local styles
 const styles = StyleSheet.create({
   statusText: {
     fontWeight: 'bold',
+    // Color is set inline based on status
   },
   infoText: {
-    fontSize: 12,
-    color: colors.textLight,
+    fontSize: 14, // Slightly larger info text
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 15,
-    fontStyle: 'italic',
+    marginTop: 10, // Add some top margin
   },
 });
 

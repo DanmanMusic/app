@@ -5,6 +5,8 @@ export type TaskAssignmentFilterStatusAPI = 'all' | 'assigned' | 'pending' | 'co
 
 export type StudentTaskFilterStatusAPI = UserStatus | 'all';
 
+type VerificationStatusInput = 'verified' | 'partial' | 'incomplete';
+
 interface AssignedTasksListResponse {
   items: AssignedTask[];
   totalPages: number;
@@ -147,9 +149,12 @@ export const fetchAssignedTasks = async ({
 };
 
 export const createAssignedTask = async (
+  // Payload from UI: Details needed for assignment
+  // assignerId is NOT needed here, it comes from auth token
   assignmentData: Omit<
     AssignedTask,
     | 'id'
+    | 'assignedById' // Removed from input type
     | 'isComplete'
     | 'verificationStatus'
     | 'assignedDate'
@@ -157,41 +162,53 @@ export const createAssignedTask = async (
     | 'verifiedById'
     | 'verifiedDate'
     | 'actualPointsAwarded'
-  > & { assignedById: string }
+  >
 ): Promise<AssignedTask> => {
-  console.error('createAssignedTask API called, but implementation is deferred to Edge Function.');
-  throw new Error(
-    'Task assignment functionality requires server-side implementation (Edge Function).'
-  );
-
-  /* 
   const client = getSupabase();
-  console.log('[Supabase] Assigning task:', assignmentData.taskTitle, 'to student', assignmentData.studentId);
+  console.log('[API createAssignedTask] Calling Edge Function "assignTask" for student:', assignmentData.studentId);
 
-  if (!assignmentData.studentId || !assignmentData.assignedById || !assignmentData.taskTitle || !assignmentData.taskDescription || assignmentData.taskBasePoints == null || assignmentData.taskBasePoints < 0) {
-      throw new Error("Missing required fields for task assignment (studentId, assignedById, title, description, basePoints).");
-  }
-  const itemToInsert = {
-      student_id: assignmentData.studentId,
-      assigned_by_id: assignmentData.assignedById,
-      task_title: assignmentData.taskTitle,
-      task_description: assignmentData.taskDescription,
-      task_base_points: assignmentData.taskBasePoints,
-      is_complete: false,
+  // Prepare payload for the Edge Function
+  // Only include fields the function expects in its payload interface
+  const payload = {
+      studentId: assignmentData.studentId,
+      taskTitle: assignmentData.taskTitle,
+      taskDescription: assignmentData.taskDescription,
+      taskBasePoints: assignmentData.taskBasePoints,
   };
-  const { data, error } = await client
-    .from('assigned_tasks')
-    .insert(itemToInsert)
-    .select('*')
-    .single();
-  if (error || !data) {
-    console.error(`[Supabase] Error creating assigned task:`, error?.message);
-    throw new Error(`Failed to assign task: ${error?.message || 'No data returned'}`);
+
+  // Validate required fields before sending
+  if (!payload.studentId || !payload.taskTitle || payload.taskBasePoints == null || payload.taskBasePoints < 0) {
+      console.error("[API createAssignedTask] Validation failed. Payload:", payload);
+      throw new Error("Missing required fields for task assignment (studentId, title, description, basePoints).");
   }
-  const createdAssignment = mapDbRowToAssignedTask(data);
-  console.log(`[Supabase] Task assigned successfully (ID: ${createdAssignment.id})`);
-  return createdAssignment;
-  */
+
+  console.log('[API createAssignedTask] Payload being sent:', payload);
+
+  const { data, error } = await client.functions.invoke('assignTask', {
+    body: payload,
+  });
+
+  if (error) {
+    console.error('[API createAssignedTask] Error invoking assignTask function:', error);
+    // Attempt to parse nested error message
+    let detailedError = error.message || 'Unknown function error';
+    if (error.context && typeof error.context === 'object' && error.context !== null && 'error' in error.context) {
+        detailedError = String((error.context as any).error) || detailedError;
+    } else { try { const parsed = JSON.parse(error.message); if (parsed && parsed.error) detailedError = String(parsed.error); } catch (e) {} }
+    if (error.context?.message) { detailedError += ` (Context: ${error.context.message})`; }
+    throw new Error(`Task assignment failed: ${detailedError}`);
+  }
+
+  console.log('[API createAssignedTask] Edge Function returned successfully:', data);
+
+  // Assuming the edge function returns the fully formed AssignedTask object
+  if (!data || typeof data !== 'object' || !data.id) {
+       console.error('[API createAssignedTask] Edge Function returned unexpected data structure:', data);
+       throw new Error('Task assignment function returned invalid data format.');
+  }
+
+  // Directly return the data assuming it matches the AssignedTask type
+  return data as AssignedTask;
 };
 
 export const updateAssignedTask = async ({
@@ -199,103 +216,172 @@ export const updateAssignedTask = async ({
   updates,
 }: {
   assignmentId: string;
-
-  updates: Partial<
-    Pick<AssignedTask, 'isComplete' | 'verificationStatus' | 'verifiedById' | 'actualPointsAwarded'>
-  >;
+  // Updated type to reflect distinct operations
+  updates:
+    | { isComplete: true; verificationStatus?: never; actualPointsAwarded?: never }
+    | { isComplete: false; verificationStatus?: never; actualPointsAwarded?: never }
+    | { isComplete?: never; verificationStatus: VerificationStatusInput; actualPointsAwarded: number }
 }): Promise<AssignedTask> => {
   const client = getSupabase();
-  console.log(`[Supabase] Updating assigned task ${assignmentId}:`, updates);
+  console.log(`[API updateAssignedTask] Request for task ${assignmentId}:`, updates);
 
-  const updatePayload: any = {};
-  let isVerificationUpdate = false;
+  // --- CASE 1: Verification Update (Call Edge Function) ---
+  if (updates.verificationStatus && updates.actualPointsAwarded !== undefined) {
+    console.log(`[API updateAssignedTask] Verification request detected. Calling "verifyTask" Edge Function.`);
 
-  if (updates.isComplete === true && updates.verificationStatus === undefined) {
-    console.log(`[Supabase] Marking task ${assignmentId} as complete (pending verification).`);
-    updatePayload.is_complete = true;
-    updatePayload.completed_date = new Date().toISOString();
+    // Prepare payload for the Edge Function
+    const payload = {
+      assignmentId: assignmentId,
+      verificationStatus: updates.verificationStatus,
+      actualPointsAwarded: updates.actualPointsAwarded,
+    };
 
-    updatePayload.verification_status = 'pending';
-  } else if (updates.verificationStatus) {
-    console.error(
-      `updateAssignedTask API called for verification update on ${assignmentId}, but implementation is deferred to Edge Function.`
-    );
-    throw new Error(
-      'Task verification/point awarding requires server-side implementation (Edge Function).'
-    );
-  } else if (updates.hasOwnProperty('isComplete') && updates.isComplete === false) {
-    console.warn(
-      `[Supabase] Un-marking task ${assignmentId} as complete. Resetting related fields.`
-    );
-    updatePayload.is_complete = false;
-    updatePayload.completed_date = null;
-    updatePayload.verification_status = null;
-    updatePayload.verified_by_id = null;
-    updatePayload.verified_date = null;
-    updatePayload.actual_points_awarded = null;
-  } else {
-    console.warn(
-      `[Supabase] updateAssignedTask called for ${assignmentId} with no applicable changes.`
-    );
-
-    const { data: currentData, error: currentError } = await client
-      .from('assigned_tasks')
-      .select('*')
-      .eq('id', assignmentId)
-      .single();
-    if (currentError || !currentData) {
-      throw new Error(
-        `Failed to fetch current task ${assignmentId} for no-op update: ${currentError?.message || 'Not Found'}`
-      );
+    // Basic validation before calling function
+    if (payload.actualPointsAwarded < 0 || !Number.isInteger(payload.actualPointsAwarded)) {
+        throw new Error("Invalid points awarded. Must be a non-negative integer.");
     }
-    return mapDbRowToAssignedTask(currentData);
+     if (payload.verificationStatus === 'incomplete' && payload.actualPointsAwarded !== 0) {
+         throw new Error("Points must be 0 for 'incomplete' status.");
+     }
+
+     console.log('[API updateAssignedTask] Payload being sent to verifyTask:', payload);
+
+     // --- Invoke the verifyTask Edge Function ---
+     const { data, error } = await client.functions.invoke('verifyTask', {
+       body: payload,
+     });
+     // --- End Invoke ---
+
+     if (error) {
+       console.error('[API updateAssignedTask] Error invoking verifyTask function:', error);
+       let detailedError = error.message || 'Unknown function error';
+        if (error.context && typeof error.context === 'object' && error.context !== null && 'error' in error.context) { detailedError = String((error.context as any).error) || detailedError; }
+        else { try { const parsed = JSON.parse(error.message); if (parsed && parsed.error) detailedError = String(parsed.error); } catch (e) {} }
+        if (error.context?.message) { detailedError += ` (Context: ${error.context.message})`; }
+       throw new Error(`Task verification failed: ${detailedError}`);
+     }
+
+     console.log('[API updateAssignedTask] verifyTask Edge Function returned successfully:', data);
+
+     if (!data || typeof data !== 'object' || !data.id) {
+          console.error('[API updateAssignedTask] verifyTask returned unexpected data structure:', data);
+          throw new Error('Task verification function returned invalid data format.');
+     }
+
+     // Return the updated task data received from the Edge Function
+     return data as AssignedTask;
   }
 
-  if (Object.keys(updatePayload).length === 0) {
-    console.warn(
-      `[Supabase] updateAssignedTask reached update block with empty payload for ${assignmentId}.`
-    );
+  // --- CASE 2: Marking Task Complete (Direct DB Update - relies on RLS) ---
+  else if (updates.isComplete === true) {
+    console.log(`[API updateAssignedTask] Marking task ${assignmentId} as complete (Direct DB Update).`);
+    const updatePayload = {
+      is_complete: true,
+      completed_date: new Date().toISOString(),
+      verification_status: 'pending' as const,
+    };
+
+    // Perform update without select().single()
+    const { error: updateError } = await client
+        .from('assigned_tasks')
+        .update(updatePayload)
+        .eq('id', assignmentId);
+
+    if (updateError) {
+        console.error(`[API updateAssignedTask] Error marking task complete ${assignmentId}:`, updateError.message);
+        throw new Error(`Failed to mark task complete: ${updateError.message}`);
+    }
+
+    // Refetch the updated task data separately
+    console.log(`[API updateAssignedTask] Update successful for ${assignmentId}. Refetching task...`);
+    const { data: refetchedData, error: fetchError } = await client
+        .from('assigned_tasks')
+        .select('*')
+        .eq('id', assignmentId)
+        .single();
+
+    if (fetchError || !refetchedData) {
+        console.error(`[API updateAssignedTask] Failed to refetch task ${assignmentId} after update:`, fetchError?.message);
+        throw new Error(`Task marked complete, but failed to refetch updated record: ${fetchError?.message || 'Not Found'}`);
+    }
+
+    const updatedTask = mapDbRowToAssignedTask(refetchedData);
+    console.log(`[API updateAssignedTask] Task ${assignmentId} marked complete successfully.`);
+    return updatedTask;
+  }
+
+  // --- CASE 3: Un-marking Task Complete (Direct DB Update - RLS might block/restrict) ---
+  else if (updates.isComplete === false) {
+     console.warn(`[API updateAssignedTask] Un-marking task ${assignmentId} as complete (Direct DB Update - Requires appropriate RLS).`);
+     const updatePayload = {
+        is_complete: false, completed_date: null, verification_status: null, verified_by_id: null, verified_date: null, actual_points_awarded: null,
+     };
+     const { error: unmarkError } = await client
+      .from('assigned_tasks').update(updatePayload).eq('id', assignmentId);
+
+     if (unmarkError) {
+        console.error(`[API updateAssignedTask] Error un-marking task complete ${assignmentId}:`, unmarkError.message);
+        throw new Error(`Failed to un-mark task complete: ${unmarkError.message}`);
+     }
+     console.log(`[API updateAssignedTask] Un-mark successful for ${assignmentId}. Refetching task...`);
+     const { data: refetchedData, error: fetchError } = await client
+        .from('assigned_tasks').select('*').eq('id', assignmentId).single();
+     if (fetchError || !refetchedData) {
+         console.error(`[API updateAssignedTask] Failed to refetch task ${assignmentId} after un-mark:`, fetchError?.message);
+         throw new Error(`Task un-marked, but failed to refetch updated record: ${fetchError?.message || 'Not Found'}`);
+     }
+     const updatedTask = mapDbRowToAssignedTask(refetchedData);
+     console.log(`[API updateAssignedTask] Task ${assignmentId} un-marked successfully.`);
+     return updatedTask;
+  }
+
+  // --- CASE 4: No recognized update operation ---
+  else {
+    console.warn(`[API updateAssignedTask] Called for ${assignmentId} with no applicable changes/operation detected. Updates:`, updates);
     const { data: currentData, error: currentError } = await client
-      .from('assigned_tasks')
-      .select('*')
-      .eq('id', assignmentId)
-      .single();
-    if (currentError || !currentData)
-      throw new Error(
-        `Failed to fetch current task ${assignmentId}: ${currentError?.message || 'Not Found'}`
-      );
+      .from('assigned_tasks').select('*').eq('id', assignmentId).single();
+    if (currentError || !currentData) { throw new Error(`Failed to fetch current task ${assignmentId}: ${currentError?.message || 'Not Found'}`); }
     return mapDbRowToAssignedTask(currentData);
   }
-
-  const { data, error } = await client
-    .from('assigned_tasks')
-    .update(updatePayload)
-    .eq('id', assignmentId)
-    .select('*')
-    .single();
-
-  if (error || !data) {
-    console.error(`[Supabase] Error updating assigned task ${assignmentId}:`, error?.message);
-    throw new Error(
-      `Failed to update assigned task ${assignmentId}: ${error?.message || 'No data returned'}`
-    );
-  }
-
-  const updatedTask = mapDbRowToAssignedTask(data);
-  console.log(`[Supabase] Assigned task ${assignmentId} updated successfully.`);
-  return updatedTask;
 };
 
 export const deleteAssignedTask = async (assignmentId: string): Promise<void> => {
   const client = getSupabase();
-  console.log(`[Supabase] Deleting assigned task ${assignmentId}`);
+  console.log(`[API deleteAssignedTask] Calling Edge Function "deleteAssignedTask" for ID: ${assignmentId}`);
 
-  const { error } = await client.from('assigned_tasks').delete().eq('id', assignmentId);
+  // Prepare payload for the Edge Function
+  const payload = {
+    assignmentId: assignmentId,
+  };
 
-  if (error) {
-    console.error(`[Supabase] Error deleting assigned task ${assignmentId}:`, error.message);
-    throw new Error(`Failed to delete assigned task ${assignmentId}: ${error.message}`);
+  if (!payload.assignmentId) {
+      console.error("[API deleteAssignedTask] Validation failed: assignmentId is missing.");
+      throw new Error("Cannot delete task: Assignment ID is missing.");
   }
 
-  console.log(`[Supabase] Assigned task ${assignmentId} deleted successfully.`);
+  console.log('[API deleteAssignedTask] Payload being sent:', payload);
+
+  const { data, error } = await client.functions.invoke('deleteAssignedTask', {
+    body: payload,
+  });
+
+  if (error) {
+    console.error('[API deleteAssignedTask] Error invoking deleteAssignedTask function:', error);
+    // Attempt to parse nested error message
+    let detailedError = error.message || 'Unknown function error';
+    if (error.context && typeof error.context === 'object' && error.context !== null && 'error' in error.context) {
+        detailedError = String((error.context as any).error) || detailedError;
+    } else { try { const parsed = JSON.parse(error.message); if (parsed && parsed.error) detailedError = String(parsed.error); } catch (e) {} }
+    if (error.context?.message) { detailedError += ` (Context: ${error.context.message})`; }
+
+    // Distinguish between permission denied and other errors if possible
+    if (detailedError.toLowerCase().includes('permission denied')) {
+         throw new Error(`Deletion failed: ${detailedError}`); // More specific message
+    } else {
+        throw new Error(`Failed to delete assigned task: ${detailedError}`);
+    }
+  }
+
+  console.log('[API deleteAssignedTask] Edge Function returned successfully:', data);
+  // No need to return anything on successful delete (Promise<void>)
 };

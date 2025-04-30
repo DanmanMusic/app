@@ -462,45 +462,84 @@ export const updateUser = async ({
 };
 
 export const deleteUser = async (userId: string): Promise<void> => {
-  console.error('[API] deleteUser called, but implementation is deferred to Edge Function.');
-  throw new Error('User deletion requires server-side implementation (Edge Function).');
+  const client = getSupabase();
+  console.log(`[API deleteUser] Calling Edge Function "deleteUser" for ID: ${userId}`);
+
+  // Prepare payload for the Edge Function
+  const payload = {
+    userIdToDelete: userId,
+  };
+
+  if (!payload.userIdToDelete) {
+      console.error("[API deleteUser] Validation failed: userIdToDelete is missing.");
+      throw new Error("Cannot delete user: User ID is missing.");
+  }
+
+  console.log('[API deleteUser] Payload being sent:', payload);
+
+  const { data, error } = await client.functions.invoke('deleteUser', {
+    body: payload,
+  });
+
+  if (error) {
+    console.error('[API deleteUser] Error invoking deleteUser function:', error);
+    let detailedError = error.message || 'Unknown function error';
+    if (error.context && typeof error.context === 'object' && error.context !== null && 'error' in error.context) { detailedError = String((error.context as any).error) || detailedError; }
+    else { try { const parsed = JSON.parse(error.message); if (parsed && parsed.error) detailedError = String(parsed.error); } catch (e) {} }
+    if (error.context?.message) { detailedError += ` (Context: ${error.context.message})`; }
+
+    // Throw the error message from the Edge Function
+    throw new Error(`User deletion failed: ${detailedError}`);
+  }
+
+  console.log('[API deleteUser] Edge Function returned successfully:', data);
+  // No need to return anything on successful delete (Promise<void>)
 };
 
 export const toggleUserStatus = async (userId: string): Promise<User> => {
   const client = getSupabase();
-  console.log(`[Supabase] Toggling status for user ${userId}`);
+  console.log(`[API toggleUserStatus] Calling Edge Function "toggleUserStatus" for user ${userId}`);
 
-  const { data: currentProfile, error: fetchError } = await client
-    .from('profiles')
-    .select('status')
-    .eq('id', userId)
-    .single();
-  if (fetchError || !currentProfile) {
-    throw new Error(`Failed to fetch user status: ${fetchError?.message || 'User not found'}`);
+  const payload = {
+      userIdToToggle: userId
+  };
+
+  if (!payload.userIdToToggle) {
+      console.error("[API toggleUserStatus] Validation failed: userIdToToggle is missing.");
+      throw new Error("Cannot toggle status: User ID is missing.");
   }
 
-  const newStatus: UserStatus = currentProfile.status === 'active' ? 'inactive' : 'active';
+  console.log('[API toggleUserStatus] Payload being sent:', payload);
 
-  const { data: updatedProfileData, error: updateError } = await client
-    .from('profiles')
-    .update({ status: newStatus })
-    .eq('id', userId)
-    .select('id')
-    .single();
-  if (updateError || !updatedProfileData) {
-    throw new Error(`Failed to toggle status: ${updateError?.message || 'Update failed'}`);
+  const { data, error } = await client.functions.invoke('toggleUserStatus', {
+      body: payload
+  });
+
+  if (error) {
+    console.error('[API toggleUserStatus] Error invoking toggleUserStatus function:', error);
+    let detailedError = error.message || 'Unknown function error';
+    if (error.context && typeof error.context === 'object' && error.context !== null && 'error' in error.context) { detailedError = String((error.context as any).error) || detailedError; }
+    else { try { const parsed = JSON.parse(error.message); if (parsed && parsed.error) detailedError = String(parsed.error); } catch (e) {} }
+    if (error.context?.message) { detailedError += ` (Context: ${error.context.message})`; }
+    throw new Error(`Failed to toggle status: ${detailedError}`);
   }
 
-  console.log(
-    `[Supabase] Status for user ${userId} toggled to ${newStatus}. Re-fetching profile...`
-  );
+  console.log('[API toggleUserStatus] Edge Function returned successfully:', data);
 
-  const updatedUser = await fetchUserProfile(userId);
-  if (!updatedUser) {
-    throw new Error(`Status updated, but failed to re-fetch profile.`);
-  }
+   // Edge function returns { id, status }. We need the full User object for consistency.
+   // Re-fetch the full profile after successful status toggle.
+   console.log(`[API toggleUserStatus] Status toggled for ${userId}. Re-fetching full profile...`);
+   const updatedUser = await fetchUserProfile(userId); // Use existing fetchUserProfile
+    if (!updatedUser) {
+       console.error(`[API toggleUserStatus] Status updated, but failed to re-fetch profile for ${userId}.`);
+       // This shouldn't really happen if the update succeeded, but handle it.
+       // Perhaps return a partial user object based on 'data'? Or throw?
+       // Let's throw an error for clarity.
+       throw new Error(`Status updated, but failed to re-fetch profile.`);
+   }
 
-  return updatedUser;
+  console.log(`[API toggleUserStatus] Successfully toggled status and refetched profile for ${userId}.`);
+  return updatedUser; // Return the freshly fetched full user profile
 };
 
 export const fetchActiveProfilesForDevSelector = async (): Promise<
