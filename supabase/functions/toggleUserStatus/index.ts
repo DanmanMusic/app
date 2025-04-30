@@ -34,10 +34,9 @@ async function isAdmin(supabaseClient: SupabaseClient, callerUserId: string): Pr
 // Ensure PROTECTED_ADMIN_IDS environment variable is set in your Supabase project
 const PROTECTED_IDS_STRING = Deno.env.get('PROTECTED_ADMIN_IDS') || '';
 const PROTECTED_ADMIN_IDS = PROTECTED_IDS_STRING.split(',')
-                                             .map(id => id.trim())
-                                             .filter(id => id.length > 0);
+  .map(id => id.trim())
+  .filter(id => id.length > 0);
 console.log('[toggleUserStatus] Initialized. Protected Admin IDs:', PROTECTED_ADMIN_IDS);
-
 
 // Main Function Handler
 Deno.serve(async (req: Request) => {
@@ -48,7 +47,10 @@ Deno.serve(async (req: Request) => {
   }
   // Allow only POST (common for actions modifying state)
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: `Method ${req.method} Not Allowed` }), { status: 405, headers: corsHeaders });
+    return new Response(JSON.stringify({ error: `Method ${req.method} Not Allowed` }), {
+      status: 405,
+      headers: corsHeaders,
+    });
   }
 
   console.log(`Received ${req.method} request for toggleUserStatus`);
@@ -58,21 +60,36 @@ Deno.serve(async (req: Request) => {
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!supabaseUrl || !serviceRoleKey) {
     console.error('Missing Supabase environment variables.');
-    return new Response(JSON.stringify({ error: 'Server configuration error.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: 'Server configuration error.' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
-  const supabaseAdminClient = createClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false }, global: { fetch: fetch } });
+  const supabaseAdminClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: { fetch: fetch },
+  });
   console.log('Supabase Admin Client initialized.');
 
   try {
     // 3. Verify Caller Authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Authentication required.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Authentication required.' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user: callerUser }, error: userError } = await supabaseAdminClient.auth.getUser(token);
+    const {
+      data: { user: callerUser },
+      error: userError,
+    } = await supabaseAdminClient.auth.getUser(token);
     if (userError || !callerUser) {
-      return new Response(JSON.stringify({ error: 'Invalid or expired token.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Invalid or expired token.' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     const callerId = callerUser.id;
     console.log('Caller User ID:', callerId);
@@ -81,7 +98,10 @@ Deno.serve(async (req: Request) => {
     const callerIsAdmin = await isAdmin(supabaseAdminClient, callerId);
     if (!callerIsAdmin) {
       console.warn(`User ${callerId} attempted status toggle without admin role.`);
-      return new Response(JSON.stringify({ error: 'Permission denied: Admin role required.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Permission denied: Admin role required.' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     console.log(`Admin action authorized for user ${callerId}.`);
 
@@ -91,25 +111,38 @@ Deno.serve(async (req: Request) => {
       payload = await req.json();
       console.log('Received payload:', payload);
     } catch (jsonError) {
-      return new Response(JSON.stringify({ error: 'Invalid request body: Must be JSON.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Invalid request body: Must be JSON.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // 6. Validate Payload
     if (!payload.userIdToToggle || typeof payload.userIdToToggle !== 'string') {
-      return new Response(JSON.stringify({ error: 'Missing or invalid userIdToToggle.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Missing or invalid userIdToToggle.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     const userIdToToggle = payload.userIdToToggle;
 
     // 7. Additional Checks (Prevent self-toggle, protected admins)
     if (callerId === userIdToToggle) {
-        console.warn(`Admin ${callerId} attempted to toggle own status.`);
-      return new Response(JSON.stringify({ error: 'Cannot toggle your own status via this function.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      console.warn(`Admin ${callerId} attempted to toggle own status.`);
+      return new Response(
+        JSON.stringify({ error: 'Cannot toggle your own status via this function.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
     if (PROTECTED_ADMIN_IDS.includes(userIdToToggle)) {
-        console.warn(`Admin ${callerId} attempted to toggle status for PROTECTED admin ${userIdToToggle}.`);
-        return new Response(JSON.stringify({ error: 'This administrator account status cannot be changed.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      console.warn(
+        `Admin ${callerId} attempted to toggle status for PROTECTED admin ${userIdToToggle}.`
+      );
+      return new Response(
+        JSON.stringify({ error: 'This administrator account status cannot be changed.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-
 
     // 8. Fetch the current status of the target user
     console.log(`Fetching current status for user ${userIdToToggle}...`);
@@ -121,7 +154,10 @@ Deno.serve(async (req: Request) => {
 
     if (fetchError || !currentProfile) {
       console.error(`Could not fetch profile for ${userIdToToggle}:`, fetchError?.message);
-      return new Response(JSON.stringify({ error: 'Target user not found.' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Target user not found.' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     console.log(`Current status for ${userIdToToggle} is ${currentProfile.status}.`);
 
@@ -139,7 +175,10 @@ Deno.serve(async (req: Request) => {
 
     if (updateError) {
       console.error(`Error updating status for ${userIdToToggle}:`, updateError);
-      return new Response(JSON.stringify({ error: `Failed to toggle status: ${updateError.message}` }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(
+        JSON.stringify({ error: `Failed to toggle status: ${updateError.message}` }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log(`Status for user ${userIdToToggle} updated successfully to ${newStatus}.`);
@@ -149,15 +188,21 @@ Deno.serve(async (req: Request) => {
       status: 200, // OK
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-
   } catch (error) {
     // Catch errors from initial setup/auth/validation etc.
     console.error('Unhandled Toggle User Status Function Error:', error);
-    const statusCode = error.message.includes('required') ? 403 : error.message.includes('Authentication') || error.message.includes('token') ? 401 : 500;
-    return new Response(JSON.stringify({ error: error.message || 'An unexpected error occurred.' }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: statusCode,
-    });
+    const statusCode = error.message.includes('required')
+      ? 403
+      : error.message.includes('Authentication') || error.message.includes('token')
+        ? 401
+        : 500;
+    return new Response(
+      JSON.stringify({ error: error.message || 'An unexpected error occurred.' }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: statusCode,
+      }
+    );
   }
 });
 

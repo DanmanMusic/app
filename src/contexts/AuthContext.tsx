@@ -63,15 +63,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error) {
         console.error("[AuthContext] supabase.auth.signOut({ scope: 'local' }) error:", error);
         // Still clear state manually if Supabase call errors
-        setAuthState({ isLoading: false, session: null, supabaseUser: null, appUser: null, error: error, viewingStudentIdContext: null });
+        setAuthState({
+          isLoading: false,
+          session: null,
+          supabaseUser: null,
+          appUser: null,
+          error: error,
+          viewingStudentIdContext: null,
+        });
       } else {
-         console.log("[AuthContext] supabase.auth.signOut({ scope: 'local' }) completed.");
-         // Let the onAuthStateChange listener handle the final state clearing via SIGNED_OUT event.
+        console.log("[AuthContext] supabase.auth.signOut({ scope: 'local' }) completed.");
+        // Let the onAuthStateChange listener handle the final state clearing via SIGNED_OUT event.
       }
     } catch (e) {
       console.error("[AuthContext] EXCEPTION during supabase.auth.signOut({ scope: 'local' }):", e);
-       // Clear state manually on exception
-       setAuthState({ isLoading: false, session: null, supabaseUser: null, appUser: null, error: e instanceof Error ? e : new Error('Sign out failed'), viewingStudentIdContext: null });
+      // Clear state manually on exception
+      setAuthState({
+        isLoading: false,
+        session: null,
+        supabaseUser: null,
+        appUser: null,
+        error: e instanceof Error ? e : new Error('Sign out failed'),
+        viewingStudentIdContext: null,
+      });
     }
   }, [supabase.auth]);
 
@@ -84,7 +98,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         storedRefreshToken = await getItem(CUSTOM_REFRESH_TOKEN_KEY);
       } catch (e) {
         console.error('[AuthContext] Error reading refresh token from storage:', e);
-        setAuthState(prev => ({ ...prev, isLoading: false, error: new Error('Failed to read session.') }));
+        setAuthState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: new Error('Failed to read session.'),
+        }));
         return;
       }
 
@@ -102,14 +120,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } catch (refreshError: any) {
           console.error('[AuthContext] Custom PIN refresh failed:', refreshError?.message);
           await signOut(); // Use local scope signOut
-          setAuthState(prev => ({ ...prev, isLoading: false, error: new Error('Session expired.') }));
+          setAuthState(prev => ({
+            ...prev,
+            isLoading: false,
+            error: new Error('Session expired.'),
+          }));
         }
       } else {
         console.log('[AuthContext] No custom refresh token found.');
         // If no custom token and listener hasn't already set a session, stop loading
         setAuthState(prev => {
-            if (!prev.session && prev.isLoading) return {...prev, isLoading: false};
-            return prev;
+          if (!prev.session && prev.isLoading) return { ...prev, isLoading: false };
+          return prev;
         });
       }
     };
@@ -120,18 +142,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Effect for Supabase standard auth state changes (updates session/supabaseUser ONLY)
   useEffect(() => {
     console.log('[AuthContext] Setting up onAuthStateChange listener...');
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`[AuthContext] Listener Event: ${event}`, session ? `User: ${session.user.id}` : 'No session');
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log(
+        `[AuthContext] Listener Event: ${event}`,
+        session ? `User: ${session.user.id}` : 'No session'
+      );
 
       switch (event) {
         case 'INITIAL_SESSION':
           if (session) {
-             console.log('[AuthContext] INITIAL_SESSION: Session found. Setting session state, profile fetch will follow.');
-             // Set session, keep loading true if appUser isn't loaded for this user yet
-             setAuthState(prev => ({ ...prev, session, supabaseUser: session.user, isLoading: prev.appUser?.id === session.user.id ? false : true, error: null }));
+            console.log(
+              '[AuthContext] INITIAL_SESSION: Session found. Setting session state, profile fetch will follow.'
+            );
+            // Set session, keep loading true if appUser isn't loaded for this user yet
+            setAuthState(prev => ({
+              ...prev,
+              session,
+              supabaseUser: session.user,
+              isLoading: prev.appUser?.id === session.user.id ? false : true,
+              error: null,
+            }));
           } else {
             console.log('[AuthContext] INITIAL_SESSION: No session found.');
-            setAuthState(prev => ({ ...prev, isLoading: false, session: null, supabaseUser: null, appUser: null, error: null, viewingStudentIdContext: null }));
+            setAuthState(prev => ({
+              ...prev,
+              isLoading: false,
+              session: null,
+              supabaseUser: null,
+              appUser: null,
+              error: null,
+              viewingStudentIdContext: null,
+            }));
           }
           break;
 
@@ -139,14 +182,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         case 'TOKEN_REFRESHED':
         case 'USER_UPDATED':
           if (session) {
-             console.log(`[AuthContext] Event ${event}: Session updated. Setting session state, profile fetch will follow.`);
-             setAuthState(prev => ({
-                  ...prev,
-                  session,
-                  supabaseUser: session.user,
-                  isLoading: prev.appUser?.id === session.user.id ? false : true, // Keep loading only if user changes or appUser is null
-                  error: null
-             }));
+            console.log(
+              `[AuthContext] Event ${event}: Session updated. Setting session state, profile fetch will follow.`
+            );
+            setAuthState(prev => ({
+              ...prev,
+              session,
+              supabaseUser: session.user,
+              isLoading: prev.appUser?.id === session.user.id ? false : true, // Keep loading only if user changes or appUser is null
+              error: null,
+            }));
           } else {
             console.warn(`[AuthContext] Event ${event} received without session. Signing out.`);
             await signOut();
@@ -155,8 +200,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         case 'SIGNED_OUT':
           console.log(`[AuthContext] Event ${event}: Clearing state.`);
-          try { await removeItem(CUSTOM_REFRESH_TOKEN_KEY); } catch (e) { console.error('[AuthContext] Listener failed to clear custom token:', e); }
-          setAuthState({ isLoading: false, session: null, supabaseUser: null, appUser: null, error: null, viewingStudentIdContext: null });
+          try {
+            await removeItem(CUSTOM_REFRESH_TOKEN_KEY);
+          } catch (e) {
+            console.error('[AuthContext] Listener failed to clear custom token:', e);
+          }
+          setAuthState({
+            isLoading: false,
+            session: null,
+            supabaseUser: null,
+            appUser: null,
+            error: null,
+            viewingStudentIdContext: null,
+          });
           break;
 
         default:
@@ -170,67 +226,92 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [supabase.auth, signOut]); // Depend on signOut for defensive clearing
 
-
   // NEW useEffect to Fetch Profile based on supabaseUser change
   useEffect(() => {
-      const userToLoad = authState.supabaseUser;
-      const shouldFetch = userToLoad && (!authState.appUser || authState.appUser.id !== userToLoad.id || authState.isLoading);
+    const userToLoad = authState.supabaseUser;
+    const shouldFetch =
+      userToLoad &&
+      (!authState.appUser || authState.appUser.id !== userToLoad.id || authState.isLoading);
 
-      if (shouldFetch) {
-          console.log(`[AuthContext] Profile Fetch Effect: Triggered for user ${userToLoad.id}. Current appUser ID: ${authState.appUser?.id}`);
-           if (!authState.isLoading) {
-                setAuthState(prev => ({...prev, isLoading: true}));
-           }
-
-          let viewingId: string | null = null;
-          const metaRole = authState.session?.user?.app_metadata?.role;
-          const metaViewingId = authState.session?.user?.app_metadata?.viewing_student_id;
-          if (metaRole === 'parent' && metaViewingId) { viewingId = metaViewingId; }
-
-          fetchUserProfile(userToLoad.id)
-            .then(profile => {
-                console.log(`[AuthContext] Profile Fetch Effect: fetchUserProfile result for ${userToLoad.id}. Profile found: ${!!profile}`);
-                if (profile) {
-                    setAuthState(prev => {
-                        // Double check if the user context changed *during* the async fetch
-                        if (prev.supabaseUser?.id !== userToLoad.id) {
-                            console.warn("[AuthContext] Profile Fetch Effect: User context changed during fetch. Ignoring stale result.");
-                            return prev; // Ignore stale result
-                        }
-                        return {
-                             ...prev,
-                             isLoading: false,
-                             appUser: profile,
-                             // Re-determine viewingId based on potentially updated session/profile
-                             viewingStudentIdContext: (authState.session?.user?.app_metadata?.role === 'parent' && authState.session?.user?.app_metadata?.viewing_student_id) ? authState.session.user.app_metadata.viewing_student_id : null,
-                             error: null
-                        }
-                    });
-                } else {
-                    console.error(`[AuthContext] Profile Fetch Effect: Profile not found for user ${userToLoad.id}. Signing out.`);
-                    throw new Error(`Profile not found for user.`);
-                }
-            })
-            .catch(async (error) => {
-                 console.error(`[AuthContext] Profile Fetch Effect: Error fetching profile for ${userToLoad.id}:`, error?.message);
-                 // Check if the error happened because the user context changed
-                 if (authState.supabaseUser?.id === userToLoad.id) {
-                      await signOut();
-                      setAuthState(prev => ({ ...prev, isLoading: false, error: error ?? new Error('Failed to load profile.') }));
-                 } else {
-                      console.warn("[AuthContext] Profile Fetch Effect: Error caught for a stale user fetch. Ignoring.");
-                 }
-            });
-      } else if (!userToLoad && !authState.isLoading) {
-           // Ensure appUser is cleared if supabaseUser is cleared and we're not loading
-           if (authState.appUser !== null) {
-                console.log("[AuthContext] Profile Fetch Effect: supabaseUser is null, ensuring appUser is null.");
-                setAuthState(prev => ({...prev, appUser: null, viewingStudentIdContext: null}));
-           }
+    if (shouldFetch) {
+      console.log(
+        `[AuthContext] Profile Fetch Effect: Triggered for user ${userToLoad.id}. Current appUser ID: ${authState.appUser?.id}`
+      );
+      if (!authState.isLoading) {
+        setAuthState(prev => ({ ...prev, isLoading: true }));
       }
-  // Depend on the ID of the supabaseUser and session changes
-  }, [authState.supabaseUser?.id, authState.session, signOut]); // Using ID prevents loop if only session object reference changes
 
+      let viewingId: string | null = null;
+      const metaRole = authState.session?.user?.app_metadata?.role;
+      const metaViewingId = authState.session?.user?.app_metadata?.viewing_student_id;
+      if (metaRole === 'parent' && metaViewingId) {
+        viewingId = metaViewingId;
+      }
+
+      fetchUserProfile(userToLoad.id)
+        .then(profile => {
+          console.log(
+            `[AuthContext] Profile Fetch Effect: fetchUserProfile result for ${userToLoad.id}. Profile found: ${!!profile}`
+          );
+          if (profile) {
+            setAuthState(prev => {
+              // Double check if the user context changed *during* the async fetch
+              if (prev.supabaseUser?.id !== userToLoad.id) {
+                console.warn(
+                  '[AuthContext] Profile Fetch Effect: User context changed during fetch. Ignoring stale result.'
+                );
+                return prev; // Ignore stale result
+              }
+              return {
+                ...prev,
+                isLoading: false,
+                appUser: profile,
+                // Re-determine viewingId based on potentially updated session/profile
+                viewingStudentIdContext:
+                  authState.session?.user?.app_metadata?.role === 'parent' &&
+                  authState.session?.user?.app_metadata?.viewing_student_id
+                    ? authState.session.user.app_metadata.viewing_student_id
+                    : null,
+                error: null,
+              };
+            });
+          } else {
+            console.error(
+              `[AuthContext] Profile Fetch Effect: Profile not found for user ${userToLoad.id}. Signing out.`
+            );
+            throw new Error(`Profile not found for user.`);
+          }
+        })
+        .catch(async error => {
+          console.error(
+            `[AuthContext] Profile Fetch Effect: Error fetching profile for ${userToLoad.id}:`,
+            error?.message
+          );
+          // Check if the error happened because the user context changed
+          if (authState.supabaseUser?.id === userToLoad.id) {
+            await signOut();
+            setAuthState(prev => ({
+              ...prev,
+              isLoading: false,
+              error: error ?? new Error('Failed to load profile.'),
+            }));
+          } else {
+            console.warn(
+              '[AuthContext] Profile Fetch Effect: Error caught for a stale user fetch. Ignoring.'
+            );
+          }
+        });
+    } else if (!userToLoad && !authState.isLoading) {
+      // Ensure appUser is cleared if supabaseUser is cleared and we're not loading
+      if (authState.appUser !== null) {
+        console.log(
+          '[AuthContext] Profile Fetch Effect: supabaseUser is null, ensuring appUser is null.'
+        );
+        setAuthState(prev => ({ ...prev, appUser: null, viewingStudentIdContext: null }));
+      }
+    }
+    // Depend on the ID of the supabaseUser and session changes
+  }, [authState.supabaseUser?.id, authState.session, signOut]); // Using ID prevents loop if only session object reference changes
 
   // Derived state values
   const isAuthenticated = !!authState.session && !!authState.appUser;

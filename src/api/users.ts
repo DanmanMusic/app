@@ -471,8 +471,8 @@ export const deleteUser = async (userId: string): Promise<void> => {
   };
 
   if (!payload.userIdToDelete) {
-      console.error("[API deleteUser] Validation failed: userIdToDelete is missing.");
-      throw new Error("Cannot delete user: User ID is missing.");
+    console.error('[API deleteUser] Validation failed: userIdToDelete is missing.');
+    throw new Error('Cannot delete user: User ID is missing.');
   }
 
   console.log('[API deleteUser] Payload being sent:', payload);
@@ -484,9 +484,22 @@ export const deleteUser = async (userId: string): Promise<void> => {
   if (error) {
     console.error('[API deleteUser] Error invoking deleteUser function:', error);
     let detailedError = error.message || 'Unknown function error';
-    if (error.context && typeof error.context === 'object' && error.context !== null && 'error' in error.context) { detailedError = String((error.context as any).error) || detailedError; }
-    else { try { const parsed = JSON.parse(error.message); if (parsed && parsed.error) detailedError = String(parsed.error); } catch (e) {} }
-    if (error.context?.message) { detailedError += ` (Context: ${error.context.message})`; }
+    if (
+      error.context &&
+      typeof error.context === 'object' &&
+      error.context !== null &&
+      'error' in error.context
+    ) {
+      detailedError = String((error.context as any).error) || detailedError;
+    } else {
+      try {
+        const parsed = JSON.parse(error.message);
+        if (parsed && parsed.error) detailedError = String(parsed.error);
+      } catch (e) {}
+    }
+    if (error.context?.message) {
+      detailedError += ` (Context: ${error.context.message})`;
+    }
 
     // Throw the error message from the Edge Function
     throw new Error(`User deletion failed: ${detailedError}`);
@@ -501,44 +514,61 @@ export const toggleUserStatus = async (userId: string): Promise<User> => {
   console.log(`[API toggleUserStatus] Calling Edge Function "toggleUserStatus" for user ${userId}`);
 
   const payload = {
-      userIdToToggle: userId
+    userIdToToggle: userId,
   };
 
   if (!payload.userIdToToggle) {
-      console.error("[API toggleUserStatus] Validation failed: userIdToToggle is missing.");
-      throw new Error("Cannot toggle status: User ID is missing.");
+    console.error('[API toggleUserStatus] Validation failed: userIdToToggle is missing.');
+    throw new Error('Cannot toggle status: User ID is missing.');
   }
 
   console.log('[API toggleUserStatus] Payload being sent:', payload);
 
   const { data, error } = await client.functions.invoke('toggleUserStatus', {
-      body: payload
+    body: payload,
   });
 
   if (error) {
     console.error('[API toggleUserStatus] Error invoking toggleUserStatus function:', error);
     let detailedError = error.message || 'Unknown function error';
-    if (error.context && typeof error.context === 'object' && error.context !== null && 'error' in error.context) { detailedError = String((error.context as any).error) || detailedError; }
-    else { try { const parsed = JSON.parse(error.message); if (parsed && parsed.error) detailedError = String(parsed.error); } catch (e) {} }
-    if (error.context?.message) { detailedError += ` (Context: ${error.context.message})`; }
+    if (
+      error.context &&
+      typeof error.context === 'object' &&
+      error.context !== null &&
+      'error' in error.context
+    ) {
+      detailedError = String((error.context as any).error) || detailedError;
+    } else {
+      try {
+        const parsed = JSON.parse(error.message);
+        if (parsed && parsed.error) detailedError = String(parsed.error);
+      } catch (e) {}
+    }
+    if (error.context?.message) {
+      detailedError += ` (Context: ${error.context.message})`;
+    }
     throw new Error(`Failed to toggle status: ${detailedError}`);
   }
 
   console.log('[API toggleUserStatus] Edge Function returned successfully:', data);
 
-   // Edge function returns { id, status }. We need the full User object for consistency.
-   // Re-fetch the full profile after successful status toggle.
-   console.log(`[API toggleUserStatus] Status toggled for ${userId}. Re-fetching full profile...`);
-   const updatedUser = await fetchUserProfile(userId); // Use existing fetchUserProfile
-    if (!updatedUser) {
-       console.error(`[API toggleUserStatus] Status updated, but failed to re-fetch profile for ${userId}.`);
-       // This shouldn't really happen if the update succeeded, but handle it.
-       // Perhaps return a partial user object based on 'data'? Or throw?
-       // Let's throw an error for clarity.
-       throw new Error(`Status updated, but failed to re-fetch profile.`);
-   }
+  // Edge function returns { id, status }. We need the full User object for consistency.
+  // Re-fetch the full profile after successful status toggle.
+  console.log(`[API toggleUserStatus] Status toggled for ${userId}. Re-fetching full profile...`);
+  const updatedUser = await fetchUserProfile(userId); // Use existing fetchUserProfile
+  if (!updatedUser) {
+    console.error(
+      `[API toggleUserStatus] Status updated, but failed to re-fetch profile for ${userId}.`
+    );
+    // This shouldn't really happen if the update succeeded, but handle it.
+    // Perhaps return a partial user object based on 'data'? Or throw?
+    // Let's throw an error for clarity.
+    throw new Error(`Status updated, but failed to re-fetch profile.`);
+  }
 
-  console.log(`[API toggleUserStatus] Successfully toggled status and refetched profile for ${userId}.`);
+  console.log(
+    `[API toggleUserStatus] Successfully toggled status and refetched profile for ${userId}.`
+  );
   return updatedUser; // Return the freshly fetched full user profile
 };
 
@@ -740,5 +770,86 @@ export const fetchAuthUser = async (userId: string): Promise<{ email: string | n
     );
 
     return null;
+  }
+};
+
+export const linkStudentToParent = async (parentId: string, studentId: string): Promise<void> => {
+  const client = getSupabase();
+  console.log(`[API linkStudentToParent] Linking Student ${studentId} to Parent ${parentId}`);
+
+  if (!parentId || !studentId) {
+    throw new Error('Parent ID and Student ID are required for linking.');
+  }
+
+  // Prepare the row to insert into the link table
+  const linkData = {
+    parent_id: parentId,
+    student_id: studentId,
+    // created_at is handled by default value in DB
+  };
+
+  const { error } = await client.from('parent_students').insert(linkData);
+
+  if (error) {
+    console.error(`[API linkStudentToParent] Error inserting link:`, error);
+    // Handle specific errors like duplicate key (23505) if needed
+    if (error.code === '23505') {
+      throw new Error(`Student ${studentId} is already linked to Parent ${parentId}.`);
+    }
+    // Handle FK constraint errors (23503) if parent/student doesn't exist (shouldn't happen if selected from UI)
+    if (error.code === '23503') {
+      throw new Error(`Linking failed: Parent or Student ID not found.`);
+    }
+    // Handle RLS errors (though Admin should bypass)
+    if (error.code === '42501') {
+      // permission denied
+      throw new Error(`Permission denied. Ensure you are logged in as an Admin.`);
+    }
+    throw new Error(`Failed to link student to parent: ${error.message}`);
+  }
+
+  console.log(`[API linkStudentToParent] Link created successfully.`);
+};
+
+/**
+ * Unlinks a student profile from a parent profile.
+ * Assumes the caller is an authorized Admin (checked by RLS).
+ */
+export const unlinkStudentFromParent = async (
+  parentId: string,
+  studentId: string
+): Promise<void> => {
+  const client = getSupabase();
+  console.log(
+    `[API unlinkStudentFromParent] Unlinking Student ${studentId} from Parent ${parentId}`
+  );
+
+  if (!parentId || !studentId) {
+    throw new Error('Parent ID and Student ID are required for unlinking.');
+  }
+
+  const { error, count } = await client
+    .from('parent_students')
+    .delete()
+    .eq('parent_id', parentId)
+    .eq('student_id', studentId);
+
+  if (error) {
+    console.error(`[API unlinkStudentFromParent] Error deleting link:`, error);
+    // Handle RLS errors
+    if (error.code === '42501') {
+      throw new Error(`Permission denied. Ensure you are logged in as an Admin.`);
+    }
+    throw new Error(`Failed to unlink student from parent: ${error.message}`);
+  }
+
+  if (count === 0) {
+    console.warn(
+      `[API unlinkStudentFromParent] No link found to delete for Parent ${parentId} and Student ${studentId}.`
+    );
+    // Decide if this is an error or just a no-op success
+    // throw new Error("Link not found.");
+  } else {
+    console.log(`[API unlinkStudentFromParent] Link deleted successfully.`);
   }
 };

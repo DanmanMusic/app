@@ -13,43 +13,86 @@ interface AdjustTicketsPayload {
 // Helper function to check if the caller is an Admin
 async function isAdmin(supabaseClient: SupabaseClient, callerUserId: string): Promise<boolean> {
   const { data, error } = await supabaseClient
-    .from('profiles').select('role').eq('id', callerUserId).single();
-  if (error) { console.error(`isAdmin check failed for ${callerUserId}:`, error.message); return false; }
+    .from('profiles')
+    .select('role')
+    .eq('id', callerUserId)
+    .single();
+  if (error) {
+    console.error(`isAdmin check failed for ${callerUserId}:`, error.message);
+    return false;
+  }
   return data?.role === 'admin';
 }
 
 Deno.serve(async (req: Request) => {
   // 1. Handle Preflight CORS & Method Check (POST)
-  if (req.method === 'OPTIONS') { return new Response('ok', { headers: corsHeaders }); }
-  if (req.method !== 'POST') { return new Response(JSON.stringify({ error: `Method ${req.method} Not Allowed` }), { status: 405, headers: corsHeaders }); }
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: `Method ${req.method} Not Allowed` }), {
+      status: 405,
+      headers: corsHeaders,
+    });
+  }
 
   console.log(`Received ${req.method} request for adjustTickets`);
 
   // 2. Initialize Supabase Admin Client
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  if (!supabaseUrl || !serviceRoleKey) { /* ... server config error ... */ }
-  const supabaseAdminClient = createClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false }, global: { fetch: fetch } });
+  if (!supabaseUrl || !serviceRoleKey) {
+    /* ... server config error ... */
+  }
+  const supabaseAdminClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: { fetch: fetch },
+  });
 
   try {
     // 3. Verify Caller Authentication
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) { /* ... auth error ... */ }
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      /* ... auth error ... */
+    }
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user: callerUser }, error: userError } = await supabaseAdminClient.auth.getUser(token);
-    if (userError || !callerUser) { /* ... auth error ... */ }
+    const {
+      data: { user: callerUser },
+      error: userError,
+    } = await supabaseAdminClient.auth.getUser(token);
+    if (userError || !callerUser) {
+      /* ... auth error ... */
+    }
     const adjusterId = callerUser.id; // The Admin making the adjustment
     console.log('Caller User ID (Adjuster):', adjusterId);
 
     // 4. Parse Request Body
     let payload: AdjustTicketsPayload;
-    try { payload = await req.json(); } catch (jsonError) { /* ... body error ... */ }
+    try {
+      payload = await req.json();
+    } catch (jsonError) {
+      /* ... body error ... */
+    }
     console.log('Received payload:', payload);
 
     // 5. Validate Payload
-    if (!payload.studentId || payload.amount == null || typeof payload.amount !== 'number' || !Number.isInteger(payload.amount) || payload.amount === 0 || // Amount cannot be zero
-        !payload.notes || typeof payload.notes !== 'string' || payload.notes.trim().length === 0) {
-      return new Response(JSON.stringify({ error: 'Missing or invalid fields: studentId, amount (non-zero integer), notes (non-empty string).' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (
+      !payload.studentId ||
+      payload.amount == null ||
+      typeof payload.amount !== 'number' ||
+      !Number.isInteger(payload.amount) ||
+      payload.amount === 0 || // Amount cannot be zero
+      !payload.notes ||
+      typeof payload.notes !== 'string' ||
+      payload.notes.trim().length === 0
+    ) {
+      return new Response(
+        JSON.stringify({
+          error:
+            'Missing or invalid fields: studentId, amount (non-zero integer), notes (non-empty string).',
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
     const studentId = payload.studentId;
     const amountToAdjust = payload.amount;
@@ -59,8 +102,13 @@ Deno.serve(async (req: Request) => {
     // 6. Authorize Caller (MUST be Admin)
     const userIsAdmin = await isAdmin(supabaseAdminClient, adjusterId);
     if (!userIsAdmin) {
-         console.warn(`Authorization failed: User ${adjusterId} is not Admin.`);
-         return new Response(JSON.stringify({ error: 'Permission denied: Only Admins can perform manual ticket adjustments.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      console.warn(`Authorization failed: User ${adjusterId} is not Admin.`);
+      return new Response(
+        JSON.stringify({
+          error: 'Permission denied: Only Admins can perform manual ticket adjustments.',
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
     console.log(`Authorization success: Admin ${adjusterId} performing adjustment.`);
 
@@ -68,12 +116,16 @@ Deno.serve(async (req: Request) => {
     if (amountToAdjust < 0) {
       console.log(`Subtraction detected. Checking balance for student ${studentId}...`);
       const { data: balanceData, error: balanceError } = await supabaseAdminClient.rpc(
-          'get_student_balance', { p_student_id: studentId }
+        'get_student_balance',
+        { p_student_id: studentId }
       );
 
       if (balanceError) {
-          console.error(`Error fetching balance for student ${studentId}:`, balanceError);
-          return new Response(JSON.stringify({ error: `Failed to verify student balance: ${balanceError.message}` }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        console.error(`Error fetching balance for student ${studentId}:`, balanceError);
+        return new Response(
+          JSON.stringify({ error: `Failed to verify student balance: ${balanceError.message}` }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       const currentBalance = typeof balanceData === 'number' ? balanceData : 0; // get_student_balance returns integer
@@ -81,8 +133,15 @@ Deno.serve(async (req: Request) => {
 
       // Check if balance is sufficient (amountToAdjust is negative)
       if (currentBalance + amountToAdjust < 0) {
-        console.warn(`Insufficient balance for subtraction. Current: ${currentBalance}, Amount: ${amountToAdjust}`);
-        return new Response(JSON.stringify({ error: `Insufficient balance. Student only has ${currentBalance} tickets.` }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        console.warn(
+          `Insufficient balance for subtraction. Current: ${currentBalance}, Amount: ${amountToAdjust}`
+        );
+        return new Response(
+          JSON.stringify({
+            error: `Insufficient balance. Student only has ${currentBalance} tickets.`,
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
     }
 
@@ -90,9 +149,9 @@ Deno.serve(async (req: Request) => {
     const transactionData = {
       student_id: studentId,
       amount: amountToAdjust,
-      type: transactionType as ('manual_add' | 'manual_subtract'), // Cast type
+      type: transactionType as 'manual_add' | 'manual_subtract', // Cast type
       source_id: adjusterId, // Record which admin made the adjustment
-      notes: notes
+      notes: notes,
     };
 
     console.log('Attempting to insert ticket transaction:', transactionData);
@@ -105,7 +164,10 @@ Deno.serve(async (req: Request) => {
 
     if (insertError) {
       console.error('Error inserting ticket transaction:', insertError);
-      return new Response(JSON.stringify({ error: `Failed to record transaction: ${insertError.message}` }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(
+        JSON.stringify({ error: `Failed to record transaction: ${insertError.message}` }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Ticket transaction logged successfully:', insertedTransaction);
@@ -114,34 +176,39 @@ Deno.serve(async (req: Request) => {
     //    (This confirms the transaction was processed by the sum)
     let newBalance = 0;
     try {
-         const { data: newBalanceData, error: newBalanceError } = await supabaseAdminClient.rpc(
-             'get_student_balance', { p_student_id: studentId }
-         );
-         if (newBalanceError) throw newBalanceError;
-         newBalance = typeof newBalanceData === 'number' ? newBalanceData : 0;
-         console.log(`New balance confirmed for student ${studentId}: ${newBalance}`);
-    } catch(e) {
-        console.error("Failed to fetch new balance after adjustment:", e);
-        // Don't fail the whole request, but log that confirmation failed
+      const { data: newBalanceData, error: newBalanceError } = await supabaseAdminClient.rpc(
+        'get_student_balance',
+        { p_student_id: studentId }
+      );
+      if (newBalanceError) throw newBalanceError;
+      newBalance = typeof newBalanceData === 'number' ? newBalanceData : 0;
+      console.log(`New balance confirmed for student ${studentId}: ${newBalance}`);
+    } catch (e) {
+      console.error('Failed to fetch new balance after adjustment:', e);
+      // Don't fail the whole request, but log that confirmation failed
     }
 
-
     // 10. Return Success Response
-    return new Response(JSON.stringify({
+    return new Response(
+      JSON.stringify({
         message: `Tickets adjusted successfully by ${amountToAdjust}.`,
         transaction: insertedTransaction, // Optionally return the created transaction
-        newBalance: newBalance // Return the calculated new balance
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200, // OK
-    });
-
+        newBalance: newBalance, // Return the calculated new balance
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200, // OK
+      }
+    );
   } catch (error) {
     console.error('Unhandled Adjust Tickets Function Error:', error);
-    return new Response(JSON.stringify({ error: error.message || 'An unexpected error occurred.' }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ error: error.message || 'An unexpected error occurred.' }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      }
+    );
   }
 });
 

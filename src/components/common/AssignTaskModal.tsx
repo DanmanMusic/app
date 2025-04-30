@@ -34,7 +34,6 @@ import { colors } from '../../styles/colors';
 import { modalSharedStyles } from '../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
-
 export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   visible,
   onClose,
@@ -137,13 +136,19 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   const mutation = useMutation({
     mutationFn: createAssignedTask, // Uses the API function
     onSuccess: createdAssignment => {
-      console.log('[AssignTaskModal] Task assigned successfully (via Edge Function):', createdAssignment);
+      console.log(
+        '[AssignTaskModal] Task assigned successfully (via Edge Function):',
+        createdAssignment
+      );
       queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] }); // Broad invalidation
-      queryClient.invalidateQueries({ queryKey: ['assigned-tasks', { studentId: createdAssignment.studentId }] }); // Specific student invalidation
+      queryClient.invalidateQueries({
+        queryKey: ['assigned-tasks', { studentId: createdAssignment.studentId }],
+      }); // Specific student invalidation
       onClose(); // Close modal on success
       Toast.show({ type: 'success', text1: 'Success', text2: 'Task assigned successfully.' });
     },
-    onError: (error: Error) => { // Explicitly type error
+    onError: (error: Error) => {
+      // Explicitly type error
       console.error('[AssignTaskModal] Error assigning task:', error);
       Toast.show({
         type: 'error',
@@ -202,9 +207,21 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
 
   const handleAdHocSubmit = () => {
     // Validate AdHoc fields before proceeding
-    const numericPoints = typeof adHocBasePoints === 'number' ? adHocBasePoints : parseInt(String(adHocBasePoints || '-1'), 10);
-    if (!adHocTitle.trim() || !adHocDescription.trim() || isNaN(numericPoints) || numericPoints < 0) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Please fill in valid Title, Description, and Points.' });
+    const numericPoints =
+      typeof adHocBasePoints === 'number'
+        ? adHocBasePoints
+        : parseInt(String(adHocBasePoints || '-1'), 10);
+    if (
+      !adHocTitle.trim() ||
+      !adHocDescription.trim() ||
+      isNaN(numericPoints) ||
+      numericPoints < 0
+    ) {
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Please fill in valid Title, Description, and Points.',
+      });
       return;
     }
     setSelectedLibraryTask(null); // Ensure no library task is selected
@@ -214,18 +231,34 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
 
   // Handler for the final confirmation and mutation trigger
   const handleConfirm = () => {
-    if (!selectedStudentId) { // Assignee ID comes from token in Edge Function
+    if (!selectedStudentId) {
+      // Assignee ID comes from token in Edge Function
       Toast.show({ type: 'error', text1: 'Error', text2: 'Student ID missing.' });
       return;
     }
 
     // Prepare payload for the client API function createAssignedTask
-    let assignmentPayload: Omit<AssignedTask, 'id' | 'assignedById' | 'assignedDate' | 'isComplete' | 'verificationStatus'>;
+    let assignmentPayload: Omit<
+      AssignedTask,
+      'id' | 'assignedById' | 'assignedDate' | 'isComplete' | 'verificationStatus'
+    >;
 
     if (isAdHocMode) {
-      const numericPoints = typeof adHocBasePoints === 'number' ? adHocBasePoints : parseInt(String(adHocBasePoints || '-1'), 10);
-      if (!adHocTitle.trim() || !adHocDescription.trim() || isNaN(numericPoints) || numericPoints < 0) {
-        Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Invalid custom task details.' });
+      const numericPoints =
+        typeof adHocBasePoints === 'number'
+          ? adHocBasePoints
+          : parseInt(String(adHocBasePoints || '-1'), 10);
+      if (
+        !adHocTitle.trim() ||
+        !adHocDescription.trim() ||
+        isNaN(numericPoints) ||
+        numericPoints < 0
+      ) {
+        Toast.show({
+          type: 'error',
+          text1: 'Validation Error',
+          text2: 'Invalid custom task details.',
+        });
         return;
       }
       assignmentPayload = {
@@ -242,7 +275,11 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         taskBasePoints: selectedLibraryTask.baseTickets,
       };
     } else {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'No task selected or defined.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'No task selected or defined.',
+      });
       return;
     }
 
@@ -271,15 +308,23 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           <Text style={modalSharedStyles.stepTitle}>Step 1: Select Student</Text>
           <TextInput
             style={commonSharedStyles.searchInput}
-            placeholder={filterTeacherId ? 'Search Your Students...' : 'Search All Active Students...'}
+            placeholder={
+              filterTeacherId ? 'Search Your Students...' : 'Search All Active Students...'
+            }
             value={studentSearchTerm}
             onChangeText={setStudentSearchTerm}
             placeholderTextColor={colors.textLight}
             autoCapitalize="none"
             autoCorrect={false}
           />
-          {isLoadingStudents && <ActivityIndicator color={colors.primary} style={styles.listLoader} />}
-          {isErrorStudents && <Text style={commonSharedStyles.errorText}>Error loading students: {errorStudents?.message}</Text>}
+          {isLoadingStudents && (
+            <ActivityIndicator color={colors.primary} style={styles.listLoader} />
+          )}
+          {isErrorStudents && (
+            <Text style={commonSharedStyles.errorText}>
+              Error loading students: {errorStudents?.message}
+            </Text>
+          )}
           {!isLoadingStudents && !isErrorStudents && (
             <FlatList
               style={modalSharedStyles.contentScrollView}
@@ -292,7 +337,11 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                   </View>
                 </TouchableOpacity>
               )}
-              ListEmptyComponent={<Text style={appSharedStyles.emptyListText}>{studentSearchTerm ? 'No students match search.' : 'No active students found.'}</Text>}
+              ListEmptyComponent={
+                <Text style={appSharedStyles.emptyListText}>
+                  {studentSearchTerm ? 'No students match search.' : 'No active students found.'}
+                </Text>
+              }
             />
           )}
         </>
@@ -303,7 +352,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     if (step === 2) {
       return (
         <>
-          <Text style={modalSharedStyles.stepTitle}>Step {preselectedStudentId ? 1 : 2}: Assign Task to {selectedStudentName}</Text>
+          <Text style={modalSharedStyles.stepTitle}>
+            Step {preselectedStudentId ? 1 : 2}: Assign Task to {selectedStudentName}
+          </Text>
           <View style={modalSharedStyles.modeSwitchContainer}>
             <Text style={commonSharedStyles.label}>Select from Library</Text>
             <Switch
@@ -320,22 +371,59 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
               // Ad-Hoc Task Input Fields
               <View>
                 <Text style={commonSharedStyles.label}>Custom Task Title:</Text>
-                <TextInput style={commonSharedStyles.input} value={adHocTitle} onChangeText={setAdHocTitle} placeholder="e.g., Help setup for recital" placeholderTextColor={colors.textLight} editable={!mutation.isPending} />
+                <TextInput
+                  style={commonSharedStyles.input}
+                  value={adHocTitle}
+                  onChangeText={setAdHocTitle}
+                  placeholder="e.g., Help setup for recital"
+                  placeholderTextColor={colors.textLight}
+                  editable={!mutation.isPending}
+                />
                 <Text style={commonSharedStyles.label}>Custom Task Description:</Text>
-                <TextInput style={commonSharedStyles.textArea} value={adHocDescription} onChangeText={setAdHocDescription} placeholder="Describe the task briefly" placeholderTextColor={colors.textLight} multiline={true} editable={!mutation.isPending} />
+                <TextInput
+                  style={commonSharedStyles.textArea}
+                  value={adHocDescription}
+                  onChangeText={setAdHocDescription}
+                  placeholder="Describe the task briefly"
+                  placeholderTextColor={colors.textLight}
+                  multiline={true}
+                  editable={!mutation.isPending}
+                />
                 <Text style={commonSharedStyles.label}>Base Points:</Text>
-                <TextInput style={commonSharedStyles.input} value={String(adHocBasePoints)} onChangeText={text => setAdHocBasePoints(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)} placeholder="e.g., 50" placeholderTextColor={colors.textLight} keyboardType="numeric" editable={!mutation.isPending} />
+                <TextInput
+                  style={commonSharedStyles.input}
+                  value={String(adHocBasePoints)}
+                  onChangeText={text =>
+                    setAdHocBasePoints(
+                      text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0
+                    )
+                  }
+                  placeholder="e.g., 50"
+                  placeholderTextColor={colors.textLight}
+                  keyboardType="numeric"
+                  editable={!mutation.isPending}
+                />
                 <Button
                   title="Use This Custom Task"
                   onPress={handleAdHocSubmit}
-                  disabled={mutation.isPending || !adHocTitle.trim() || !adHocDescription.trim() || adHocBasePoints === '' || adHocBasePoints < 0}
+                  disabled={
+                    mutation.isPending ||
+                    !adHocTitle.trim() ||
+                    !adHocDescription.trim() ||
+                    adHocBasePoints === '' ||
+                    adHocBasePoints < 0
+                  }
                 />
               </View>
             ) : (
               // Task Library List
               <>
                 {isLoadingLibrary && <ActivityIndicator style={styles.listLoader} />}
-                {isErrorLibrary && <Text style={commonSharedStyles.errorText}>Error loading task library: {errorLibrary?.message}</Text>}
+                {isErrorLibrary && (
+                  <Text style={commonSharedStyles.errorText}>
+                    Error loading task library: {errorLibrary?.message}
+                  </Text>
+                )}
                 {!isLoadingLibrary && !isErrorLibrary && (
                   <FlatList
                     data={sortedTasks}
@@ -343,12 +431,16 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                     renderItem={({ item }) => (
                       <TouchableOpacity onPress={() => handleLibraryTaskSelect(item)}>
                         <View style={modalSharedStyles.listItem}>
-                          <Text style={modalSharedStyles.taskItemText}>{item.title} ({item.baseTickets} pts)</Text>
+                          <Text style={modalSharedStyles.taskItemText}>
+                            {item.title} ({item.baseTickets} pts)
+                          </Text>
                           <Text style={modalSharedStyles.taskDescription}>{item.description}</Text>
                         </View>
                       </TouchableOpacity>
                     )}
-                    ListEmptyComponent={<Text style={appSharedStyles.emptyListText}>Task library is empty.</Text>}
+                    ListEmptyComponent={
+                      <Text style={appSharedStyles.emptyListText}>Task library is empty.</Text>
+                    }
                   />
                 )}
               </>
@@ -364,9 +456,12 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       const taskPoints = isAdHocMode ? adHocBasePoints : selectedLibraryTask?.baseTickets;
       return (
         <>
-          <Text style={modalSharedStyles.stepTitle}>Step {preselectedStudentId ? 2 : 3}: Confirm Assignment</Text>
+          <Text style={modalSharedStyles.stepTitle}>
+            Step {preselectedStudentId ? 2 : 3}: Confirm Assignment
+          </Text>
           <Text style={modalSharedStyles.confirmationText}>
-            Assign task "{taskTitle || 'N/A'}" ({taskPoints ?? '?'} points) to "{selectedStudentName}"?
+            Assign task "{taskTitle || 'N/A'}" ({taskPoints ?? '?'} points) to "
+            {selectedStudentName}"?
           </Text>
           {/* Removed the deferred info text */}
         </>
@@ -385,18 +480,18 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           {renderStepContent()}
 
           {/* Loading/Error for mutation */}
-           {mutation.isPending && (
-                <View style={modalSharedStyles.loadingContainer}>
-                    <ActivityIndicator size="small" color={colors.primary} />
-                    <Text style={modalSharedStyles.loadingText}>Assigning Task...</Text>
-                </View>
-            )}
-            {mutation.isError && (
-                 <Text style={[commonSharedStyles.errorText, {marginTop: 10}]}>
-                    Error: {mutation.error instanceof Error ? mutation.error.message : 'Failed to assign task'}
-                 </Text>
-            )}
-
+          {mutation.isPending && (
+            <View style={modalSharedStyles.loadingContainer}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={modalSharedStyles.loadingText}>Assigning Task...</Text>
+            </View>
+          )}
+          {mutation.isError && (
+            <Text style={[commonSharedStyles.errorText, { marginTop: 10 }]}>
+              Error:{' '}
+              {mutation.error instanceof Error ? mutation.error.message : 'Failed to assign task'}
+            </Text>
+          )}
 
           {/* Footer Buttons */}
           <View style={modalSharedStyles.buttonContainer}>
@@ -408,7 +503,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
               />
             )}
 
-            {((step > 1 && !preselectedStudentId) || step === 3 || (step === 2 && preselectedStudentId)) && (
+            {((step > 1 && !preselectedStudentId) ||
+              step === 3 ||
+              (step === 2 && preselectedStudentId)) && (
               <Button
                 title="Back"
                 onPress={goBack}

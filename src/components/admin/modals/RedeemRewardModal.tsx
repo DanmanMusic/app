@@ -69,16 +69,21 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
   // Mutation for redeeming reward (calls the API function which calls the Edge Function)
   const redeemMutation = useMutation({
     mutationFn: redeemReward, // Use the updated API function
-    onSuccess: (data, variables) => { // data here is { message, newBalance }
-      console.log(`[RedeemRewardModal] Redemption successful for student ${variables.studentId}, reward ${variables.rewardId}. New Balance: ${data.newBalance}`);
+    onSuccess: (data, variables) => {
+      // data here is { message, newBalance }
+      console.log(
+        `[RedeemRewardModal] Redemption successful for student ${variables.studentId}, reward ${variables.rewardId}. New Balance: ${data.newBalance}`
+      );
       Toast.show({ type: 'success', text1: 'Redemption Successful!', text2: data.message });
 
       // Invalidate relevant queries AFTER success
       queryClient.invalidateQueries({ queryKey: ['balance', variables.studentId] });
-      queryClient.invalidateQueries({ queryKey: ['ticket-history', { studentId: variables.studentId }] });
+      queryClient.invalidateQueries({
+        queryKey: ['ticket-history', { studentId: variables.studentId }],
+      });
       queryClient.invalidateQueries({ queryKey: ['ticket-history'] }); // Invalidate global history
-       // Optionally force immediate balance refetch for UI update, though invalidation often suffices
-       // refetchBalance();
+      // Optionally force immediate balance refetch for UI update, though invalidation often suffices
+      // refetchBalance();
 
       onClose(); // Close modal on success
     },
@@ -101,7 +106,7 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
       redeemMutation.reset();
       // Refetch balance when modal becomes visible for the specific student
       if (studentId) {
-          refetchBalance();
+        refetchBalance();
       }
     }
   }, [visible, studentId, refetchBalance]); // Add refetchBalance to dependencies
@@ -117,13 +122,17 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
         type: 'error',
         text1: 'Insufficient Tickets',
         text2: `Need ${reward.cost - currentBalance} more tickets.`,
-        position: 'bottom'
+        position: 'bottom',
       });
       setSelectedRewardId(null); // Deselect if not affordable
     } else {
-        // Handle balance error case - maybe prevent selection?
-        Toast.show({type: 'error', text1: 'Error', text2: 'Cannot determine affordability due to balance error.'})
-        setSelectedRewardId(null);
+      // Handle balance error case - maybe prevent selection?
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Cannot determine affordability due to balance error.',
+      });
+      setSelectedRewardId(null);
     }
   };
 
@@ -134,32 +143,43 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
       return;
     }
     if (balanceLoading || redeemMutation.isPending) {
-       Toast.show({ type: 'info', text1: 'Please wait', text2: 'Processing...' });
-       return;
+      Toast.show({ type: 'info', text1: 'Please wait', text2: 'Processing...' });
+      return;
     }
     if (balanceError) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Could not verify balance before redemption.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Could not verify balance before redemption.',
+      });
       return;
     }
 
     const selectedReward = rewardsCatalog.find(r => r.id === selectedRewardId);
-    if (!selectedReward) { // Should not happen if selectedRewardId is set from list
+    if (!selectedReward) {
+      // Should not happen if selectedRewardId is set from list
       Toast.show({ type: 'error', text1: 'Error', text2: 'Selected reward data not found.' });
       return;
     }
 
     // Double-check affordability right before mutation
     if (currentBalance < selectedReward.cost) {
-      Toast.show({ type: 'error', text1: 'Insufficient Tickets', text2: `Cannot redeem ${selectedReward.name}. Balance might have changed.` });
+      Toast.show({
+        type: 'error',
+        text1: 'Insufficient Tickets',
+        text2: `Cannot redeem ${selectedReward.name}. Balance might have changed.`,
+      });
       setSelectedRewardId(null); // Deselect if suddenly unaffordable
       return;
     }
 
-    console.log(`[RedeemRewardModal] Initiating redemption mutation for student ${studentId}, reward ${selectedRewardId}`);
+    console.log(
+      `[RedeemRewardModal] Initiating redemption mutation for student ${studentId}, reward ${selectedRewardId}`
+    );
     // Call the mutation with studentId and rewardId
     redeemMutation.mutate({
-        studentId: studentId,
-        rewardId: selectedRewardId,
+      studentId: studentId,
+      rewardId: selectedRewardId,
     });
   };
 
@@ -167,12 +187,17 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
   const selectedReward = rewardsCatalog.find(r => r.id === selectedRewardId);
 
   // Determine if confirm button should be disabled
-  const isConfirmDisabled = !selectedRewardId || balanceLoading || redeemMutation.isPending || isLoadingRewards || balanceError;
+  const isConfirmDisabled =
+    !selectedRewardId ||
+    balanceLoading ||
+    redeemMutation.isPending ||
+    isLoadingRewards ||
+    balanceError;
 
   // Render function for each reward item in the list
   const renderRewardItem = ({ item }: { item: RewardItem }) => {
     // Determine affordability based on fetched balance (handle loading/error states)
-    const canAfford = balanceLoading ? null : (balanceError ? false : currentBalance >= item.cost);
+    const canAfford = balanceLoading ? null : balanceError ? false : currentBalance >= item.cost;
     const isSelected = item.id === selectedRewardId;
 
     return (
@@ -195,9 +220,13 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
               {item.cost} Tickets
             </Text>
             {/* Show affordability status */}
-            {canAfford === false && <Text style={styles.cannotAffordText}>(Need {item.cost - currentBalance} more)</Text>}
-            {canAfford === null && !balanceError && <Text style={styles.loadingAffordText}>(Checking balance...)</Text>}
-             {balanceError && <Text style={styles.cannotAffordText}>(Balance Error)</Text>}
+            {canAfford === false && (
+              <Text style={styles.cannotAffordText}>(Need {item.cost - currentBalance} more)</Text>
+            )}
+            {canAfford === null && !balanceError && (
+              <Text style={styles.loadingAffordText}>(Checking balance...)</Text>
+            )}
+            {balanceError && <Text style={styles.cannotAffordText}>(Balance Error)</Text>}
           </View>
           {/* Show checkmark if selected */}
           {isSelected && <Text style={styles.checkmark}>✓</Text>}
@@ -217,8 +246,14 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
             {balanceLoading ? 'Loading...' : balanceError ? 'Error' : `${currentBalance} Tickets`}
           </Text>
           {/* Display errors */}
-          {balanceError && <Text style={commonSharedStyles.errorText}>Balance Error: {balanceErrorMsg?.message}</Text>}
-          {isErrorRewards && <Text style={commonSharedStyles.errorText}>Rewards Error: {errorRewards?.message}</Text>}
+          {balanceError && (
+            <Text style={commonSharedStyles.errorText}>
+              Balance Error: {balanceErrorMsg?.message}
+            </Text>
+          )}
+          {isErrorRewards && (
+            <Text style={commonSharedStyles.errorText}>Rewards Error: {errorRewards?.message}</Text>
+          )}
 
           {/* Loading indicator for rewards list */}
           {isLoadingRewards && (
@@ -233,7 +268,9 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
               renderItem={renderRewardItem}
               keyExtractor={item => item.id}
               ItemSeparatorComponent={() => <View style={styles.separator} />}
-              ListEmptyComponent={<Text style={appSharedStyles.emptyListText}>No rewards available.</Text>}
+              ListEmptyComponent={
+                <Text style={appSharedStyles.emptyListText}>No rewards available.</Text>
+              }
               extraData={selectedRewardId || currentBalance} // Re-render list if selection or balance changes
             />
           )}
@@ -271,8 +308,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundPrimary,
   },
   rewardItemUnaffordable: {
-      opacity: 0.6,
-      backgroundColor: colors.backgroundGrey, // Grey out unaffordable items
+    opacity: 0.6,
+    backgroundColor: colors.backgroundGrey, // Grey out unaffordable items
   },
   rewardItemSelected: {
     borderColor: colors.success, // Highlight selected item
@@ -289,29 +326,29 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundGrey, // Placeholder bg
   },
   rewardName: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: colors.textPrimary
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
   },
   cannotAffordText: {
-      fontSize: 12,
-      color: colors.danger, // Use danger color for clarity
-      fontStyle: 'italic',
-      marginTop: 2
+    fontSize: 12,
+    color: colors.danger, // Use danger color for clarity
+    fontStyle: 'italic',
+    marginTop: 2,
   },
   loadingAffordText: {
-      fontSize: 12,
-      color: colors.textLight,
-      fontStyle: 'italic',
-      marginTop: 2
+    fontSize: 12,
+    color: colors.textLight,
+    fontStyle: 'italic',
+    marginTop: 2,
   },
   checkmark: {
-      fontSize: 24,
-      color: colors.success, // Use success color for checkmark
-      marginLeft: 'auto' // Push checkmark to the right
+    fontSize: 24,
+    color: colors.success, // Use success color for checkmark
+    marginLeft: 'auto', // Push checkmark to the right
   },
   separator: {
-      height: 8
+    height: 8,
   },
 });
 

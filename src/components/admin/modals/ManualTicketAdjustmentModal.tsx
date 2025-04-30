@@ -16,7 +16,6 @@ import { colors } from '../../../styles/colors';
 import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
-
 export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = ({
   visible,
   onClose,
@@ -49,29 +48,33 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
   // Mutation hook for adjusting tickets (calls API -> Edge Function)
   const mutation = useMutation({
     mutationFn: adjustTickets, // Use the API function that calls the Edge Function
-    onSuccess: (data) => { // Data is { message, transaction, newBalance }
-        console.log('[AdjustModal] Ticket adjustment successful:', data);
-        Toast.show({ type: 'success', text1: 'Success!', text2: data.message });
+    onSuccess: data => {
+      // Data is { message, transaction, newBalance }
+      console.log('[AdjustModal] Ticket adjustment successful:', data);
+      Toast.show({ type: 'success', text1: 'Success!', text2: data.message });
 
-        // Invalidate queries to update UI elsewhere
-        queryClient.invalidateQueries({ queryKey: ['balance', studentId] });
-        queryClient.invalidateQueries({ queryKey: ['ticket-history', { studentId: studentId }] });
-        queryClient.invalidateQueries({ queryKey: ['ticket-history'] }); // Global history
+      // Invalidate queries to update UI elsewhere
+      queryClient.invalidateQueries({ queryKey: ['balance', studentId] });
+      queryClient.invalidateQueries({ queryKey: ['ticket-history', { studentId: studentId }] });
+      queryClient.invalidateQueries({ queryKey: ['ticket-history'] }); // Global history
 
-        // Optional: Immediately update the balance query data for this modal
-        queryClient.setQueryData(['balance', studentId, { context: 'adjustmentModal' }], data.newBalance);
+      // Optional: Immediately update the balance query data for this modal
+      queryClient.setQueryData(
+        ['balance', studentId, { context: 'adjustmentModal' }],
+        data.newBalance
+      );
 
-        onClose(); // Close modal on success
+      onClose(); // Close modal on success
     },
     onError: (error: Error) => {
-        console.error('[AdjustModal] Ticket adjustment failed:', error);
-        Toast.show({
-            type: 'error',
-            text1: 'Adjustment Failed',
-            text2: error.message || 'Could not adjust tickets.', // Show error from Edge Function
-            position: 'bottom',
-            visibilityTime: 5000,
-        });
+      console.error('[AdjustModal] Ticket adjustment failed:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Adjustment Failed',
+        text2: error.message || 'Could not adjust tickets.', // Show error from Edge Function
+        position: 'bottom',
+        visibilityTime: 5000,
+      });
     },
   });
 
@@ -91,11 +94,19 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
   const handleAdjust = () => {
     // Basic client-side validation (Edge function does more thorough checks)
     if (amount === '' || isNaN(Number(amount)) || Number(amount) <= 0) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Please enter a valid positive amount.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Please enter a valid positive amount.',
+      });
       return;
     }
     if (!notes.trim()) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Please enter a reason (notes).' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Please enter a reason (notes).',
+      });
       return;
     }
     if (mutation.isPending) return; // Prevent double submit
@@ -104,16 +115,20 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
 
     // Client-side check for subtraction (optional, Edge Func also checks)
     if (isSubtracting && !balanceLoading && !balanceError && currentBalance < Number(amount)) {
-      Toast.show({ type: 'error', text1: 'Insufficient Balance', text2: `${studentName} only has ${currentBalance} tickets.` });
+      Toast.show({
+        type: 'error',
+        text1: 'Insufficient Balance',
+        text2: `${studentName} only has ${currentBalance} tickets.`,
+      });
       return;
     }
 
     console.log(`[AdjustModal] Initiating ticket adjustment mutation. Amount: ${adjustmentAmount}`);
     mutation.mutate({
-        studentId: studentId,
-        amount: adjustmentAmount, // Send positive or negative value
-        notes: notes.trim(),
-        // adjusterId is handled by Edge Function
+      studentId: studentId,
+      amount: adjustmentAmount, // Send positive or negative value
+      notes: notes.trim(),
+      // adjusterId is handled by Edge Function
     });
   };
 
@@ -128,7 +143,8 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
   const actionText = isSubtracting ? 'Subtract' : 'Add';
   const confirmButtonText = mutation.isPending ? 'Processing...' : `${actionText} Tickets`;
   // Disable if loading balance, mutation pending, or form invalid
-  const isConfirmDisabled = balanceLoading || mutation.isPending || amount === '' || Number(amount) <= 0 || !notes.trim();
+  const isConfirmDisabled =
+    balanceLoading || mutation.isPending || amount === '' || Number(amount) <= 0 || !notes.trim();
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -141,7 +157,9 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
             {balanceLoading ? 'Loading...' : balanceError ? 'Error' : `${currentBalance} Tickets`}
           </Text>
           {balanceError && (
-            <Text style={commonSharedStyles.errorText}>Balance Error: {balanceErrorMsg?.message}</Text>
+            <Text style={commonSharedStyles.errorText}>
+              Balance Error: {balanceErrorMsg?.message}
+            </Text>
           )}
 
           {/* Add/Subtract Toggle */}
@@ -165,7 +183,9 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
           <TextInput
             style={commonSharedStyles.input}
             value={String(amount)} // Ensure value is string for input
-            onChangeText={text => setAmount(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || '')} // Allow only positive integers
+            onChangeText={text =>
+              setAmount(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || '')
+            } // Allow only positive integers
             placeholder="Enter amount (e.g., 100)"
             placeholderTextColor={colors.textLight}
             keyboardType="numeric"
@@ -189,16 +209,20 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
           </Text>
 
           {/* Mutation Status */}
-           {mutation.isPending && (
-                <View style={modalSharedStyles.loadingContainer}>
-                  <ActivityIndicator size="small" color={colors.primary} />
-                  <Text style={modalSharedStyles.loadingText}>Adjusting Tickets...</Text>
-                </View>
-            )}
-            {mutation.isError && !mutation.isPending && ( // Show error only if not pending
-                 <Text style={[commonSharedStyles.errorText, {marginTop: 10}]}>
-                    Error: {mutation.error instanceof Error ? mutation.error.message : 'Failed to adjust tickets'}
-                 </Text>
+          {mutation.isPending && (
+            <View style={modalSharedStyles.loadingContainer}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={modalSharedStyles.loadingText}>Adjusting Tickets...</Text>
+            </View>
+          )}
+          {mutation.isError &&
+            !mutation.isPending && ( // Show error only if not pending
+              <Text style={[commonSharedStyles.errorText, { marginTop: 10 }]}>
+                Error:{' '}
+                {mutation.error instanceof Error
+                  ? mutation.error.message
+                  : 'Failed to adjust tickets'}
+              </Text>
             )}
 
           {/* Action Buttons */}

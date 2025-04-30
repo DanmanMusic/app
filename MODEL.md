@@ -88,16 +88,16 @@ This document provides the technical details of the database schema intended for
 **`assigned_tasks`**
 
 - `id` (UUID, PK)
-- `student_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE CASCADE) - *Assumes tasks are deleted if student is deleted.*
-- `assigned_by_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE SET NULL) - *Keeps task history if assigner is deleted.*
+- `student_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE CASCADE) - _Assumes tasks are deleted if student is deleted._
+- `assigned_by_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE SET NULL) - _Keeps task history if assigner is deleted._
 - `assigned_date` (TIMESTAMPTZ, NOT NULL, default `now()`)
 - `task_title` (TEXT, NOT NULL)
-- `task_description` (TEXT, NOT NULL) - *Currently required by Edge Func, was nullable.*
+- `task_description` (TEXT, NOT NULL) - _Currently required by Edge Func, was nullable._
 - `task_base_points` (INTEGER, NOT NULL, CHECK >= 0)
 - `is_complete` (BOOLEAN, NOT NULL, default false)
 - `completed_date` (TIMESTAMPTZ, Nullable)
 - `verification_status` (PUBLIC.verification_status ENUM('pending', 'verified', 'partial', 'incomplete'), Nullable)
-- `verified_by_id` (UUID, Nullable, FK -> `profiles.id` ON DELETE SET NULL) - *Keeps task history if verifier is deleted.*
+- `verified_by_id` (UUID, Nullable, FK -> `profiles.id` ON DELETE SET NULL) - _Keeps task history if verifier is deleted._
 - `verified_date` (TIMESTAMPTZ, Nullable)
 - `actual_points_awarded` (INTEGER, Nullable, CHECK >= 0)
 - `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
@@ -108,7 +108,7 @@ This document provides the technical details of the database schema intended for
 **`ticket_transactions`**
 
 - `id` (BIGSERIAL, PK): Auto-incrementing key for ordering.
-- `student_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE CASCADE) - *Assumes transaction history is deleted if student is deleted.*
+- `student_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE CASCADE) - _Assumes transaction history is deleted if student is deleted._
 - `timestamp` (TIMESTAMPTZ, NOT NULL, default `now()`)
 - `amount` (INTEGER, NOT NULL): Positive for additions, negative for deductions.
 - `type` (PUBLIC.transaction_type ENUM('task_award', 'manual_add', 'manual_subtract', 'redemption'), NOT NULL)

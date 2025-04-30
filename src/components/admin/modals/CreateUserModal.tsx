@@ -23,7 +23,7 @@ import { UserRole, User, Instrument } from '../../../types/dataTypes';
 import { getUserDisplayName } from '../../../utils/helpers';
 import Toast from 'react-native-toast-message';
 
-const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'student'];
+const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'student', 'parent'];
 
 interface InternalCreateUserModalProps {
   visible: boolean;
@@ -77,7 +77,8 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
       const userRole = createdUser.role;
       if (userRole === 'student') queryClient.invalidateQueries({ queryKey: ['students'] });
       if (userRole === 'teacher') queryClient.invalidateQueries({ queryKey: ['teachers'] });
-      if (userRole === 'admin') queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      if (userRole === 'admin') queryClient.invalidateQueries({ queryKey: ['admins'] });
+      if (userRole === 'parent') queryClient.invalidateQueries({ queryKey: ['parents'] });
 
       queryClient.invalidateQueries({ queryKey: ['activeProfilesForDevSelector'] });
       onClose();

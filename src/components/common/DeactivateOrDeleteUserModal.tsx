@@ -30,7 +30,9 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
   const deleteMutation = useMutation({
     mutationFn: deleteUser, // Use the API function calling the Edge Function
     onSuccess: (_, userId) => {
-      console.log(`[DeactivateOrDeleteUserModal] User ${userId} deleted successfully via API/Edge Function.`);
+      console.log(
+        `[DeactivateOrDeleteUserModal] User ${userId} deleted successfully via API/Edge Function.`
+      );
       Toast.show({ type: 'success', text1: 'Success', text2: 'User deleted successfully.' });
 
       // Invalidate relevant queries BEFORE calling callbacks/closing
@@ -41,13 +43,13 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
       if (userRole === 'admin') queryClient.invalidateQueries({ queryKey: ['admins'] }); // Updated key
       queryClient.invalidateQueries({ queryKey: ['userProfile', userId] }); // Invalidate specific profile
       queryClient.invalidateQueries({ queryKey: ['activeProfilesForDevSelector'] });
-      queryClient.invalidateQueries({ queryKey: ['userCounts']}); // Invalidate counts
+      queryClient.invalidateQueries({ queryKey: ['userCounts'] }); // Invalidate counts
 
       // Close the confirmation modal FIRST
       setIsConfirmDeleteVisible(false);
       // Then call the success callback IF provided
       if (onDeletionSuccess) {
-          onDeletionSuccess(userId);
+        onDeletionSuccess(userId);
       }
       // Finally, close the main management modal
       onClose();
@@ -62,7 +64,7 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
         position: 'bottom',
         visibilityTime: 5000,
       });
-       // Do NOT close the main modal on error, let user decide
+      // Do NOT close the main modal on error, let user decide
     },
   });
 
@@ -70,7 +72,9 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
   const toggleStatusMutation = useMutation({
     mutationFn: toggleUserStatus,
     onSuccess: updatedUser => {
-      console.log(`[DeactivateOrDeleteUserModal] User ${updatedUser.id} status toggled to ${updatedUser.status}.`);
+      console.log(
+        `[DeactivateOrDeleteUserModal] User ${updatedUser.id} status toggled to ${updatedUser.status}.`
+      );
       Toast.show({ type: 'success', text1: 'Success', text2: 'User status updated successfully.' });
 
       // Invalidate relevant queries
@@ -81,12 +85,15 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
       if (userRole === 'admin') queryClient.invalidateQueries({ queryKey: ['admins'] }); // Updated key
       queryClient.invalidateQueries({ queryKey: ['userProfile', updatedUser.id] });
       queryClient.invalidateQueries({ queryKey: ['activeProfilesForDevSelector'] });
-      queryClient.invalidateQueries({ queryKey: ['userCounts']});
+      queryClient.invalidateQueries({ queryKey: ['userCounts'] });
 
       onClose(); // Close modal on success
     },
     onError: (error: Error, userId) => {
-      console.error(`[DeactivateOrDeleteUserModal] Error toggling status for user ${userId}:`, error);
+      console.error(
+        `[DeactivateOrDeleteUserModal] Error toggling status for user ${userId}:`,
+        error
+      );
       Toast.show({
         type: 'error',
         text1: 'Update Failed',
@@ -118,17 +125,19 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
   const handleDeletePress = () => {
     // Prevent opening confirm modal if another action is pending
     if (!deleteMutation.isPending && !toggleStatusMutation.isPending) {
-        setIsConfirmDeleteVisible(true);
+      setIsConfirmDeleteVisible(true);
     }
   };
 
   // Executes the delete mutation after confirmation
   const handleConfirmDeleteAction = () => {
     if (user?.id && !deleteMutation.isPending) {
-        console.log(`[DeactivateOrDeleteUserModal] Confirming delete for user ${user.id}`);
-        deleteMutation.mutate(user.id);
+      console.log(`[DeactivateOrDeleteUserModal] Confirming delete for user ${user.id}`);
+      deleteMutation.mutate(user.id);
     } else {
-      console.error('[DeactivateOrDeleteUserModal] Cannot delete: User ID missing or delete already in progress.');
+      console.error(
+        '[DeactivateOrDeleteUserModal] Cannot delete: User ID missing or delete already in progress.'
+      );
       setIsConfirmDeleteVisible(false); // Close confirm modal if something went wrong
     }
   };
@@ -140,7 +149,9 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
   };
 
   // Render null if modal not visible or user data unavailable
-  if (!visible || !user) { return null; }
+  if (!visible || !user) {
+    return null;
+  }
 
   // Derived display values
   const displayName = getUserDisplayName(user);
@@ -151,7 +162,6 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
   const isActionPending = deleteMutation.isPending || toggleStatusMutation.isPending;
   // Re-enable delete button (logic handled by Edge Function)
   const isDeleteDisabled = isActionPending; // Only disable if another action is running
-
 
   return (
     <>
@@ -201,14 +211,17 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
               />
             </View>
 
-             {/* Error display specifically for delete mutation failure */}
-             {deleteMutation.isError && !deleteMutation.isPending && (
-                <Text style={[commonSharedStyles.errorText, {marginTop: 5}]}>
-                  Deletion Error: {deleteMutation.error instanceof Error ? deleteMutation.error.message : 'Unknown error'}
-                </Text>
+            {/* Error display specifically for delete mutation failure */}
+            {deleteMutation.isError && !deleteMutation.isPending && (
+              <Text style={[commonSharedStyles.errorText, { marginTop: 5 }]}>
+                Deletion Error:{' '}
+                {deleteMutation.error instanceof Error
+                  ? deleteMutation.error.message
+                  : 'Unknown error'}
+              </Text>
             )}
 
-             {/* Footer Close Button */}
+            {/* Footer Close Button */}
             <View style={modalSharedStyles.footerButton}>
               <Button
                 title="Close"

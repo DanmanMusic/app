@@ -31,8 +31,11 @@ import { EditUserModalProps } from '../../types/componentProps';
 import { User, Instrument } from '../../types/dataTypes';
 import { getUserDisplayName } from '../../utils/helpers';
 
-
-export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdit: userToEditProp, onClose }) => {
+export const EditUserModal: React.FC<EditUserModalProps> = ({
+  visible,
+  userToEdit: userToEditProp,
+  onClose,
+}) => {
   const { currentUserRole } = useAuth(); // Get the logged-in user's role
   const isCallerAdmin = currentUserRole === 'admin'; // Check if the caller is admin
 
@@ -47,12 +50,16 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
   const userIdToEdit = userToEditProp?.id;
 
   // Fetch the LATEST user profile data when modal opens or user ID changes
-  const { data: userToEdit, isLoading: isLoadingUserToEdit, isSuccess: isSuccessUserToEdit } = useQuery<User | null, Error>({
-      queryKey: ['userProfile', userIdToEdit, { context: 'editUserModalFetch' }],
-      queryFn: () => userIdToEdit ? fetchUserProfile(userIdToEdit) : Promise.resolve(null),
-      enabled: visible && !!userIdToEdit, // Fetch only when modal is visible and user ID exists
-      staleTime: 1 * 60 * 1000,
-      refetchOnWindowFocus: true,
+  const {
+    data: userToEdit,
+    isLoading: isLoadingUserToEdit,
+    isSuccess: isSuccessUserToEdit,
+  } = useQuery<User | null, Error>({
+    queryKey: ['userProfile', userIdToEdit, { context: 'editUserModalFetch' }],
+    queryFn: () => (userIdToEdit ? fetchUserProfile(userIdToEdit) : Promise.resolve(null)),
+    enabled: visible && !!userIdToEdit, // Fetch only when modal is visible and user ID exists
+    staleTime: 1 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   // Determine if the user being edited is a student
@@ -96,21 +103,28 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
       queryClient.invalidateQueries({ queryKey: ['userProfile', updatedUser.id] });
       if (updatedUser.role === 'student') queryClient.invalidateQueries({ queryKey: ['students'] });
       if (updatedUser.role === 'teacher') queryClient.invalidateQueries({ queryKey: ['teachers'] });
-      if (updatedUser.role === 'parent') queryClient.invalidateQueries({ queryKey: ['parents']});
-      if (updatedUser.role === 'admin') queryClient.invalidateQueries({ queryKey: ['admins']});
+      if (updatedUser.role === 'parent') queryClient.invalidateQueries({ queryKey: ['parents'] });
+      if (updatedUser.role === 'admin') queryClient.invalidateQueries({ queryKey: ['admins'] });
       queryClient.invalidateQueries({ queryKey: ['activeProfilesForDevSelector'] });
       onClose();
       Toast.show({ type: 'success', text1: 'Success', text2: 'User updated successfully.' });
     },
     onError: (error: Error) => {
       console.error('[EditUserModal] Error updating user:', error);
-      Toast.show({ type: 'error', text1: 'Update Failed', text2: error.message || 'Could not update user.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Update Failed',
+        text2: error.message || 'Could not update user.',
+      });
     },
   });
 
   // Effect to initialize form state based on the fetched user data
   useEffect(() => {
-    console.log(`[EditUserModal useEffect] Running. Visible: ${visible}, User Loaded: ${isSuccessUserToEdit}, User Data:`, userToEdit);
+    console.log(
+      `[EditUserModal useEffect] Running. Visible: ${visible}, User Loaded: ${isSuccessUserToEdit}, User Data:`,
+      userToEdit
+    );
     if (visible && userToEdit) {
       console.log('[EditUserModal useEffect] Setting form state...');
       setFirstName(userToEdit.firstName);
@@ -119,7 +133,12 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
       if (userToEdit.role === 'student') {
         const instrumentsToSet = userToEdit.instrumentIds || [];
         const teachersToSet = userToEdit.linkedTeacherIds || [];
-        console.log('[EditUserModal useEffect] Setting student selections - Instruments:', instrumentsToSet, 'Teachers:', teachersToSet);
+        console.log(
+          '[EditUserModal useEffect] Setting student selections - Instruments:',
+          instrumentsToSet,
+          'Teachers:',
+          teachersToSet
+        );
         setSelectedInstrumentIds(instrumentsToSet);
         setSelectedTeacherIds(teachersToSet);
       } else {
@@ -146,8 +165,12 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
   const toggleTeacherSelection = (id: string) => {
     // Only allow admins to change teacher selection
     if (!isCallerAdmin) {
-        Toast.show({type: 'info', text1: 'Permission Denied', text2: 'Only Admins can change teacher links.'});
-        return;
+      Toast.show({
+        type: 'info',
+        text1: 'Permission Denied',
+        text2: 'Only Admins can change teacher links.',
+      });
+      return;
     }
     setSelectedTeacherIds(prev =>
       prev.includes(id) ? prev.filter(teacherId => teacherId !== id) : [...prev, id]
@@ -159,14 +182,18 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
     if (!userToEdit) {
       Toast.show({ type: 'error', text1: 'Error', text2: 'User data not loaded.' });
       return;
-    };
+    }
 
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
     const trimmedNickname = nickname.trim();
 
     if (!trimmedFirstName || !trimmedLastName) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'First and Last Name cannot be empty.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'First and Last Name cannot be empty.',
+      });
       return;
     }
 
@@ -175,9 +202,18 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
     let hasLinkChanges = false;
 
     // Check for changes in basic fields
-    if (trimmedFirstName !== userToEdit.firstName) { updates.firstName = trimmedFirstName; hasProfileChanges = true; }
-    if (trimmedLastName !== userToEdit.lastName) { updates.lastName = trimmedLastName; hasProfileChanges = true; }
-    if (trimmedNickname !== (userToEdit.nickname || '')) { updates.nickname = trimmedNickname || undefined; hasProfileChanges = true; }
+    if (trimmedFirstName !== userToEdit.firstName) {
+      updates.firstName = trimmedFirstName;
+      hasProfileChanges = true;
+    }
+    if (trimmedLastName !== userToEdit.lastName) {
+      updates.lastName = trimmedLastName;
+      hasProfileChanges = true;
+    }
+    if (trimmedNickname !== (userToEdit.nickname || '')) {
+      updates.nickname = trimmedNickname || undefined;
+      hasProfileChanges = true;
+    }
 
     // Check for changes in student-specific link tables
     if (userToEdit.role === 'student') {
@@ -195,7 +231,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
         hasLinkChanges = true;
       }
       // Always include teachers payload (EF handles authorization)
-       updates.linkedTeacherIds = selectedTeacherIds;
+      updates.linkedTeacherIds = selectedTeacherIds;
     }
 
     if (!hasProfileChanges && !hasLinkChanges) {
@@ -218,51 +254,55 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
 
   // Handle loading state for the user being edited
   if (visible && isLoadingUserToEdit) {
-      return (
-           <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-               <View style={modalSharedStyles.centeredView}>
-                   <View style={modalSharedStyles.modalView}>
-                        <ActivityIndicator size="large" color={colors.primary} />
-                        <Text style={modalSharedStyles.loadingText}>Loading user data...</Text>
-                   </View>
-               </View>
-           </Modal>
-      )
-  }
-
-  // If the modal is visible but userToEdit (fetched data) is null/undefined, handle close
-   if (visible && !userToEdit) {
-      useEffect(() => {
-           if (visible && !isLoadingUserToEdit && !userToEdit) {
-                console.error("[EditUserModal] Modal visible but user data failed to load after fetch attempt.");
-                Toast.show({ type: 'error', text1: 'Error', text2: 'Could not load user details.' });
-               onClose(); // Auto-close if fetch failed
-           }
-       }, [visible, isLoadingUserToEdit, userToEdit, onClose]);
-      return null; // Render nothing while closing
-   }
-
-  // Ensure userToEdit is loaded before proceeding
-  if (!userToEdit) { return null; }
-
-  // Prevent rendering Parent edit UI for now
-  if (userToEdit.role === 'parent') {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
         <View style={modalSharedStyles.centeredView}>
           <View style={modalSharedStyles.modalView}>
-            <Text style={modalSharedStyles.modalTitle}>Edit User</Text>
-            <Text style={commonSharedStyles.errorText}>
-              Editing Parent details is not fully supported via this modal yet.
-            </Text>
-            <View style={modalSharedStyles.footerButton}>
-              <Button title="Close" onPress={onClose} color={colors.secondary} />
-            </View>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={modalSharedStyles.loadingText}>Loading user data...</Text>
           </View>
         </View>
       </Modal>
     );
   }
+
+  // If the modal is visible but userToEdit (fetched data) is null/undefined, handle close
+  if (visible && !userToEdit) {
+    useEffect(() => {
+      if (visible && !isLoadingUserToEdit && !userToEdit) {
+        console.error(
+          '[EditUserModal] Modal visible but user data failed to load after fetch attempt.'
+        );
+        Toast.show({ type: 'error', text1: 'Error', text2: 'Could not load user details.' });
+        onClose(); // Auto-close if fetch failed
+      }
+    }, [visible, isLoadingUserToEdit, userToEdit, onClose]);
+    return null; // Render nothing while closing
+  }
+
+  // Ensure userToEdit is loaded before proceeding
+  if (!userToEdit) {
+    return null;
+  }
+
+  // Prevent rendering Parent edit UI for now
+  // if (userToEdit.role === 'parent') {
+  //   return (
+  //     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
+  //       <View style={modalSharedStyles.centeredView}>
+  //         <View style={modalSharedStyles.modalView}>
+  //           <Text style={modalSharedStyles.modalTitle}>Edit User</Text>
+  //           <Text style={commonSharedStyles.errorText}>
+  //             Editing Parent details is not fully supported via this modal yet.
+  //           </Text>
+  //           <View style={modalSharedStyles.footerButton}>
+  //             <Button title="Close" onPress={onClose} color={colors.secondary} />
+  //           </View>
+  //         </View>
+  //       </View>
+  //     </Modal>
+  //   );
+  // }
 
   const currentUserDisplayName = getUserDisplayName(userToEdit);
 
@@ -279,11 +319,28 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
           <ScrollView style={modalSharedStyles.scrollView}>
             {/* Basic Info Fields */}
             <Text style={commonSharedStyles.label}>First Name:</Text>
-            <TextInput style={commonSharedStyles.input} value={firstName} onChangeText={setFirstName} editable={!mutation.isPending} />
+            <TextInput
+              style={commonSharedStyles.input}
+              value={firstName}
+              onChangeText={setFirstName}
+              editable={!mutation.isPending}
+            />
             <Text style={commonSharedStyles.label}>Last Name:</Text>
-            <TextInput style={commonSharedStyles.input} value={lastName} onChangeText={setLastName} editable={!mutation.isPending} />
+            <TextInput
+              style={commonSharedStyles.input}
+              value={lastName}
+              onChangeText={setLastName}
+              editable={!mutation.isPending}
+            />
             <Text style={commonSharedStyles.label}>Nickname (Optional):</Text>
-            <TextInput style={commonSharedStyles.input} value={nickname} onChangeText={setNickname} placeholder="Optional Nickname" placeholderTextColor={colors.textLight} editable={!mutation.isPending} />
+            <TextInput
+              style={commonSharedStyles.input}
+              value={nickname}
+              onChangeText={setNickname}
+              placeholder="Optional Nickname"
+              placeholderTextColor={colors.textLight}
+              editable={!mutation.isPending}
+            />
 
             {/* Student Specific Fields */}
             {isStudentRole && (
@@ -292,7 +349,11 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
                 <View style={modalSharedStyles.roleSpecificSection}>
                   <Text style={modalSharedStyles.roleSectionTitle}>Instruments</Text>
                   {isLoadingInstruments && <ActivityIndicator color={colors.primary} />}
-                  {isErrorInstruments && <Text style={commonSharedStyles.errorText}>Error loading instruments: {errorInstrumentsMsg?.message}</Text>}
+                  {isErrorInstruments && (
+                    <Text style={commonSharedStyles.errorText}>
+                      Error loading instruments: {errorInstrumentsMsg?.message}
+                    </Text>
+                  )}
                   {!isLoadingInstruments && !isErrorInstruments && (
                     <View style={commonSharedStyles.selectionContainer}>
                       {instruments.length > 0 ? (
@@ -322,7 +383,11 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
                     <Text style={styles.infoText}>Only Admins can modify teacher links.</Text>
                   )}
                   {isLoadingTeachers && <ActivityIndicator color={colors.primary} />}
-                  {isErrorTeachers && <Text style={commonSharedStyles.errorText}>Error loading teachers: {errorTeachersMsg?.message}</Text>}
+                  {isErrorTeachers && (
+                    <Text style={commonSharedStyles.errorText}>
+                      Error loading teachers: {errorTeachersMsg?.message}
+                    </Text>
+                  )}
                   {!isLoadingTeachers && !isErrorTeachers && (
                     <View style={commonSharedStyles.selectionContainer}>
                       {activeTeachers.length > 0 ? (
@@ -357,15 +422,27 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ visible, userToEdi
             </View>
           )}
           {mutation.isError && (
-            <Text style={commonSharedStyles.errorText}>Error: {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}</Text>
+            <Text style={commonSharedStyles.errorText}>
+              Error:{' '}
+              {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
+            </Text>
           )}
 
           {/* Action Buttons */}
           <View style={modalSharedStyles.buttonContainer}>
-            <Button title={mutation.isPending ? 'Saving...' : 'Save Changes'} onPress={handleSaveChanges} disabled={isSaveDisabled} />
+            <Button
+              title={mutation.isPending ? 'Saving...' : 'Save Changes'}
+              onPress={handleSaveChanges}
+              disabled={isSaveDisabled}
+            />
           </View>
           <View style={modalSharedStyles.footerButton}>
-            <Button title="Cancel" onPress={onClose} color={colors.secondary} disabled={mutation.isPending} />
+            <Button
+              title="Cancel"
+              onPress={onClose}
+              color={colors.secondary}
+              disabled={mutation.isPending}
+            />
           </View>
         </View>
       </View>

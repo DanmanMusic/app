@@ -58,7 +58,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     error: teacherErrorMsg,
   } = useQuery<User | null, Error>({
     queryKey: ['userProfile', teacherId],
-    queryFn: () => teacherId ? fetchUserProfile(teacherId) : Promise.resolve(null), // Fetch only if teacherId exists
+    queryFn: () => (teacherId ? fetchUserProfile(teacherId) : Promise.resolve(null)), // Fetch only if teacherId exists
     enabled: !!teacherId, // Enable query only when teacherId is available
     staleTime: 15 * 60 * 1000, // Cache teacher profile for 15 mins
   });
@@ -77,23 +77,23 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
 
   // Fetch the profile of the student being viewed (runs only when viewingStudentId is set)
   const {
-      data: studentDetailUser,
-      isLoading: studentDetailLoading,
-      isError: studentDetailError,
-      error: studentDetailErrorMsg
+    data: studentDetailUser,
+    isLoading: studentDetailLoading,
+    isError: studentDetailError,
+    error: studentDetailErrorMsg,
   } = useQuery<User | null, Error>({
-      queryKey: ['userProfile', viewingStudentId], // Query key includes the specific student ID
-      queryFn: () => {
-           if (!viewingStudentId) {
-               console.warn("[TeacherView] studentDetailUser queryFn called without viewingStudentId.");
-               return Promise.resolve(null); // Return null if no ID
-           }
-           console.log(`[TeacherView] Fetching profile for student: ${viewingStudentId}`);
-           return fetchUserProfile(viewingStudentId); // Fetch the specific student
-      },
-      enabled: !!viewingStudentId, // CRITICAL: Only run the query when viewingStudentId has a value
-      staleTime: 1 * 60 * 1000, // Cache student detail for 1 min
-      refetchOnWindowFocus: true,
+    queryKey: ['userProfile', viewingStudentId], // Query key includes the specific student ID
+    queryFn: () => {
+      if (!viewingStudentId) {
+        console.warn('[TeacherView] studentDetailUser queryFn called without viewingStudentId.');
+        return Promise.resolve(null); // Return null if no ID
+      }
+      console.log(`[TeacherView] Fetching profile for student: ${viewingStudentId}`);
+      return fetchUserProfile(viewingStudentId); // Fetch the specific student
+    },
+    enabled: !!viewingStudentId, // CRITICAL: Only run the query when viewingStudentId has a value
+    staleTime: 1 * 60 * 1000, // Cache student detail for 1 min
+    refetchOnWindowFocus: true,
   });
 
   // --- Memoized Values ---
@@ -135,7 +135,11 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
       setStudentToEdit(user);
       setIsEditStudentModalVisible(true);
     } else {
-      Toast.show({ type: 'error', text1: 'Invalid Action', text2: 'Cannot edit non-student users here.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Invalid Action',
+        text2: 'Cannot edit non-student users here.',
+      });
     }
   };
   const handleCloseEditUserModal = () => {
@@ -145,13 +149,14 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
 
   // Handler to open PIN generation modal
   const handleInitiatePinGeneration = (user: User | null) => {
-     if (user) { // Ensure user data is available
-        setUserForPin(user);
-        setIsGeneratePinModalVisible(true);
-     } else {
-          console.warn("Attempted PIN generation before student detail loaded or for null user.")
-          Toast.show({type: 'info', text1: 'Info', text2: 'Loading student data...'})
-     }
+    if (user) {
+      // Ensure user data is available
+      setUserForPin(user);
+      setIsGeneratePinModalVisible(true);
+    } else {
+      console.warn('Attempted PIN generation before student detail loaded or for null user.');
+      Toast.show({ type: 'info', text1: 'Info', text2: 'Loading student data...' });
+    }
   };
   const handleClosePinGeneration = () => {
     setIsGeneratePinModalVisible(false);
@@ -197,7 +202,9 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
       <SafeAreaView style={appSharedStyles.safeArea}>
         <View style={appSharedStyles.container}>
           <Text style={appSharedStyles.header}>Account Inactive</Text>
-          <Text style={commonSharedStyles.textCenter}>Your teacher account is currently inactive.</Text>
+          <Text style={commonSharedStyles.textCenter}>
+            Your teacher account is currently inactive.
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -215,17 +222,18 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
           </View>
         );
       }
-       if (studentDetailError || !studentDetailUser) {
-           return (
-             <View style={appSharedStyles.container}>
-                <Text style={commonSharedStyles.errorText}>
-                    Error loading student details: {studentDetailErrorMsg?.message || 'Student not found or error occurred.'}
-                </Text>
-                {/* Provide a way back if loading fails */}
-                <Button title="Back to My Students" onPress={handleBackFromProfile}/>
-             </View>
-           );
-       }
+      if (studentDetailError || !studentDetailUser) {
+        return (
+          <View style={appSharedStyles.container}>
+            <Text style={commonSharedStyles.errorText}>
+              Error loading student details:{' '}
+              {studentDetailErrorMsg?.message || 'Student not found or error occurred.'}
+            </Text>
+            {/* Provide a way back if loading fails */}
+            <Button title="Back to My Students" onPress={handleBackFromProfile} />
+          </View>
+        );
+      }
       // Render the student detail view component
       return (
         <AdminStudentDetailView
@@ -234,7 +242,9 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
           onInitiateAssignTaskForStudent={handleInitiateAssignTaskForStudent}
           onInitiateEditStudent={handleInitiateEditUser}
           // Only pass PIN generation if data is loaded
-          onInitiatePinGeneration={studentDetailUser ? () => handleInitiatePinGeneration(studentDetailUser) : undefined}
+          onInitiatePinGeneration={
+            studentDetailUser ? () => handleInitiatePinGeneration(studentDetailUser) : undefined
+          }
           // Remove props irrelevant for teacher's view of student
           // onInitiateStatusUser={...}
           // onInitiateTicketAdjustment={...}
@@ -246,19 +256,48 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     // Otherwise, render the main teacher dashboard/sections
     return (
       <ScrollView style={appSharedStyles.container}>
-         {/* Navigation Tabs */}
-         <View style={appSharedStyles.teacherNav}>
-            <Button title="Dashboard" onPress={() => setViewingSection('dashboard')} color={viewingSection === 'dashboard' ? colors.primary : colors.secondary} />
-            <Button title="My Students" onPress={() => setViewingSection('students')} color={viewingSection === 'students' ? colors.primary : colors.secondary} />
-            <Button title="Tasks" onPress={() => setViewingSection('tasks')} color={viewingSection === 'tasks' ? colors.primary : colors.secondary} />
-            <Button title="Set Email/Password" onPress={() => setIsSetCredentialsModalVisible(true)} color={colors.info} />
-         </View>
+        {/* Navigation Tabs */}
+        <View style={appSharedStyles.teacherNav}>
+          <Button
+            title="Dashboard"
+            onPress={() => setViewingSection('dashboard')}
+            color={viewingSection === 'dashboard' ? colors.primary : colors.secondary}
+          />
+          <Button
+            title="My Students"
+            onPress={() => setViewingSection('students')}
+            color={viewingSection === 'students' ? colors.primary : colors.secondary}
+          />
+          <Button
+            title="Tasks"
+            onPress={() => setViewingSection('tasks')}
+            color={viewingSection === 'tasks' ? colors.primary : colors.secondary}
+          />
+          <Button
+            title="Set Email/Password"
+            onPress={() => setIsSetCredentialsModalVisible(true)}
+            color={colors.info}
+          />
+        </View>
 
-         {/* Conditional Section Rendering */}
-        {viewingSection === 'dashboard' && ( <TeacherDashboardSection onInitiateVerificationModal={handleInternalInitiateVerification} /> )}
-        {viewingSection === 'students' && ( <TeacherStudentsSection instruments={fetchedInstruments} onViewProfile={handleViewProfile} onAssignTask={handleInitiateAssignTaskForStudent} /> )}
-        {viewingSection === 'tasks' && ( <TeacherTasksSection onInitiateAssignTaskGeneral={handleInitiateAssignTaskGeneral} /> )}
-        <View style={{ height: 40 }} />{/* Spacer at bottom */}
+        {/* Conditional Section Rendering */}
+        {viewingSection === 'dashboard' && (
+          <TeacherDashboardSection
+            onInitiateVerificationModal={handleInternalInitiateVerification}
+          />
+        )}
+        {viewingSection === 'students' && (
+          <TeacherStudentsSection
+            instruments={fetchedInstruments}
+            onViewProfile={handleViewProfile}
+            onAssignTask={handleInitiateAssignTaskForStudent}
+          />
+        )}
+        {viewingSection === 'tasks' && (
+          <TeacherTasksSection onInitiateAssignTaskGeneral={handleInitiateAssignTaskGeneral} />
+        )}
+        <View style={{ height: 40 }} />
+        {/* Spacer at bottom */}
       </ScrollView>
     );
   };
@@ -267,7 +306,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   const getHeaderTitle = () => {
     if (viewingStudentId) {
       // Show student name in header if loaded, otherwise 'Loading...'
-      return `Viewing: ${studentDetailUser ? getUserDisplayName(studentDetailUser) : (studentDetailLoading ? 'Loading...' : 'Error')}`;
+      return `Viewing: ${studentDetailUser ? getUserDisplayName(studentDetailUser) : studentDetailLoading ? 'Loading...' : 'Error'}`;
     }
     // Default header for teacher view
     return `Teacher: ${teacherDisplayName}`;
@@ -280,21 +319,43 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     <SafeAreaView style={appSharedStyles.safeArea}>
       {/* Header */}
       <View style={appSharedStyles.headerContainer}>
-          <View style={appSharedStyles.headerSideContainer}>
-              {showBackButton ? (<Button title="← Back" onPress={handleBackFromProfile} />) : (<View style={{ width: 60 }} /> /* Placeholder */)}
-          </View>
-          <Text style={appSharedStyles.headerTitle} numberOfLines={1} ellipsizeMode="tail">{getHeaderTitle()}</Text>
-          <View style={appSharedStyles.headerSideContainer} />{/* Placeholder for right side */}
+        <View style={appSharedStyles.headerSideContainer}>
+          {showBackButton ? (
+            <Button title="← Back" onPress={handleBackFromProfile} />
+          ) : (
+            <View style={{ width: 60 }} /> /* Placeholder */
+          )}
+        </View>
+        <Text style={appSharedStyles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
+          {getHeaderTitle()}
+        </Text>
+        <View style={appSharedStyles.headerSideContainer} />
+        {/* Placeholder for right side */}
       </View>
 
       {/* Main Content Area */}
       {renderMainContent()}
 
       {/* Modals */}
-      <SetEmailPasswordModal visible={isSetCredentialsModalVisible} onClose={() => setIsSetCredentialsModalVisible(false)} />
-      <AssignTaskModal visible={isAssignTaskModalVisible} onClose={handleAssignTaskModalClose} preselectedStudentId={assignTaskTargetStudentId} />
-      <EditUserModal visible={isEditStudentModalVisible} userToEdit={studentToEdit} onClose={handleCloseEditUserModal} />
-      <GeneratePinModal visible={isGeneratePinModalVisible} user={userForPin} onClose={handleClosePinGeneration} />
+      <SetEmailPasswordModal
+        visible={isSetCredentialsModalVisible}
+        onClose={() => setIsSetCredentialsModalVisible(false)}
+      />
+      <AssignTaskModal
+        visible={isAssignTaskModalVisible}
+        onClose={handleAssignTaskModalClose}
+        preselectedStudentId={assignTaskTargetStudentId}
+      />
+      <EditUserModal
+        visible={isEditStudentModalVisible}
+        userToEdit={studentToEdit}
+        onClose={handleCloseEditUserModal}
+      />
+      <GeneratePinModal
+        visible={isGeneratePinModalVisible}
+        user={userForPin}
+        onClose={handleClosePinGeneration}
+      />
     </SafeAreaView>
   );
 };

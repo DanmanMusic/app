@@ -165,21 +165,31 @@ export const createAssignedTask = async (
   >
 ): Promise<AssignedTask> => {
   const client = getSupabase();
-  console.log('[API createAssignedTask] Calling Edge Function "assignTask" for student:', assignmentData.studentId);
+  console.log(
+    '[API createAssignedTask] Calling Edge Function "assignTask" for student:',
+    assignmentData.studentId
+  );
 
   // Prepare payload for the Edge Function
   // Only include fields the function expects in its payload interface
   const payload = {
-      studentId: assignmentData.studentId,
-      taskTitle: assignmentData.taskTitle,
-      taskDescription: assignmentData.taskDescription,
-      taskBasePoints: assignmentData.taskBasePoints,
+    studentId: assignmentData.studentId,
+    taskTitle: assignmentData.taskTitle,
+    taskDescription: assignmentData.taskDescription,
+    taskBasePoints: assignmentData.taskBasePoints,
   };
 
   // Validate required fields before sending
-  if (!payload.studentId || !payload.taskTitle || payload.taskBasePoints == null || payload.taskBasePoints < 0) {
-      console.error("[API createAssignedTask] Validation failed. Payload:", payload);
-      throw new Error("Missing required fields for task assignment (studentId, title, description, basePoints).");
+  if (
+    !payload.studentId ||
+    !payload.taskTitle ||
+    payload.taskBasePoints == null ||
+    payload.taskBasePoints < 0
+  ) {
+    console.error('[API createAssignedTask] Validation failed. Payload:', payload);
+    throw new Error(
+      'Missing required fields for task assignment (studentId, title, description, basePoints).'
+    );
   }
 
   console.log('[API createAssignedTask] Payload being sent:', payload);
@@ -192,10 +202,22 @@ export const createAssignedTask = async (
     console.error('[API createAssignedTask] Error invoking assignTask function:', error);
     // Attempt to parse nested error message
     let detailedError = error.message || 'Unknown function error';
-    if (error.context && typeof error.context === 'object' && error.context !== null && 'error' in error.context) {
-        detailedError = String((error.context as any).error) || detailedError;
-    } else { try { const parsed = JSON.parse(error.message); if (parsed && parsed.error) detailedError = String(parsed.error); } catch (e) {} }
-    if (error.context?.message) { detailedError += ` (Context: ${error.context.message})`; }
+    if (
+      error.context &&
+      typeof error.context === 'object' &&
+      error.context !== null &&
+      'error' in error.context
+    ) {
+      detailedError = String((error.context as any).error) || detailedError;
+    } else {
+      try {
+        const parsed = JSON.parse(error.message);
+        if (parsed && parsed.error) detailedError = String(parsed.error);
+      } catch (e) {}
+    }
+    if (error.context?.message) {
+      detailedError += ` (Context: ${error.context.message})`;
+    }
     throw new Error(`Task assignment failed: ${detailedError}`);
   }
 
@@ -203,8 +225,11 @@ export const createAssignedTask = async (
 
   // Assuming the edge function returns the fully formed AssignedTask object
   if (!data || typeof data !== 'object' || !data.id) {
-       console.error('[API createAssignedTask] Edge Function returned unexpected data structure:', data);
-       throw new Error('Task assignment function returned invalid data format.');
+    console.error(
+      '[API createAssignedTask] Edge Function returned unexpected data structure:',
+      data
+    );
+    throw new Error('Task assignment function returned invalid data format.');
   }
 
   // Directly return the data assuming it matches the AssignedTask type
@@ -220,14 +245,20 @@ export const updateAssignedTask = async ({
   updates:
     | { isComplete: true; verificationStatus?: never; actualPointsAwarded?: never }
     | { isComplete: false; verificationStatus?: never; actualPointsAwarded?: never }
-    | { isComplete?: never; verificationStatus: VerificationStatusInput; actualPointsAwarded: number }
+    | {
+        isComplete?: never;
+        verificationStatus: VerificationStatusInput;
+        actualPointsAwarded: number;
+      };
 }): Promise<AssignedTask> => {
   const client = getSupabase();
   console.log(`[API updateAssignedTask] Request for task ${assignmentId}:`, updates);
 
   // --- CASE 1: Verification Update (Call Edge Function) ---
   if (updates.verificationStatus && updates.actualPointsAwarded !== undefined) {
-    console.log(`[API updateAssignedTask] Verification request detected. Calling "verifyTask" Edge Function.`);
+    console.log(
+      `[API updateAssignedTask] Verification request detected. Calling "verifyTask" Edge Function.`
+    );
 
     // Prepare payload for the Edge Function
     const payload = {
@@ -238,43 +269,61 @@ export const updateAssignedTask = async ({
 
     // Basic validation before calling function
     if (payload.actualPointsAwarded < 0 || !Number.isInteger(payload.actualPointsAwarded)) {
-        throw new Error("Invalid points awarded. Must be a non-negative integer.");
+      throw new Error('Invalid points awarded. Must be a non-negative integer.');
     }
-     if (payload.verificationStatus === 'incomplete' && payload.actualPointsAwarded !== 0) {
-         throw new Error("Points must be 0 for 'incomplete' status.");
-     }
+    if (payload.verificationStatus === 'incomplete' && payload.actualPointsAwarded !== 0) {
+      throw new Error("Points must be 0 for 'incomplete' status.");
+    }
 
-     console.log('[API updateAssignedTask] Payload being sent to verifyTask:', payload);
+    console.log('[API updateAssignedTask] Payload being sent to verifyTask:', payload);
 
-     // --- Invoke the verifyTask Edge Function ---
-     const { data, error } = await client.functions.invoke('verifyTask', {
-       body: payload,
-     });
-     // --- End Invoke ---
+    // --- Invoke the verifyTask Edge Function ---
+    const { data, error } = await client.functions.invoke('verifyTask', {
+      body: payload,
+    });
+    // --- End Invoke ---
 
-     if (error) {
-       console.error('[API updateAssignedTask] Error invoking verifyTask function:', error);
-       let detailedError = error.message || 'Unknown function error';
-        if (error.context && typeof error.context === 'object' && error.context !== null && 'error' in error.context) { detailedError = String((error.context as any).error) || detailedError; }
-        else { try { const parsed = JSON.parse(error.message); if (parsed && parsed.error) detailedError = String(parsed.error); } catch (e) {} }
-        if (error.context?.message) { detailedError += ` (Context: ${error.context.message})`; }
-       throw new Error(`Task verification failed: ${detailedError}`);
-     }
+    if (error) {
+      console.error('[API updateAssignedTask] Error invoking verifyTask function:', error);
+      let detailedError = error.message || 'Unknown function error';
+      if (
+        error.context &&
+        typeof error.context === 'object' &&
+        error.context !== null &&
+        'error' in error.context
+      ) {
+        detailedError = String((error.context as any).error) || detailedError;
+      } else {
+        try {
+          const parsed = JSON.parse(error.message);
+          if (parsed && parsed.error) detailedError = String(parsed.error);
+        } catch (e) {}
+      }
+      if (error.context?.message) {
+        detailedError += ` (Context: ${error.context.message})`;
+      }
+      throw new Error(`Task verification failed: ${detailedError}`);
+    }
 
-     console.log('[API updateAssignedTask] verifyTask Edge Function returned successfully:', data);
+    console.log('[API updateAssignedTask] verifyTask Edge Function returned successfully:', data);
 
-     if (!data || typeof data !== 'object' || !data.id) {
-          console.error('[API updateAssignedTask] verifyTask returned unexpected data structure:', data);
-          throw new Error('Task verification function returned invalid data format.');
-     }
+    if (!data || typeof data !== 'object' || !data.id) {
+      console.error(
+        '[API updateAssignedTask] verifyTask returned unexpected data structure:',
+        data
+      );
+      throw new Error('Task verification function returned invalid data format.');
+    }
 
-     // Return the updated task data received from the Edge Function
-     return data as AssignedTask;
+    // Return the updated task data received from the Edge Function
+    return data as AssignedTask;
   }
 
   // --- CASE 2: Marking Task Complete (Direct DB Update - relies on RLS) ---
   else if (updates.isComplete === true) {
-    console.log(`[API updateAssignedTask] Marking task ${assignmentId} as complete (Direct DB Update).`);
+    console.log(
+      `[API updateAssignedTask] Marking task ${assignmentId} as complete (Direct DB Update).`
+    );
     const updatePayload = {
       is_complete: true,
       completed_date: new Date().toISOString(),
@@ -283,26 +332,36 @@ export const updateAssignedTask = async ({
 
     // Perform update without select().single()
     const { error: updateError } = await client
-        .from('assigned_tasks')
-        .update(updatePayload)
-        .eq('id', assignmentId);
+      .from('assigned_tasks')
+      .update(updatePayload)
+      .eq('id', assignmentId);
 
     if (updateError) {
-        console.error(`[API updateAssignedTask] Error marking task complete ${assignmentId}:`, updateError.message);
-        throw new Error(`Failed to mark task complete: ${updateError.message}`);
+      console.error(
+        `[API updateAssignedTask] Error marking task complete ${assignmentId}:`,
+        updateError.message
+      );
+      throw new Error(`Failed to mark task complete: ${updateError.message}`);
     }
 
     // Refetch the updated task data separately
-    console.log(`[API updateAssignedTask] Update successful for ${assignmentId}. Refetching task...`);
+    console.log(
+      `[API updateAssignedTask] Update successful for ${assignmentId}. Refetching task...`
+    );
     const { data: refetchedData, error: fetchError } = await client
-        .from('assigned_tasks')
-        .select('*')
-        .eq('id', assignmentId)
-        .single();
+      .from('assigned_tasks')
+      .select('*')
+      .eq('id', assignmentId)
+      .single();
 
     if (fetchError || !refetchedData) {
-        console.error(`[API updateAssignedTask] Failed to refetch task ${assignmentId} after update:`, fetchError?.message);
-        throw new Error(`Task marked complete, but failed to refetch updated record: ${fetchError?.message || 'Not Found'}`);
+      console.error(
+        `[API updateAssignedTask] Failed to refetch task ${assignmentId} after update:`,
+        fetchError?.message
+      );
+      throw new Error(
+        `Task marked complete, but failed to refetch updated record: ${fetchError?.message || 'Not Found'}`
+      );
     }
 
     const updatedTask = mapDbRowToAssignedTask(refetchedData);
@@ -312,42 +371,76 @@ export const updateAssignedTask = async ({
 
   // --- CASE 3: Un-marking Task Complete (Direct DB Update - RLS might block/restrict) ---
   else if (updates.isComplete === false) {
-     console.warn(`[API updateAssignedTask] Un-marking task ${assignmentId} as complete (Direct DB Update - Requires appropriate RLS).`);
-     const updatePayload = {
-        is_complete: false, completed_date: null, verification_status: null, verified_by_id: null, verified_date: null, actual_points_awarded: null,
-     };
-     const { error: unmarkError } = await client
-      .from('assigned_tasks').update(updatePayload).eq('id', assignmentId);
+    console.warn(
+      `[API updateAssignedTask] Un-marking task ${assignmentId} as complete (Direct DB Update - Requires appropriate RLS).`
+    );
+    const updatePayload = {
+      is_complete: false,
+      completed_date: null,
+      verification_status: null,
+      verified_by_id: null,
+      verified_date: null,
+      actual_points_awarded: null,
+    };
+    const { error: unmarkError } = await client
+      .from('assigned_tasks')
+      .update(updatePayload)
+      .eq('id', assignmentId);
 
-     if (unmarkError) {
-        console.error(`[API updateAssignedTask] Error un-marking task complete ${assignmentId}:`, unmarkError.message);
-        throw new Error(`Failed to un-mark task complete: ${unmarkError.message}`);
-     }
-     console.log(`[API updateAssignedTask] Un-mark successful for ${assignmentId}. Refetching task...`);
-     const { data: refetchedData, error: fetchError } = await client
-        .from('assigned_tasks').select('*').eq('id', assignmentId).single();
-     if (fetchError || !refetchedData) {
-         console.error(`[API updateAssignedTask] Failed to refetch task ${assignmentId} after un-mark:`, fetchError?.message);
-         throw new Error(`Task un-marked, but failed to refetch updated record: ${fetchError?.message || 'Not Found'}`);
-     }
-     const updatedTask = mapDbRowToAssignedTask(refetchedData);
-     console.log(`[API updateAssignedTask] Task ${assignmentId} un-marked successfully.`);
-     return updatedTask;
+    if (unmarkError) {
+      console.error(
+        `[API updateAssignedTask] Error un-marking task complete ${assignmentId}:`,
+        unmarkError.message
+      );
+      throw new Error(`Failed to un-mark task complete: ${unmarkError.message}`);
+    }
+    console.log(
+      `[API updateAssignedTask] Un-mark successful for ${assignmentId}. Refetching task...`
+    );
+    const { data: refetchedData, error: fetchError } = await client
+      .from('assigned_tasks')
+      .select('*')
+      .eq('id', assignmentId)
+      .single();
+    if (fetchError || !refetchedData) {
+      console.error(
+        `[API updateAssignedTask] Failed to refetch task ${assignmentId} after un-mark:`,
+        fetchError?.message
+      );
+      throw new Error(
+        `Task un-marked, but failed to refetch updated record: ${fetchError?.message || 'Not Found'}`
+      );
+    }
+    const updatedTask = mapDbRowToAssignedTask(refetchedData);
+    console.log(`[API updateAssignedTask] Task ${assignmentId} un-marked successfully.`);
+    return updatedTask;
   }
 
   // --- CASE 4: No recognized update operation ---
   else {
-    console.warn(`[API updateAssignedTask] Called for ${assignmentId} with no applicable changes/operation detected. Updates:`, updates);
+    console.warn(
+      `[API updateAssignedTask] Called for ${assignmentId} with no applicable changes/operation detected. Updates:`,
+      updates
+    );
     const { data: currentData, error: currentError } = await client
-      .from('assigned_tasks').select('*').eq('id', assignmentId).single();
-    if (currentError || !currentData) { throw new Error(`Failed to fetch current task ${assignmentId}: ${currentError?.message || 'Not Found'}`); }
+      .from('assigned_tasks')
+      .select('*')
+      .eq('id', assignmentId)
+      .single();
+    if (currentError || !currentData) {
+      throw new Error(
+        `Failed to fetch current task ${assignmentId}: ${currentError?.message || 'Not Found'}`
+      );
+    }
     return mapDbRowToAssignedTask(currentData);
   }
 };
 
 export const deleteAssignedTask = async (assignmentId: string): Promise<void> => {
   const client = getSupabase();
-  console.log(`[API deleteAssignedTask] Calling Edge Function "deleteAssignedTask" for ID: ${assignmentId}`);
+  console.log(
+    `[API deleteAssignedTask] Calling Edge Function "deleteAssignedTask" for ID: ${assignmentId}`
+  );
 
   // Prepare payload for the Edge Function
   const payload = {
@@ -355,8 +448,8 @@ export const deleteAssignedTask = async (assignmentId: string): Promise<void> =>
   };
 
   if (!payload.assignmentId) {
-      console.error("[API deleteAssignedTask] Validation failed: assignmentId is missing.");
-      throw new Error("Cannot delete task: Assignment ID is missing.");
+    console.error('[API deleteAssignedTask] Validation failed: assignmentId is missing.');
+    throw new Error('Cannot delete task: Assignment ID is missing.');
   }
 
   console.log('[API deleteAssignedTask] Payload being sent:', payload);
@@ -369,16 +462,28 @@ export const deleteAssignedTask = async (assignmentId: string): Promise<void> =>
     console.error('[API deleteAssignedTask] Error invoking deleteAssignedTask function:', error);
     // Attempt to parse nested error message
     let detailedError = error.message || 'Unknown function error';
-    if (error.context && typeof error.context === 'object' && error.context !== null && 'error' in error.context) {
-        detailedError = String((error.context as any).error) || detailedError;
-    } else { try { const parsed = JSON.parse(error.message); if (parsed && parsed.error) detailedError = String(parsed.error); } catch (e) {} }
-    if (error.context?.message) { detailedError += ` (Context: ${error.context.message})`; }
+    if (
+      error.context &&
+      typeof error.context === 'object' &&
+      error.context !== null &&
+      'error' in error.context
+    ) {
+      detailedError = String((error.context as any).error) || detailedError;
+    } else {
+      try {
+        const parsed = JSON.parse(error.message);
+        if (parsed && parsed.error) detailedError = String(parsed.error);
+      } catch (e) {}
+    }
+    if (error.context?.message) {
+      detailedError += ` (Context: ${error.context.message})`;
+    }
 
     // Distinguish between permission denied and other errors if possible
     if (detailedError.toLowerCase().includes('permission denied')) {
-         throw new Error(`Deletion failed: ${detailedError}`); // More specific message
+      throw new Error(`Deletion failed: ${detailedError}`); // More specific message
     } else {
-        throw new Error(`Failed to delete assigned task: ${detailedError}`);
+      throw new Error(`Failed to delete assigned task: ${detailedError}`);
     }
   }
 

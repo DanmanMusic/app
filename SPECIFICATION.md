@@ -18,7 +18,7 @@ Future considerations, pending discussion and decisions, include features like p
 - **Authentication (Admin/Teacher - Standard):**
   - Login via a dedicated secure mechanism (e.g., email/password) managed by Supabase Auth. Requires a distinct login interface section. Uses standard `supabase.auth.signInWithPassword`. Backend returns standard Supabase JWT session upon success. Session refresh handled automatically by the Supabase client library. Credentials can be updated via the `updateAuthCredentials` Edge Function.
 - **Authentication (Student/Parent/Teacher/Admin - PIN-Based):**
-  - **PIN Generation & Management:** A short-lived, one-time numerical PIN (e.g., 6 digits) is generated **on demand** by an **Admin** or a **Teacher** via their UI, invoking the `generate-onetime-pin` Supabase Edge Function. This function requires the target user ID and the intended `targetRole` ('student', 'parent', 'teacher', or 'admin') the user will assume upon claiming the PIN. PINs are stored temporarily and securely in the `onetime_pins` table. *There is no persistent PIN stored for users.*
+  - **PIN Generation & Management:** A short-lived, one-time numerical PIN (e.g., 6 digits) is generated **on demand** by an **Admin** or a **Teacher** via their UI, invoking the `generate-onetime-pin` Supabase Edge Function. This function requires the target user ID and the intended `targetRole` ('student', 'parent', 'teacher', or 'admin') the user will assume upon claiming the PIN. PINs are stored temporarily and securely in the `onetime_pins` table. _There is no persistent PIN stored for users._
   - **Login Flow (PIN):**
     1.  The mobile app presents a login screen section requesting the numerical PIN. (**Decision Pending:** How is the target user identified if multiple users might use PINs? For Student/Parent, the PIN implicitly links to a user via the `onetime_pins` table. For Teacher/Admin PIN login, how is the user specified?).
     2.  User enters the PIN.
@@ -36,16 +36,16 @@ Future considerations, pending discussion and decisions, include features like p
         - The `AuthContext` listener (`onAuthStateChange`) detects the `SIGNED_IN` event and fetches the user's profile based on the user ID from the session. The context determines the `currentUserRole` and `currentViewingStudentId` based on the JWT's `app_metadata`.
     6.  **App Handling (on Failure):** Displays an error message.
 - **Session Management (PIN Flow):**
-    - The custom JWT access token is short-lived.
-    - On app startup or when the access token expires, the `AuthContext` attempts to retrieve the stored **custom refresh token**.
-    - If found, it calls the `refreshPinSession` Supabase Edge Function.
-    - `refreshPinSession` validates the custom refresh token against the stored hash in `active_refresh_tokens` and issues a *new* custom JWT access token (but typically reuses the same refresh token).
-    *   The app updates the Supabase client session using `setSession` with the new access token and the existing refresh token.
-    *   Logout (`signOut`): Clears the custom refresh token from local storage and calls `supabase.auth.signOut({ scope: 'local' })` to clear the client-side Supabase session state. On web, a page reload is forced as a workaround for a client bug. Authorization and access control rely heavily on server-side **Row Level Security (RLS)** policies and **Edge Function logic**.
+  - The custom JWT access token is short-lived.
+  - On app startup or when the access token expires, the `AuthContext` attempts to retrieve the stored **custom refresh token**.
+  - If found, it calls the `refreshPinSession` Supabase Edge Function.
+  - `refreshPinSession` validates the custom refresh token against the stored hash in `active_refresh_tokens` and issues a _new_ custom JWT access token (but typically reuses the same refresh token).
+  * The app updates the Supabase client session using `setSession` with the new access token and the existing refresh token.
+  * Logout (`signOut`): Clears the custom refresh token from local storage and calls `supabase.auth.signOut({ scope: 'local' })` to clear the client-side Supabase session state. On web, a page reload is forced as a workaround for a client bug. Authorization and access control rely heavily on server-side **Row Level Security (RLS)** policies and **Edge Function logic**.
 
 ## 3. Core Features by Role
 
-*(Roles remain largely the same, but emphasize API calls now trigger Edge Functions)*
+_(Roles remain largely the same, but emphasize API calls now trigger Edge Functions)_
 
 ### 3.1. Admin
 
@@ -60,8 +60,8 @@ Future considerations, pending discussion and decisions, include features like p
 - **Reward Redemption:** Redeems rewards for students via UI invoking `redeemReward` Edge Function.
 - **History Viewing:** Views global history via API (`fetchTicketHistory`) protected by Admin RLS. Pagination handled via hook.
 - **Announcements:** CRUD via API (`fetchAnnouncements`, `createAnnouncement`, `updateAnnouncement`, `deleteAnnouncement`) protected by Admin RLS.
-- **Challenge Management (TBD):** *If implemented.*
-- **Manage Avatar (TBD):** *If implemented.*
+- **Challenge Management (TBD):** _If implemented._
+- **Manage Avatar (TBD):** _If implemented._
 
 ### 3.2. Teacher
 
@@ -70,21 +70,21 @@ Future considerations, pending discussion and decisions, include features like p
 - **PIN Management:** Generates temporary login PINs for **linked students** (role 'student' or 'parent') or **themselves** (role 'teacher') via UI controls invoking `generate-onetime-pin` Edge Function.
 - **Task Assignment:** Assigns tasks via UI invoking `assignTask` Edge Function (authorization checked server-side).
 - **Task Verification:** Views pending tasks for linked students, verifies via UI invoking `verifyTask` Edge Function (authorization checked server-side).
-- **Challenge Creation/Management (TBD):** *If implemented.*
-- **Manage Own Avatar (TBD):** *If implemented.*
+- **Challenge Creation/Management (TBD):** _If implemented._
+- **Manage Own Avatar (TBD):** _If implemented._
 - **Manage Own Credentials:** Can update own Email/Password (if applicable) via UI invoking `updateAuthCredentials` Edge Function.
 
 ### 3.3. Student
 
 - **Dashboard:** Fetches own profile data (`fetchUserProfile`), balance (`fetchStudentBalance`), goal info, recent history/tasks via API protected by RLS.
 - **Task List:** Fetches own assigned tasks (`fetchAssignedTasks`), displays status. Marks complete via API (`updateAssignedTask` RLS allows this specific update). Pagination handled by hook.
-- **View Task Links (TBD):** *If implemented.*
+- **View Task Links (TBD):** _If implemented._
 - **Rewards Catalog:** Fetches via API (`fetchRewards`). Views progress, sets goal (local state). Redemption (TBD - likely requires Admin action currently).
 - **Ticket History:** Fetches personal history (`fetchTicketHistory`), protected by RLS. Pagination handled by hook.
 - **Announcements:** Fetches via API (`fetchAnnouncements`).
-- **View Available Challenges (TBD):** *If implemented.*
-- **Accept Challenge (TBD):** *If implemented.*
-- **Manage Own Avatar (TBD):** *If implemented.*
+- **View Available Challenges (TBD):** _If implemented._
+- **Accept Challenge (TBD):** _If implemented._
+- **Manage Own Avatar (TBD):** _If implemented._
 - **Manage Own Credentials:** Can update own Email/Password (if applicable) via UI invoking `updateAuthCredentials` Edge Function.
 
 ### 3.4. Parent
@@ -93,14 +93,14 @@ Future considerations, pending discussion and decisions, include features like p
 - **View Student Dashboard:** Renders `StudentView` component for the selected child. Data fetched using child's ID, protected by RLS checking parent-child link.
 - **Mark Tasks Complete:** Can mark selected child's tasks complete via API (`updateAssignedTask` RLS allows this specific update).
 - **Link Additional Students:** Mechanism TBD (likely Admin action via `updateUserWithLinks` or similar).
-- **Send Reminders (TBD):** *Functionality subject to decision.*
-- **Manage Own Avatar (TBD):** *If implemented.*
-- **Manage Child's Avatar (TBD):** *If implemented.*
+- **Send Reminders (TBD):** _Functionality subject to decision._
+- **Manage Own Avatar (TBD):** _If implemented._
+- **Manage Child's Avatar (TBD):** _If implemented._
 - **Manage Own Credentials:** Can update own Email/Password (if applicable) via UI invoking `updateAuthCredentials` Edge Function.
 
 ## 4. Task & Challenge Workflow
 
-*(Challenge Sub-Workflow remains TBD)*
+_(Challenge Sub-Workflow remains TBD)_
 
 - **Standard Task Workflow:**
   1.  **Creation/Assignment:** Admin/Teacher UI calls `assignTask` Edge Function.
@@ -123,7 +123,8 @@ The application manages several core data entities detailed in **[MODEL.md](./MO
 
 ## 7. Non-Functional Requirements
 
-*(Largely unchanged, but reinforce RLS/Edge Functions)*
+_(Largely unchanged, but reinforce RLS/Edge Functions)_
+
 - **Platform:** Mobile App (iOS & Android via React Native/Expo).
 - **Security:** Secure storage of credentials/JWTs (standard Supabase client for email/pass, `storageHelper` for custom PIN refresh tokens). Secure PIN generation/claim/refresh flow via Edge Functions. Input validation (client & server). Role-based access control enforced primarily by **server-side RLS policies** and **Edge Function authorization logic**.
 - **Usability:** Intuitive navigation, clear feedback. Offline NOT required for V1.
@@ -131,8 +132,8 @@ The application manages several core data entities detailed in **[MODEL.md](./MO
 
 ## 8. Cascading Logic for Deactivation/Deletion (Server-Side Implementation)
 
-- **Deactivating a User:** Handled by `toggleUserStatus` Edge Function updating `profiles.status`. Does *not* cascade delete links. Other functions/RLS should check `status`.
-- **Permanently Deleting a User:** Handled by `deleteUser` Edge Function calling `auth.admin.deleteUser`. Relies on **database `ON DELETE CASCADE` / `ON DELETE SET NULL`** foreign key constraints defined in migrations to manage associated data removal/cleanup across tables (`profiles`, `user_credentials`, `onetime_pins`, `active_refresh_tokens`, link tables, potentially `assigned_tasks`, `ticket_transactions`). *Ensure FK constraints are correctly defined in migrations.*
+- **Deactivating a User:** Handled by `toggleUserStatus` Edge Function updating `profiles.status`. Does _not_ cascade delete links. Other functions/RLS should check `status`.
+- **Permanently Deleting a User:** Handled by `deleteUser` Edge Function calling `auth.admin.deleteUser`. Relies on **database `ON DELETE CASCADE` / `ON DELETE SET NULL`** foreign key constraints defined in migrations to manage associated data removal/cleanup across tables (`profiles`, `user_credentials`, `onetime_pins`, `active_refresh_tokens`, link tables, potentially `assigned_tasks`, `ticket_transactions`). _Ensure FK constraints are correctly defined in migrations._
 
 ## 9. Asset Requirements & Handover (Action: Dan)
 
@@ -144,7 +145,7 @@ The application manages several core data entities detailed in **[MODEL.md](./MO
 
 ## 10. Pending Decisions (Input Required: Dan)
 
-*(Largely unchanged, but added clarity on PIN identifier)*
+_(Largely unchanged, but added clarity on PIN identifier)_
 
 1.  **Task Link URL:** Implement `link_url` field?
 2.  **Image Requirements & Avatars:** Require stored images for Instruments? Avatars (which roles)? Mandatory Reward images?
@@ -152,8 +153,8 @@ The application manages several core data entities detailed in **[MODEL.md](./MO
 4.  **Challenge Feature (Go/No-Go):** Implement distinct "Challenge" system in V1? (If yes, requires detailed specs on targeting, expiry, acceptance flow).
 5.  **Task/Reward/Announcement Fields:** Confirm necessity of `description` fields? Finalize Announcement fields/types? (`relatedStudentId` usage confirmed for redemptions, others needed?).
 6.  **PIN Login Details:**
-    - *What identifier is used WITH the PIN?* Currently, the PIN itself identifies the user via the `onetime_pins` table lookup. Is an additional identifier (Name, Username?) needed on the login screen, or just the PIN field?
-    - *Parent Session Differentiation:* Confirmed: Handled by `generate-onetime-pin` setting `targetRole='parent'` and `claim-onetime-pin` setting appropriate `app_metadata` in the JWT. `AuthContext` reads this metadata.
+    - _What identifier is used WITH the PIN?_ Currently, the PIN itself identifies the user via the `onetime_pins` table lookup. Is an additional identifier (Name, Username?) needed on the login screen, or just the PIN field?
+    - _Parent Session Differentiation:_ Confirmed: Handled by `generate-onetime-pin` setting `targetRole='parent'` and `claim-onetime-pin` setting appropriate `app_metadata` in the JWT. `AuthContext` reads this metadata.
 7.  **Additional Login Methods:** Offer Email/Password for Students/Parents as alternative/replacement to PIN flow? (Requires `updateAuthCredentials` usage by them).
 8.  **Parent Reminders Feature (Go/No-Go):** Implement in V1?
 9.  **Data Deletion Policy:** Confirm `ON DELETE` actions for `assigned_tasks` and `ticket_transactions` foreign keys referencing `profiles.id` (CASCADE or SET NULL?).

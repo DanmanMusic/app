@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,9 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
-import { useQuery, useQueries } from '@tanstack/react-query';
+import { useQuery, useQueries, useQueryClient, useMutation } from '@tanstack/react-query';
 
-import { fetchUserProfile } from '../../api/users';
+import { fetchUserProfile, unlinkStudentFromParent } from '../../api/users';
 
 import { User } from '../../types/dataTypes';
 import { AdminParentDetailViewProps } from '../../types/componentProps';
@@ -20,14 +20,18 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { colors } from '../../styles/colors';
 import { getUserDisplayName } from '../../utils/helpers';
+import LinkStudentToParentModal from './modals/LinkStudentToParentModal';
+import Toast from 'react-native-toast-message';
+import ConfirmationModal from '../common/ConfirmationModal';
 
 export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
   viewingUserId,
-
   onInitiateEditUser,
   onInitiateStatusUser,
   onViewStudentProfile,
 }) => {
+  const queryClient = useQueryClient();
+
   const {
     data: parent,
     isLoading: parentLoading,
@@ -39,6 +43,14 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
     enabled: !!viewingUserId,
     staleTime: 5 * 60 * 1000,
   });
+
+  const [isLinkStudentModalVisible, setIsLinkStudentModalVisible] = useState(false);
+  const [isUnlinkConfirmModalVisible, setIsUnlinkConfirmModalVisible] = useState(false);
+  const [linkToRemove, setLinkToRemove] = useState<{
+    parentId: string;
+    studentId: string;
+    studentName: string;
+  } | null>(null);
 
   const linkedStudentIds = useMemo(() => parent?.linkedStudentIds || [], [parent]);
 
@@ -76,6 +88,35 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
     };
   }, [linkedStudentsQueries]);
 
+  const unlinkMutation = useMutation({
+    mutationFn: (variables: { parentId: string; studentId: string }) =>
+      unlinkStudentFromParent(variables.parentId, variables.studentId),
+    onSuccess: (_, variables) => {
+      Toast.show({ type: 'success', text1: 'Success', text2: 'Student unlinked successfully.' });
+      queryClient.invalidateQueries({ queryKey: ['userProfile', variables.parentId] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile', variables.studentId] });
+      queryClient.invalidateQueries({ queryKey: ['parents'] });
+      queryClient.invalidateQueries({ queryKey: ['students'] });
+
+      closeUnlinkConfirmModal(); // Close confirmation modal
+    },
+    onError: (error: Error) => {
+      Toast.show({
+        type: 'error',
+        text1: 'Unlinking Failed',
+        text2: error.message || 'Could not unlink student.',
+      });
+      // Keep confirmation modal open on error? Or close? Closing for now.
+      closeUnlinkConfirmModal();
+    },
+  });
+
+  const closeUnlinkConfirmModal = () => {
+    setIsUnlinkConfirmModalVisible(false);
+    setLinkToRemove(null);
+    unlinkMutation.reset(); // Reset mutation state
+  };
+
   const parentDisplayName = useMemo(
     () => (parent ? getUserDisplayName(parent) : 'Loading...'),
     [parent]
@@ -93,11 +134,21 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
     }
   };
 
-  const handleLinkStudent = () => {
-    if (parent) {
-      alert(
-        `TODO: Implement link student flow for ${parentDisplayName}... (Parent ID: ${parent.id})`
-      );
+  const handleLinkStudent = () => setIsLinkStudentModalVisible(true);
+
+  const handleInitiateUnlink = (studentToUnlink: User) => {
+    if (!parent) return; // Should not happen if button is visible
+    setLinkToRemove({
+      parentId: parent.id,
+      studentId: studentToUnlink.id,
+      studentName: getUserDisplayName(studentToUnlink),
+    });
+    setIsUnlinkConfirmModalVisible(true);
+  };
+
+  const handleConfirmUnlink = () => {
+    if (linkToRemove && !unlinkMutation.isPending) {
+      unlinkMutation.mutate({ parentId: linkToRemove.parentId, studentId: linkToRemove.studentId });
     }
   };
 
@@ -129,71 +180,96 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
   }
 
   return (
-    <ScrollView style={appSharedStyles.container}>
-      <Text style={appSharedStyles.sectionTitle}>Parent Details</Text>
-      <Text style={appSharedStyles.itemDetailText}>Name: {parentDisplayName}</Text>
-      <Text style={appSharedStyles.itemDetailText}>ID: {parent.id}</Text>
-      <Text style={appSharedStyles.itemDetailText}>
-        Status:{' '}
-        <Text style={isParentActive ? styles.activeStatus : styles.inactiveStatus}>
-          {parent.status}
+    <>
+      <ScrollView style={appSharedStyles.container}>
+        <Text style={appSharedStyles.sectionTitle}>Parent Details</Text>
+        <Text style={appSharedStyles.itemDetailText}>Name: {parentDisplayName}</Text>
+        <Text style={appSharedStyles.itemDetailText}>ID: {parent.id}</Text>
+        <Text style={appSharedStyles.itemDetailText}>
+          Status:{' '}
+          <Text style={isParentActive ? styles.activeStatus : styles.inactiveStatus}>
+            {parent.status}
+          </Text>
         </Text>
-      </Text>
-      <View
-        style={[adminSharedStyles.adminStudentActions, commonSharedStyles.actionButtonsContainer]}
-      >
-        <Button title="Edit Info (Limited)" onPress={handleEdit} color={colors.warning} />
-        <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
-        <Button
-          title="Link Another Student (TODO)"
-          onPress={handleLinkStudent}
-          color={colors.info}
-        />
-      </View>
-      <Text style={appSharedStyles.sectionTitle}>Linked Students ({linkedStudents.length})</Text>
-      {isLoadingLinkedStudents && (
-        <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
-      )}
-      {isErrorLinkedStudents && !isLoadingLinkedStudents && (
-        <Text style={commonSharedStyles.errorText}>
-          Error loading details for one or more linked students.
-        </Text>
-      )}
-      {!isLoadingLinkedStudents && !isErrorLinkedStudents && (
-        <FlatList
-          data={linkedStudents.sort((a, b) =>
-            getUserDisplayName(a).localeCompare(getUserDisplayName(b))
-          )}
-          keyExtractor={item => item.id}
-          renderItem={({ item: studentItem }) => (
-            <View style={[appSharedStyles.itemContainer, styles.linkedStudentItem]}>
-              <Text style={appSharedStyles.itemTitle}>{getUserDisplayName(studentItem)}</Text>
-              <Text style={appSharedStyles.itemDetailText}>
-                Status:{' '}
-                <Text
-                  style={
-                    studentItem.status === 'active' ? styles.activeStatus : styles.inactiveStatus
-                  }
-                >
-                  {studentItem.status}
+        <View
+          style={[adminSharedStyles.adminStudentActions, commonSharedStyles.actionButtonsContainer]}
+        >
+          <Button title="Edit Info" onPress={handleEdit} color={colors.warning} />
+          <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
+          <Button title="Link Student" onPress={handleLinkStudent} color={colors.info} />
+        </View>
+        <Text style={appSharedStyles.sectionTitle}>Linked Students ({linkedStudents.length})</Text>
+        {isLoadingLinkedStudents && (
+          <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
+        )}
+        {isErrorLinkedStudents && !isLoadingLinkedStudents && (
+          <Text style={commonSharedStyles.errorText}>
+            Error loading details for one or more linked students.
+          </Text>
+        )}
+        {!isLoadingLinkedStudents && !isErrorLinkedStudents && (
+          <FlatList
+            data={linkedStudents.sort((a, b) =>
+              getUserDisplayName(a).localeCompare(getUserDisplayName(b))
+            )}
+            keyExtractor={item => item.id}
+            renderItem={({ item: studentItem }) => (
+              <View style={[appSharedStyles.itemContainer, styles.linkedStudentItem]}>
+                <Text style={appSharedStyles.itemTitle}>{getUserDisplayName(studentItem)}</Text>
+                <Text style={appSharedStyles.itemDetailText}>
+                  Status:{' '}
+                  <Text
+                    style={
+                      studentItem.status === 'active' ? styles.activeStatus : styles.inactiveStatus
+                    }
+                  >
+                    {studentItem.status}
+                  </Text>
                 </Text>
-              </Text>
-              <View style={styles.linkedStudentActions}>
-                <Button title="View Profile" onPress={() => onViewStudentProfile(studentItem.id)} />
+                <View style={styles.linkedStudentActions}>
+                  <Button
+                    title="View Profile"
+                    onPress={() => onViewStudentProfile(studentItem.id)}
+                  />
+                  <Button
+                    title="Unlink Student"
+                    onPress={() => handleInitiateUnlink(studentItem)}
+                    color={colors.danger}
+                    disabled={unlinkMutation.isPending} // Disable while unlinking
+                  />
+                </View>
               </View>
-            </View>
-          )}
-          scrollEnabled={false}
-          ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-          ListEmptyComponent={() => (
-            <Text style={appSharedStyles.emptyListText}>
-              No students currently linked to this parent.
-            </Text>
-          )}
+            )}
+            scrollEnabled={false}
+            ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+            ListEmptyComponent={() => (
+              <Text style={appSharedStyles.emptyListText}>
+                No students currently linked to this parent.
+              </Text>
+            )}
+          />
+        )}
+        <View style={{ height: 30 }} />
+      </ScrollView>
+      {parent && (
+        <LinkStudentToParentModal
+          visible={isLinkStudentModalVisible}
+          onClose={() => setIsLinkStudentModalVisible(false)}
+          parentId={parent.id}
+          parentName={parentDisplayName}
+          currentlyLinkedStudentIds={linkedStudentIds}
         />
       )}
-      <View style={{ height: 30 }} />
-    </ScrollView>
+      <ConfirmationModal
+        visible={isUnlinkConfirmModalVisible}
+        title="Confirm Unlink"
+        message={`Are you sure you want to unlink student "${linkToRemove?.studentName || ''}" from parent "${parentDisplayName}"?`}
+        confirmText={unlinkMutation.isPending ? 'Unlinking...' : 'Yes, Unlink'}
+        onConfirm={handleConfirmUnlink}
+        onCancel={closeUnlinkConfirmModal}
+        confirmDisabled={unlinkMutation.isPending}
+      />
+    </>
   );
 };
 
@@ -203,19 +279,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  activeStatus: {
-    fontWeight: 'bold',
-    color: colors.success,
-  },
-  inactiveStatus: {
-    fontWeight: 'bold',
-    color: colors.secondary,
-  },
-  linkedStudentItem: {
-    backgroundColor: colors.backgroundSecondary,
-  },
+  activeStatus: { fontWeight: 'bold', color: colors.success },
+  inactiveStatus: { fontWeight: 'bold', color: colors.secondary },
+  linkedStudentItem: { backgroundColor: colors.backgroundSecondary },
   linkedStudentActions: {
     marginTop: 8,
-    alignItems: 'flex-start',
+    flexDirection: 'row', // Arrange buttons horizontally
+    gap: 10, // Add space between buttons
+    justifyContent: 'flex-start', // Align buttons to the start
   },
 });

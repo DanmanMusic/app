@@ -23,7 +23,9 @@ async function isAdmin(supabaseClient: SupabaseClient, callerUserId: string): Pr
       return false;
     }
     const role = data?.role;
-    console.log(`[deleteUser] isAdmin Check: Found profile role: ${role} for caller ${callerUserId}`);
+    console.log(
+      `[deleteUser] isAdmin Check: Found profile role: ${role} for caller ${callerUserId}`
+    );
     return role === 'admin';
   } catch (err) {
     console.error('[deleteUser] isAdmin Check Exception:', err.message);
@@ -35,8 +37,8 @@ async function isAdmin(supabaseClient: SupabaseClient, callerUserId: string): Pr
 const PROTECTED_IDS_STRING = Deno.env.get('PROTECTED_ADMIN_IDS') || '';
 // Parse the comma-separated string into an array of trimmed IDs, filtering out empty strings
 const PROTECTED_ADMIN_IDS = PROTECTED_IDS_STRING.split(',')
-                                             .map(id => id.trim())
-                                             .filter(id => id.length > 0);
+  .map(id => id.trim())
+  .filter(id => id.length > 0);
 console.log('[deleteUser] Initialized. Protected Admin IDs:', PROTECTED_ADMIN_IDS);
 
 // Main Function Handler
@@ -84,9 +86,15 @@ Deno.serve(async (req: Request) => {
       });
     }
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user: callerUser }, error: userError } = await supabaseAdminClient.auth.getUser(token);
+    const {
+      data: { user: callerUser },
+      error: userError,
+    } = await supabaseAdminClient.auth.getUser(token);
     if (userError || !callerUser) {
-      console.error('Auth token validation error:', userError?.message || 'User not found for token');
+      console.error(
+        'Auth token validation error:',
+        userError?.message || 'User not found for token'
+      );
       return new Response(JSON.stringify({ error: 'Invalid or expired token.' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -132,30 +140,38 @@ Deno.serve(async (req: Request) => {
     // Prevent self-deletion
     if (callerId === userIdToDelete) {
       console.warn(`Admin user ${callerId} attempted to delete themselves.`);
-      return new Response(JSON.stringify({ error: 'Cannot delete your own account via this function.' }), {
-        status: 400, // Bad Request might be more appropriate than Forbidden
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({ error: 'Cannot delete your own account via this function.' }),
+        {
+          status: 400, // Bad Request might be more appropriate than Forbidden
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
     // Prevent deletion of protected Admins
     if (PROTECTED_ADMIN_IDS.includes(userIdToDelete)) {
-         console.warn(`Admin user ${callerId} attempted to delete PROTECTED admin ${userIdToDelete}.`);
-         return new Response(JSON.stringify({ error: 'This administrator account cannot be deleted.' }), {
-             status: 403, // Forbidden
-             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-         });
+      console.warn(`Admin user ${callerId} attempted to delete PROTECTED admin ${userIdToDelete}.`);
+      return new Response(
+        JSON.stringify({ error: 'This administrator account cannot be deleted.' }),
+        {
+          status: 403, // Forbidden
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
     // --- END Additional Authorization Checks ---
 
-
     // 6. Call Supabase Admin API to Delete User by ID
     console.log(`Attempting to permanently delete user: ${userIdToDelete}`);
-    const { data: deleteResult, error: deleteError } = await supabaseAdminClient.auth.admin.deleteUser(userIdToDelete);
+    const { data: deleteResult, error: deleteError } =
+      await supabaseAdminClient.auth.admin.deleteUser(userIdToDelete);
 
     if (deleteError) {
       console.error(`Supabase Auth Delete Error for user ${userIdToDelete}:`, deleteError);
       const userNotFound = deleteError.message.toLowerCase().includes('not found');
-      const errorMessage = userNotFound ? 'User to delete was not found.' : `Failed to delete user: ${deleteError.message}`;
+      const errorMessage = userNotFound
+        ? 'User to delete was not found.'
+        : `Failed to delete user: ${deleteError.message}`;
       return new Response(JSON.stringify({ error: errorMessage }), {
         status: userNotFound ? 404 : 500, // Use 404 if not found, 500 for others
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -163,24 +179,33 @@ Deno.serve(async (req: Request) => {
     }
 
     // Assuming cascade delete handles profile and related links/data correctly based on schema FKs
-    console.log(`User ${userIdToDelete} deleted successfully from auth.users (cascade should handle profile etc.).`);
+    console.log(
+      `User ${userIdToDelete} deleted successfully from auth.users (cascade should handle profile etc.).`
+    );
 
     // 7. Return Success Response
-    return new Response(JSON.stringify({ message: `User ${userIdToDelete} deleted successfully.` }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200, // OK
-    });
-
+    return new Response(
+      JSON.stringify({ message: `User ${userIdToDelete} deleted successfully.` }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200, // OK
+      }
+    );
   } catch (error) {
     // Catch errors from initial setup/auth/validation etc.
     console.error('Unhandled Delete User Function Error:', error);
-    const statusCode = error.message.includes('required') ? 403
-        : error.message.includes('Authentication') || error.message.includes('token') ? 401
+    const statusCode = error.message.includes('required')
+      ? 403
+      : error.message.includes('Authentication') || error.message.includes('token')
+        ? 401
         : 500;
-    return new Response(JSON.stringify({ error: error.message || 'An unexpected error occurred.' }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: statusCode,
-    });
+    return new Response(
+      JSON.stringify({ error: error.message || 'An unexpected error occurred.' }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: statusCode,
+      }
+    );
   }
 });
 
