@@ -156,25 +156,37 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
       <View style={appSharedStyles.centeredView}>
         <View style={appSharedStyles.modalView}>
           <Text style={appSharedStyles.modalTitle}>Login</Text>
-          <View style={appSharedStyles.toggleContainer}>
+          <View style={appSharedStyles.containerToggle}>
             <TouchableOpacity
-              style={[appSharedStyles.toggleButton, mode === 'email' && appSharedStyles.toggleButtonActive]}
+              style={[
+                appSharedStyles.toggleButton,
+                mode === 'email' && appSharedStyles.toggleButtonActive,
+              ]}
               onPress={() => setMode('email')}
               disabled={isLoading}
             >
               <Text
-                style={[appSharedStyles.toggleButtonText, mode === 'email' && appSharedStyles.toggleButtonTextActive]}
+                style={[
+                  appSharedStyles.toggleButtonText,
+                  mode === 'email' && appSharedStyles.toggleButtonTextActive,
+                ]}
               >
                 Email / Password
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[appSharedStyles.toggleButton, mode === 'pin' && appSharedStyles.toggleButtonActive]}
+              style={[
+                appSharedStyles.toggleButton,
+                mode === 'pin' && appSharedStyles.toggleButtonActive,
+              ]}
               onPress={() => setMode('pin')}
               disabled={isLoading}
             >
               <Text
-                style={[appSharedStyles.toggleButtonText, mode === 'pin' && appSharedStyles.toggleButtonTextActive]}
+                style={[
+                  appSharedStyles.toggleButtonText,
+                  mode === 'pin' && appSharedStyles.toggleButtonTextActive,
+                ]}
               >
                 Login PIN
               </Text>
@@ -182,7 +194,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
           </View>
 
           {mode === 'email' && (
-            <View style={appSharedStyles.formContainer}>
+            <View style={appSharedStyles.itemFull}>
               <Text style={commonSharedStyles.label}>Email:</Text>
               <TextInput
                 style={commonSharedStyles.input}
@@ -206,7 +218,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
                 autoComplete="password"
                 editable={!isLoading}
               />
-              <View style={appSharedStyles.buttonContainer}>
+              <View style={appSharedStyles.itemFull}>
                 <Button
                   title={isLoading ? 'Logging In...' : 'Login with Email'}
                   onPress={handleEmailLogin}
@@ -217,7 +229,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
           )}
 
           {mode === 'pin' && (
-            <View style={appSharedStyles.formContainer}>
+            <View style={appSharedStyles.itemFull}>
               <Text style={commonSharedStyles.label}>One-Time PIN:</Text>
               <TextInput
                 style={commonSharedStyles.input}
@@ -230,7 +242,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
                 editable={!isLoading}
                 secureTextEntry={true}
               />
-              <View style={appSharedStyles.buttonContainer}>
+              <View style={appSharedStyles.itemFull}>
                 <Button
                   title={isLoading ? 'Verifying...' : 'Login with PIN'}
                   onPress={handlePinLogin}
@@ -241,7 +253,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
           )}
 
           {isLoading && (
-            <View style={appSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.containerRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={appSharedStyles.loadingText}>Processing...</Text>
             </View>

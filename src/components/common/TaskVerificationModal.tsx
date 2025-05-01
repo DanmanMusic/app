@@ -237,7 +237,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               </Text>
             )}
 
-            <View style={appSharedStyles.buttonContainer}>
+            <View style={appSharedStyles.itemFull}>
               <Button
                 title="Verified"
                 onPress={() => handleStatusSelect('verified')}
@@ -303,7 +303,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             <Text style={appSharedStyles.stepTitle}>Step 2: Award Tickets</Text>
             {selectedStatus !== 'incomplete' ? (
               <>
-                <View style={appSharedStyles.pointsInputContainer}>
+                <View style={appSharedStyles.containerRowCentered}>
                   <Text style={{ fontSize: 16 }}>Tickets Awarded:</Text>
                   <Text style={appSharedStyles.awardedPointsText}>{awardedPoints}</Text>
                 </View>
@@ -328,12 +328,14 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
                 </View>
               </>
             ) : (
-              <Text style={appSharedStyles.infoText}>No points awarded for 'Incomplete' status.</Text>
+              <Text style={appSharedStyles.infoText}>
+                No points awarded for 'Incomplete' status.
+              </Text>
             )}
 
             {/* Display mutation status */}
             {verifyMutation.isPending && (
-              <View style={appSharedStyles.loadingContainer}>
+              <View style={appSharedStyles.containerRowCentered}>
                 <ActivityIndicator size="small" color={colors.primary} />
                 <Text style={appSharedStyles.loadingText}>Processing Verification...</Text>
               </View>
@@ -347,7 +349,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               </Text>
             )}
 
-            <View style={appSharedStyles.buttonContainer}>
+            <View style={appSharedStyles.itemFull}>
               <Button
                 title={verifyMutation.isPending ? 'Processing...' : 'Confirm Verification'}
                 onPress={handleConfirmTickets}
@@ -400,7 +402,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             {/* Removed Reassign option for simplicity - can be added back if needed */}
             {/* <Text style={appSharedStyles.stepTitle}>Step 3: Re-assign?</Text> */}
 
-            <View style={appSharedStyles.buttonContainer}>
+            <View style={appSharedStyles.itemFull}>
               <Button title="Done" onPress={onClose} />
             </View>
           </View>

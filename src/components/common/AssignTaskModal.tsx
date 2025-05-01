@@ -315,9 +315,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             autoCapitalize="none"
             autoCorrect={false}
           />
-          {isLoadingStudents && (
-            <ActivityIndicator color={colors.primary} style={appSharedStyles.listLoader} />
-          )}
+          {isLoadingStudents && <ActivityIndicator color={colors.primary} />}
           {isErrorStudents && (
             <Text style={commonSharedStyles.errorText}>
               Error loading students: {errorStudents?.message}
@@ -353,7 +351,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           <Text style={appSharedStyles.stepTitle}>
             Step {preselectedStudentId ? 1 : 2}: Assign Task to {selectedStudentName}
           </Text>
-          <View style={appSharedStyles.modeSwitchContainer}>
+          <View style={appSharedStyles.containerRowFull}>
             <Text style={commonSharedStyles.label}>Select from Library</Text>
             <Switch
               trackColor={{ false: colors.secondary, true: colors.primary }}
@@ -416,7 +414,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             ) : (
               // Task Library List
               <>
-                {isLoadingLibrary && <ActivityIndicator style={appSharedStyles.listLoader} />}
+                {isLoadingLibrary && <ActivityIndicator />}
                 {isErrorLibrary && (
                   <Text style={commonSharedStyles.errorText}>
                     Error loading task library: {errorLibrary?.message}
@@ -479,7 +477,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
 
           {/* Loading/Error for mutation */}
           {mutation.isPending && (
-            <View style={appSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.containerRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={appSharedStyles.loadingText}>Assigning Task...</Text>
             </View>
@@ -492,7 +490,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           )}
 
           {/* Footer Buttons */}
-          <View style={appSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.itemFull}>
             {step === 3 && (
               <Button
                 title={mutation.isPending ? 'Assigning...' : 'Confirm & Assign'}

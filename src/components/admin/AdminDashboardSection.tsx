@@ -4,11 +4,14 @@ import { View, Text, Button, ActivityIndicator } from 'react-native';
 import { fetchUserCounts, fetchPendingTaskCount, UserCounts, TaskStats } from '../../api/stats';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
-import { AdminDashboardSectionProps } from '../../types/componentProps';
+import { AdminDashboardSectionProps, UserTab } from '../../types/componentProps';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
   onViewPendingVerifications,
+  setActiveTab,
+  setViewingSection,
+  onInitiateCreateUser,
 }) => {
   const {
     data: userCounts,
@@ -35,47 +38,113 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
   const studentCount = userCounts?.studentCount ?? 0;
   const teacherCount = userCounts?.teacherCount ?? 0;
   const parentCount = userCounts?.parentCount ?? 0;
+  const adminCount = userCounts?.adminCount ?? 0;
+  const studentButtonTitle = `Students: ${studentCount}`;
+  const teacherButtonTitle = `Teachers: ${teacherCount}`;
+  const parentButtonTitle = `Parents: ${parentCount}`;
+  const adminButtonTitle = `Admins: ${adminCount}`;
   const pendingVerificationsCount = taskStats?.pendingVerificationCount ?? 0;
 
   const isLoading = isLoadingCounts || isLoadingTaskStats;
 
+  const handleUserSelection = (userTab: UserTab) => {
+    setActiveTab(userTab);
+    setViewingSection('users');
+  };
+
   return (
-    <View>
-      <Text style={appSharedStyles.sectionTitle}>Overview</Text>
+    <View style={commonSharedStyles.baseMargin}>
+      <Text style={[commonSharedStyles.baseTitle, commonSharedStyles.baseMarginTopBottom]}>
+        Overview
+      </Text>
       {isLoading ? (
         <ActivityIndicator color={colors.primary} style={{ marginVertical: 15 }} />
       ) : (
         <>
-          <Text style={appSharedStyles.itemDetailText}>
-            Total Students: {isErrorCounts ? 'Error' : studentCount}
-          </Text>
-          <Text style={appSharedStyles.itemDetailText}>
-            Total Teachers: {isErrorCounts ? 'Error' : teacherCount}
-          </Text>
-          <Text style={appSharedStyles.itemDetailText}>
-            Total Parents: {isErrorCounts ? 'Error' : parentCount}
-          </Text>
-          <Text style={appSharedStyles.itemDetailText}>
-            Tasks Pending Verification: {isErrorTaskStats ? 'Error' : pendingVerificationsCount}
-          </Text>
-          {isErrorCounts && (
+          {isErrorCounts ? (
             <Text style={commonSharedStyles.errorText}>
               Failed to load user counts: {errorCounts?.message}
             </Text>
+          ) : (
+            <>
+              <View
+                style={[
+                  commonSharedStyles.baseColumn,
+                  commonSharedStyles.baseGap,
+                  commonSharedStyles.baseMarginTopBottom,
+                ]}
+              >
+                <Text style={commonSharedStyles.baseSubTitle}>
+                  <Text style={{ fontWeight: 'bold' }}>Users</Text>:{' '}
+                  {studentCount + teacherCount + parentCount + adminCount}
+                </Text>
+                <View
+                  style={[
+                    commonSharedStyles.baseRow,
+                    commonSharedStyles.baseGap,
+                    commonSharedStyles.baseMarginTopBottom,
+                  ]}
+                >
+                  <Button title="+ User" onPress={onInitiateCreateUser} color={colors.warning} />
+                  <Button
+                    title={studentButtonTitle}
+                    onPress={() => {
+                      handleUserSelection('students');
+                    }}
+                  />
+                  <Button
+                    title={teacherButtonTitle}
+                    onPress={() => {
+                      handleUserSelection('teachers');
+                    }}
+                  />
+                  <Button
+                    title={parentButtonTitle}
+                    onPress={() => {
+                      handleUserSelection('parents');
+                    }}
+                  />
+                  <Button
+                    title={adminButtonTitle}
+                    onPress={() => {
+                      handleUserSelection('admins');
+                    }}
+                  />
+                </View>
+              </View>
+            </>
           )}
-          {isErrorTaskStats && (
+          {isErrorTaskStats ? (
             <Text style={commonSharedStyles.errorText}>
               Failed to load task stats: {errorTaskStats?.message}
             </Text>
+          ) : (
+            <View
+              style={[
+                commonSharedStyles.baseColumn,
+                commonSharedStyles.baseGap,
+                commonSharedStyles.baseMarginTopBottom,
+              ]}
+            >
+              <Text style={[commonSharedStyles.baseSubTitle, commonSharedStyles.bold]}>Tasks</Text>
+              <View
+                style={[
+                  commonSharedStyles.baseRow,
+                  commonSharedStyles.baseGap,
+                  commonSharedStyles.baseMarginTopBottom,
+                ]}
+              >
+                <Button
+                  title={`View Pending Verifications (${isErrorTaskStats ? '!' : pendingVerificationsCount})`}
+                  onPress={onViewPendingVerifications}
+                  color={colors.warning}
+                  disabled={isErrorTaskStats}
+                />
+                <Button title="Tasks" onPress={() => setViewingSection('tasks')} />
+                <Button title="History" onPress={() => setViewingSection('history')} />
+              </View>
+            </View>
           )}
-          <View style={{ marginTop: 20, alignItems: 'flex-start' }}>
-            <Button
-              title={`View Pending Verifications (${isErrorTaskStats ? '!' : pendingVerificationsCount})`}
-              onPress={onViewPendingVerifications}
-              color={colors.warning}
-              disabled={isErrorTaskStats}
-            />
-          </View>
         </>
       )}
     </View>

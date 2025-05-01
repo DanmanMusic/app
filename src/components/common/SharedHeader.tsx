@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import ConfirmationModal from './ConfirmationModal';
 import { appSharedStyles } from '../../styles/appSharedStyles';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 interface SharedHeaderProps {
   onSetLoginPress: () => void; // Callback to open the SetEmailPasswordModal
@@ -47,7 +48,7 @@ export const SharedHeader: React.FC<SharedHeaderProps> = ({ onSetLoginPress }) =
     }
   };
 
-  // Handlers for the confirmation modal
+  // Handlers for the confirmappSharedStyles.userNameTextation modal
   const onConfirmLogout = () => {
     setIsConfirmLogoutVisible(false);
     signOut(); // Proceed with sign out after confirmation
@@ -59,20 +60,19 @@ export const SharedHeader: React.FC<SharedHeaderProps> = ({ onSetLoginPress }) =
 
   return (
     <>
-      <View style={appSharedStyles.sharedHeaderContentContainer}>
+      
         {/* Left-aligned Name/Nickname */}
-        <Text style={appSharedStyles.userNameText} numberOfLines={1} ellipsizeMode="tail">
-          {displayName}
+        <Text style={commonSharedStyles.baseTitle} numberOfLines={1} ellipsizeMode="tail">
+          <Text style={commonSharedStyles.bold}>{appUser?.role}</Text>: {displayName}
         </Text>
 
         {/* Right-aligned Buttons */}
-        <View style={appSharedStyles.buttonsContainer}>
+        <View style={appSharedStyles.containerRowCenter}>
           {canSetLogin && (
             <Button title="Set Login" onPress={onSetLoginPress} color={colors.info} />
           )}
           <Button title="Logout" onPress={handleLogoutPress} color={colors.danger} />
         </View>
-      </View>
 
       {/* Confirmation Modal for PIN Logout */}
       <ConfirmationModal

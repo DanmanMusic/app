@@ -121,6 +121,15 @@ export interface ManualTicketAdjustmentModalProps {
 }
 
 export type UserTab = 'students' | 'teachers' | 'parents' | 'admins';
+export type AdminSection =
+  | 'dashboard'
+  | 'dashboard-pending-verification'
+  | 'users'
+  | 'tasks'
+  | 'rewards'
+  | 'history'
+  | 'announcements'
+  | 'instruments';
 
 type StudentFilter = UserStatus | 'all';
 
@@ -139,6 +148,9 @@ export interface AdminUsersSectionProps {
 
 export interface AdminDashboardSectionProps {
   onViewPendingVerifications: () => void;
+  setActiveTab: React.Dispatch<React.SetStateAction<UserTab>>;
+  setViewingSection: React.Dispatch<React.SetStateAction<AdminSection>>;
+  onInitiateCreateUser: () => void;
 }
 
 export interface AdminTasksSectionProps {

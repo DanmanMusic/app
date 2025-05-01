@@ -163,7 +163,7 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
           )}
 
           {/* Add/Subtract Toggle */}
-          <View style={appSharedStyles.modalToggleContainer}>
+          <View style={appSharedStyles.containerRowFull}>
             <Button
               title="Add Tickets"
               onPress={() => setIsSubtracting(false)}
@@ -210,7 +210,7 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
 
           {/* Mutation Status */}
           {mutation.isPending && (
-            <View style={appSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.containerRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={appSharedStyles.loadingText}>Adjusting Tickets...</Text>
             </View>
@@ -226,7 +226,7 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
             )}
 
           {/* Action Buttons */}
-          <View style={appSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.itemFull}>
             <Button
               title={confirmButtonText}
               onPress={handleAdjust}

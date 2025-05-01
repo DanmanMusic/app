@@ -33,7 +33,7 @@ export const AdminUserItem = ({
         Linked Students: {user.linkedStudentIds.length}
       </Text>
     )}
-    <View style={appSharedStyles.itemActions}>
+    <View>
       <Button title="View Details" onPress={() => onViewManage(user.id, user.role)} />
     </View>
   </View>

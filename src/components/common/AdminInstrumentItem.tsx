@@ -12,7 +12,7 @@ export const AdminInstrumentItem: React.FC<AdminInstrumentItemProps> = ({
   disabled,
 }) => (
   <View style={commonSharedStyles.baseItem}>
-    <View style={appSharedStyles.itemContentRow}>
+    <View style={appSharedStyles.containerRowCenter}>
       <Image
         source={getInstrumentIconSource(item)}
         style={appSharedStyles.instrumentIcon}
@@ -20,7 +20,7 @@ export const AdminInstrumentItem: React.FC<AdminInstrumentItemProps> = ({
       />
       <Text style={[appSharedStyles.itemTitle, appSharedStyles.itemTitleText]}>{item.name}</Text>
     </View>
-    <View style={appSharedStyles.itemActions}>
+    <View>
       <Button title="Edit" onPress={() => onEdit(item)} disabled={disabled} />
       <Button
         title="Delete"

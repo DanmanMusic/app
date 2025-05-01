@@ -4,6 +4,7 @@ export interface UserCounts {
   studentCount: number;
   teacherCount: number;
   parentCount: number;
+  adminCount: number;
   activeStudentCount: number;
 }
 
@@ -30,17 +31,23 @@ export const fetchUserCounts = async (): Promise<UserCounts> => {
     .select('*', { count: 'exact', head: true })
     .eq('role', 'parent');
 
+  const { count: adminCount, error: adminError } = await client
+    .from('profiles')
+    .select('*', { count: 'exact', head: true })
+    .eq('role', 'admin');
+
   const { count: activeStudentCount, error: activeStudentError } = await client
     .from('profiles')
     .select('*', { count: 'exact', head: true })
     .eq('role', 'student')
     .eq('status', 'active');
 
-  if (studentError || teacherError || parentError || activeStudentError) {
+  if (studentError || teacherError || parentError || adminError || activeStudentError) {
     console.error('[Supabase] Error fetching user counts:', {
       studentError,
       teacherError,
       parentError,
+      adminError,
       activeStudentError,
     });
 
@@ -51,6 +58,7 @@ export const fetchUserCounts = async (): Promise<UserCounts> => {
     studentCount: studentCount ?? 0,
     teacherCount: teacherCount ?? 0,
     parentCount: parentCount ?? 0,
+    adminCount: adminCount ?? 0,
     activeStudentCount: activeStudentCount ?? 0,
   };
 

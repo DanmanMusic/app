@@ -173,14 +173,18 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
             <Text style={appSharedStyles.modalContextInfo}>User: {displayName}</Text>
             <Text style={appSharedStyles.modalContextInfo}>
               Current Status:{' '}
-              <Text style={isCurrentlyActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus}>
+              <Text
+                style={
+                  isCurrentlyActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus
+                }
+              >
                 {currentStatusText}
               </Text>
             </Text>
 
             {/* Loading indicator for toggle status */}
             {toggleStatusMutation.isPending && (
-              <View style={appSharedStyles.loadingContainer}>
+              <View style={appSharedStyles.containerRowCentered}>
                 <ActivityIndicator size="small" color={colors.primary} />
                 <Text style={appSharedStyles.loadingText}>Updating Status...</Text>
               </View>
@@ -196,7 +200,7 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
             )}
 
             {/* Action Buttons */}
-            <View style={appSharedStyles.buttonContainer}>
+            <View style={appSharedStyles.itemFull}>
               <Button
                 title={toggleButtonText}
                 onPress={handleToggle}

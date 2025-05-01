@@ -3,12 +3,60 @@ import { StyleSheet } from 'react-native';
 import { colors } from './colors';
 
 export const commonSharedStyles = StyleSheet.create({
+  baseGap: {
+    gap: 5,
+  },
+  baseGapLarge: {
+    gap: 20,
+  },
+  baseMargin: {
+    margin: 5,
+  },
+  baseMarginTopBottom: {
+    marginTop: 5,
+    marginBottom: 5,
+  },
+  basePadding: {
+    padding: 5,
+  },
+  baseFull: {
+    width: '100%',
+  },
+  baseRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },  
+  baseColumn: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  baseSelfAlign: {
+    alignSelf: 'flex-start',
+  },
+  baseAlign: {
+    alignItems: 'center',
+  },  
   baseItem: {
-    padding: 12,
+    padding: 4,
     borderWidth: 1,
     borderRadius: 8,
-    marginBottom: 10,
+    backgroundColor: colors.backgroundPrimary,
   },
+  baseTitle: {
+    color: colors.textPrimary,
+    fontSize: 18,
+  },
+  baseSubTitle: {
+    color: colors.textPrimary,
+    fontSize: 16,
+  },
+  spaceBetween: {
+    justifyContent: 'space-between'
+  },
+  bold: {
+    fontWeight: 'bold',
+  },
+
   errorContainer: {
     alignItems: 'center',
     backgroundColor: '#ffebee',
@@ -55,10 +103,7 @@ export const commonSharedStyles = StyleSheet.create({
     borderWidth: 1,
     color: colors.textPrimary,
     fontSize: 16,
-    marginBottom: 15,
     minHeight: 80,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
     textAlignVertical: 'top',
     width: '100%',
   },

@@ -1,13 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  View,
-  Text,
-  ScrollView,
-  Button,
-  FlatList,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, ScrollView, Button, FlatList, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 import { deleteAssignedTask } from '../../api/assignedTasks';
@@ -222,7 +215,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   }
   if (studentError || !student) {
     return (
-      <View style={appSharedStyles.container}>
+      <View style={appSharedStyles.containerBase}>
         <Text style={commonSharedStyles.errorText}>
           Error loading student: {studentErrorMsg?.message || 'Student not found.'}
         </Text>
@@ -231,7 +224,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   }
   if (student.role !== 'student') {
     return (
-      <View style={appSharedStyles.container}>
+      <View style={appSharedStyles.containerBase}>
         <Text style={commonSharedStyles.errorText}>Error: User is not a student.</Text>
       </View>
     );
@@ -239,40 +232,40 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
 
   return (
     <>
-      <ScrollView style={appSharedStyles.container}>
+      <ScrollView style={appSharedStyles.containerBase}>
         <Text style={appSharedStyles.sectionTitle}>Student Details</Text>
         <Text style={appSharedStyles.itemDetailText}>Name: {studentDisplayName}</Text>
         <Text style={appSharedStyles.itemDetailText}>ID: {student.id}</Text>
         <Text style={appSharedStyles.itemDetailText}>
           Status:{' '}
-          <Text style={isStudentActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus}>
+          <Text
+            style={isStudentActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus}
+          >
             {student.status}
           </Text>
         </Text>
         <Text style={appSharedStyles.itemDetailText}>Instrument(s): {instrumentNames}</Text>
         <Text style={appSharedStyles.itemDetailText}>Linked Teachers: {teacherNames}</Text>
         {balanceLoading ? (
-          <Text style={[appSharedStyles.itemDetailText, appSharedStyles.balanceText]}>
+          <Text style={[appSharedStyles.itemDetailText, appSharedStyles.balance]}>
             Balance: Loading...
           </Text>
         ) : balanceError ? (
           <Text
             style={[
               appSharedStyles.itemDetailText,
-              appSharedStyles.balanceText,
+              appSharedStyles.balance,
               commonSharedStyles.errorText,
             ]}
           >
             Balance: Error
           </Text>
         ) : (
-          <Text style={[appSharedStyles.itemDetailText, appSharedStyles.balanceText]}>
+          <Text style={[appSharedStyles.itemDetailText, appSharedStyles.balance]}>
             Balance: {balance} Tickets
           </Text>
         )}
-        <View
-          style={[appSharedStyles.adminStudentActions, appSharedStyles.actionButtonsContainer]}
-        >
+        <View style={[appSharedStyles.containerRowStart]}>
           {onInitiateTicketAdjustment && (
             <Button
               title="Adjust Tickets"
@@ -303,7 +296,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
           )}
         </View>
         <Text style={appSharedStyles.sectionTitle}>Assigned Tasks ({totalTasksCount})</Text>
-        {studentTasksLoading && <ActivityIndicator style={appSharedStyles.listLoader} />}
+        {studentTasksLoading && <ActivityIndicator />}
         {studentTasksError && (
           <Text style={commonSharedStyles.errorText}>
             Error loading tasks: {studentTasksErrorObject?.message}
@@ -397,7 +390,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
           />
         )}
         <Text style={appSharedStyles.sectionTitle}>History ({totalHistoryCount})</Text>
-        {studentHistoryLoading && <ActivityIndicator style={appSharedStyles.listLoader} />}
+        {studentHistoryLoading && <ActivityIndicator />}
         {studentHistoryError && (
           <Text style={commonSharedStyles.errorText}>
             Error loading history: {historyErrorObject?.message}

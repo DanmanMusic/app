@@ -90,14 +90,14 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
           </Text>
 
           {isLoading && (
-            <View style={appSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.containerRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={appSharedStyles.loadingText}>Generating PIN...</Text>
             </View>
           )}
 
           {generatedPin && !isLoading && (
-            <View style={appSharedStyles.pinDisplayContainer}>
+            <View style={appSharedStyles.containerPinDisplay}>
               <Text style={appSharedStyles.pinLabel}>Generated PIN for {generatedForRole}:</Text>
               <Text style={appSharedStyles.pinValue}>{generatedPin}</Text>
               <Text style={appSharedStyles.pinInstructions}>
@@ -107,7 +107,7 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
           )}
 
           {!generatedPin && !isLoading && (
-            <View style={appSharedStyles.buttonContainer}>
+            <View style={appSharedStyles.itemFull}>
               {(userActualRole === 'student' ||
                 userActualRole === 'teacher' ||
                 userActualRole === 'admin') && (

@@ -211,15 +211,21 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
             isSelected && appSharedStyles.rewardItemSelected,
           ]}
         >
-          <Image source={{ uri: item.imageUrl }} style={appSharedStyles.rewardImage} resizeMode="contain" />
-          <View style={appSharedStyles.itemDetailsContainer}>
+          <Image
+            source={{ uri: item.imageUrl }}
+            style={appSharedStyles.rewardImage}
+            resizeMode="contain"
+          />
+          <View style={appSharedStyles.itemFlex}>
             <Text style={appSharedStyles.rewardName}>{item.name}</Text>
             <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
               {item.cost} Tickets
             </Text>
             {/* Show affordability status */}
             {canAfford === false && (
-              <Text style={appSharedStyles.cannotAffordText}>(Need {item.cost - currentBalance} more)</Text>
+              <Text style={appSharedStyles.cannotAffordText}>
+                (Need {item.cost - currentBalance} more)
+              </Text>
             )}
             {canAfford === null && !balanceError && (
               <Text style={appSharedStyles.loadingAffordText}>(Checking balance...)</Text>
@@ -261,7 +267,7 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
           {/* Rewards List */}
           {!isLoadingRewards && !isErrorRewards && (
             <FlatList
-              style={appSharedStyles.modalListContainer}
+              style={appSharedStyles.listItemFull}
               data={rewardsCatalog} // Already sorted by cost in API fetch? If not, add sort here.
               renderItem={renderRewardItem}
               keyExtractor={item => item.id}
@@ -274,7 +280,7 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
           )}
 
           {/* Footer Buttons */}
-          <View style={appSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.itemFull}>
             <Button
               title={redeemMutation.isPending ? 'Redeeming...' : `Redeem Selected`}
               onPress={handleConfirmRedemption}

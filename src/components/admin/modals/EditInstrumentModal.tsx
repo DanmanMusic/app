@@ -197,7 +197,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
             editable={!mutation.isPending}
           />
           <Text style={commonSharedStyles.label}>Icon:</Text>
-          <View style={appSharedStyles.iconPreviewContainer}>
+          <View style={appSharedStyles.containerIconPreview}>
             {previewSource ? (
               <Image
                 source={previewSource}
@@ -216,7 +216,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
           </View>
 
           {mutation.isPending && (
-            <View style={appSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.containerRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={appSharedStyles.loadingText}>Saving Changes...</Text>
             </View>
@@ -228,7 +228,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
             </Text>
           )}
 
-          <View style={appSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.itemFull}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}

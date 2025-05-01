@@ -103,7 +103,7 @@ export const ParentView = () => {
   if (isErrorParent || !parentUser) {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.container}>
+        <View style={appSharedStyles.containerBase}>
           <Text style={commonSharedStyles.errorText}>
             Error loading parent data: {errorParent?.message || 'Parent not found.'}
           </Text>
@@ -115,7 +115,7 @@ export const ParentView = () => {
   if (parentUser.role !== 'parent') {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.container}>
+        <View style={appSharedStyles.containerBase}>
           <Text style={commonSharedStyles.errorText}>Error: Logged in user is not a parent.</Text>
         </View>
       </SafeAreaView>
@@ -151,7 +151,7 @@ export const ParentView = () => {
 
       return (
         <SafeAreaView style={appSharedStyles.safeArea}>
-          <View style={appSharedStyles.container}>
+          <View style={appSharedStyles.containerBase}>
             <Text style={commonSharedStyles.errorText}>Error: {specificErrorMsg}</Text>
             <Button title="Back to Students" onPress={() => setViewingStudentId(null)} />
           </View>
@@ -180,7 +180,7 @@ export const ParentView = () => {
 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      <View style={appSharedStyles.container}>
+      <View style={appSharedStyles.containerBase}>
         <View style={appSharedStyles.parentHeader}>
           <Text style={appSharedStyles.parentHeaderText} numberOfLines={1} ellipsizeMode="tail">
             Parent: {getUserDisplayName(parentUser)}

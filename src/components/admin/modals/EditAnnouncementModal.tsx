@@ -127,7 +127,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
           <Text style={appSharedStyles.subTitle}>ID: {announcementToEdit.id}</Text>
 
           <Text style={commonSharedStyles.label}>Type:</Text>
-          <View style={appSharedStyles.pickerContainer}>
+          <View>
             <Picker
               selectedValue={type}
               onValueChange={itemValue => setType(itemValue as AnnouncementType)}
@@ -169,7 +169,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
           />
 
           {mutation.isPending && (
-            <View style={appSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.containerRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={appSharedStyles.loadingText}>Saving Changes...</Text>
             </View>
@@ -182,7 +182,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
             </Text>
           )}
 
-          <View style={appSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.itemFull}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}

@@ -172,7 +172,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
 
             {/* Filters */}
             <View style={appSharedStyles.filterSection}>
-              <View style={appSharedStyles.filterRow}>
+              <View style={appSharedStyles.containerRowCenter}>
                 <Text style={appSharedStyles.filterLabel}>Task Status:</Text>
                 <Button
                   title="All"
@@ -195,7 +195,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                   color={assignmentFilter === 'completed' ? colors.success : colors.secondary}
                 />
               </View>
-              <View style={appSharedStyles.filterRow}>
+              <View style={appSharedStyles.containerRowCenter}>
                 <Text style={appSharedStyles.filterLabel}>Student Status:</Text>
                 <Button
                   title="Active"
@@ -247,7 +247,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
             {/* Task List */}
             {!isDataLoading && !isErrorTasks && (
               <FlatList
-                style={appSharedStyles.modalListContainer}
+                style={appSharedStyles.listItemFull}
                 data={tasks}
                 keyExtractor={item => item.id}
                 renderItem={({ item }) => {

@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Modal,
-  View,
-  Text,
-  Button,
-  TextInput,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 
 import { createUser, fetchTeachers } from '../../../api/users';
 import { fetchInstruments } from '../../../api/instruments';
@@ -202,7 +194,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
               editable={!mutation.isPending}
             />
             <Text style={commonSharedStyles.label}>Role:</Text>
-            <View style={appSharedStyles.roleButtonContainer}>
+            <View style={appSharedStyles.containerRowCenter}>
               {CREATABLE_ROLES.map(r => (
                 <Button
                   key={r}
@@ -225,7 +217,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
                   </Text>
                 )}
                 {!isLoadingInstruments && !isErrorInstruments && (
-                  <View style={appSharedStyles.selectionContainer}>
+                  <View style={appSharedStyles.containerRowCentered}>
                     {instruments.length > 0 ? (
                       instruments.map(inst => (
                         <Button
@@ -254,7 +246,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
                   </Text>
                 )}
                 {!isLoadingTeachers && !isErrorTeachers && (
-                  <View style={appSharedStyles.selectionContainer}>
+                  <View style={appSharedStyles.containerRowCentered}>
                     {activeTeachers.length > 0 ? (
                       activeTeachers.map(teacher => (
                         <Button
@@ -281,7 +273,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
           </ScrollView>
 
           {mutation.isPending && (
-            <View style={appSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.containerRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={appSharedStyles.loadingText}>Creating User...</Text>
             </View>
@@ -293,7 +285,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
             </Text>
           )}
 
-          <View style={appSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.itemFull}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create User'}
               onPress={handleCreatePress}

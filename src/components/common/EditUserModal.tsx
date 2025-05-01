@@ -1,15 +1,7 @@
 // src/components/common/EditUserModal.tsx
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Modal,
-  View,
-  Text,
-  Button,
-  TextInput,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 // API Imports
@@ -353,7 +345,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     </Text>
                   )}
                   {!isLoadingInstruments && !isErrorInstruments && (
-                    <View style={appSharedStyles.selectionContainer}>
+                    <View style={appSharedStyles.containerRowCentered}>
                       {instruments.length > 0 ? (
                         instruments.map(inst => {
                           const isSelected = selectedInstrumentIds.includes(inst.id);
@@ -378,7 +370,9 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                 <View style={appSharedStyles.roleSpecificSection}>
                   <Text style={appSharedStyles.roleSectionTitle}>Linked Teachers</Text>
                   {!isCallerAdmin && (
-                    <Text style={appSharedStyles.infoText}>Only Admins can modify teacher links.</Text>
+                    <Text style={appSharedStyles.infoText}>
+                      Only Admins can modify teacher links.
+                    </Text>
                   )}
                   {isLoadingTeachers && <ActivityIndicator color={colors.primary} />}
                   {isErrorTeachers && (
@@ -387,7 +381,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     </Text>
                   )}
                   {!isLoadingTeachers && !isErrorTeachers && (
-                    <View style={appSharedStyles.selectionContainer}>
+                    <View style={appSharedStyles.containerRowCentered}>
                       {activeTeachers.length > 0 ? (
                         activeTeachers.map(teacher => {
                           const isSelected = selectedTeacherIds.includes(teacher.id);
@@ -414,7 +408,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
           {/* Mutation Status */}
           {mutation.isPending && (
-            <View style={appSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.containerRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={appSharedStyles.loadingText}>Saving Changes...</Text>
             </View>
@@ -427,7 +421,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
           )}
 
           {/* Action Buttons */}
-          <View style={appSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.itemFull}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSaveChanges}

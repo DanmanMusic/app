@@ -180,7 +180,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   if (teacherError || !teacherUser) {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.container}>
+        <View style={appSharedStyles.containerBase}>
           <Text style={commonSharedStyles.errorText}>
             Error loading teacher data: {teacherErrorMsg?.message || 'Not found.'}
           </Text>
@@ -191,7 +191,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   if (teacherUser.role !== 'teacher') {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.container}>
+        <View style={appSharedStyles.containerBase}>
           <Text style={commonSharedStyles.errorText}>Error: Logged in user is not a teacher.</Text>
         </View>
       </SafeAreaView>
@@ -200,7 +200,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   if (teacherUser.status === 'inactive') {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.container}>
+        <View style={appSharedStyles.containerBase}>
           <Text style={appSharedStyles.header}>Account Inactive</Text>
           <Text style={appSharedStyles.textCenter}>
             Your teacher account is currently inactive.
@@ -224,7 +224,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
       }
       if (studentDetailError || !studentDetailUser) {
         return (
-          <View style={appSharedStyles.container}>
+          <View style={appSharedStyles.containerBase}>
             <Text style={commonSharedStyles.errorText}>
               Error loading student details:{' '}
               {studentDetailErrorMsg?.message || 'Student not found or error occurred.'}
@@ -255,7 +255,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
 
     // Otherwise, render the main teacher dashboard/sections
     return (
-      <ScrollView style={appSharedStyles.container}>
+      <ScrollView style={appSharedStyles.containerBase}>
         {/* Navigation Tabs */}
         <View style={appSharedStyles.teacherNav}>
           <Button
@@ -318,8 +318,8 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
       {/* Header */}
-      <View style={appSharedStyles.headerContainer}>
-        <View style={appSharedStyles.headerSideContainer}>
+      <View style={appSharedStyles.containerRowHeader}>
+        <View style={[appSharedStyles.containerRowCentered, appSharedStyles.containerHeaderSide]}>
           {showBackButton ? (
             <Button title="← Back" onPress={handleBackFromProfile} />
           ) : (
@@ -329,8 +329,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
         <Text style={appSharedStyles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
           {getHeaderTitle()}
         </Text>
-        <View style={appSharedStyles.headerSideContainer} />
-        {/* Placeholder for right side */}
       </View>
 
       {/* Main Content Area */}

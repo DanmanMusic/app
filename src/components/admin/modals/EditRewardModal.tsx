@@ -227,7 +227,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
               editable={!mutation.isPending}
             />
             <Text style={commonSharedStyles.label}>Image:</Text>
-            <View style={appSharedStyles.iconPreviewContainer}>
+            <View style={appSharedStyles.containerIconPreview}>
               {previewSource ? (
                 <Image
                   source={previewSource}
@@ -268,7 +268,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
             />
           </ScrollView>
           {mutation.isPending && (
-            <View style={appSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.containerRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={appSharedStyles.loadingText}>Saving Changes...</Text>
             </View>
@@ -279,7 +279,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
               {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
             </Text>
           )}
-          <View style={appSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.itemFull}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}

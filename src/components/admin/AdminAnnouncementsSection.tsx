@@ -125,7 +125,7 @@ export const AdminAnnouncementsSection = () => {
           renderItem={({ item }) => (
             <View style={commonSharedStyles.baseItem}>
               <AnnouncementListItem item={item} />
-              <View style={appSharedStyles.itemActions}>
+              <View>
                 <Button
                   title="Edit"
                   onPress={() => handleEditPress(item)}

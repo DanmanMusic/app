@@ -16,13 +16,13 @@ export const AdminRewardItem = ({
   disabled?: boolean;
 }) => (
   <View style={commonSharedStyles.baseItem}>
-    <View style={appSharedStyles.itemContentRow}>
+    <View style={appSharedStyles.containerRowCenter}>
       <Image
         source={{ uri: item.imageUrl }}
         style={appSharedStyles.itemImageMedium}
         resizeMode="contain"
       />
-      <View style={appSharedStyles.itemDetailsContainer}>
+      <View style={appSharedStyles.itemFlex}>
         <Text style={appSharedStyles.itemTitle}>{item.name}</Text>
         <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
           {item.cost} Tickets
@@ -30,7 +30,7 @@ export const AdminRewardItem = ({
         {item.description && <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>}
       </View>
     </View>
-    <View style={appSharedStyles.itemActions}>
+    <View>
       <Button title="Edit" onPress={() => onEdit(item)} disabled={disabled} />
       <Button
         title="Delete"

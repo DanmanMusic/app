@@ -163,7 +163,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
               editable={!mutation.isPending}
             />
             <Text style={commonSharedStyles.label}>Image (Optional):</Text>
-            <View style={appSharedStyles.iconPreviewContainer}>
+            <View style={appSharedStyles.containerIconPreview}>
               {imageUri ? (
                 <Image
                   source={{ uri: imageUri }}
@@ -196,7 +196,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
             />
           </ScrollView>
           {mutation.isPending && (
-            <View style={appSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.containerRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={appSharedStyles.loadingText}>Creating Reward...</Text>
             </View>
@@ -207,7 +207,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
               {mutation.error instanceof Error ? mutation.error.message : 'Failed to create reward'}
             </Text>
           )}
-          <View style={appSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.itemFull}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Reward'}
               onPress={handleCreate}

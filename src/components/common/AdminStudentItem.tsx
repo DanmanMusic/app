@@ -18,24 +18,36 @@ export const AdminStudentItem = ({
 }) => {
   return (
     <View
-      style={[commonSharedStyles.baseItem, !student.isActive ? appSharedStyles.inactiveItem : {}]}
+      style={[
+        commonSharedStyles.baseItem,
+        commonSharedStyles.baseRow,
+        !student.isActive ? appSharedStyles.inactiveItem : {},
+      ]}
     >
-      <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
-      <Text style={appSharedStyles.itemDetailText}>
-        Instrument(s): {getInstrumentNames(student.instrumentIds, instruments)}
-      </Text>
-      <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
-        Balance: {student.balance}
-      </Text>
-      <Text
+      <View>
+        <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
+        <Text style={appSharedStyles.itemDetailText}>
+          Instrument(s): {getInstrumentNames(student.instrumentIds, instruments)}
+        </Text>
+        <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
+          Balance: {student.balance}
+        </Text>
+        <Text
+          style={[
+            appSharedStyles.itemDetailText,
+            { fontWeight: 'bold', color: student.isActive ? colors.success : colors.secondary },
+          ]}
+        >
+          Status: {student.isActive ? 'Active' : 'Inactive'}
+        </Text>
+      </View>
+      <View
         style={[
-          appSharedStyles.itemDetailText,
-          { fontWeight: 'bold', color: student.isActive ? colors.success : colors.secondary },
+          commonSharedStyles.baseRow,
+          commonSharedStyles.baseGap,
+          commonSharedStyles.baseSelfAlign,
         ]}
       >
-        Status: {student.isActive ? 'Active' : 'Inactive'}
-      </Text>
-      <View style={appSharedStyles.itemActions}>
         <Button
           title="View Details"
           onPress={() => {

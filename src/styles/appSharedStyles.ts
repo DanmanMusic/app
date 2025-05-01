@@ -3,28 +3,134 @@ import { Platform, StyleSheet } from 'react-native';
 import { colors } from './colors';
 
 export const appSharedStyles = StyleSheet.create({
-  actionButtonsContainer: {
+  containerBase: {
+    backgroundColor: 'transparent',
+    flex: 1,
+    padding: 10,
+  },
+  containerFooter: {
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSecondary,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  containerRowStart: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
     justifyContent: 'flex-start',
-    marginBottom: 15,
-    marginTop: 15,
   },
-  adminNav: {
+  containerRowCenter: {
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
     justifyContent: 'center',
-    marginBottom: 20,
   },
-  adminStudentActions: {
+  containerHighlight: {
+    backgroundColor: colors.backgroundPrimary,
+    borderColor: colors.borderHighlight,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  containerRowCentered: {
+    alignItems: 'center',
     flexDirection: 'row',
-    gap: 5,
-    justifyContent: 'space-around',
-    marginBottom: 20,
-    marginTop: 15,
+    justifyContent: 'center',
   },
+  containerHeader: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  containerRowHeader: {
+    alignItems: 'center',
+    backgroundColor: colors.backgroundPrimary,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  containerPagination: {
+    alignItems: 'center',
+    borderTopColor: colors.borderSecondary,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  containerRowWrapped: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  containerHeaderSide: {
+    minWidth: 60,
+  },
+  containerItemBordered: {
+    backgroundColor: colors.backgroundGrey,
+    borderColor: colors.borderSecondary,
+    borderRadius: 6,
+    borderWidth: 1,
+    marginBottom: 5,
+    padding: 10,
+  },
+  containerIconPreview: {
+    alignItems: 'center',
+    borderBottomColor: colors.borderSecondary,
+    borderBottomWidth: 1,
+    marginBottom: 15,
+    paddingBottom: 15,
+    width: '100%',
+    gap: 10,
+  },
+  containerListContent: {
+    paddingBottom: 5,
+  },
+  containerRowFull: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  containerPinDisplay: {
+    alignItems: 'center',
+    backgroundColor: colors.backgroundHighlight,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.borderPrimary,
+  },
+  containerToggle: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+
+  itemBordered: {
+    flexGrow: 0,
+    borderColor: colors.borderPrimary,
+    borderWidth: 1,
+    borderRadius: 5,
+  },
+  itemFlexCenter: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  itemFlex: {
+    flex: 1,
+  },
+  itemFull: {
+    width: '100%',
+  },
+  itemOuter: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+
   announcementDate: {
     color: colors.textVeryLight,
     fontSize: 12,
@@ -53,14 +159,6 @@ export const appSharedStyles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 15,
   },
-  buttonContainer: {
-    borderTopColor: colors.borderSecondary,
-    borderTopWidth: 1,
-    gap: 10,
-    marginTop: 15,
-    paddingTop: 15,
-    width: '100%',
-  },
   cannotAffordText: {
     color: colors.textLight,
     fontSize: 12,
@@ -84,11 +182,6 @@ export const appSharedStyles = StyleSheet.create({
     marginVertical: 15,
     textAlign: 'center',
   },
-  container: {
-    backgroundColor: 'transparent',
-    flex: 1,
-    padding: 15,
-  },
   contentArea: {
     flex: 1,
   },
@@ -108,32 +201,11 @@ export const appSharedStyles = StyleSheet.create({
     marginTop: 5,
     textAlign: 'center',
   },
-  filterAndSearchContainer: {
-    marginBottom: 10,
-    paddingVertical: 5,
-  },
-  filterContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
   filterLabel: {
     color: colors.textSecondary,
     fontSize: 14,
     fontWeight: 'bold',
     marginRight: 10,
-  },
-  filterRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'center',
-    paddingHorizontal: 5,
-    paddingVertical: 8,
   },
   filterSection: {
     backgroundColor: colors.backgroundPrimary,
@@ -152,14 +224,6 @@ export const appSharedStyles = StyleSheet.create({
   footerButton: {
     marginTop: 10,
     width: '100%',
-  },
-  goalContainer: {
-    backgroundColor: colors.backgroundPrimary,
-    borderColor: colors.borderHighlight,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginBottom: 20,
-    padding: 15,
   },
   goalImage: {
     borderColor: colors.borderSecondary,
@@ -209,23 +273,6 @@ export const appSharedStyles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
   },
-  headerContainer: {
-    alignItems: 'center',
-    backgroundColor: colors.backgroundPrimary,
-    borderBottomColor: colors.borderPrimary,
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingBottom: 5,
-    paddingHorizontal: 15,
-    paddingTop: 10,
-  },
-  headerSideContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    minWidth: 60,
-  },
   headerTitle: {
     color: colors.textPrimary,
     flex: 1,
@@ -239,14 +286,6 @@ export const appSharedStyles = StyleSheet.create({
   },
   historyItemAmount: {
     fontWeight: 'bold',
-  },
-  historyItemContainer: {
-    backgroundColor: colors.backgroundGrey,
-    borderColor: colors.borderSecondary,
-    borderRadius: 6,
-    borderWidth: 1,
-    marginBottom: 5,
-    padding: 10,
   },
   historyItemDetails: {
     color: colors.textSecondary,
@@ -272,19 +311,16 @@ export const appSharedStyles = StyleSheet.create({
     borderColor: colors.borderSecondary,
     backgroundColor: colors.backgroundGrey,
   },
-  iconPreviewContainer: {
-    alignItems: 'center',
-    borderBottomColor: colors.borderSecondary,
-    borderBottomWidth: 1,
-    marginBottom: 15,
-    paddingBottom: 15,
-    width: '100%',
-    gap: 10,
-  },
   inactiveItem: {
     borderColor: colors.secondary,
     opacity: 0.7,
   },
+  itemContentRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+
   inactiveItemStyle: {
     borderColor: colors.secondary,
     opacity: 0.7,
@@ -313,30 +349,12 @@ export const appSharedStyles = StyleSheet.create({
   },
   itemActions: {
     flexDirection: 'row',
-    gap: 5,
     justifyContent: 'space-around',
-    marginTop: 10,
-  },
-  itemContainer: {
-    backgroundColor: colors.backgroundPrimary,
-    borderColor: colors.borderSecondary,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginBottom: 10,
-    padding: 12,
-  },
-  itemContentRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: 10,
   },
   itemDetailText: {
     color: colors.textSecondary,
     fontSize: 13,
     marginBottom: 2,
-  },
-  itemDetailsContainer: {
-    flex: 1,
   },
   itemImageMedium: {
     borderColor: colors.borderPrimary,
@@ -367,9 +385,6 @@ export const appSharedStyles = StyleSheet.create({
   listArea: {
     marginTop: 10,
   },
-  listContentContainer: {
-    paddingBottom: 5,
-  },
   listItem: {
     borderBottomColor: colors.borderSecondary,
     borderBottomWidth: 1,
@@ -378,13 +393,6 @@ export const appSharedStyles = StyleSheet.create({
   listItemText: {
     color: colors.textPrimary,
     fontSize: 15,
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    height: 20,
-    justifyContent: 'center',
-    marginVertical: 10,
   },
   loadingText: {
     color: colors.textSecondary,
@@ -408,7 +416,7 @@ export const appSharedStyles = StyleSheet.create({
     padding: 15,
     width: '100%',
   },
-  modalListContainer: {
+  listItemFull: {
     flexGrow: 0,
     marginBottom: 15,
     maxHeight: '60%',
@@ -448,14 +456,6 @@ export const appSharedStyles = StyleSheet.create({
     textAlign: 'center',
     width: '100%',
   },
-  modalToggleContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginVertical: 15,
-    paddingHorizontal: 10,
-    width: '100%',
-  },
   modalView: {
     alignItems: 'stretch',
     backgroundColor: colors.backgroundPrimary,
@@ -471,29 +471,11 @@ export const appSharedStyles = StyleSheet.create({
     shadowRadius: 4,
     width: '90%',
   },
-  modeSwitchContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 15,
-    paddingHorizontal: 5,
-    width: '100%',
-  },
   pageInfo: {
     color: colors.textSecondary,
     fontSize: 14,
     fontWeight: '600',
     marginHorizontal: 15,
-  },
-  paginationContainer: {
-    alignItems: 'center',
-    borderTopColor: colors.borderSecondary,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 15,
   },
   parentHeader: {
     alignItems: 'center',
@@ -540,25 +522,9 @@ export const appSharedStyles = StyleSheet.create({
     height: Platform.OS === 'android' ? 50 : undefined,
     color: colors.textPrimary,
   },
-  pickerContainer: {
-    height: 50,
-    borderColor: colors.borderPrimary,
-    borderWidth: 1,
-    borderRadius: 5,
-    marginBottom: 15,
-    justifyContent: 'center',
-    backgroundColor: colors.backgroundPrimary,
-  },
   pickerItem: {
     height: 120,
     fontSize: 16,
-  },
-  pointsInputContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
-    justifyContent: 'center',
-    marginBottom: 10,
   },
   previewText: {
     color: colors.textLight,
@@ -662,13 +628,6 @@ export const appSharedStyles = StyleSheet.create({
     marginTop: 20,
     paddingBottom: 5,
   },
-  selectionContainer: {
-    flexDirection: 'row', // From commonSharedStyles
-    flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
   separator: {
     backgroundColor: colors.borderSecondary,
     height: 1,
@@ -709,16 +668,6 @@ export const appSharedStyles = StyleSheet.create({
     fontSize: 18,
     marginBottom: 20, // From commonSharedStyles
     textAlign: 'center',
-  },
-  tabContainer: {
-    borderBottomColor: colors.borderSecondary,
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    justifyContent: 'center',
-    marginBottom: 5,
-    paddingBottom: 10,
   },
   tabContentPlaceholder: {
     alignItems: 'center',
@@ -777,7 +726,8 @@ export const appSharedStyles = StyleSheet.create({
   textCenter: {
     textAlign: 'center',
   },
-  textDanger: { // From commonSharedStyles
+  textDanger: {
+    // From commonSharedStyles
     color: colors.danger,
   },
   textGold: {
@@ -833,40 +783,10 @@ export const appSharedStyles = StyleSheet.create({
     gap: 10,
     justifyContent: 'flex-start',
   },
-  balanceText: {
-    fontWeight: 'bold',
-    color: colors.gold,
-    marginTop: 5,
-  },
-  listLoader: {
-    marginVertical: 20,
-  },
-  roleButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  listContainer: {
-    flexGrow: 0, // Prevent FlatList from taking all height
-    maxHeight: 250, // Limit height for scrolling
-    borderColor: colors.borderPrimary,
-    borderWidth: 1,
-    borderRadius: 5,
-    marginBottom: 15,
-  },
-  studentItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   selectedStudentItem: {
     backgroundColor: colors.backgroundHighlight,
   },
-  studentName: {
+  textPrimaryLarge: {
     fontSize: 16,
     color: colors.textPrimary,
   },
@@ -876,7 +796,7 @@ export const appSharedStyles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: 10,
     fontSize: 15,
-  },  
+  },
 
   rewardItemBase: {
     flexDirection: 'row',
@@ -912,15 +832,6 @@ export const appSharedStyles = StyleSheet.create({
     marginTop: 2,
   },
 
-  pinDisplayContainer: {
-    alignItems: 'center',
-    marginVertical: 20,
-    padding: 15,
-    backgroundColor: colors.backgroundHighlight,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.borderPrimary,
-  },
   pinLabel: {
     fontSize: 16,
     color: colors.textSecondary,
@@ -946,15 +857,6 @@ export const appSharedStyles = StyleSheet.create({
     color: colors.textLight,
     textAlign: 'center',
   },
-
-  toggleContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
   toggleButton: {
     flex: 1,
     paddingVertical: 10,
@@ -975,18 +877,6 @@ export const appSharedStyles = StyleSheet.create({
   toggleButtonTextActive: {
     color: colors.textWhite,
   },
-  formContainer: {
-    width: '100%',
-    alignItems: 'stretch',
-  },
-
-  sharedHeaderContentContainer: {
-    flex: 1, // Take remaining space in the parent's header row
-    flexDirection: 'row',
-    justifyContent: 'space-between', // Push name left, buttons right
-    alignItems: 'center',
-    marginLeft: 5, // Add some margin if a back button might appear to its left
-  },
   userNameText: {
     fontSize: 18, // Adjust size
     fontWeight: 'bold',
@@ -994,55 +884,24 @@ export const appSharedStyles = StyleSheet.create({
     flexShrink: 1, // Allow text to shrink if needed
     marginRight: 10, // Space before buttons
   },
-  buttonsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10, // Space between buttons if both shown
-  },
-
   statusText: {
     fontWeight: 'bold',
     // Color is set inline based on status
   },
 
-  outerContainer: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
   headerSection: {
     paddingHorizontal: 15,
     paddingTop: 10,
     paddingBottom: 5,
   },
-  welcomeContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  welcomeText: {
+  textWelcome: {
     textAlign: 'center',
     fontSize: 16,
     color: colors.textSecondary,
     marginBottom: 10,
   },
-  loadingIndicator: {
-    marginTop: 30,
-  },
-  errorMargin: {
-    marginTop: 20,
-  },
-  footerContainer: {
-    padding: 15,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderSecondary,
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-    gap: 10,
-  },
   goalDetails: {
     flex: 1,
     marginLeft: 10,
   },
-
 });

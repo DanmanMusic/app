@@ -53,14 +53,14 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress }) => {
 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      <View style={appSharedStyles.outerContainer}>
+      <View style={appSharedStyles.itemOuter}>
         <View style={appSharedStyles.headerSection}>
           <Text style={[appSharedStyles.header, appSharedStyles.publicHeader]}>
             Danmans Music School
           </Text>
           <Text style={appSharedStyles.subheader}>Virtual Ticket Rewards Program</Text>
         </View>
-        <View style={appSharedStyles.tabContainer}>
+        <View style={appSharedStyles.containerRowCentered}>
           <Button
             title="Welcome"
             onPress={() => setActiveTab('welcome')}
@@ -79,31 +79,19 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress }) => {
         </View>
         <View style={appSharedStyles.contentArea}>
           {activeTab === 'welcome' && (
-            <View style={appSharedStyles.welcomeContainer}>
-              <Text style={appSharedStyles.welcomeText}>
+            <View style={appSharedStyles.itemFlexCenter}>
+              <Text style={appSharedStyles.textWelcome}>
                 Welcome! Check out the latest announcements and the cool rewards you can earn.
               </Text>
-              <Text style={appSharedStyles.welcomeText}>Login required to track progress.</Text>
+              <Text style={appSharedStyles.textWelcome}>Login required to track progress.</Text>
             </View>
           )}
 
           {activeTab === 'rewards' && (
             <>
-              {isLoadingRewards && (
-                <ActivityIndicator
-                  style={appSharedStyles.loadingIndicator}
-                  size="large"
-                  color={colors.primary}
-                />
-              )}
+              {isLoadingRewards && <ActivityIndicator size="large" color={colors.primary} />}
               {isErrorRewards && (
-                <Text
-                  style={[
-                    commonSharedStyles.errorText,
-                    appSharedStyles.textCenter,
-                    appSharedStyles.errorMargin,
-                  ]}
-                >
+                <Text style={[commonSharedStyles.errorText, appSharedStyles.textCenter]}>
                   Error loading rewards catalog: {getErrorMessage(errorRewards)}
                 </Text>
               )}
@@ -118,7 +106,7 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress }) => {
                       No rewards currently available.
                     </Text>
                   )}
-                  contentContainerStyle={appSharedStyles.listContentContainer}
+                  contentContainerStyle={appSharedStyles.containerListContent}
                 />
               )}
             </>
@@ -126,21 +114,9 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress }) => {
 
           {activeTab === 'announcements' && (
             <>
-              {isLoadingAnnouncements && (
-                <ActivityIndicator
-                  style={appSharedStyles.loadingIndicator}
-                  size="large"
-                  color={colors.primary}
-                />
-              )}
+              {isLoadingAnnouncements && <ActivityIndicator size="large" color={colors.primary} />}
               {isErrorAnnouncements && (
-                <Text
-                  style={[
-                    commonSharedStyles.errorText,
-                    appSharedStyles.textCenter,
-                    appSharedStyles.errorMargin,
-                  ]}
-                >
+                <Text style={[commonSharedStyles.errorText, appSharedStyles.textCenter]}>
                   Error loading announcements: {getErrorMessage(errorAnnouncements)}
                 </Text>
               )}
@@ -153,13 +129,13 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress }) => {
                   ListEmptyComponent={() => (
                     <Text style={appSharedStyles.emptyListText}>No announcements found.</Text>
                   )}
-                  contentContainerStyle={appSharedStyles.listContentContainer}
+                  contentContainerStyle={appSharedStyles.containerListContent}
                 />
               )}
             </>
           )}
         </View>
-        <View style={appSharedStyles.footerContainer}>
+        <View style={appSharedStyles.containerFooter}>
           <Text style={appSharedStyles.footer}>Ready to track progress?</Text>
           <Button title="Login / Enter PIN" onPress={onLoginPress} color={colors.primary} />
         </View>

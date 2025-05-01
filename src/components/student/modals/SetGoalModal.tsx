@@ -55,7 +55,7 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
           )}
           {!isLoading && !isError && (
             <FlatList
-              style={appSharedStyles.modalListContainer}
+              style={appSharedStyles.listItemFull}
               data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
@@ -75,7 +75,7 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
               ListFooterComponent={<View style={{ height: 10 }} />}
             />
           )}
-          <View style={appSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.itemFull}>
             {currentGoalId && (
               <Button title="Clear Current Goal" onPress={handleClearGoal} color={colors.warning} />
             )}

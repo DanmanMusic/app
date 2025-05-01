@@ -132,7 +132,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             editable={!mutation.isPending}
           />
           <Text style={commonSharedStyles.label}>Icon (Optional):</Text>
-          <View style={appSharedStyles.iconPreviewContainer}>
+          <View style={appSharedStyles.containerIconPreview}>
             {imageUri ? (
               <Image
                 source={{ uri: imageUri }}
@@ -151,7 +151,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
           </View>
 
           {mutation.isPending && (
-            <View style={appSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.containerRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={appSharedStyles.loadingText}>Creating Instrument...</Text>
             </View>
@@ -164,7 +164,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
                 : 'Failed to create instrument'}
             </Text>
           )}
-          <View style={appSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.itemFull}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Instrument'}
               onPress={handleCreate}

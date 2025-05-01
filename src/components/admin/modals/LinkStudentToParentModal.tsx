@@ -155,7 +155,7 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
           />
 
           {/* Student List */}
-          <View style={appSharedStyles.listContainer}>
+          <View style={appSharedStyles.itemBordered}>
             {isLoadingStudents && (
               <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
             )}
@@ -173,12 +173,13 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
                     onPress={() => handleSelectStudent(item)}
                     disabled={linkMutation.isPending}
                     style={[
-                      appSharedStyles.studentItem,
                       item.id === selectedStudentId ? appSharedStyles.selectedStudentItem : {},
                     ]}
                   >
-                    <Text style={appSharedStyles.studentName}>{item.name}</Text>
-                    {item.id === selectedStudentId && <Text style={appSharedStyles.checkmark}>✓</Text>}
+                    <Text style={appSharedStyles.textPrimaryLarge}>{item.name}</Text>
+                    {item.id === selectedStudentId && (
+                      <Text style={appSharedStyles.checkmark}>✓</Text>
+                    )}
                   </TouchableOpacity>
                 )}
                 ItemSeparatorComponent={() => <View style={appSharedStyles.separator} />}
@@ -195,12 +196,14 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
 
           {/* Selected Student Confirmation Display */}
           {selectedStudentName && (
-            <Text style={appSharedStyles.selectionConfirmation}>Selected: {selectedStudentName}</Text>
+            <Text style={appSharedStyles.selectionConfirmation}>
+              Selected: {selectedStudentName}
+            </Text>
           )}
 
           {/* Mutation Status */}
           {linkMutation.isPending && (
-            <View style={appSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.containerRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={appSharedStyles.loadingText}>Linking Student...</Text>
             </View>
@@ -215,7 +218,7 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
           )}
 
           {/* Action Buttons */}
-          <View style={appSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.itemFull}>
             <Button
               title={linkMutation.isPending ? 'Linking...' : 'Link Selected Student'}
               onPress={handleConfirmLink}

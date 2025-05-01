@@ -1,14 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import {
-  View,
-  Text,
-  ScrollView,
-  FlatList,
-  Button,
-  Image,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, ScrollView, FlatList, Button, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { fetchAnnouncements } from '../api/announcements';
@@ -206,7 +198,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   if (userError || !user) {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.container}>
+        <View style={appSharedStyles.containerBase}>
           <Text style={[commonSharedStyles.errorText, appSharedStyles.textCenter]}>
             Error loading student data: {userErrorMsg?.message || 'Student not found.'}
           </Text>
@@ -217,7 +209,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   if (user.role !== 'student') {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.container}>
+        <View style={appSharedStyles.containerBase}>
           <Text style={commonSharedStyles.errorText}>Error: User is not a student.</Text>
         </View>
       </SafeAreaView>
@@ -226,7 +218,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   if (user.status === 'inactive') {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.container}>
+        <View style={appSharedStyles.containerBase}>
           <Text style={appSharedStyles.header}>Account Inactive</Text>
           <Text style={appSharedStyles.textCenter}>
             This student account is currently inactive.
@@ -240,7 +232,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      <View style={appSharedStyles.container}>
+      <View style={appSharedStyles.containerBase}>
         {!studentIdToView && (
           <Text style={appSharedStyles.header}>Welcome, {studentDisplayName}!</Text>
         )}
@@ -263,7 +255,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           </Text>
         )}
 
-        <View style={appSharedStyles.tabContainer}>
+        <View style={appSharedStyles.containerRowCentered}>
           <Button
             title="Dashboard"
             onPress={() => setActiveTab('dashboard')}
@@ -301,8 +293,8 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
               {!rewardsLoading &&
                 !rewardsError &&
                 (goalReward ? (
-                  <View style={appSharedStyles.goalContainer}>
-                    <View style={appSharedStyles.itemContentRow}>
+                  <View style={appSharedStyles.containerHighlight}>
+                    <View style={appSharedStyles.containerRowCenter}>
                       <Image
                         source={{ uri: goalReward.imageUrl }}
                         style={appSharedStyles.goalImage}
@@ -335,7 +327,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                     <Button title="Change Goal" onPress={handleSetGoalPress} />
                   </View>
                 ) : (
-                  <View style={appSharedStyles.goalContainer}>
+                  <View style={appSharedStyles.containerHighlight}>
                     <Text style={appSharedStyles.goalText}>No goal set yet.</Text>
                     <Button title="Set a Goal" onPress={handleSetGoalPress} />
                   </View>
@@ -359,7 +351,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                     <Text style={appSharedStyles.emptyListText}>No history yet.</Text>
                   )}
                   scrollEnabled={false}
-                  contentContainerStyle={appSharedStyles.listContentContainer}
+                  contentContainerStyle={appSharedStyles.containerListContent}
                   ListHeaderComponent={
                     historyFetching ? (
                       <ActivityIndicator size="small" color={colors.secondary} />
@@ -423,7 +415,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                       <View style={{ height: 20 }} />
                     )
                   }
-                  contentContainerStyle={appSharedStyles.listContentContainer}
+                  contentContainerStyle={appSharedStyles.containerListContent}
                 />
               )}
             </>
@@ -453,7 +445,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                   ListEmptyComponent={() => (
                     <Text style={appSharedStyles.emptyListText}>No rewards found.</Text>
                   )}
-                  contentContainerStyle={appSharedStyles.listContentContainer}
+                  contentContainerStyle={appSharedStyles.containerListContent}
                   ListFooterComponent={<View style={{ height: 20 }} />}
                 />
               )}
@@ -478,7 +470,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                   ListEmptyComponent={() => (
                     <Text style={appSharedStyles.emptyListText}>No announcements found.</Text>
                   )}
-                  contentContainerStyle={appSharedStyles.listContentContainer}
+                  contentContainerStyle={appSharedStyles.containerListContent}
                   ListFooterComponent={<View style={{ height: 20 }} />}
                 />
               )}

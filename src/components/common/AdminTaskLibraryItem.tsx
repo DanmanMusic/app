@@ -11,12 +11,18 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
   onDelete,
   disabled,
 }) => (
-  <View style={commonSharedStyles.baseItem}>
-    <Text style={appSharedStyles.itemTitle}>
-      {item.title} ({item.baseTickets} pts)
-    </Text>
-    <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
-    <View style={appSharedStyles.itemActions}>
+  <View
+    style={[commonSharedStyles.baseItem, commonSharedStyles.baseFull, commonSharedStyles.baseRow]}
+  >
+    <View>
+      <Text style={appSharedStyles.itemTitle}>
+        {item.title} ({item.baseTickets} pts)
+      </Text>
+      <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
+    </View>
+    <View
+      style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap, commonSharedStyles.baseSelfAlign]}
+    >
       <Button title="Edit" onPress={() => onEdit(item)} disabled={disabled} />
       <Button
         title="Delete"

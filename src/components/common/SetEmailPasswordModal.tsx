@@ -8,6 +8,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { getUserDisplayName } from '../../utils/helpers';
+import { appSharedStyles } from '../../styles/appSharedStyles';
 
 interface SetEmailPasswordModalProps {
   visible: boolean;
@@ -146,7 +147,7 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
           />
 
           {mutation.isPending && (
-            <View style={appSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.containerRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={appSharedStyles.loadingText}>Saving Credentials...</Text>
             </View>
@@ -157,7 +158,7 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
             </Text>
           )}
 
-          <View style={appSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.itemFull}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Credentials'}
               onPress={handleSave}

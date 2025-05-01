@@ -5,14 +5,14 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const RewardItemPublic = ({ item }: { item: RewardItem }) => (
   <View style={commonSharedStyles.baseItem}>
-    <View style={commonSharedStyles.itemContentRow}>
+    <View style={appSharedStyles.containerRowCenter}>
       <Image
         source={{ uri: item.imageUrl }}
-        style={commonSharedStyles.itemImageMedium}
+        style={appSharedStyles.itemImageMedium}
         resizeMode="contain"
       />
-      <View style={commonSharedStyles.itemDetailsContainer}>
-        <Text style={commonSharedStyles.rewardName}>{item.name}</Text>
+      <View style={appSharedStyles.itemFlex}>
+        <Text style={appSharedStyles.rewardName}>{item.name}</Text>
         <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
           {item.cost} Tickets
         </Text>

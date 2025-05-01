@@ -1,12 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  View,
-  Text,
-  Button,
-  ActivityIndicator,
-  ScrollView,
-  FlatList,
-} from 'react-native';
+import { View, Text, Button, ActivityIndicator, ScrollView, FlatList } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchStudents, fetchUserProfile } from '../../api/users';
@@ -92,7 +85,7 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
 
   if (teacherError || !teacher) {
     return (
-      <View style={appSharedStyles.container}>
+      <View style={appSharedStyles.containerBase}>
         <Text style={commonSharedStyles.errorText}>
           Error loading teacher details: {teacherErrorMsg?.message || 'Teacher not found.'}
         </Text>
@@ -101,26 +94,26 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
   }
   if (teacher.role !== 'teacher') {
     return (
-      <View style={appSharedStyles.container}>
+      <View style={appSharedStyles.containerBase}>
         <Text style={commonSharedStyles.errorText}>Error: User found but is not a teacher.</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={appSharedStyles.container}>
+    <ScrollView style={appSharedStyles.containerBase}>
       <Text style={appSharedStyles.sectionTitle}>Teacher Details</Text>
       <Text style={appSharedStyles.itemDetailText}>Name: {teacherDisplayName}</Text>
       <Text style={appSharedStyles.itemDetailText}>ID: {teacher.id}</Text>
       <Text style={appSharedStyles.itemDetailText}>
         Status:{' '}
-        <Text style={isTeacherActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus}>
+        <Text
+          style={isTeacherActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus}
+        >
           {teacher.status}
         </Text>
       </Text>
-      <View
-        style={[appSharedStyles.adminStudentActions, appSharedStyles.actionButtonsContainer]}
-      >
+      <View style={[appSharedStyles.containerBase]}>
         <Button title="Edit Info" onPress={handleEdit} color={colors.warning} />
         <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
         {onInitiatePinGeneration && (
@@ -150,7 +143,11 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
               <Text style={appSharedStyles.itemTitle}>{item.name}</Text>
               <Text style={appSharedStyles.itemDetailText}>
                 Status:{' '}
-                <Text style={item.isActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus}>
+                <Text
+                  style={
+                    item.isActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus
+                  }
+                >
                   {item.isActive ? 'Active' : 'Inactive'}
                 </Text>
               </Text>

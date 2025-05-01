@@ -1,13 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  View,
-  Text,
-  ScrollView,
-  Button,
-  FlatList,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, ScrollView, Button, FlatList, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
@@ -53,7 +46,7 @@ import {
   UserRole,
   UserStatus,
 } from '../types/dataTypes';
-import { AdminViewProps, UserTab } from '../types/componentProps';
+import { AdminSection, AdminViewProps, UserTab } from '../types/componentProps';
 
 // Style & Helper Imports (keep as is)
 import { getUserDisplayName } from '../utils/helpers';
@@ -61,16 +54,6 @@ import { appSharedStyles } from '../styles/appSharedStyles';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
 // Removed StyledButton import as it's not used here directly anymore
-
-type AdminSection =
-  | 'dashboard'
-  | 'dashboard-pending-verification'
-  | 'users'
-  | 'tasks'
-  | 'rewards'
-  | 'history'
-  | 'announcements'
-  | 'instruments';
 
 export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId: adminUserId } = useAuth(); // Keep useAuth
@@ -297,7 +280,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   if (!adminUser || adminError) {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.container}>
+        <View style={appSharedStyles.containerBase}>
           <Text style={commonSharedStyles.errorText}>
             Error loading Admin user data: {adminErrorMsg?.message || 'Not found.'}
           </Text>
@@ -308,7 +291,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   if (adminUser.role !== 'admin') {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.container}>
+        <View style={appSharedStyles.containerBase}>
           <Text style={commonSharedStyles.errorText}>Error: User is not an Admin.</Text>
         </View>
       </SafeAreaView>
@@ -331,7 +314,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
       if (!detailUserData) {
         // Handled user deleted case in handleDeletionSuccess, this is for fetch errors
         return (
-          <View style={appSharedStyles.container}>
+          <View style={appSharedStyles.containerBase}>
             <Text style={commonSharedStyles.errorText}>
               Failed to load details for user ID: {viewingUserId}. User might have been deleted.
             </Text>
@@ -391,9 +374,36 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     switch (viewingSection) {
       case 'dashboard':
         return (
-          <AdminDashboardSection
-            onViewPendingVerifications={() => setViewingSection('dashboard-pending-verification')}
-          />
+          <View style={[commonSharedStyles.baseColumn, commonSharedStyles.baseGap]}>
+            <AdminDashboardSection
+              onViewPendingVerifications={() => setViewingSection('dashboard-pending-verification')}
+              setActiveTab={setActiveUserTab}
+              setViewingSection={setViewingSection}
+              onInitiateCreateUser={handleInitiateCreateUser}
+            />
+            <View style={[commonSharedStyles.baseColumn, commonSharedStyles.baseGap]}>
+              <Text
+                style={[
+                  commonSharedStyles.baseSubTitle,
+                  commonSharedStyles.bold,
+                  commonSharedStyles.baseMargin,
+                ]}
+              >
+                Entities
+              </Text>
+              <View
+                style={[
+                  commonSharedStyles.baseRow,
+                  commonSharedStyles.baseMargin,
+                  commonSharedStyles.baseGap,
+                ]}
+              >
+                <Button title="Announcements" onPress={() => setViewingSection('announcements')} />
+                <Button title="Instruments" onPress={() => setViewingSection('instruments')} />
+                <Button title="Rewards" onPress={() => setViewingSection('rewards')} />
+              </View>
+            </View>
+          </View>
         );
       case 'dashboard-pending-verification':
         return (
@@ -431,7 +441,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             ) : (
               <Text style={appSharedStyles.emptyListText}>No tasks pending verification.</Text>
             )}
-            <Button title="Back to Dashboard" onPress={() => setViewingSection('dashboard')} />
           </View>
         );
       case 'users':
@@ -478,73 +487,32 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      {/* --- UPDATED Header Section --- */}
-      <View style={appSharedStyles.headerContainer}>
-        {/* Left Side: Back Button (Conditional) */}
-        <View style={appSharedStyles.headerSideContainer}>
-          {showBackButton && <Button title="← Back" onPress={handleBackFromDetailView} />}
-          {/* Add a placeholder if no back button to maintain spacing, adjust width as needed */}
-          {!showBackButton && <View style={{ width: 60 }} />}
-        </View>
-
-        {/* Center/Right: Shared Header fills remaining space */}
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseAlign, commonSharedStyles.spaceBetween, commonSharedStyles.baseMargin]}>
         <SharedHeader onSetLoginPress={() => setIsSetCredentialsModalVisible(true)} />
       </View>
-      {/* --- END UPDATED Header Section --- */}
 
-      {/* --- Keep Main Content & Modals --- */}
       {!viewingUserId ? (
         <ScrollView style={appSharedStyles.contentArea}>
-          {/* Admin Navigation (Keep as is) */}
-          <View style={appSharedStyles.adminNav}>
+          <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseMargin]}>
             <Button
               title="Dashboard"
               onPress={() => setViewingSection('dashboard')}
               disabled={viewingSection === 'dashboard'}
             />
-            <Button
-              title="Users"
-              onPress={() => setViewingSection('users')}
-              disabled={viewingSection === 'users'}
-            />
-            <Button
-              title="Tasks"
-              onPress={() => setViewingSection('tasks')}
-              disabled={viewingSection === 'tasks'}
-            />
-            <Button
-              title="Rewards"
-              onPress={() => setViewingSection('rewards')}
-              disabled={viewingSection === 'rewards'}
-            />
-            <Button
-              title="History"
-              onPress={() => setViewingSection('history')}
-              disabled={viewingSection === 'history'}
-            />
-            <Button
-              title="Announcements"
-              onPress={() => setViewingSection('announcements')}
-              disabled={viewingSection === 'announcements'}
-            />
-            <Button
-              title="Instruments"
-              onPress={() => setViewingSection('instruments')}
-              disabled={viewingSection === 'instruments'}
-            />
           </View>
-
-          {/* Render selected section content */}
           {renderMainContent()}
-          <View style={{ height: 40 }} />
-          {/* Spacer */}
         </ScrollView>
       ) : (
-        // Render detail view directly if viewing a user
-        <View style={appSharedStyles.contentArea}>{renderMainContent()}</View>
+        <>
+          {showBackButton && (
+            <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseMargin]}>
+              <Button title="← Back" onPress={handleBackFromDetailView} />
+            </View>
+          )}
+          <View style={appSharedStyles.contentArea}>{renderMainContent()}</View>
+        </>
       )}
 
-      {/* Keep all Modals at the bottom */}
       <CreateUserModal
         visible={isCreateUserModalVisible}
         onClose={() => setIsCreateUserModalVisible(false)}

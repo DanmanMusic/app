@@ -21,7 +21,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           <Text style={appSharedStyles.modalTitle}>{title}</Text>
           <Text style={appSharedStyles.modalMessage}>{message}</Text>
 
-          <View style={appSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.itemFull}>
             <Button
               title={confirmText}
               onPress={onConfirm}

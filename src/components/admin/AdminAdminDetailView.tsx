@@ -99,7 +99,7 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
 
   if (profileError || !adminProfile) {
     return (
-      <View style={appSharedStyles.container}>
+      <View style={appSharedStyles.containerBase}>
         <Text style={commonSharedStyles.errorText}>
           Error loading admin profile: {profileErrorMsg?.message || 'Admin not found.'}
         </Text>
@@ -109,7 +109,7 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
 
   if (adminProfile.role !== 'admin') {
     return (
-      <View style={appSharedStyles.container}>
+      <View style={appSharedStyles.containerBase}>
         <Text style={commonSharedStyles.errorText}>Error: User found but is not an admin.</Text>
       </View>
     );
@@ -122,7 +122,7 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
   }
 
   return (
-    <ScrollView style={appSharedStyles.container}>
+    <ScrollView style={appSharedStyles.containerBase}>
       <Text style={appSharedStyles.sectionTitle}>Admin Details</Text>
       <Text style={appSharedStyles.itemDetailText}>Name: {adminDisplayName}</Text>
       <Text style={appSharedStyles.itemDetailText}>ID: {adminProfile.id}</Text>
@@ -140,9 +140,7 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
       {!needsPinLogin && !authDetailsError && adminAuthDetails?.email && (
         <Text style={appSharedStyles.infoText}>(Email/Password login appears to be set up)</Text>
       )}
-      <View
-        style={[appSharedStyles.adminStudentActions, appSharedStyles.actionButtonsContainer]}
-      >
+      <View style={[appSharedStyles.containerRowStart]}>
         <Button
           title="Manage Status"
           onPress={handleStatus}
@@ -165,7 +163,9 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
         {onInitiatePinGeneration &&
           !needsPinLogin &&
           !authDetailsError &&
-          adminAuthDetails?.email && <Text style={appSharedStyles.infoText}>(PIN login not needed)</Text>}
+          adminAuthDetails?.email && (
+            <Text style={appSharedStyles.infoText}>(PIN login not needed)</Text>
+          )}
       </View>
       <View style={{ height: 30 }} />
     </ScrollView>

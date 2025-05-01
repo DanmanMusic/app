@@ -184,37 +184,13 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   };
 
   return (
-    <View>
-      <View style={appSharedStyles.tabContainer}>
-        <Button
-          title={`Students (${studentTotalItems})`}
-          onPress={() => setActiveTab('students')}
-          color={activeTab === 'students' ? colors.primary : colors.secondary}
-        />
-        <Button
-          title={`Teachers (${teacherTotalItems})`}
-          onPress={() => setActiveTab('teachers')}
-          color={activeTab === 'teachers' ? colors.primary : colors.secondary}
-        />
-        <Button
-          title={`Parents (${parentTotalItems})`}
-          onPress={() => setActiveTab('parents')}
-          color={activeTab === 'parents' ? colors.primary : colors.secondary}
-        />
-        <Button
-          title={`Admins (${adminTotalItems})`}
-          onPress={() => setActiveTab('admins')}
-          color={activeTab === 'admins' ? colors.primary : colors.secondary}
-        />
-        <Button title="Create User" onPress={onInitiateCreateUser} />
-      </View>
-
+    <View style={commonSharedStyles.baseMargin}>
       {activeTab === 'students' &&
         studentFilter !== undefined &&
         setStudentFilter &&
         setStudentSearchTerm && (
-          <View style={appSharedStyles.filterAndSearchContainer}>
-            <View style={appSharedStyles.filterContainer}>
+          <View>
+            <View style={appSharedStyles.containerRowCenter}>
               <Text style={appSharedStyles.filterLabel}>Show:</Text>
               <Button
                 title="Active"
@@ -233,7 +209,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
               />
             </View>
             <TextInput
-              style={commonSharedStyles.searchInput}
+              style={appSharedStyles.searchInput}
               placeholder="Search Students by Name..."
               placeholderTextColor={colors.textLight}
               value={studentSearchTerm}
