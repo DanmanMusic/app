@@ -374,7 +374,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     switch (viewingSection) {
       case 'dashboard':
         return (
-          <View style={[commonSharedStyles.baseColumn, commonSharedStyles.baseGap]}>
+          <View style={[commonSharedStyles.baseColumn, commonSharedStyles.baseGap, commonSharedStyles.baseSelfAlignStretch]}>
             <AdminDashboardSection
               onViewPendingVerifications={() => setViewingSection('dashboard-pending-verification')}
               setActiveTab={setActiveUserTab}
@@ -487,7 +487,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
-      <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseAlign, commonSharedStyles.spaceBetween, commonSharedStyles.baseMargin]}>
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseAlign, commonSharedStyles.justifySpaceBetween, commonSharedStyles.baseMargin]}>
         <SharedHeader onSetLoginPress={() => setIsSetCredentialsModalVisible(true)} />
       </View>
 

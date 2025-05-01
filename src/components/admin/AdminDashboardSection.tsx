@@ -53,10 +53,12 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
   };
 
   return (
-    <View style={commonSharedStyles.baseMargin}>
-      <Text style={[commonSharedStyles.baseTitle, commonSharedStyles.baseMarginTopBottom]}>
-        Overview
-      </Text>
+    <View style={[commonSharedStyles.baseMargin]}>
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+        <Text style={[commonSharedStyles.baseTitle, commonSharedStyles.baseMarginTopBottom]}>
+          Dashboard Overview
+        </Text>
+      </View>
       {isLoading ? (
         <ActivityIndicator color={colors.primary} style={{ marginVertical: 15 }} />
       ) : (

@@ -13,8 +13,8 @@ export const commonSharedStyles = StyleSheet.create({
     margin: 5,
   },
   baseMarginTopBottom: {
-    marginTop: 5,
-    marginBottom: 5,
+    marginTop: 10,
+    marginBottom: 10,
   },
   basePadding: {
     padding: 5,
@@ -25,23 +25,21 @@ export const commonSharedStyles = StyleSheet.create({
   baseRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    flexWrap: 'wrap'
   },  
   baseColumn: {
     flexDirection: 'column',
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
   },
   baseSelfAlign: {
     alignSelf: 'flex-start',
   },
+  baseSelfAlignStretch: {
+    alignSelf: 'stretch',
+  },
   baseAlign: {
     alignItems: 'center',
   },  
-  baseItem: {
-    padding: 4,
-    borderWidth: 1,
-    borderRadius: 8,
-    backgroundColor: colors.backgroundPrimary,
-  },
   baseTitle: {
     color: colors.textPrimary,
     fontSize: 18,
@@ -50,13 +48,27 @@ export const commonSharedStyles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 16,
   },
-  spaceBetween: {
+
+  justifyCenter: {
+    justifyContent: 'center'
+  },  
+  justifySpaceBetween: {
     justifyContent: 'space-between'
   },
   bold: {
     fontWeight: 'bold',
   },
+  flex1: {
+    flex: 1
+  },
 
+
+  baseItem: {
+    padding: 4,
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: colors.backgroundPrimary,
+  },
   errorContainer: {
     alignItems: 'center',
     backgroundColor: '#ffebee',
