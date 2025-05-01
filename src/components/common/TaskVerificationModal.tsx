@@ -17,8 +17,8 @@ import { TaskVerificationModalProps } from '../../types/componentProps';
 // Style & Helper Imports
 import { colors } from '../../styles/colors';
 import { getUserDisplayName } from '../../utils/helpers';
-import { modalSharedStyles } from '../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { appSharedStyles } from '../../styles/appSharedStyles';
 
 // Possible statuses a Teacher/Admin can select
 const VERIFICATION_OPTIONS: TaskVerificationStatus[] = ['verified', 'partial', 'incomplete'];
@@ -217,19 +217,19 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   if (currentStep === 1) {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-        <View style={modalSharedStyles.centeredView}>
-          <View style={modalSharedStyles.modalView}>
-            <Text style={modalSharedStyles.modalTitle}>Verify Task</Text>
-            <Text style={modalSharedStyles.taskTitle}>{taskTitle}</Text>
-            <Text style={modalSharedStyles.modalContextInfo}>Student: {studentNameDisplay}</Text>
-            <Text style={modalSharedStyles.modalContextInfo}>
+        <View style={appSharedStyles.centeredView}>
+          <View style={appSharedStyles.modalView}>
+            <Text style={appSharedStyles.modalTitle}>Verify Task</Text>
+            <Text style={appSharedStyles.taskTitle}>{taskTitle}</Text>
+            <Text style={appSharedStyles.modalContextInfo}>Student: {studentNameDisplay}</Text>
+            <Text style={appSharedStyles.modalContextInfo}>
               Potential Tickets: {basePointsDisplay}
             </Text>
-            <Text style={[modalSharedStyles.modalContextInfo, { marginBottom: 20 }]}>
+            <Text style={[appSharedStyles.modalContextInfo, { marginBottom: 20 }]}>
               Completed: {completedDateTime}
             </Text>
 
-            <Text style={modalSharedStyles.stepTitle}>Step 1: Select Status</Text>
+            <Text style={appSharedStyles.stepTitle}>Step 1: Select Status</Text>
             {isLoadingStudent && <ActivityIndicator color={colors.primary} />}
             {studentFetchError && (
               <Text style={commonSharedStyles.errorText}>
@@ -237,7 +237,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               </Text>
             )}
 
-            <View style={modalSharedStyles.buttonContainer}>
+            <View style={appSharedStyles.buttonContainer}>
               <Button
                 title="Verified"
                 onPress={() => handleStatusSelect('verified')}
@@ -256,7 +256,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
                 disabled={isLoadingStudent || verifyMutation.isPending}
               />
             </View>
-            <View style={modalSharedStyles.footerButton}>
+            <View style={appSharedStyles.footerButton}>
               <Button
                 title="Cancel"
                 onPress={onClose}
@@ -276,12 +276,12 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
 
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-        <View style={modalSharedStyles.centeredView}>
-          <View style={modalSharedStyles.modalView}>
-            <Text style={modalSharedStyles.modalTitle}>Verify Task</Text>
-            <Text style={modalSharedStyles.taskTitle}>{taskTitle}</Text>
-            <Text style={modalSharedStyles.modalContextInfo}>Student: {studentNameDisplay}</Text>
-            <Text style={[modalSharedStyles.modalContextInfo, { marginBottom: 10 }]}>
+        <View style={appSharedStyles.centeredView}>
+          <View style={appSharedStyles.modalView}>
+            <Text style={appSharedStyles.modalTitle}>Verify Task</Text>
+            <Text style={appSharedStyles.taskTitle}>{taskTitle}</Text>
+            <Text style={appSharedStyles.modalContextInfo}>Student: {studentNameDisplay}</Text>
+            <Text style={[appSharedStyles.modalContextInfo, { marginBottom: 10 }]}>
               Status Selected:{' '}
               <Text
                 style={[
@@ -300,15 +300,15 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               </Text>
             </Text>
 
-            <Text style={modalSharedStyles.stepTitle}>Step 2: Award Tickets</Text>
+            <Text style={appSharedStyles.stepTitle}>Step 2: Award Tickets</Text>
             {selectedStatus !== 'incomplete' ? (
               <>
-                <View style={modalSharedStyles.pointsInputContainer}>
+                <View style={appSharedStyles.pointsInputContainer}>
                   <Text style={{ fontSize: 16 }}>Tickets Awarded:</Text>
-                  <Text style={modalSharedStyles.awardedPointsText}>{awardedPoints}</Text>
+                  <Text style={appSharedStyles.awardedPointsText}>{awardedPoints}</Text>
                 </View>
                 <Slider
-                  style={modalSharedStyles.slider}
+                  style={appSharedStyles.slider}
                   minimumValue={0}
                   // Allow potentially higher points if 'verified', else cap at baseTickets?
                   // For now, let's allow up to baseTickets * 1.5 for potential bonuses if fully verified? Or just baseTickets?
@@ -322,7 +322,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
                   thumbTintColor={colors.primary}
                   disabled={verifyMutation.isPending}
                 />
-                <View style={modalSharedStyles.rangeText}>
+                <View style={appSharedStyles.rangeText}>
                   <Text>0</Text>
                   <Text>Base: {basePointsDisplay}</Text>
                 </View>
@@ -333,9 +333,9 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
 
             {/* Display mutation status */}
             {verifyMutation.isPending && (
-              <View style={modalSharedStyles.loadingContainer}>
+              <View style={appSharedStyles.loadingContainer}>
                 <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={modalSharedStyles.loadingText}>Processing Verification...</Text>
+                <Text style={appSharedStyles.loadingText}>Processing Verification...</Text>
               </View>
             )}
             {verifyMutation.isError && (
@@ -347,7 +347,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               </Text>
             )}
 
-            <View style={modalSharedStyles.buttonContainer}>
+            <View style={appSharedStyles.buttonContainer}>
               <Button
                 title={verifyMutation.isPending ? 'Processing...' : 'Confirm Verification'}
                 onPress={handleConfirmTickets}
@@ -360,7 +360,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
                 disabled={verifyMutation.isPending}
               />
             </View>
-            <View style={modalSharedStyles.footerButton}>
+            <View style={appSharedStyles.footerButton}>
               <Button
                 title="Cancel Verification"
                 onPress={onClose}
@@ -378,12 +378,12 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   if (currentStep === 3) {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-        <View style={modalSharedStyles.centeredView}>
-          <View style={modalSharedStyles.modalView}>
-            <Text style={modalSharedStyles.modalTitle}>Verification Complete</Text>
-            <Text style={modalSharedStyles.taskTitle}>{taskTitle}</Text>
-            <Text style={modalSharedStyles.modalContextInfo}>Student: {studentNameDisplay}</Text>
-            <Text style={[modalSharedStyles.modalContextInfo, { marginBottom: 20 }]}>
+        <View style={appSharedStyles.centeredView}>
+          <View style={appSharedStyles.modalView}>
+            <Text style={appSharedStyles.modalTitle}>Verification Complete</Text>
+            <Text style={appSharedStyles.taskTitle}>{taskTitle}</Text>
+            <Text style={appSharedStyles.modalContextInfo}>Student: {studentNameDisplay}</Text>
+            <Text style={[appSharedStyles.modalContextInfo, { marginBottom: 20 }]}>
               Status Recorded As:{' '}
               <Text style={{ fontWeight: 'bold' }}>{selectedStatus?.toUpperCase()}</Text>
               {' - '} Points Awarded:{' '}
@@ -398,9 +398,9 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             </Text>
 
             {/* Removed Reassign option for simplicity - can be added back if needed */}
-            {/* <Text style={modalSharedStyles.stepTitle}>Step 3: Re-assign?</Text> */}
+            {/* <Text style={appSharedStyles.stepTitle}>Step 3: Re-assign?</Text> */}
 
-            <View style={modalSharedStyles.buttonContainer}>
+            <View style={appSharedStyles.buttonContainer}>
               <Button title="Done" onPress={onClose} />
             </View>
           </View>

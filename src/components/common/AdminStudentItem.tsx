@@ -2,8 +2,8 @@ import { Button, Text, View } from 'react-native';
 import { Instrument, SimplifiedStudent, UserRole } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { getInstrumentNames } from '../../utils/helpers';
-import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const AdminStudentItem = ({
   student,
@@ -18,7 +18,7 @@ export const AdminStudentItem = ({
 }) => {
   return (
     <View
-      style={[appSharedStyles.itemContainer, !student.isActive ? appSharedStyles.inactiveItem : {}]}
+      style={[commonSharedStyles.baseItem, !student.isActive ? appSharedStyles.inactiveItem : {}]}
     >
       <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
       <Text style={appSharedStyles.itemDetailText}>
@@ -35,7 +35,7 @@ export const AdminStudentItem = ({
       >
         Status: {student.isActive ? 'Active' : 'Inactive'}
       </Text>
-      <View style={adminSharedStyles.itemActions}>
+      <View style={appSharedStyles.itemActions}>
         <Button
           title="View Details"
           onPress={() => {

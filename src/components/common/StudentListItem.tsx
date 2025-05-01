@@ -3,6 +3,7 @@ import { Instrument, SimplifiedStudent } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { getInstrumentNames } from '../../utils/helpers';
 import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const StudentListItem = ({
   student,
@@ -17,7 +18,7 @@ export const StudentListItem = ({
 }) => (
   <View
     style={[
-      appSharedStyles.itemContainer,
+      commonSharedStyles.baseItem,
       !student.isActive ? appSharedStyles.inactiveItemStyle : {},
     ]}
   >

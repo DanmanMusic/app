@@ -7,8 +7,7 @@ import { generatePinForUser } from '../../api/users';
 import { User, UserRole } from '../../types/dataTypes';
 import { getUserDisplayName } from '../../utils/helpers';
 import { colors } from '../../styles/colors';
-import { modalSharedStyles } from '../../styles/modalSharedStyles';
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { appSharedStyles } from '../../styles/appSharedStyles';
 
 interface GeneratePinModalProps {
   visible: boolean;
@@ -85,17 +84,17 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>Generate Login PIN</Text>
-          <Text style={modalSharedStyles.modalContextInfo}>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>Generate Login PIN</Text>
+          <Text style={appSharedStyles.modalContextInfo}>
             For User: {displayName} ({userActualRole})
           </Text>
 
           {isLoading && (
-            <View style={modalSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalSharedStyles.loadingText}>Generating PIN...</Text>
+              <Text style={appSharedStyles.loadingText}>Generating PIN...</Text>
             </View>
           )}
 
@@ -110,7 +109,7 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
           )}
 
           {!generatedPin && !isLoading && (
-            <View style={modalSharedStyles.buttonContainer}>
+            <View style={appSharedStyles.buttonContainer}>
               {(userActualRole === 'student' ||
                 userActualRole === 'teacher' ||
                 userActualRole === 'admin') && (
@@ -132,7 +131,7 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
             </View>
           )}
 
-          <View style={modalSharedStyles.footerButton}>
+          <View style={appSharedStyles.footerButton}>
             <Button
               title={generatedPin ? 'Close' : 'Cancel'}
               onPress={onClose}

@@ -17,7 +17,6 @@ import { AdminParentDetailViewProps } from '../../types/componentProps';
 
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { colors } from '../../styles/colors';
 import { getUserDisplayName } from '../../utils/helpers';
 import LinkStudentToParentModal from './modals/LinkStudentToParentModal';
@@ -192,7 +191,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
           </Text>
         </Text>
         <View
-          style={[adminSharedStyles.adminStudentActions, commonSharedStyles.actionButtonsContainer]}
+          style={[appSharedStyles.adminStudentActions, appSharedStyles.actionButtonsContainer]}
         >
           <Button title="Edit Info" onPress={handleEdit} color={colors.warning} />
           <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
@@ -214,7 +213,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
             )}
             keyExtractor={item => item.id}
             renderItem={({ item: studentItem }) => (
-              <View style={[appSharedStyles.itemContainer, styles.linkedStudentItem]}>
+              <View style={[commonSharedStyles.baseItem, styles.linkedStudentItem]}>
                 <Text style={appSharedStyles.itemTitle}>{getUserDisplayName(studentItem)}</Text>
                 <Text style={appSharedStyles.itemDetailText}>
                   Status:{' '}

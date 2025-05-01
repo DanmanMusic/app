@@ -24,7 +24,6 @@ import { SimplifiedStudent, User } from '../../../types/dataTypes';
 // Style Imports
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
-import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
 interface LinkStudentToParentModalProps {
@@ -138,11 +137,11 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>Link Student to Parent</Text>
-          <Text style={modalSharedStyles.modalContextInfo}>Parent: {parentName}</Text>
-          <Text style={modalSharedStyles.stepTitle}>Select Student to Link:</Text>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>Link Student to Parent</Text>
+          <Text style={appSharedStyles.modalContextInfo}>Parent: {parentName}</Text>
+          <Text style={appSharedStyles.stepTitle}>Select Student to Link:</Text>
 
           {/* Search Input */}
           <TextInput
@@ -202,9 +201,9 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
 
           {/* Mutation Status */}
           {linkMutation.isPending && (
-            <View style={modalSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalSharedStyles.loadingText}>Linking Student...</Text>
+              <Text style={appSharedStyles.loadingText}>Linking Student...</Text>
             </View>
           )}
           {linkMutation.isError && !linkMutation.isPending && (
@@ -217,14 +216,14 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
           )}
 
           {/* Action Buttons */}
-          <View style={modalSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.buttonContainer}>
             <Button
               title={linkMutation.isPending ? 'Linking...' : 'Link Selected Student'}
               onPress={handleConfirmLink}
               disabled={isLinkDisabled}
             />
           </View>
-          <View style={modalSharedStyles.footerButton}>
+          <View style={appSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}

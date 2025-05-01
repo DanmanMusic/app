@@ -171,7 +171,7 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress }) => {
 const styles = StyleSheet.create({
   outerContainer: {
     flex: 1,
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: 'transparent',
   },
   headerSection: {
     paddingHorizontal: 15,
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.borderSecondary,
     alignItems: 'center',
-    backgroundColor: colors.backgroundPrimary,
+    backgroundColor: 'transparent',
     gap: 10,
   },
 });

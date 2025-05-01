@@ -15,12 +15,11 @@ import Toast from 'react-native-toast-message';
 
 import { getSupabase } from '../../lib/supabaseClient';
 import { claimPin } from '../../api/auth';
-// --- Import storage helpers ---
 import { storeItem, removeItem, CUSTOM_REFRESH_TOKEN_KEY } from '../../lib/storageHelper';
 
 import { colors } from '../../styles/colors';
-import { modalSharedStyles } from '../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { appSharedStyles } from '../../styles/appSharedStyles';
 
 interface LoginModalProps {
   visible: boolean;
@@ -28,8 +27,6 @@ interface LoginModalProps {
 }
 
 type LoginMode = 'email' | 'pin';
-
-// Key definition is now in storageHelper.ts
 
 export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
   const supabase = getSupabase();
@@ -157,9 +154,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>Login</Text>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>Login</Text>
           <View style={styles.toggleContainer}>
             <TouchableOpacity
               style={[styles.toggleButton, mode === 'email' && styles.toggleButtonActive]}
@@ -210,7 +207,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
                 autoComplete="password"
                 editable={!isLoading}
               />
-              <View style={modalSharedStyles.buttonContainer}>
+              <View style={appSharedStyles.buttonContainer}>
                 <Button
                   title={isLoading ? 'Logging In...' : 'Login with Email'}
                   onPress={handleEmailLogin}
@@ -234,7 +231,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
                 editable={!isLoading}
                 secureTextEntry={true}
               />
-              <View style={modalSharedStyles.buttonContainer}>
+              <View style={appSharedStyles.buttonContainer}>
                 <Button
                   title={isLoading ? 'Verifying...' : 'Login with PIN'}
                   onPress={handlePinLogin}
@@ -245,16 +242,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
           )}
 
           {isLoading && (
-            <View style={modalSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalSharedStyles.loadingText}>Processing...</Text>
+              <Text style={appSharedStyles.loadingText}>Processing...</Text>
             </View>
           )}
           {error && (
             <Text style={[commonSharedStyles.errorText, { marginTop: 10 }]}> Error: {error} </Text>
           )}
 
-          <View style={modalSharedStyles.footerButton}>
+          <View style={appSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}

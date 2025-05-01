@@ -13,8 +13,8 @@ import { ManualTicketAdjustmentModalProps } from '../../../types/componentProps'
 
 // Style Imports
 import { colors } from '../../../styles/colors';
-import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = ({
   visible,
@@ -148,11 +148,11 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>Manual Ticket Adjustment</Text>
-          <Text style={modalSharedStyles.modalContextInfo}>Student: {studentName}</Text>
-          <Text style={modalSharedStyles.modalContextInfo}>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>Manual Ticket Adjustment</Text>
+          <Text style={appSharedStyles.modalContextInfo}>Student: {studentName}</Text>
+          <Text style={appSharedStyles.modalContextInfo}>
             Current Balance:{' '}
             {balanceLoading ? 'Loading...' : balanceError ? 'Error' : `${currentBalance} Tickets`}
           </Text>
@@ -163,7 +163,7 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
           )}
 
           {/* Add/Subtract Toggle */}
-          <View style={modalSharedStyles.modalToggleContainer}>
+          <View style={appSharedStyles.modalToggleContainer}>
             <Button
               title="Add Tickets"
               onPress={() => setIsSubtracting(false)}
@@ -204,15 +204,15 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
           />
 
           {/* New Balance Preview */}
-          <Text style={modalSharedStyles.previewText}>
+          <Text style={appSharedStyles.previewText}>
             New Balance Preview: {newBalancePreview} Tickets
           </Text>
 
           {/* Mutation Status */}
           {mutation.isPending && (
-            <View style={modalSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalSharedStyles.loadingText}>Adjusting Tickets...</Text>
+              <Text style={appSharedStyles.loadingText}>Adjusting Tickets...</Text>
             </View>
           )}
           {mutation.isError &&
@@ -226,7 +226,7 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
             )}
 
           {/* Action Buttons */}
-          <View style={modalSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.buttonContainer}>
             <Button
               title={confirmButtonText}
               onPress={handleAdjust}
@@ -234,7 +234,7 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
               disabled={isConfirmDisabled}
             />
           </View>
-          <View style={modalSharedStyles.footerButton}>
+          <View style={appSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}

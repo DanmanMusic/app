@@ -18,9 +18,9 @@ import { Instrument } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { EditInstrumentModalProps } from '../../../types/componentProps';
 import { getInstrumentIconSource } from '../../../utils/helpers';
-import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
+import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
   visible,
@@ -94,7 +94,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
     }
 
     try {
-      let result = await ImagePicker.launchImageLibraryAsync({
+      const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
@@ -181,10 +181,10 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>Edit Instrument</Text>
-          <Text style={modalSharedStyles.subTitle}>ID: {instrumentToEdit.id}</Text>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>Edit Instrument</Text>
+          <Text style={appSharedStyles.subTitle}>ID: {instrumentToEdit.id}</Text>
 
           <Text style={commonSharedStyles.label}>Instrument Name:</Text>
           <TextInput
@@ -197,11 +197,11 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
             editable={!mutation.isPending}
           />
           <Text style={commonSharedStyles.label}>Icon:</Text>
-          <View style={modalSharedStyles.iconPreviewContainer}>
+          <View style={appSharedStyles.iconPreviewContainer}>
             {previewSource ? (
               <Image
                 source={previewSource}
-                style={modalSharedStyles.iconPreview}
+                style={appSharedStyles.iconPreview}
                 resizeMode="contain"
               />
             ) : (
@@ -216,9 +216,9 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
           </View>
 
           {mutation.isPending && (
-            <View style={modalSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalSharedStyles.loadingText}>Saving Changes...</Text>
+              <Text style={appSharedStyles.loadingText}>Saving Changes...</Text>
             </View>
           )}
           {mutation.isError && (
@@ -228,14 +228,14 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
             </Text>
           )}
 
-          <View style={modalSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
               disabled={mutation.isPending || !name.trim()}
             />
           </View>
-          <View style={modalSharedStyles.footerButton}>
+          <View style={appSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}

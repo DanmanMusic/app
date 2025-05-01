@@ -7,7 +7,6 @@ import { fetchAnnouncements, deleteAnnouncement } from '../../api/announcements'
 import { Announcement } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { colors } from '../../styles/colors';
 
 import ConfirmationModal from '../common/ConfirmationModal';
@@ -124,9 +123,9 @@ export const AdminAnnouncementsSection = () => {
           data={announcements}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <View style={appSharedStyles.itemContainer}>
+            <View style={commonSharedStyles.baseItem}>
               <AnnouncementListItem item={item} />
-              <View style={adminSharedStyles.itemActions}>
+              <View style={appSharedStyles.itemActions}>
                 <Button
                   title="Edit"
                   onPress={() => handleEditPress(item)}

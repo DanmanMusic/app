@@ -13,12 +13,11 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { createInstrument } from '../../../api/instruments';
-import { Instrument } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { CreateInstrumentModalProps } from '../../../types/componentProps';
-import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
+import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');
@@ -71,7 +70,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
     }
 
     try {
-      let result = await ImagePicker.launchImageLibraryAsync({
+      const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
@@ -118,9 +117,9 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>Add New Instrument</Text>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>Add New Instrument</Text>
 
           <Text style={commonSharedStyles.label}>Instrument Name:</Text>
           <TextInput
@@ -133,11 +132,11 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             editable={!mutation.isPending}
           />
           <Text style={commonSharedStyles.label}>Icon (Optional):</Text>
-          <View style={modalSharedStyles.iconPreviewContainer}>
+          <View style={appSharedStyles.iconPreviewContainer}>
             {imageUri ? (
               <Image
                 source={{ uri: imageUri }}
-                style={modalSharedStyles.iconPreview}
+                style={appSharedStyles.iconPreview}
                 resizeMode="contain"
               />
             ) : (
@@ -152,9 +151,9 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
           </View>
 
           {mutation.isPending && (
-            <View style={modalSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalSharedStyles.loadingText}>Creating Instrument...</Text>
+              <Text style={appSharedStyles.loadingText}>Creating Instrument...</Text>
             </View>
           )}
           {mutation.isError && (
@@ -165,14 +164,14 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
                 : 'Failed to create instrument'}
             </Text>
           )}
-          <View style={modalSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Instrument'}
               onPress={handleCreate}
               disabled={mutation.isPending || !name.trim()}
             />
           </View>
-          <View style={modalSharedStyles.footerButton}>
+          <View style={appSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}

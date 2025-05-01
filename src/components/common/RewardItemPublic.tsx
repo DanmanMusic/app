@@ -4,7 +4,7 @@ import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const RewardItemPublic = ({ item }: { item: RewardItem }) => (
-  <View style={appSharedStyles.itemContainer}>
+  <View style={commonSharedStyles.baseItem}>
     <View style={commonSharedStyles.itemContentRow}>
       <Image
         source={{ uri: item.imageUrl }}

@@ -7,7 +7,6 @@ import { RewardItem } from '../../../types/dataTypes';
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
 import { SetGoalModalProps } from '../../../types/componentProps';
-import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { RewardGoalItem } from '../../common/RewardGoalItem';
 
 export const SetGoalModal: React.FC<SetGoalModalProps> = ({
@@ -41,9 +40,9 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>
             {currentGoalId ? 'Change Your Goal' : 'Set Your Goal'}
           </Text>
           {isLoading && (
@@ -56,7 +55,7 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
           )}
           {!isLoading && !isError && (
             <FlatList
-              style={modalSharedStyles.modalListContainer}
+              style={appSharedStyles.modalListContainer}
               data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
@@ -76,7 +75,7 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
               ListFooterComponent={<View style={{ height: 10 }} />}
             />
           )}
-          <View style={modalSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.buttonContainer}>
             {currentGoalId && (
               <Button title="Clear Current Goal" onPress={handleClearGoal} color={colors.warning} />
             )}

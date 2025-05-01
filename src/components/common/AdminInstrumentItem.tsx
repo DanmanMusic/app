@@ -1,5 +1,4 @@
 import { Button, Image, Text, View } from 'react-native';
-import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { appSharedStyles } from '../../styles/appSharedStyles';
@@ -12,16 +11,16 @@ export const AdminInstrumentItem: React.FC<AdminInstrumentItemProps> = ({
   onDelete,
   disabled,
 }) => (
-  <View style={appSharedStyles.itemContainer}>
-    <View style={commonSharedStyles.itemContentRow}>
+  <View style={commonSharedStyles.baseItem}>
+    <View style={appSharedStyles.itemContentRow}>
       <Image
         source={getInstrumentIconSource(item)}
-        style={adminSharedStyles.instrumentIcon}
+        style={appSharedStyles.instrumentIcon}
         resizeMode="contain"
       />
-      <Text style={[appSharedStyles.itemTitle, adminSharedStyles.itemTitleText]}>{item.name}</Text>
+      <Text style={[appSharedStyles.itemTitle, appSharedStyles.itemTitleText]}>{item.name}</Text>
     </View>
-    <View style={adminSharedStyles.itemActions}>
+    <View style={appSharedStyles.itemActions}>
       <Button title="Edit" onPress={() => onEdit(item)} disabled={disabled} />
       <Button
         title="Delete"

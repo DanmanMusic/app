@@ -146,6 +146,7 @@ export interface AdminTasksSectionProps {
   onInitiateCreateTask: () => void;
   onInitiateEditTask: (task: TaskLibraryItem) => void;
   onInitiateDeleteTask: (task: TaskLibraryItem) => void;
+  handleInternalInitiateVerificationModal: (task: AssignedTask) => void;
   deleteTaskMutationPending: boolean;
 }
 

@@ -3,12 +3,13 @@ import { ParentStudentListItemProps } from '../../types/componentProps';
 import { getUserDisplayName } from '../../utils/helpers';
 import { colors } from '../../styles/colors';
 import { appSharedStyles } from '../../styles/appSharedStyles';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const ParentStudentListItem: React.FC<ParentStudentListItemProps> = ({
   student,
   onSelectStudent,
 }) => (
-  <View style={appSharedStyles.itemContainer}>
+  <View style={commonSharedStyles.baseItem}>
     <Text style={appSharedStyles.itemTitle}>{getUserDisplayName(student)}</Text>
     <Text
       style={[

@@ -19,7 +19,7 @@ export const RewardItemStudent = ({
   return (
     <View
       style={[
-        appSharedStyles.itemContainer,
+        commonSharedStyles.baseItem,
         canEarn ? appSharedStyles.rewardItemAffordable : {},
         isGoal ? appSharedStyles.rewardItemGoal : {},
       ]}

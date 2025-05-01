@@ -1,6 +1,7 @@
 // App.tsx
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Button, ActivityIndicator } from 'react-native';
+// *** Import ImageBackground ***
+import { StyleSheet, Text, View, Button, ActivityIndicator, ImageBackground } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -8,7 +9,7 @@ import Toast from 'react-native-toast-message';
 
 // Component & Context Imports
 import TaskVerificationModal from './src/components/common/TaskVerificationModal';
-import { AuthProvider, useAuth } from './src/contexts/AuthContext'; // Using AuthProvider
+import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { AdminView } from './src/views/AdminView';
 import { ParentView } from './src/views/ParentView';
 import { PublicView } from './src/views/PublicView';
@@ -22,22 +23,16 @@ import { AssignedTask } from './src/types/dataTypes';
 // Style & Helper Imports
 import { colors } from './src/styles/colors';
 import { commonSharedStyles } from './src/styles/commonSharedStyles';
-// Removed appSharedStyles import if only used for test button styles
+
+// *** Define the background image source ***
+const lightWoodBackground = require('./assets/backgrounds/light_wood.png'); // Adjust path if needed
 
 const queryClient = new QueryClient();
 
 // --- Main Application Content Component ---
 const AppContent = () => {
-  // Use REAL auth state from context
-  const {
-    isLoading: authIsLoading,
-    isAuthenticated,
-    currentUserRole,
-    error: authError,
-    signOut,
-  } = useAuth();
+  const { isLoading: authIsLoading, currentUserRole, error: authError, signOut } = useAuth();
 
-  // State for modals remains the same
   const [isVerificationModalVisible, setIsVerificationModalVisible] = useState(false);
   const [taskToVerify, setTaskToVerify] = useState<AssignedTask | null>(null);
   const [isLoginModalVisible, setIsLoginModalVisible] = useState(false);
@@ -54,10 +49,10 @@ const AppContent = () => {
   const handleOpenLoginModal = () => setIsLoginModalVisible(true);
   const handleCloseLoginModal = () => setIsLoginModalVisible(false);
 
-  // Define renderMainView INSIDE AppContent
   const renderMainView = () => {
-    // Show initial loading indicator
     if (authIsLoading) {
+      // Note: This loading view might cover the background initially.
+      // Consider making its background transparent if needed.
       return (
         <View style={styles.centeredLoader}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -66,7 +61,6 @@ const AppContent = () => {
       );
     }
 
-    // Show error if auth context failed
     if (authError) {
       return (
         <View style={styles.centeredLoader}>
@@ -78,10 +72,8 @@ const AppContent = () => {
       );
     }
 
-    // Use currentUserRole directly from context
     switch (currentUserRole) {
       case 'public':
-        // Show PublicView if not authenticated
         return <PublicView onLoginPress={handleOpenLoginModal} />;
       case 'student':
         return <StudentView />;
@@ -92,7 +84,6 @@ const AppContent = () => {
       case 'admin':
         return <AdminView onInitiateVerificationModal={handleInitiateVerificationModal} />;
       default:
-        // This case should ideally not be reached if role is always defined
         console.error('Reached default case in renderMainView, role:', currentUserRole);
         return (
           <View style={styles.centeredLoader}>
@@ -107,26 +98,29 @@ const AppContent = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="auto" />
+    // *** Wrap everything in ImageBackground ***
+    <ImageBackground
+      source={lightWoodBackground}
+      style={styles.backgroundImage}
+      resizeMode="cover" // Or 'stretch', 'repeat' etc.
+    >
+      <View style={styles.backgroundOverlay} />
 
-      {renderMainView()}
+      {/* *** This container View is now transparent *** */}
+      <View style={styles.container}>
+        <StatusBar style="auto" />
 
-      <TaskVerificationModal
-        visible={isVerificationModalVisible}
-        task={taskToVerify}
-        onClose={handleCloseVerificationModal}
-      />
-      <LoginModal visible={isLoginModalVisible} onClose={handleCloseLoginModal} />
+        {renderMainView()}
 
-      {/* Removed Test Fetch Button View */}
-
-      {isAuthenticated && (
-        <View style={styles.signOutButtonContainer}>
-          <Button title="Sign Out" onPress={signOut} color={colors.danger} />
-        </View>
-      )}
-    </View>
+        {/* Modals remain outside the main view content but inside background */}
+        <TaskVerificationModal
+          visible={isVerificationModalVisible}
+          task={taskToVerify}
+          onClose={handleCloseVerificationModal}
+        />
+        <LoginModal visible={isLoginModalVisible} onClose={handleCloseLoginModal} />
+      </View>
+    </ImageBackground>
   );
 };
 // --- END AppContent ---
@@ -147,32 +141,29 @@ export default function App() {
 
 // Styles
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1, // Ensure it fills the screen
+    width: '100%',
+    height: '100%',
+  },
+  backgroundOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    zIndex: 0,
+  },
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundPrimary, // Use primary background
+    backgroundColor: 'transparent',
   },
   centeredLoader: {
-    // Style for initial loading/error
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: colors.backgroundSecondary, // Use secondary for loading bg
   },
   loadingText: {
-    // Added style for loading text
     marginTop: 10,
-    color: colors.textSecondary,
+    color: colors.textSecondary, // Adjust color for readability on wood
     fontSize: 16,
-  },
-  signOutButtonContainer: {
-    // Kept optional sign out button style
-    position: 'absolute',
-    bottom: 15,
-    right: 15,
-    zIndex: 100,
-    backgroundColor: 'rgba(200, 0, 0, 0.6)', // Reddish background
-    borderRadius: 5,
-    padding: 3,
   },
 });

@@ -16,9 +16,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { createReward } from '../../../api/rewards';
 import { colors } from '../../../styles/colors';
 import { CreateRewardModalProps } from '../../../types/componentProps';
-import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
+import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');
@@ -78,7 +78,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
       }
     }
     try {
-      let result = await ImagePicker.launchImageLibraryAsync({
+      const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
@@ -135,10 +135,10 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>Create New Reward</Text>
-          <ScrollView style={modalSharedStyles.scrollView}>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>Create New Reward</Text>
+          <ScrollView style={appSharedStyles.scrollView}>
             <Text style={commonSharedStyles.label}>Reward Name:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -163,11 +163,11 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
               editable={!mutation.isPending}
             />
             <Text style={commonSharedStyles.label}>Image (Optional):</Text>
-            <View style={modalSharedStyles.iconPreviewContainer}>
+            <View style={appSharedStyles.iconPreviewContainer}>
               {imageUri ? (
                 <Image
                   source={{ uri: imageUri }}
-                  style={modalSharedStyles.iconPreview}
+                  style={appSharedStyles.iconPreview}
                   resizeMode="contain"
                 />
               ) : (
@@ -196,9 +196,9 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
             />
           </ScrollView>
           {mutation.isPending && (
-            <View style={modalSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalSharedStyles.loadingText}>Creating Reward...</Text>
+              <Text style={appSharedStyles.loadingText}>Creating Reward...</Text>
             </View>
           )}
           {mutation.isError && (
@@ -207,14 +207,14 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
               {mutation.error instanceof Error ? mutation.error.message : 'Failed to create reward'}
             </Text>
           )}
-          <View style={modalSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Reward'}
               onPress={handleCreate}
               disabled={isCreateDisabled}
             />
           </View>
-          <View style={modalSharedStyles.footerButton}>
+          <View style={appSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}

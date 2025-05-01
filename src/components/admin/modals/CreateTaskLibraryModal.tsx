@@ -7,9 +7,9 @@ import { createTaskLibraryItem } from '../../../api/taskLibrary';
 import { TaskLibraryItem } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { CreateTaskLibraryModalProps } from '../../../types/componentProps';
-import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
+import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible, onClose }) => {
   const [title, setTitle] = useState('');
@@ -99,10 +99,10 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>Create New Library Task</Text>
-          <ScrollView style={modalSharedStyles.scrollView}>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>Create New Library Task</Text>
+          <ScrollView style={appSharedStyles.scrollView}>
             <Text style={commonSharedStyles.label}>Task Title:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -141,9 +141,9 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
           </ScrollView>
 
           {mutation.isPending && (
-            <View style={modalSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalSharedStyles.loadingText}>Creating Task...</Text>
+              <Text style={appSharedStyles.loadingText}>Creating Task...</Text>
             </View>
           )}
 
@@ -154,14 +154,14 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
             </Text>
           )}
 
-          <View style={modalSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Task'}
               onPress={handleCreate}
               disabled={isCreateDisabled}
             />
           </View>
-          <View style={modalSharedStyles.footerButton}>
+          <View style={appSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}

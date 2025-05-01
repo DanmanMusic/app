@@ -7,7 +7,6 @@ import { fetchRewards, deleteReward } from '../../api/rewards';
 import { RewardItem } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { colors } from '../../styles/colors';
 
 import ConfirmationModal from '../common/ConfirmationModal';

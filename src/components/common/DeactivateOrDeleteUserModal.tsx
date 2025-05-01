@@ -9,13 +9,13 @@ import { deleteUser, toggleUserStatus } from '../../api/users'; // Use updated d
 
 // Style Imports
 import { colors } from '../../styles/colors';
-import { modalSharedStyles } from '../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 // Helper & Type Imports
 import { getUserDisplayName } from '../../utils/helpers';
 import { DeactivateOrDeleteUserModalProps } from '../../types/componentProps';
 import ConfirmationModal from './ConfirmationModal'; // Import ConfirmationModal
+import { appSharedStyles } from '../../styles/appSharedStyles';
 
 export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = ({
   visible,
@@ -167,11 +167,11 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
     <>
       {/* Main Management Modal */}
       <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={onClose}>
-        <View style={modalSharedStyles.centeredView}>
-          <View style={modalSharedStyles.modalView}>
-            <Text style={modalSharedStyles.modalTitle}>Manage User Status</Text>
-            <Text style={modalSharedStyles.modalContextInfo}>User: {displayName}</Text>
-            <Text style={modalSharedStyles.modalContextInfo}>
+        <View style={appSharedStyles.centeredView}>
+          <View style={appSharedStyles.modalView}>
+            <Text style={appSharedStyles.modalTitle}>Manage User Status</Text>
+            <Text style={appSharedStyles.modalContextInfo}>User: {displayName}</Text>
+            <Text style={appSharedStyles.modalContextInfo}>
               Current Status:{' '}
               <Text style={isCurrentlyActive ? styles.activeStatus : styles.inactiveStatus}>
                 {currentStatusText}
@@ -180,9 +180,9 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
 
             {/* Loading indicator for toggle status */}
             {toggleStatusMutation.isPending && (
-              <View style={modalSharedStyles.loadingContainer}>
+              <View style={appSharedStyles.loadingContainer}>
                 <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={modalSharedStyles.loadingText}>Updating Status...</Text>
+                <Text style={appSharedStyles.loadingText}>Updating Status...</Text>
               </View>
             )}
             {/* Error display for toggle status */}
@@ -196,7 +196,7 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
             )}
 
             {/* Action Buttons */}
-            <View style={modalSharedStyles.buttonContainer}>
+            <View style={appSharedStyles.buttonContainer}>
               <Button
                 title={toggleButtonText}
                 onPress={handleToggle}
@@ -222,7 +222,7 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
             )}
 
             {/* Footer Close Button */}
-            <View style={modalSharedStyles.footerButton}>
+            <View style={appSharedStyles.footerButton}>
               <Button
                 title="Close"
                 onPress={onClose}

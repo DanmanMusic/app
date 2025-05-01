@@ -2,9 +2,9 @@ import { Button, Text, View } from 'react-native';
 
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { User, UserRole } from '../../types/dataTypes';
-import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { getUserDisplayName } from '../../utils/helpers';
 import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const AdminUserItem = ({
   user,
@@ -15,7 +15,7 @@ export const AdminUserItem = ({
 }) => (
   <View
     style={[
-      appSharedStyles.itemContainer,
+      commonSharedStyles.baseItem,
       user.status === 'inactive' ? appSharedStyles.inactiveItem : {},
     ]}
   >
@@ -33,7 +33,7 @@ export const AdminUserItem = ({
         Linked Students: {user.linkedStudentIds.length}
       </Text>
     )}
-    <View style={adminSharedStyles.itemActions}>
+    <View style={appSharedStyles.itemActions}>
       <Button title="View Details" onPress={() => onViewManage(user.id, user.role)} />
     </View>
   </View>

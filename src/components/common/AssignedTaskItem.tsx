@@ -22,7 +22,7 @@ export const AssignedTaskItem = ({
   const showMarkCompleteButton = !task.isComplete && canMark && onMarkComplete;
 
   return (
-    <View style={appSharedStyles.itemContainer}>
+    <View style={commonSharedStyles.baseItem}>
       <Text style={appSharedStyles.itemTitle}>{task.taskTitle}</Text>
       <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
       {task.actualPointsAwarded !== undefined && task.verificationStatus !== 'pending' && (

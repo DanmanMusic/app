@@ -10,7 +10,6 @@ import { AdminAdminDetailViewProps } from '../../types/componentProps';
 
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { colors } from '../../styles/colors';
 import { getUserDisplayName } from '../../utils/helpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -142,7 +141,7 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
         <Text style={styles.infoText}>(Email/Password login appears to be set up)</Text>
       )}
       <View
-        style={[adminSharedStyles.adminStudentActions, commonSharedStyles.actionButtonsContainer]}
+        style={[appSharedStyles.adminStudentActions, appSharedStyles.actionButtonsContainer]}
       >
         <Button
           title="Manage Status"

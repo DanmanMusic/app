@@ -1,7 +1,7 @@
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { RewardItem } from '../../types/dataTypes';
 import { appSharedStyles } from '../../styles/appSharedStyles';
-import { modalSharedStyles } from '../../styles/modalSharedStyles';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const RewardGoalItem = ({
   item,
@@ -17,27 +17,27 @@ export const RewardGoalItem = ({
   <TouchableOpacity onPress={() => onSelect(item.id)}>
     <View
       style={[
-        appSharedStyles.itemContainer,
-        modalSharedStyles.goalSelectItem,
-        isCurrentGoal ? modalSharedStyles.currentGoalItem : {},
+        commonSharedStyles.baseItem,
+        appSharedStyles.goalSelectItem,
+        isCurrentGoal ? appSharedStyles.currentGoalItem : {},
       ]}
     >
-      <View style={modalSharedStyles.goalSelectItemContent}>
+      <View style={appSharedStyles.goalSelectItemContent}>
         <Image
           source={{ uri: item.imageUrl }}
-          style={modalSharedStyles.goalSelectImage}
+          style={appSharedStyles.goalSelectImage}
           resizeMode="contain"
         />
-        <View style={modalSharedStyles.goalSelectDetails}>
-          <Text style={modalSharedStyles.goalSelectName}>{item.name}</Text>
+        <View style={appSharedStyles.goalSelectDetails}>
+          <Text style={appSharedStyles.goalSelectName}>{item.name}</Text>
           <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
             {item.cost} Tickets
           </Text>
           {!canAfford && (
-            <Text style={modalSharedStyles.cannotAffordText}>(Need more tickets)</Text>
+            <Text style={appSharedStyles.cannotAffordText}>(Need more tickets)</Text>
           )}
         </View>
-        {isCurrentGoal && <Text style={modalSharedStyles.checkmark}>✓</Text>}
+        {isCurrentGoal && <Text style={appSharedStyles.checkmark}>✓</Text>}
       </View>
     </View>
   </TouchableOpacity>

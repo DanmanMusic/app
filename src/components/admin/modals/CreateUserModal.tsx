@@ -16,7 +16,6 @@ import { fetchInstruments } from '../../../api/instruments';
 
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
-import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
 import { UserRole, User, Instrument } from '../../../types/dataTypes';
@@ -171,11 +170,11 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>Create New User</Text>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>Create New User</Text>
 
-          <ScrollView style={modalSharedStyles.scrollView}>
+          <ScrollView style={appSharedStyles.scrollView}>
             <Text style={commonSharedStyles.label}>First Name:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -217,8 +216,8 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
             </View>
 
             {isStudentRoleSelected && (
-              <View style={modalSharedStyles.modalSubSection}>
-                <Text style={modalSharedStyles.roleSectionTitle}>Student Details (Optional)</Text>
+              <View style={appSharedStyles.modalSubSection}>
+                <Text style={appSharedStyles.roleSectionTitle}>Student Details (Optional)</Text>
                 <Text style={commonSharedStyles.label}>Instruments:</Text>
                 {isLoadingInstruments && <ActivityIndicator color={colors.primary} />}
                 {isErrorInstruments && (
@@ -227,7 +226,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
                   </Text>
                 )}
                 {!isLoadingInstruments && !isErrorInstruments && (
-                  <View style={commonSharedStyles.selectionContainer}>
+                  <View style={appSharedStyles.selectionContainer}>
                     {instruments.length > 0 ? (
                       instruments.map(inst => (
                         <Button
@@ -256,7 +255,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
                   </Text>
                 )}
                 {!isLoadingTeachers && !isErrorTeachers && (
-                  <View style={commonSharedStyles.selectionContainer}>
+                  <View style={appSharedStyles.selectionContainer}>
                     {activeTeachers.length > 0 ? (
                       activeTeachers.map(teacher => (
                         <Button
@@ -283,9 +282,9 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
           </ScrollView>
 
           {mutation.isPending && (
-            <View style={modalSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalSharedStyles.loadingText}>Creating User...</Text>
+              <Text style={appSharedStyles.loadingText}>Creating User...</Text>
             </View>
           )}
           {mutation.isError && (
@@ -295,14 +294,14 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
             </Text>
           )}
 
-          <View style={modalSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create User'}
               onPress={handleCreatePress}
               disabled={isCreateDisabled}
             />
           </View>
-          <View style={modalSharedStyles.footerButton}>
+          <View style={appSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}

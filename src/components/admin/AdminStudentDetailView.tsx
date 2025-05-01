@@ -30,7 +30,6 @@ import { AssignedTask, Instrument, User } from '../../types/dataTypes';
 import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminStudentDetailViewProps } from '../../types/componentProps';
 
@@ -274,7 +273,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
           </Text>
         )}
         <View
-          style={[adminSharedStyles.adminStudentActions, commonSharedStyles.actionButtonsContainer]}
+          style={[appSharedStyles.adminStudentActions, appSharedStyles.actionButtonsContainer]}
         >
           {onInitiateTicketAdjustment && (
             <Button
@@ -330,9 +329,9 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
                 : 'Assigned';
 
               return (
-                <View style={adminSharedStyles.taskItem}>
-                  <Text style={adminSharedStyles.taskItemTitle}>{item.taskTitle}</Text>
-                  <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
+                <View style={appSharedStyles.taskItem}>
+                  <Text style={appSharedStyles.taskItemTitle}>{item.taskTitle}</Text>
+                  <Text style={appSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
                   {item.completedDate && (
                     <Text style={appSharedStyles.itemDetailText}>
                       Completed: {new Date(item.completedDate).toLocaleDateString()}
@@ -345,15 +344,15 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
                   )}
                   {item.actualPointsAwarded !== undefined &&
                     item.verificationStatus !== 'pending' && (
-                      <Text style={adminSharedStyles.taskItemTickets}>
+                      <Text style={appSharedStyles.taskItemTickets}>
                         Awarded: {item.actualPointsAwarded ?? 0} Tickets
                       </Text>
                     )}
                   {item.isComplete && item.verificationStatus === 'pending' && (
-                    <Text style={commonSharedStyles.pendingNote}>Awaiting verification...</Text>
+                    <Text style={appSharedStyles.pendingNote}>Awaiting verification...</Text>
                   )}
 
-                  <View style={adminSharedStyles.assignedTaskActions}>
+                  <View style={appSharedStyles.assignedTaskActions}>
                     {allowVerify && (
                       <Button
                         title="Verify"

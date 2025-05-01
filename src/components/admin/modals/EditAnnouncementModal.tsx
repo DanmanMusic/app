@@ -9,10 +9,9 @@ import { updateAnnouncement } from '../../../api/announcements';
 import { Announcement, AnnouncementType } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { EditAnnouncementModalProps } from '../../../types/componentProps';
-import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
-import { adminSharedStyles } from '../../../styles/adminSharedStyles';
+import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const ANNOUNCEMENT_TYPES: AnnouncementType[] = [
   'announcement',
@@ -122,19 +121,19 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>Edit Announcement</Text>
-          <Text style={modalSharedStyles.subTitle}>ID: {announcementToEdit.id}</Text>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>Edit Announcement</Text>
+          <Text style={appSharedStyles.subTitle}>ID: {announcementToEdit.id}</Text>
 
           <Text style={commonSharedStyles.label}>Type:</Text>
-          <View style={adminSharedStyles.pickerContainer}>
+          <View style={appSharedStyles.pickerContainer}>
             <Picker
               selectedValue={type}
               onValueChange={itemValue => setType(itemValue as AnnouncementType)}
               enabled={!mutation.isPending}
-              style={adminSharedStyles.picker}
-              itemStyle={adminSharedStyles.pickerItem}
+              style={appSharedStyles.picker}
+              itemStyle={appSharedStyles.pickerItem}
             >
               {ANNOUNCEMENT_TYPES.map(typeValue => (
                 <Picker.Item
@@ -170,9 +169,9 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
           />
 
           {mutation.isPending && (
-            <View style={modalSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalSharedStyles.loadingText}>Saving Changes...</Text>
+              <Text style={appSharedStyles.loadingText}>Saving Changes...</Text>
             </View>
           )}
 
@@ -183,14 +182,14 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
             </Text>
           )}
 
-          <View style={modalSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
               disabled={isSaveDisabled}
             />
           </View>
-          <View style={modalSharedStyles.footerButton}>
+          <View style={appSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}

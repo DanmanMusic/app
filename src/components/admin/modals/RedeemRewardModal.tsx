@@ -25,7 +25,6 @@ import { RedeemRewardModalProps } from '../../../types/componentProps';
 // Style Imports
 import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
-import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
 export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
@@ -214,7 +213,7 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
           ]}
         >
           <Image source={{ uri: item.imageUrl }} style={styles.rewardImage} resizeMode="contain" />
-          <View style={commonSharedStyles.itemDetailsContainer}>
+          <View style={appSharedStyles.itemDetailsContainer}>
             <Text style={styles.rewardName}>{item.name}</Text>
             <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
               {item.cost} Tickets
@@ -237,11 +236,11 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>Redeem Reward</Text>
-          <Text style={modalSharedStyles.modalContextInfo}>For: {studentName}</Text>
-          <Text style={modalSharedStyles.modalContextInfo}>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>Redeem Reward</Text>
+          <Text style={appSharedStyles.modalContextInfo}>For: {studentName}</Text>
+          <Text style={appSharedStyles.modalContextInfo}>
             Current Balance:{' '}
             {balanceLoading ? 'Loading...' : balanceError ? 'Error' : `${currentBalance} Tickets`}
           </Text>
@@ -263,7 +262,7 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
           {/* Rewards List */}
           {!isLoadingRewards && !isErrorRewards && (
             <FlatList
-              style={modalSharedStyles.modalListContainer}
+              style={appSharedStyles.modalListContainer}
               data={rewardsCatalog} // Already sorted by cost in API fetch? If not, add sort here.
               renderItem={renderRewardItem}
               keyExtractor={item => item.id}
@@ -276,7 +275,7 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
           )}
 
           {/* Footer Buttons */}
-          <View style={modalSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.buttonContainer}>
             <Button
               title={redeemMutation.isPending ? 'Redeeming...' : `Redeem Selected`}
               onPress={handleConfirmRedemption}

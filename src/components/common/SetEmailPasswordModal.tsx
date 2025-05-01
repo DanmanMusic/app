@@ -6,7 +6,6 @@ import Toast from 'react-native-toast-message';
 import { updateAuthCredentials } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
-import { modalSharedStyles } from '../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { getUserDisplayName } from '../../utils/helpers';
 
@@ -99,13 +98,13 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>Set Email & Password</Text>
-          <Text style={modalSharedStyles.modalContextInfo}>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>Set Email & Password</Text>
+          <Text style={appSharedStyles.modalContextInfo}>
             For: {appUser ? getUserDisplayName(appUser) : 'Loading...'}
           </Text>
-          <Text style={modalSharedStyles.modalMessage}>
+          <Text style={appSharedStyles.modalMessage}>
             Set up an email and password for future logins. This will replace PIN-based login for
             this account.
           </Text>
@@ -147,9 +146,9 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
           />
 
           {mutation.isPending && (
-            <View style={modalSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalSharedStyles.loadingText}>Saving Credentials...</Text>
+              <Text style={appSharedStyles.loadingText}>Saving Credentials...</Text>
             </View>
           )}
           {mutation.isError && (
@@ -158,14 +157,14 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
             </Text>
           )}
 
-          <View style={modalSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Credentials'}
               onPress={handleSave}
               disabled={isSaveDisabled}
             />
           </View>
-          <View style={modalSharedStyles.footerButton}>
+          <View style={appSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}

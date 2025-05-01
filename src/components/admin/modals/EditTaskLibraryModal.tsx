@@ -7,9 +7,9 @@ import { updateTaskLibraryItem } from '../../../api/taskLibrary';
 import { TaskLibraryItem } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { EditTaskLibraryModalProps } from '../../../types/componentProps';
-import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
+import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
   visible,
@@ -127,11 +127,11 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>Edit Library Task</Text>
-          <Text style={modalSharedStyles.subTitle}>ID: {taskToEdit.id}</Text>
-          <ScrollView style={modalSharedStyles.scrollView}>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>Edit Library Task</Text>
+          <Text style={appSharedStyles.subTitle}>ID: {taskToEdit.id}</Text>
+          <ScrollView style={appSharedStyles.scrollView}>
             <Text style={commonSharedStyles.label}>Task Title:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -167,9 +167,9 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
           </ScrollView>
 
           {mutation.isPending && (
-            <View style={modalSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalSharedStyles.loadingText}>Saving Changes...</Text>
+              <Text style={appSharedStyles.loadingText}>Saving Changes...</Text>
             </View>
           )}
 
@@ -180,14 +180,14 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
             </Text>
           )}
 
-          <View style={modalSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
               disabled={isSaveDisabled}
             />
           </View>
-          <View style={modalSharedStyles.footerButton}>
+          <View style={appSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}

@@ -8,9 +8,10 @@ import { createAnnouncement } from '../../../api/announcements';
 import { Announcement, AnnouncementType } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { CreateAnnouncementModalProps } from '../../../types/componentProps';
-import { modalSharedStyles } from '../../../styles/modalSharedStyles';
+
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
+import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const ANNOUNCEMENT_TYPES: AnnouncementType[] = [
   'announcement',
@@ -88,9 +89,9 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>Create New Announcement</Text>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>Create New Announcement</Text>
 
           <Text style={commonSharedStyles.label}>Type:</Text>
           <View style={commonSharedStyles.input}>
@@ -134,22 +135,10 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
             editable={!mutation.isPending}
           />
 
-          {/*
-          <Text style={commonSharedStyles.label}>Related Student ID (Optional):</Text>
-          <TextInput
-            style={commonSharedStyles.input}
-            value={relatedStudentId ?? ''}
-            onChangeText={setRelatedStudentId}
-            placeholder="Enter Student ID if applicable"
-            placeholderTextColor={colors.textLight}
-            editable={!mutation.isPending}
-          />
-          */}
-
           {mutation.isPending && (
-            <View style={modalSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalSharedStyles.loadingText}>Creating Announcement...</Text>
+              <Text style={appSharedStyles.loadingText}>Creating Announcement...</Text>
             </View>
           )}
 
@@ -162,14 +151,14 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
             </Text>
           )}
 
-          <View style={modalSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Announcement'}
               onPress={handleCreate}
               disabled={isCreateDisabled}
             />
           </View>
-          <View style={modalSharedStyles.footerButton}>
+          <View style={appSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}

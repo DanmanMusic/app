@@ -24,7 +24,7 @@ const SecureStoreAdapter = {
 };
 
 // --- Restore storageOptions with persistSession: true ---
-let storageOptions: SupabaseClientOptions<'public'>['auth'] = {
+const storageOptions: SupabaseClientOptions<'public'>['auth'] = {
   autoRefreshToken: true,
   persistSession: true, // <-- RESTORE TO TRUE
   detectSessionInUrl: false,

@@ -12,11 +12,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
+// API Imports (keep as is)
 import { fetchAssignedTasks } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
 import { deleteTaskLibraryItem } from '../api/taskLibrary';
 import { fetchUserProfile, fetchStudents } from '../api/users';
 
+// Component Imports (Add SharedHeader, remove unused things if needed)
 import { AdminAnnouncementsSection } from '../components/admin/AdminAnnouncementsSection';
 import { AdminDashboardSection } from '../components/admin/AdminDashboardSection';
 import { AdminHistorySection } from '../components/admin/AdminHistorySection';
@@ -24,16 +26,14 @@ import { AdminInstrumentsSection } from '../components/admin/AdminInstrumentsSec
 import { AdminRewardsSection } from '../components/admin/AdminRewardsSection';
 import { AdminTasksSection } from '../components/admin/AdminTasksSection';
 import { AdminUsersSection } from '../components/admin/AdminUsersSection';
-
 import { AdminStudentDetailView } from '../components/admin/AdminStudentDetailView';
 import { AdminTeacherDetailView } from '../components/admin/AdminTeacherDetailView';
 import { AdminParentDetailView } from '../components/admin/AdminParentDetailView';
-
+import { AdminAdminDetailView } from '../components/admin/AdminAdminDetailView'; // Keep
 import { PendingVerificationItem } from '../components/common/PendingVerificationItem';
 import CreateUserModal from '../components/admin/modals/CreateUserModal';
 import CreateTaskLibraryModal from '../components/admin/modals/CreateTaskLibraryModal';
 import EditTaskLibraryModal from '../components/admin/modals/EditTaskLibraryModal';
-import { ViewAllAssignedTasksModal } from '../components/admin/modals/ViewAllAssignedTasksModal';
 import ManualTicketAdjustmentModal from '../components/admin/modals/ManualTicketAdjustmentModal';
 import RedeemRewardModal from '../components/admin/modals/RedeemRewardModal';
 import AssignTaskModal from '../components/common/AssignTaskModal';
@@ -41,10 +41,11 @@ import ConfirmationModal from '../components/common/ConfirmationModal';
 import EditUserModal from '../components/common/EditUserModal';
 import DeactivateOrDeleteUserModal from '../components/common/DeactivateOrDeleteUserModal';
 import GeneratePinModal from '../components/common/GeneratePinModal';
-import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
+import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal'; // Keep
+import { SharedHeader } from '../components/common/SharedHeader'; // *** IMPORT NEW HEADER ***
 
+// Context & Type Imports (keep as is)
 import { useAuth } from '../contexts/AuthContext';
-
 import {
   AssignedTask,
   Instrument,
@@ -55,13 +56,12 @@ import {
 } from '../types/dataTypes';
 import { AdminViewProps, UserTab } from '../types/componentProps';
 
+// Style & Helper Imports (keep as is)
 import { getUserDisplayName } from '../utils/helpers';
-import { adminSharedStyles } from '../styles/adminSharedStyles';
 import { appSharedStyles } from '../styles/appSharedStyles';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
-import { StyledButton } from '../components/common/StyledButton';
-import { AdminAdminDetailView } from '../components/admin/AdminAdminDetailView';
+// Removed StyledButton import as it's not used here directly anymore
 
 type AdminSection =
   | 'dashboard'
@@ -74,9 +74,10 @@ type AdminSection =
   | 'instruments';
 
 export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModal }) => {
-  const { currentUserId: adminUserId } = useAuth();
+  const { currentUserId: adminUserId } = useAuth(); // Keep useAuth
   const queryClient = useQueryClient();
 
+  // Keep existing state
   const [viewingSection, setViewingSection] = useState<AdminSection>('dashboard');
   const [activeUserTab, setActiveUserTab] = useState<UserTab>('students');
   const [studentFilter, setStudentFilter] = useState<UserStatus | 'all'>('active');
@@ -86,8 +87,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const [isCreateUserModalVisible, setIsCreateUserModalVisible] = useState(false);
   const [isAssignTaskModalVisible, setIsAssignTaskModalVisible] = useState(false);
   const [assignTaskTargetStudentId, setAssignTaskTargetStudentId] = useState<string | null>(null);
-  const [isViewAllAssignedTasksModalVisible, setIsViewAllAssignedTasksModalVisible] =
-    useState(false);
   const [isCreateTaskModalVisible, setIsCreateTaskModalVisible] = useState(false);
   const [isEditTaskModalVisible, setIsEditTaskModalVisible] = useState(false);
   const [isDeleteTaskModalVisible, setIsDeleteTaskModalVisible] = useState(false);
@@ -96,12 +95,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const [isAdjustmentModalVisible, setIsAdjustmentModalVisible] = useState(false);
   const [isRedeemModalVisible, setIsRedeemModalVisible] = useState(false);
   const [isGeneratePinModalVisible, setIsGeneratePinModalVisible] = useState(false);
-  const [isSetCredentialsModalVisible, setIsSetCredentialsModalVisible] = useState(false);
+  const [isSetCredentialsModalVisible, setIsSetCredentialsModalVisible] = useState(false); // Keep state for the modal
   const [taskToEdit, setTaskToEdit] = useState<TaskLibraryItem | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<TaskLibraryItem | null>(null);
   const [userToManage, setUserToManage] = useState<User | null>(null);
   const [userForPin, setUserForPin] = useState<User | null>(null);
 
+  // Keep existing queries
   const {
     data: adminUser,
     isLoading: adminLoading,
@@ -160,6 +160,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     staleTime: 5 * 60 * 1000,
   });
 
+  // Keep mutations
   const deleteTaskMutation = useMutation({
     mutationFn: deleteTaskLibraryItem,
     onSuccess: (_, deletedTaskId) => {
@@ -177,6 +178,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     },
   });
 
+  // Keep handlers
   const handleViewManageUser = (userId: string, role: UserRole) => {
     setViewingUserId(userId);
     setViewingUserRole(role);
@@ -205,8 +207,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     setAssignTaskTargetStudentId(null);
   };
   const handleInitiateCreateUser = () => setIsCreateUserModalVisible(true);
-  const handleViewAllAssignedTasks = () => setIsViewAllAssignedTasksModalVisible(true);
-  const handleViewAllAssignedTasksModalClose = () => setIsViewAllAssignedTasksModalVisible(false);
   const handleInitiateCreateTask = () => setIsCreateTaskModalVisible(true);
   const handleCloseCreateTaskModal = () => setIsCreateTaskModalVisible(false);
   const handleInitiateEditTask = (task: TaskLibraryItem) => {
@@ -283,6 +283,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     setViewingUserRole('student');
   };
 
+  // Keep loading/error checks
   const isLoadingCoreData = adminLoading || instrumentsLoading;
   if (isLoadingCoreData) {
     return (
@@ -315,7 +316,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     );
   }
 
+  // Keep main content rendering logic
   const renderMainContent = () => {
+    // ... (Keep the existing switch/case logic for viewingUserId and viewingSection) ...
     if (viewingUserId && viewingUserRole) {
       if (detailUserLoading) {
         return (
@@ -327,10 +330,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
       }
 
       if (!detailUserData) {
+        // Handled user deleted case in handleDeletionSuccess, this is for fetch errors
         return (
           <View style={appSharedStyles.container}>
             <Text style={commonSharedStyles.errorText}>
-              Failed to load user details for ID: {viewingUserId}.
+              Failed to load details for user ID: {viewingUserId}. User might have been deleted.
             </Text>
             <Button title="Back to List" onPress={handleBackFromDetailView} />
           </View>
@@ -453,6 +457,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             onInitiateCreateTask={handleInitiateCreateTask}
             onInitiateEditTask={handleInitiateEditTask}
             onInitiateDeleteTask={handleInitiateDeleteTask}
+            handleInternalInitiateVerificationModal={handleInternalInitiateVerificationModal}
             deleteTaskMutationPending={deleteTaskMutation.isPending}
           />
         );
@@ -470,46 +475,29 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     }
   };
 
-  const getHeaderTitle = () => {
-    if (viewingUserId && viewingUserRole) {
-      const detailTitle = viewingUserRole.charAt(0).toUpperCase() + viewingUserRole.slice(1);
-      const displayName = detailUserData
-        ? getUserDisplayName(detailUserData)
-        : `View ${detailTitle}`;
-      return displayName;
-    }
-    return `Admin: ${getUserDisplayName(adminUser)}`;
-  };
-
   const showBackButton = !!viewingUserId;
 
   return (
     <SafeAreaView style={appSharedStyles.safeArea}>
+      {/* --- UPDATED Header Section --- */}
       <View style={appSharedStyles.headerContainer}>
+        {/* Left Side: Back Button (Conditional) */}
         <View style={appSharedStyles.headerSideContainer}>
-          {showBackButton ? (
-            <Button title="← Back" onPress={handleBackFromDetailView} />
-          ) : (
-            <View style={{ width: 60 }} />
-          )}
+          {showBackButton && <Button title="← Back" onPress={handleBackFromDetailView} />}
+          {/* Add a placeholder if no back button to maintain spacing, adjust width as needed */}
+          {!showBackButton && <View style={{ width: 60 }} />}
         </View>
-        <Text style={appSharedStyles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
-          {getHeaderTitle()}
-        </Text>
-        <View style={appSharedStyles.headerSideContainer}>
-          {!viewingUserId && (
-            <Button
-              title="Set Login"
-              onPress={() => setIsSetCredentialsModalVisible(true)}
-              color={colors.info}
-            />
-          )}
-        </View>
-      </View>
 
+        {/* Center/Right: Shared Header fills remaining space */}
+        <SharedHeader onSetLoginPress={() => setIsSetCredentialsModalVisible(true)} />
+      </View>
+      {/* --- END UPDATED Header Section --- */}
+
+      {/* --- Keep Main Content & Modals --- */}
       {!viewingUserId ? (
         <ScrollView style={appSharedStyles.contentArea}>
-          <View style={adminSharedStyles.adminNav}>
+          {/* Admin Navigation (Keep as is) */}
+          <View style={appSharedStyles.adminNav}>
             <Button
               title="Dashboard"
               onPress={() => setViewingSection('dashboard')}
@@ -546,25 +534,18 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
               disabled={viewingSection === 'instruments'}
             />
           </View>
+
+          {/* Render selected section content */}
           {renderMainContent()}
-          {viewingSection === 'tasks' && (
-            <View
-              style={{
-                alignItems: 'flex-start',
-                marginTop: 10,
-                marginBottom: 20,
-                paddingHorizontal: 15,
-              }}
-            >
-              <Button title="View All Assigned Tasks" onPress={handleViewAllAssignedTasks} />
-            </View>
-          )}
           <View style={{ height: 40 }} />
+          {/* Spacer */}
         </ScrollView>
       ) : (
+        // Render detail view directly if viewing a user
         <View style={appSharedStyles.contentArea}>{renderMainContent()}</View>
       )}
 
+      {/* Keep all Modals at the bottom */}
       <CreateUserModal
         visible={isCreateUserModalVisible}
         onClose={() => setIsCreateUserModalVisible(false)}
@@ -573,11 +554,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         visible={isAssignTaskModalVisible}
         onClose={handleAssignTaskModalClose}
         preselectedStudentId={assignTaskTargetStudentId}
-      />
-      <ViewAllAssignedTasksModal
-        visible={isViewAllAssignedTasksModalVisible}
-        onClose={handleViewAllAssignedTasksModalClose}
-        onInitiateVerification={handleInternalInitiateVerificationModal}
       />
       <CreateTaskLibraryModal
         visible={isCreateTaskModalVisible}
@@ -613,7 +589,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         user={userForPin}
         onClose={handleClosePinGeneration}
       />
-
       {userToManage?.role === 'student' && adminUserId && (
         <ManualTicketAdjustmentModal
           visible={isAdjustmentModalVisible}
@@ -622,17 +597,15 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           studentName={getUserDisplayName(userToManage)}
         />
       )}
-
       {userToManage?.role === 'student' && adminUserId && (
         <RedeemRewardModal
           visible={isRedeemModalVisible}
           onClose={handleCloseRedeemModal}
           studentId={userToManage.id}
           studentName={getUserDisplayName(userToManage)}
-          redeemerId={adminUserId}
+          redeemerId={adminUserId} // Keep passing adminId here for now
         />
       )}
-
       <SetEmailPasswordModal
         visible={isSetCredentialsModalVisible}
         onClose={handleCloseSetCredentialsModal}
@@ -641,6 +614,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   );
 };
 
+// Keep existing styles
 const styles = StyleSheet.create({
   centered: {
     flex: 1,

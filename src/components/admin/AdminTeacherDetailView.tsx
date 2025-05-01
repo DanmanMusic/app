@@ -16,7 +16,6 @@ import { User, SimplifiedStudent } from '../../types/dataTypes';
 
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { adminSharedStyles } from '../../styles/adminSharedStyles';
 import { colors } from '../../styles/colors';
 import { getUserDisplayName } from '../../utils/helpers';
 import { AdminTeacherDetailViewProps } from '../../types/componentProps';
@@ -121,7 +120,7 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
         </Text>
       </Text>
       <View
-        style={[adminSharedStyles.adminStudentActions, commonSharedStyles.actionButtonsContainer]}
+        style={[appSharedStyles.adminStudentActions, appSharedStyles.actionButtonsContainer]}
       >
         <Button title="Edit Info" onPress={handleEdit} color={colors.warning} />
         <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
@@ -148,7 +147,7 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
           data={linkedStudents.sort((a, b) => a.name.localeCompare(b.name))}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <View style={[appSharedStyles.itemContainer, styles.linkedStudentItem]}>
+            <View style={[commonSharedStyles.baseItem, styles.linkedStudentItem]}>
               <Text style={appSharedStyles.itemTitle}>{item.name}</Text>
               <Text style={appSharedStyles.itemDetailText}>
                 Status:{' '}

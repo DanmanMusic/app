@@ -3,25 +3,11 @@ import { StyleSheet } from 'react-native';
 import { colors } from './colors';
 
 export const commonSharedStyles = StyleSheet.create({
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    justifyContent: 'flex-start',
-    marginBottom: 15,
-    marginTop: 15,
-  },
-  announcementDate: {
-    color: colors.textVeryLight,
-    fontSize: 12,
-    marginTop: 8,
-    textAlign: 'right',
-  },
-  announcementTitle: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
+  baseItem: {
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 10,
   },
   errorContainer: {
     alignItems: 'center',
@@ -37,32 +23,6 @@ export const commonSharedStyles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
   },
-  historyItemAmount: {
-    fontWeight: 'bold',
-  },
-  historyItemContainer: {
-    backgroundColor: colors.backgroundGrey,
-    borderColor: colors.borderSecondary,
-    borderRadius: 6,
-    borderWidth: 1,
-    marginBottom: 5,
-    padding: 10,
-  },
-  historyItemDetails: {
-    color: colors.textSecondary,
-    fontSize: 14,
-  },
-  historyItemNotes: {
-    color: colors.textLight,
-    fontSize: 13,
-    fontStyle: 'italic',
-    marginTop: 4,
-  },
-  historyItemTimestamp: {
-    color: colors.textVeryLight,
-    fontSize: 12,
-    marginBottom: 4,
-  },
   input: {
     backgroundColor: colors.backgroundPrimary,
     borderColor: colors.borderPrimary,
@@ -70,26 +30,10 @@ export const commonSharedStyles = StyleSheet.create({
     borderWidth: 1,
     color: colors.textPrimary,
     fontSize: 16,
-    marginBottom: 15,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    marginBottom: 5,
+    paddingHorizontal: 5,
+    paddingVertical: 5,
     width: '100%',
-  },
-  itemContentRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: 10,
-  },
-  itemDetailsContainer: {
-    flex: 1,
-  },
-  itemImageMedium: {
-    borderColor: colors.borderPrimary,
-    borderRadius: 4,
-    borderWidth: 1,
-    height: 60,
-    marginRight: 15,
-    width: 60,
   },
   label: {
     alignSelf: 'flex-start',
@@ -99,60 +43,10 @@ export const commonSharedStyles = StyleSheet.create({
     marginBottom: 5,
     width: '100%',
   },
-  pageInfo: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    fontWeight: '600',
-    marginHorizontal: 15,
-  },
-  paginationContainer: {
-    alignItems: 'center',
-    borderTopColor: colors.borderSecondary,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 15,
-  },
-  pendingNote: {
-    color: colors.warning,
-    fontSize: 13,
-    fontStyle: 'italic',
-    marginTop: 5,
-  },
-  rewardName: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  searchInput: {
-    backgroundColor: colors.backgroundPrimary,
-    borderColor: colors.borderPrimary,
-    borderRadius: 5,
-    borderWidth: 1,
-    color: colors.textPrimary,
-    fontSize: 15,
-    height: 40,
-    paddingHorizontal: 10,
-  },
-  selectionContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'center',
-    marginBottom: 10,
-    width: '100%',
-  },
   separator: {
     backgroundColor: colors.borderSecondary,
     height: 1,
     marginVertical: 10,
-  },
-  taskItemStatus: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    marginBottom: 8,
   },
   textArea: {
     backgroundColor: colors.backgroundPrimary,
@@ -167,8 +61,5 @@ export const commonSharedStyles = StyleSheet.create({
     paddingVertical: 8,
     textAlignVertical: 'top',
     width: '100%',
-  },
-  textCenter: {
-    textAlign: 'center',
   },
 });

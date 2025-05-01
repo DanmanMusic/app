@@ -17,9 +17,9 @@ import { updateReward } from '../../../api/rewards';
 import { RewardItem } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { EditRewardModalProps } from '../../../types/componentProps';
-import { modalSharedStyles } from '../../../styles/modalSharedStyles';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
+import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit, onClose }) => {
   const [name, setName] = useState('');
@@ -98,7 +98,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
       }
     }
     try {
-      let result = await ImagePicker.launchImageLibraryAsync({
+      const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
@@ -201,11 +201,11 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={modalSharedStyles.centeredView}>
-        <View style={modalSharedStyles.modalView}>
-          <Text style={modalSharedStyles.modalTitle}>Edit Reward</Text>
-          <Text style={modalSharedStyles.subTitle}>ID: {rewardToEdit.id}</Text>
-          <ScrollView style={modalSharedStyles.scrollView}>
+      <View style={appSharedStyles.centeredView}>
+        <View style={appSharedStyles.modalView}>
+          <Text style={appSharedStyles.modalTitle}>Edit Reward</Text>
+          <Text style={appSharedStyles.subTitle}>ID: {rewardToEdit.id}</Text>
+          <ScrollView style={appSharedStyles.scrollView}>
             <Text style={commonSharedStyles.label}>Reward Name:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -227,11 +227,11 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
               editable={!mutation.isPending}
             />
             <Text style={commonSharedStyles.label}>Image:</Text>
-            <View style={modalSharedStyles.iconPreviewContainer}>
+            <View style={appSharedStyles.iconPreviewContainer}>
               {previewSource ? (
                 <Image
                   source={previewSource}
-                  style={modalSharedStyles.iconPreview}
+                  style={appSharedStyles.iconPreview}
                   resizeMode="contain"
                 />
               ) : (
@@ -268,9 +268,9 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
             />
           </ScrollView>
           {mutation.isPending && (
-            <View style={modalSharedStyles.loadingContainer}>
+            <View style={appSharedStyles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={modalSharedStyles.loadingText}>Saving Changes...</Text>
+              <Text style={appSharedStyles.loadingText}>Saving Changes...</Text>
             </View>
           )}
           {mutation.isError && (
@@ -279,14 +279,14 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
               {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
             </Text>
           )}
-          <View style={modalSharedStyles.buttonContainer}>
+          <View style={appSharedStyles.buttonContainer}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
               disabled={isSaveDisabled}
             />
           </View>
-          <View style={modalSharedStyles.footerButton}>
+          <View style={appSharedStyles.footerButton}>
             <Button
               title="Cancel"
               onPress={onClose}

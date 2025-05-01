@@ -10,7 +10,6 @@ import { TeacherTasksSectionProps } from '../../types/componentProps';
 
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
-import { adminSharedStyles } from '../../styles/adminSharedStyles';
 
 export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
   onInitiateAssignTaskGeneral,
@@ -32,7 +31,7 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
       <View style={{ alignItems: 'flex-start', marginBottom: 20 }}>
         <Button title="Assign Task" onPress={onInitiateAssignTaskGeneral} />
       </View>
-      <Text style={adminSharedStyles.sectionSubTitle}> Task Library ({taskLibrary.length}) </Text>
+      <Text style={appSharedStyles.sectionSubTitle}> Task Library ({taskLibrary.length}) </Text>
       {isLoading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />}
       {isError && (
         <Text style={appSharedStyles.textDanger}>Error loading task library: {error?.message}</Text>

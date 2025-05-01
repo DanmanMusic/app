@@ -119,7 +119,7 @@ const fetchProfilesByRole = async ({
   const startIndex = (page - 1) * limit;
   const endIndex = startIndex + limit - 1;
 
-  let query = client
+  const query = client
     .from('profiles')
     .select('id, role, first_name, last_name, nickname, status', { count: 'exact' })
     .eq('role', role)
