@@ -7,7 +7,6 @@ import {
   Button,
   FlatList,
   ActivityIndicator,
-  StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
@@ -288,9 +287,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   if (isLoadingCoreData) {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={styles.centered}>
+        <View style={appSharedStyles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading Admin Data...</Text>
+          <Text style={appSharedStyles.loadingText}>Loading Admin Data...</Text>
         </View>
       </SafeAreaView>
     );
@@ -322,9 +321,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     if (viewingUserId && viewingUserRole) {
       if (detailUserLoading) {
         return (
-          <View style={styles.centered}>
+          <View style={appSharedStyles.centered}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Loading User Details...</Text>
+            <Text style={appSharedStyles.loadingText}>Loading User Details...</Text>
           </View>
         );
       }
@@ -613,26 +612,3 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     </SafeAreaView>
   );
 };
-
-// Keep existing styles
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  activeStatus: {
-    fontWeight: 'bold',
-    color: colors.success,
-  },
-  inactiveStatus: {
-    fontWeight: 'bold',
-    color: colors.secondary,
-  },
-  loadingText: {
-    marginTop: 10,
-    color: colors.textSecondary,
-    fontSize: 16,
-  },
-});

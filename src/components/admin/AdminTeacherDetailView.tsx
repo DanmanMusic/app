@@ -5,7 +5,6 @@ import {
   Button,
   ActivityIndicator,
   ScrollView,
-  StyleSheet,
   FlatList,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
@@ -84,7 +83,7 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
 
   if (teacherLoading) {
     return (
-      <View style={[styles.centered]}>
+      <View style={[appSharedStyles.centered]}>
         <ActivityIndicator size="large" color={colors.primary} />
         <Text>Loading Teacher Details...</Text>
       </View>
@@ -115,7 +114,7 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
       <Text style={appSharedStyles.itemDetailText}>ID: {teacher.id}</Text>
       <Text style={appSharedStyles.itemDetailText}>
         Status:{' '}
-        <Text style={isTeacherActive ? styles.activeStatus : styles.inactiveStatus}>
+        <Text style={isTeacherActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus}>
           {teacher.status}
         </Text>
       </Text>
@@ -147,15 +146,15 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
           data={linkedStudents.sort((a, b) => a.name.localeCompare(b.name))}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <View style={[commonSharedStyles.baseItem, styles.linkedStudentItem]}>
+            <View style={[commonSharedStyles.baseItem, appSharedStyles.linkedStudentItem]}>
               <Text style={appSharedStyles.itemTitle}>{item.name}</Text>
               <Text style={appSharedStyles.itemDetailText}>
                 Status:{' '}
-                <Text style={item.isActive ? styles.activeStatus : styles.inactiveStatus}>
+                <Text style={item.isActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus}>
                   {item.isActive ? 'Active' : 'Inactive'}
                 </Text>
               </Text>
-              <View style={styles.linkedStudentActions}>
+              <View style={appSharedStyles.linkedStudentActions}>
                 <Button title="View Profile" onPress={() => onViewStudentProfile(item.id)} />
               </View>
             </View>
@@ -173,27 +172,3 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
     </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  activeStatus: {
-    fontWeight: 'bold',
-    color: colors.success,
-  },
-  inactiveStatus: {
-    fontWeight: 'bold',
-    color: colors.secondary,
-  },
-  linkedStudentItem: {
-    backgroundColor: colors.backgroundSecondary,
-  },
-  linkedStudentActions: {
-    marginTop: 8,
-    alignItems: 'flex-start',
-  },
-});

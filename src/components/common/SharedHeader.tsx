@@ -1,11 +1,10 @@
 // src/components/common/SharedHeader.tsx
 import React, { useState, useMemo } from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
-
+import { View, Text, Button } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
-import { getUserDisplayName } from '../../utils/helpers';
 import { colors } from '../../styles/colors';
 import ConfirmationModal from './ConfirmationModal';
+import { appSharedStyles } from '../../styles/appSharedStyles';
 
 interface SharedHeaderProps {
   onSetLoginPress: () => void; // Callback to open the SetEmailPasswordModal
@@ -60,14 +59,14 @@ export const SharedHeader: React.FC<SharedHeaderProps> = ({ onSetLoginPress }) =
 
   return (
     <>
-      <View style={styles.sharedHeaderContentContainer}>
+      <View style={appSharedStyles.sharedHeaderContentContainer}>
         {/* Left-aligned Name/Nickname */}
-        <Text style={styles.userNameText} numberOfLines={1} ellipsizeMode="tail">
+        <Text style={appSharedStyles.userNameText} numberOfLines={1} ellipsizeMode="tail">
           {displayName}
         </Text>
 
         {/* Right-aligned Buttons */}
-        <View style={styles.buttonsContainer}>
+        <View style={appSharedStyles.buttonsContainer}>
           {canSetLogin && (
             <Button title="Set Login" onPress={onSetLoginPress} color={colors.info} />
           )}
@@ -89,26 +88,3 @@ export const SharedHeader: React.FC<SharedHeaderProps> = ({ onSetLoginPress }) =
     </>
   );
 };
-
-// Styles specific to the header structure
-const styles = StyleSheet.create({
-  sharedHeaderContentContainer: {
-    flex: 1, // Take remaining space in the parent's header row
-    flexDirection: 'row',
-    justifyContent: 'space-between', // Push name left, buttons right
-    alignItems: 'center',
-    marginLeft: 5, // Add some margin if a back button might appear to its left
-  },
-  userNameText: {
-    fontSize: 18, // Adjust size
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-    flexShrink: 1, // Allow text to shrink if needed
-    marginRight: 10, // Space before buttons
-  },
-  buttonsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10, // Space between buttons if both shown
-  },
-});

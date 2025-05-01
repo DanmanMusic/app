@@ -9,7 +9,6 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
-  StyleSheet,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
@@ -379,7 +378,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                 <View style={appSharedStyles.roleSpecificSection}>
                   <Text style={appSharedStyles.roleSectionTitle}>Linked Teachers</Text>
                   {!isCallerAdmin && (
-                    <Text style={styles.infoText}>Only Admins can modify teacher links.</Text>
+                    <Text style={appSharedStyles.infoText}>Only Admins can modify teacher links.</Text>
                   )}
                   {isLoadingTeachers && <ActivityIndicator color={colors.primary} />}
                   {isErrorTeachers && (
@@ -388,7 +387,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     </Text>
                   )}
                   {!isLoadingTeachers && !isErrorTeachers && (
-                    <View style={commonSharedStyles.selectionContainer}>
+                    <View style={appSharedStyles.selectionContainer}>
                       {activeTeachers.length > 0 ? (
                         activeTeachers.map(teacher => {
                           const isSelected = selectedTeacherIds.includes(teacher.id);
@@ -448,16 +447,5 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     </Modal>
   );
 };
-
-// Styles
-const styles = StyleSheet.create({
-  infoText: {
-    fontSize: 12,
-    color: colors.textLight,
-    textAlign: 'center',
-    marginBottom: 5, // Added margin below
-    fontStyle: 'italic',
-  },
-});
 
 export default EditUserModal;

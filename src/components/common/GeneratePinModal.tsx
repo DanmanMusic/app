@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, Button, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import { Modal, View, Text, Button, ActivityIndicator, Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 import { generatePinForUser } from '../../api/users';
@@ -19,7 +19,7 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
   const [isLoading, setIsLoading] = useState(false);
   const [generatedPin, setGeneratedPin] = useState<string | null>(null);
 
-  const [generatedForRole, setGeneratedForRole] = useState<UserRole | 'parent' | null>(null);
+  const [generatedForRole, setGeneratedForRole] = useState<UserRole | null>(null);
 
   useEffect(() => {
     if (!visible) {
@@ -35,21 +35,19 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
     setIsLoading(false);
   }, [user]);
 
-  const handleGeneratePin = async (generateAsRole: UserRole | 'parent') => {
+  const handleGeneratePin = async (generateAsRole: UserRole) => {
     if (!user || isLoading) return;
 
-    const roleToSendToApi = generateAsRole;
-
-    setGeneratedForRole(roleToSendToApi);
+    setGeneratedForRole(generateAsRole);
     setIsLoading(true);
     setGeneratedPin(null);
 
     try {
       console.log(
-        `[GeneratePinModal] Calling API to generate PIN for user ${user.id} (User Role: ${user.role}), intended login role: ${roleToSendToApi}`
+        `[GeneratePinModal] Calling API to generate PIN for user ${user.id} (User Role: ${user.role}), intended login role: ${generateAsRole}`
       );
 
-      const pinFromApi = await generatePinForUser(user.id, roleToSendToApi);
+      const pinFromApi = await generatePinForUser(user.id, generateAsRole);
 
       setGeneratedPin(pinFromApi);
       Toast.show({
@@ -99,10 +97,10 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
           )}
 
           {generatedPin && !isLoading && (
-            <View style={styles.pinDisplayContainer}>
-              <Text style={styles.pinLabel}>Generated PIN for {generatedForRole}:</Text>
-              <Text style={styles.pinValue}>{generatedPin}</Text>
-              <Text style={styles.pinInstructions}>
+            <View style={appSharedStyles.pinDisplayContainer}>
+              <Text style={appSharedStyles.pinLabel}>Generated PIN for {generatedForRole}:</Text>
+              <Text style={appSharedStyles.pinValue}>{generatedPin}</Text>
+              <Text style={appSharedStyles.pinInstructions}>
                 Provide this PIN to the {generatedForRole} for login. It will expire shortly.
               </Text>
             </View>
@@ -117,15 +115,6 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
                   title={`Generate PIN for ${userActualRole.charAt(0).toUpperCase() + userActualRole.slice(1)} Login`}
                   onPress={() => handleGeneratePin(userActualRole)}
                   disabled={isLoading}
-                />
-              )}
-
-              {userActualRole === 'student' && (
-                <Button
-                  title={`Generate PIN for Parent Login`}
-                  onPress={() => handleGeneratePin('parent')}
-                  disabled={isLoading}
-                  color={colors.success}
                 />
               )}
             </View>
@@ -143,42 +132,5 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  pinDisplayContainer: {
-    alignItems: 'center',
-    marginVertical: 20,
-    padding: 15,
-    backgroundColor: colors.backgroundHighlight,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.borderPrimary,
-  },
-  pinLabel: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginBottom: 5,
-    fontWeight: '600',
-  },
-  pinValue: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: colors.primary,
-    letterSpacing: 3,
-    marginBottom: 10,
-    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
-    backgroundColor: colors.backgroundPrimary,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: colors.borderSecondary,
-  },
-  pinInstructions: {
-    fontSize: 13,
-    color: colors.textLight,
-    textAlign: 'center',
-  },
-});
 
 export default GeneratePinModal;

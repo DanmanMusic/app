@@ -1,4 +1,3 @@
-import { AuthUser } from '@supabase/supabase-js';
 import { getSupabase } from '../lib/supabaseClient';
 import { SimplifiedStudent, User, UserRole, UserStatus } from '../types/dataTypes';
 import { getUserDisplayName } from '../utils/helpers';
@@ -611,7 +610,7 @@ export const fetchActiveProfilesForDevSelector = async (): Promise<
  */
 export const generatePinForUser = async (
   targetUserId: string,
-  targetRole: 'student' | 'parent'
+  targetRole: UserRole
 ): Promise<string> => {
   const client = getSupabase();
   console.log(

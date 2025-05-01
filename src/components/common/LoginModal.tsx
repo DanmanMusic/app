@@ -7,7 +7,6 @@ import {
   Button,
   TextInput,
   ActivityIndicator,
-  StyleSheet,
   TouchableOpacity,
   Keyboard,
 } from 'react-native';
@@ -157,25 +156,25 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
       <View style={appSharedStyles.centeredView}>
         <View style={appSharedStyles.modalView}>
           <Text style={appSharedStyles.modalTitle}>Login</Text>
-          <View style={styles.toggleContainer}>
+          <View style={appSharedStyles.toggleContainer}>
             <TouchableOpacity
-              style={[styles.toggleButton, mode === 'email' && styles.toggleButtonActive]}
+              style={[appSharedStyles.toggleButton, mode === 'email' && appSharedStyles.toggleButtonActive]}
               onPress={() => setMode('email')}
               disabled={isLoading}
             >
               <Text
-                style={[styles.toggleButtonText, mode === 'email' && styles.toggleButtonTextActive]}
+                style={[appSharedStyles.toggleButtonText, mode === 'email' && appSharedStyles.toggleButtonTextActive]}
               >
                 Email / Password
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toggleButton, mode === 'pin' && styles.toggleButtonActive]}
+              style={[appSharedStyles.toggleButton, mode === 'pin' && appSharedStyles.toggleButtonActive]}
               onPress={() => setMode('pin')}
               disabled={isLoading}
             >
               <Text
-                style={[styles.toggleButtonText, mode === 'pin' && styles.toggleButtonTextActive]}
+                style={[appSharedStyles.toggleButtonText, mode === 'pin' && appSharedStyles.toggleButtonTextActive]}
               >
                 Login PIN
               </Text>
@@ -183,7 +182,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
           </View>
 
           {mode === 'email' && (
-            <View style={styles.formContainer}>
+            <View style={appSharedStyles.formContainer}>
               <Text style={commonSharedStyles.label}>Email:</Text>
               <TextInput
                 style={commonSharedStyles.input}
@@ -218,7 +217,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
           )}
 
           {mode === 'pin' && (
-            <View style={styles.formContainer}>
+            <View style={appSharedStyles.formContainer}>
               <Text style={commonSharedStyles.label}>One-Time PIN:</Text>
               <TextInput
                 style={commonSharedStyles.input}
@@ -264,40 +263,5 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  toggleContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.backgroundPrimary,
-  },
-  toggleButtonActive: {
-    backgroundColor: colors.primary,
-  },
-  toggleButtonText: {
-    color: colors.primary,
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  toggleButtonTextActive: {
-    color: colors.textWhite,
-  },
-  formContainer: {
-    width: '100%',
-    alignItems: 'stretch',
-  },
-});
 
 export default LoginModal;

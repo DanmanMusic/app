@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Slider from '@react-native-community/slider';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Modal, View, Text, Button, ActivityIndicator, StyleSheet } from 'react-native';
+import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 // API Imports (Assuming updateAssignedTask will call the verifyTask Edge Function)
@@ -285,7 +285,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               Status Selected:{' '}
               <Text
                 style={[
-                  styles.statusText,
+                  appSharedStyles.statusText,
                   {
                     color:
                       selectedStatus === 'verified'
@@ -328,7 +328,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
                 </View>
               </>
             ) : (
-              <Text style={styles.infoText}>No points awarded for 'Incomplete' status.</Text>
+              <Text style={appSharedStyles.infoText}>No points awarded for 'Incomplete' status.</Text>
             )}
 
             {/* Display mutation status */}
@@ -412,20 +412,5 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   // Fallback if state is somehow invalid
   return null;
 };
-
-// Local styles
-const styles = StyleSheet.create({
-  statusText: {
-    fontWeight: 'bold',
-    // Color is set inline based on status
-  },
-  infoText: {
-    fontSize: 14, // Slightly larger info text
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 15,
-    marginTop: 10, // Add some top margin
-  },
-});
 
 export default TaskVerificationModal;

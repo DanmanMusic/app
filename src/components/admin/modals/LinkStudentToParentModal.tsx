@@ -10,7 +10,6 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  StyleSheet,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
@@ -145,7 +144,7 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
 
           {/* Search Input */}
           <TextInput
-            style={[commonSharedStyles.input, styles.searchInput]}
+            style={[commonSharedStyles.input, appSharedStyles.searchInput]}
             placeholder="Search active students by name..."
             placeholderTextColor={colors.textLight}
             value={searchTerm}
@@ -156,7 +155,7 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
           />
 
           {/* Student List */}
-          <View style={styles.listContainer}>
+          <View style={appSharedStyles.listContainer}>
             {isLoadingStudents && (
               <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
             )}
@@ -174,15 +173,15 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
                     onPress={() => handleSelectStudent(item)}
                     disabled={linkMutation.isPending}
                     style={[
-                      styles.studentItem,
-                      item.id === selectedStudentId ? styles.selectedStudentItem : {},
+                      appSharedStyles.studentItem,
+                      item.id === selectedStudentId ? appSharedStyles.selectedStudentItem : {},
                     ]}
                   >
-                    <Text style={styles.studentName}>{item.name}</Text>
-                    {item.id === selectedStudentId && <Text style={styles.checkmark}>✓</Text>}
+                    <Text style={appSharedStyles.studentName}>{item.name}</Text>
+                    {item.id === selectedStudentId && <Text style={appSharedStyles.checkmark}>✓</Text>}
                   </TouchableOpacity>
                 )}
-                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                ItemSeparatorComponent={() => <View style={appSharedStyles.separator} />}
                 ListEmptyComponent={
                   <Text style={appSharedStyles.emptyListText}>
                     {searchTerm
@@ -196,7 +195,7 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
 
           {/* Selected Student Confirmation Display */}
           {selectedStudentName && (
-            <Text style={styles.selectionConfirmation}>Selected: {selectedStudentName}</Text>
+            <Text style={appSharedStyles.selectionConfirmation}>Selected: {selectedStudentName}</Text>
           )}
 
           {/* Mutation Status */}
@@ -236,49 +235,5 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
     </Modal>
   );
 };
-
-// Local Styles
-const styles = StyleSheet.create({
-  searchInput: {
-    marginBottom: 10,
-  },
-  listContainer: {
-    flexGrow: 0, // Prevent FlatList from taking all height
-    maxHeight: 250, // Limit height for scrolling
-    borderColor: colors.borderPrimary,
-    borderWidth: 1,
-    borderRadius: 5,
-    marginBottom: 15,
-  },
-  studentItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  selectedStudentItem: {
-    backgroundColor: colors.backgroundHighlight,
-  },
-  studentName: {
-    fontSize: 16,
-    color: colors.textPrimary,
-  },
-  checkmark: {
-    fontSize: 18,
-    color: colors.primary,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: colors.borderSecondary,
-  },
-  selectionConfirmation: {
-    textAlign: 'center',
-    fontStyle: 'italic',
-    color: colors.textSecondary,
-    marginBottom: 10,
-    fontSize: 15,
-  },
-});
 
 export default LinkStudentToParentModal;

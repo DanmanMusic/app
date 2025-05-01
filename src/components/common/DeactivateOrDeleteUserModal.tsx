@@ -1,7 +1,7 @@
 // src/components/common/DeactivateOrDeleteUserModal.tsx
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Modal, View, Text, Button, ActivityIndicator, StyleSheet } from 'react-native';
+import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 // API Imports
@@ -173,7 +173,7 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
             <Text style={appSharedStyles.modalContextInfo}>User: {displayName}</Text>
             <Text style={appSharedStyles.modalContextInfo}>
               Current Status:{' '}
-              <Text style={isCurrentlyActive ? styles.activeStatus : styles.inactiveStatus}>
+              <Text style={isCurrentlyActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus}>
                 {currentStatusText}
               </Text>
             </Text>
@@ -247,18 +247,5 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
     </>
   );
 };
-
-// Styles
-const styles = StyleSheet.create({
-  activeStatus: {
-    fontWeight: 'bold',
-    color: colors.success,
-  },
-  inactiveStatus: {
-    fontWeight: 'bold',
-    color: colors.secondary, // Or use warning/danger color for inactive?
-  },
-  // infoText removed as not used here
-});
 
 export default DeactivateOrDeleteUserModal;

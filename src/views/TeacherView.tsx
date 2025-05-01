@@ -1,7 +1,7 @@
 // src/views/TeacherView.tsx
 import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { View, Text, ScrollView, Button, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Button, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
@@ -169,9 +169,9 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   if (isLoadingCore) {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={styles.centered}>
+        <View style={appSharedStyles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading Teacher Data...</Text>
+          <Text style={appSharedStyles.loadingText}>Loading Teacher Data...</Text>
         </View>
       </SafeAreaView>
     );
@@ -202,7 +202,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
       <SafeAreaView style={appSharedStyles.safeArea}>
         <View style={appSharedStyles.container}>
           <Text style={appSharedStyles.header}>Account Inactive</Text>
-          <Text style={commonSharedStyles.textCenter}>
+          <Text style={appSharedStyles.textCenter}>
             Your teacher account is currently inactive.
           </Text>
         </View>
@@ -216,9 +216,9 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     if (viewingStudentId) {
       if (studentDetailLoading) {
         return (
-          <View style={styles.centered}>
+          <View style={appSharedStyles.centered}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Loading Student Details...</Text>
+            <Text style={appSharedStyles.loadingText}>Loading Student Details...</Text>
           </View>
         );
       }
@@ -359,16 +359,3 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     </SafeAreaView>
   );
 };
-
-// Styles
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    color: colors.textSecondary,
-  },
-});

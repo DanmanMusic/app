@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useQueries, UseQueryResult } from '@tanstack/react-query';
-import { View, Text, Button, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from '../contexts/AuthContext';
@@ -92,7 +92,7 @@ export const ParentView = () => {
   if (isLoadingParent) {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={styles.centered}>
+        <View style={appSharedStyles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text>Loading Parent Data...</Text>
         </View>
@@ -135,7 +135,7 @@ export const ParentView = () => {
       if (specificQueryResult?.isLoading || specificQueryResult?.isFetching) {
         return (
           <SafeAreaView style={appSharedStyles.safeArea}>
-            <View style={styles.centered}>
+            <View style={appSharedStyles.centered}>
               <ActivityIndicator size="large" color={colors.primary} />
               <Text>Loading Student Details...</Text>
               <Button title="Back to Students" onPress={() => setViewingStudentId(null)} />
@@ -230,12 +230,3 @@ export const ParentView = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-});

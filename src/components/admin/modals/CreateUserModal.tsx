@@ -8,7 +8,6 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
-  StyleSheet,
 } from 'react-native';
 
 import { createUser, fetchTeachers } from '../../../api/users';
@@ -203,7 +202,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
               editable={!mutation.isPending}
             />
             <Text style={commonSharedStyles.label}>Role:</Text>
-            <View style={styles.roleButtonContainer}>
+            <View style={appSharedStyles.roleButtonContainer}>
               {CREATABLE_ROLES.map(r => (
                 <Button
                   key={r}
@@ -314,15 +313,5 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  roleButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-});
 
 export default CreateUserModal;

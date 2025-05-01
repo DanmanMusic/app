@@ -8,7 +8,6 @@ import {
   Button,
   Image,
   ActivityIndicator,
-  StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -197,9 +196,9 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   if (isLoadingCore) {
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={styles.centered}>
+        <View style={appSharedStyles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading Student Data...</Text>
+          <Text style={appSharedStyles.loadingText}>Loading Student Data...</Text>
         </View>
       </SafeAreaView>
     );
@@ -208,7 +207,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     return (
       <SafeAreaView style={appSharedStyles.safeArea}>
         <View style={appSharedStyles.container}>
-          <Text style={[commonSharedStyles.errorText, commonSharedStyles.textCenter]}>
+          <Text style={[commonSharedStyles.errorText, appSharedStyles.textCenter]}>
             Error loading student data: {userErrorMsg?.message || 'Student not found.'}
           </Text>
         </View>
@@ -229,7 +228,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
       <SafeAreaView style={appSharedStyles.safeArea}>
         <View style={appSharedStyles.container}>
           <Text style={appSharedStyles.header}>Account Inactive</Text>
-          <Text style={commonSharedStyles.textCenter}>
+          <Text style={appSharedStyles.textCenter}>
             This student account is currently inactive.
           </Text>
         </View>
@@ -303,13 +302,13 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                 !rewardsError &&
                 (goalReward ? (
                   <View style={appSharedStyles.goalContainer}>
-                    <View style={commonSharedStyles.itemContentRow}>
+                    <View style={appSharedStyles.itemContentRow}>
                       <Image
                         source={{ uri: goalReward.imageUrl }}
                         style={appSharedStyles.goalImage}
                         resizeMode="contain"
                       />
-                      <View style={styles.goalDetails}>
+                      <View style={appSharedStyles.goalDetails}>
                         <Text style={appSharedStyles.goalText}>Saving for: {goalReward.name}</Text>
                         <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
                           {goalReward.cost} Tickets
@@ -435,7 +434,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                 <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
               )}
               {rewardsError && (
-                <Text style={[commonSharedStyles.errorText, commonSharedStyles.textCenter]}>
+                <Text style={[commonSharedStyles.errorText, appSharedStyles.textCenter]}>
                   Error loading rewards: {rewardsErrorMsg?.message}
                 </Text>
               )}
@@ -466,7 +465,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                 <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
               )}
               {announcementsError && (
-                <Text style={[commonSharedStyles.errorText, commonSharedStyles.textCenter]}>
+                <Text style={[commonSharedStyles.errorText, appSharedStyles.textCenter]}>
                   Error loading announcements: {announcementsErrorMsg?.message}
                 </Text>
               )}
@@ -502,21 +501,3 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundSecondary,
-  },
-  loadingText: {
-    marginTop: 10,
-    color: colors.textSecondary,
-    fontSize: 16,
-  },
-  goalDetails: {
-    flex: 1,
-    marginLeft: 10,
-  },
-});

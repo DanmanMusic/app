@@ -1,7 +1,7 @@
 // src/components/admin/modals/ManualTicketAdjustmentModal.tsx
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Modal, View, Text, Button, TextInput, ActivityIndicator, StyleSheet } from 'react-native';
+import { Modal, View, Text, Button, TextInput, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 // API Imports
@@ -247,8 +247,5 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
     </Modal>
   );
 };
-
-// Keep existing styles if needed, or remove if unused
-// const styles = StyleSheet.create({ ... });
 
 export default ManualTicketAdjustmentModal;

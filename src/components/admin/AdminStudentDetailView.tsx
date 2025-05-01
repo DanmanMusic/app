@@ -6,9 +6,7 @@ import {
   ScrollView,
   Button,
   FlatList,
-  SafeAreaView,
   ActivityIndicator,
-  StyleSheet,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
@@ -216,7 +214,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
 
   if (isLoading) {
     return (
-      <View style={styles.centered}>
+      <View style={appSharedStyles.centered}>
         <ActivityIndicator size="large" />
         <Text>Loading Student Details...</Text>
       </View>
@@ -247,28 +245,28 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
         <Text style={appSharedStyles.itemDetailText}>ID: {student.id}</Text>
         <Text style={appSharedStyles.itemDetailText}>
           Status:{' '}
-          <Text style={isStudentActive ? styles.activeStatus : styles.inactiveStatus}>
+          <Text style={isStudentActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus}>
             {student.status}
           </Text>
         </Text>
         <Text style={appSharedStyles.itemDetailText}>Instrument(s): {instrumentNames}</Text>
         <Text style={appSharedStyles.itemDetailText}>Linked Teachers: {teacherNames}</Text>
         {balanceLoading ? (
-          <Text style={[appSharedStyles.itemDetailText, styles.balanceText]}>
+          <Text style={[appSharedStyles.itemDetailText, appSharedStyles.balanceText]}>
             Balance: Loading...
           </Text>
         ) : balanceError ? (
           <Text
             style={[
               appSharedStyles.itemDetailText,
-              styles.balanceText,
+              appSharedStyles.balanceText,
               commonSharedStyles.errorText,
             ]}
           >
             Balance: Error
           </Text>
         ) : (
-          <Text style={[appSharedStyles.itemDetailText, styles.balanceText]}>
+          <Text style={[appSharedStyles.itemDetailText, appSharedStyles.balanceText]}>
             Balance: {balance} Tickets
           </Text>
         )}
@@ -305,7 +303,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
           )}
         </View>
         <Text style={appSharedStyles.sectionTitle}>Assigned Tasks ({totalTasksCount})</Text>
-        {studentTasksLoading && <ActivityIndicator style={styles.listLoader} />}
+        {studentTasksLoading && <ActivityIndicator style={appSharedStyles.listLoader} />}
         {studentTasksError && (
           <Text style={commonSharedStyles.errorText}>
             Error loading tasks: {studentTasksErrorObject?.message}
@@ -399,7 +397,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
           />
         )}
         <Text style={appSharedStyles.sectionTitle}>History ({totalHistoryCount})</Text>
-        {studentHistoryLoading && <ActivityIndicator style={styles.listLoader} />}
+        {studentHistoryLoading && <ActivityIndicator style={appSharedStyles.listLoader} />}
         {studentHistoryError && (
           <Text style={commonSharedStyles.errorText}>
             Error loading history: {historyErrorObject?.message}
@@ -444,27 +442,3 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
     </>
   );
 };
-
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  activeStatus: {
-    fontWeight: 'bold',
-    color: colors.success,
-  },
-  inactiveStatus: {
-    fontWeight: 'bold',
-    color: colors.secondary,
-  },
-  balanceText: {
-    fontWeight: 'bold',
-    color: colors.gold,
-    marginTop: 5,
-  },
-  listLoader: {
-    marginVertical: 20,
-  },
-});

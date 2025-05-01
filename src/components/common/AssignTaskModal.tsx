@@ -12,7 +12,6 @@ import {
   ScrollView,
   Switch,
   ActivityIndicator,
-  StyleSheet,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
@@ -317,7 +316,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             autoCorrect={false}
           />
           {isLoadingStudents && (
-            <ActivityIndicator color={colors.primary} style={styles.listLoader} />
+            <ActivityIndicator color={colors.primary} style={appSharedStyles.listLoader} />
           )}
           {isErrorStudents && (
             <Text style={commonSharedStyles.errorText}>
@@ -417,7 +416,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             ) : (
               // Task Library List
               <>
-                {isLoadingLibrary && <ActivityIndicator style={styles.listLoader} />}
+                {isLoadingLibrary && <ActivityIndicator style={appSharedStyles.listLoader} />}
                 {isErrorLibrary && (
                   <Text style={commonSharedStyles.errorText}>
                     Error loading task library: {errorLibrary?.message}
@@ -525,13 +524,5 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     </Modal>
   );
 };
-
-// Styles
-const styles = StyleSheet.create({
-  listLoader: {
-    marginVertical: 20,
-  },
-  // Removed infoText style as it's no longer used
-});
 
 export default AssignTaskModal;

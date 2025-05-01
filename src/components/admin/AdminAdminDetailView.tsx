@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, Button, ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Button, ActivityIndicator, ScrollView } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchUserProfile, fetchAuthUser } from '../../api/users';
@@ -90,9 +90,9 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
 
   if (isLoading) {
     return (
-      <View style={[styles.centered]}>
+      <View style={[appSharedStyles.centered]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading Admin Details...</Text>
+        <Text style={appSharedStyles.loadingText}>Loading Admin Details...</Text>
       </View>
     );
   }
@@ -128,7 +128,7 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
       <Text style={appSharedStyles.itemDetailText}>ID: {adminProfile.id}</Text>
       <Text style={appSharedStyles.itemDetailText}>
         Status:{' '}
-        <Text style={isAdminActive ? styles.activeStatus : styles.inactiveStatus}>
+        <Text style={isAdminActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus}>
           {adminProfile.status}
         </Text>
       </Text>
@@ -138,7 +138,7 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
           (authDetailsError ? '(Error Fetching)' : '(Not Found/No Email)')}
       </Text>
       {!needsPinLogin && !authDetailsError && adminAuthDetails?.email && (
-        <Text style={styles.infoText}>(Email/Password login appears to be set up)</Text>
+        <Text style={appSharedStyles.infoText}>(Email/Password login appears to be set up)</Text>
       )}
       <View
         style={[appSharedStyles.adminStudentActions, appSharedStyles.actionButtonsContainer]}
@@ -165,38 +165,9 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
         {onInitiatePinGeneration &&
           !needsPinLogin &&
           !authDetailsError &&
-          adminAuthDetails?.email && <Text style={styles.infoText}>(PIN login not needed)</Text>}
+          adminAuthDetails?.email && <Text style={appSharedStyles.infoText}>(PIN login not needed)</Text>}
       </View>
       <View style={{ height: 30 }} />
     </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  activeStatus: {
-    fontWeight: 'bold',
-    color: colors.success,
-  },
-  inactiveStatus: {
-    fontWeight: 'bold',
-    color: colors.secondary,
-  },
-  infoText: {
-    fontSize: 12,
-    color: colors.textLight,
-    fontStyle: 'italic',
-    marginTop: 2,
-    marginLeft: 5,
-  },
-  loadingText: {
-    marginTop: 10,
-    color: colors.textSecondary,
-    fontSize: 16,
-  },
-});

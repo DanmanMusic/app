@@ -803,4 +803,246 @@ export const appSharedStyles = StyleSheet.create({
     textAlignVertical: 'top',
     width: '100%',
   },
+
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  activeStatus: {
+    fontWeight: 'bold',
+    color: colors.success,
+  },
+  inactiveStatus: {
+    fontWeight: 'bold',
+    color: colors.secondary,
+  },
+  infoText: {
+    fontSize: 12,
+    color: colors.textLight,
+    fontStyle: 'italic',
+    marginTop: 2,
+    marginLeft: 5,
+  },
+
+  linkedStudentItem: { backgroundColor: colors.backgroundSecondary },
+  linkedStudentActions: {
+    marginTop: 8,
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'flex-start',
+  },
+  balanceText: {
+    fontWeight: 'bold',
+    color: colors.gold,
+    marginTop: 5,
+  },
+  listLoader: {
+    marginVertical: 20,
+  },
+  roleButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  listContainer: {
+    flexGrow: 0, // Prevent FlatList from taking all height
+    maxHeight: 250, // Limit height for scrolling
+    borderColor: colors.borderPrimary,
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  studentItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  selectedStudentItem: {
+    backgroundColor: colors.backgroundHighlight,
+  },
+  studentName: {
+    fontSize: 16,
+    color: colors.textPrimary,
+  },
+  selectionConfirmation: {
+    textAlign: 'center',
+    fontStyle: 'italic',
+    color: colors.textSecondary,
+    marginBottom: 10,
+    fontSize: 15,
+  },  
+
+  rewardItemBase: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+    borderRadius: 6,
+    backgroundColor: colors.backgroundPrimary,
+  },
+  rewardItemUnaffordable: {
+    opacity: 0.6,
+    backgroundColor: colors.backgroundGrey, // Grey out unaffordable items
+  },
+  rewardItemSelected: {
+    borderColor: colors.success, // Highlight selected item
+    borderWidth: 2,
+    backgroundColor: colors.backgroundHighlight,
+  },
+  rewardImage: {
+    width: 50,
+    height: 50,
+    marginRight: 12,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+    backgroundColor: colors.backgroundGrey, // Placeholder bg
+  },
+  loadingAffordText: {
+    fontSize: 12,
+    color: colors.textLight,
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
+
+  pinDisplayContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+    padding: 15,
+    backgroundColor: colors.backgroundHighlight,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.borderPrimary,
+  },
+  pinLabel: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginBottom: 5,
+    fontWeight: '600',
+  },
+  pinValue: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: colors.primary,
+    letterSpacing: 3,
+    marginBottom: 10,
+    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
+    backgroundColor: colors.backgroundPrimary,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+  },
+  pinInstructions: {
+    fontSize: 13,
+    color: colors.textLight,
+    textAlign: 'center',
+  },
+
+  toggleContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.backgroundPrimary,
+  },
+  toggleButtonActive: {
+    backgroundColor: colors.primary,
+  },
+  toggleButtonText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  toggleButtonTextActive: {
+    color: colors.textWhite,
+  },
+  formContainer: {
+    width: '100%',
+    alignItems: 'stretch',
+  },
+
+  sharedHeaderContentContainer: {
+    flex: 1, // Take remaining space in the parent's header row
+    flexDirection: 'row',
+    justifyContent: 'space-between', // Push name left, buttons right
+    alignItems: 'center',
+    marginLeft: 5, // Add some margin if a back button might appear to its left
+  },
+  userNameText: {
+    fontSize: 18, // Adjust size
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+    flexShrink: 1, // Allow text to shrink if needed
+    marginRight: 10, // Space before buttons
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10, // Space between buttons if both shown
+  },
+
+  statusText: {
+    fontWeight: 'bold',
+    // Color is set inline based on status
+  },
+
+  outerContainer: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  headerSection: {
+    paddingHorizontal: 15,
+    paddingTop: 10,
+    paddingBottom: 5,
+  },
+  welcomeContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  welcomeText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginBottom: 10,
+  },
+  loadingIndicator: {
+    marginTop: 30,
+  },
+  errorMargin: {
+    marginTop: 20,
+  },
+  footerContainer: {
+    padding: 15,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSecondary,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    gap: 10,
+  },
+  goalDetails: {
+    flex: 1,
+    marginLeft: 10,
+  },
+
 });

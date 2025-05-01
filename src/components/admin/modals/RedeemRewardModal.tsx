@@ -5,7 +5,6 @@ import {
   Modal,
   View,
   Text,
-  StyleSheet,
   Button,
   FlatList,
   TouchableOpacity,
@@ -206,29 +205,29 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
       >
         <View
           style={[
-            styles.rewardItemBase,
+            appSharedStyles.rewardItemBase,
             // Apply styles based on affordability and selection
-            canAfford === false && styles.rewardItemUnaffordable,
-            isSelected && styles.rewardItemSelected,
+            canAfford === false && appSharedStyles.rewardItemUnaffordable,
+            isSelected && appSharedStyles.rewardItemSelected,
           ]}
         >
-          <Image source={{ uri: item.imageUrl }} style={styles.rewardImage} resizeMode="contain" />
+          <Image source={{ uri: item.imageUrl }} style={appSharedStyles.rewardImage} resizeMode="contain" />
           <View style={appSharedStyles.itemDetailsContainer}>
-            <Text style={styles.rewardName}>{item.name}</Text>
+            <Text style={appSharedStyles.rewardName}>{item.name}</Text>
             <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
               {item.cost} Tickets
             </Text>
             {/* Show affordability status */}
             {canAfford === false && (
-              <Text style={styles.cannotAffordText}>(Need {item.cost - currentBalance} more)</Text>
+              <Text style={appSharedStyles.cannotAffordText}>(Need {item.cost - currentBalance} more)</Text>
             )}
             {canAfford === null && !balanceError && (
-              <Text style={styles.loadingAffordText}>(Checking balance...)</Text>
+              <Text style={appSharedStyles.loadingAffordText}>(Checking balance...)</Text>
             )}
-            {balanceError && <Text style={styles.cannotAffordText}>(Balance Error)</Text>}
+            {balanceError && <Text style={appSharedStyles.cannotAffordText}>(Balance Error)</Text>}
           </View>
           {/* Show checkmark if selected */}
-          {isSelected && <Text style={styles.checkmark}>✓</Text>}
+          {isSelected && <Text style={appSharedStyles.checkmark}>✓</Text>}
         </View>
       </TouchableOpacity>
     );
@@ -266,7 +265,7 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
               data={rewardsCatalog} // Already sorted by cost in API fetch? If not, add sort here.
               renderItem={renderRewardItem}
               keyExtractor={item => item.id}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
+              ItemSeparatorComponent={() => <View style={appSharedStyles.separator} />}
               ListEmptyComponent={
                 <Text style={appSharedStyles.emptyListText}>No rewards available.</Text>
               }
@@ -294,61 +293,5 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
     </Modal>
   );
 };
-
-// Styles
-const styles = StyleSheet.create({
-  rewardItemBase: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderWidth: 1,
-    borderColor: colors.borderSecondary,
-    borderRadius: 6,
-    backgroundColor: colors.backgroundPrimary,
-  },
-  rewardItemUnaffordable: {
-    opacity: 0.6,
-    backgroundColor: colors.backgroundGrey, // Grey out unaffordable items
-  },
-  rewardItemSelected: {
-    borderColor: colors.success, // Highlight selected item
-    borderWidth: 2,
-    backgroundColor: colors.backgroundHighlight,
-  },
-  rewardImage: {
-    width: 50,
-    height: 50,
-    marginRight: 12,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: colors.borderSecondary,
-    backgroundColor: colors.backgroundGrey, // Placeholder bg
-  },
-  rewardName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  cannotAffordText: {
-    fontSize: 12,
-    color: colors.danger, // Use danger color for clarity
-    fontStyle: 'italic',
-    marginTop: 2,
-  },
-  loadingAffordText: {
-    fontSize: 12,
-    color: colors.textLight,
-    fontStyle: 'italic',
-    marginTop: 2,
-  },
-  checkmark: {
-    fontSize: 24,
-    color: colors.success, // Use success color for checkmark
-    marginLeft: 'auto', // Push checkmark to the right
-  },
-  separator: {
-    height: 8,
-  },
-});
 
 export default RedeemRewardModal;
