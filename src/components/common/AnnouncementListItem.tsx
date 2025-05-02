@@ -3,7 +3,7 @@ import { Announcement } from '../../types/dataTypes';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const AnnouncementListItem = ({ item }: { item: Announcement }) => (
-  <View style={commonSharedStyles.baseItem}>
+  <View>
     <Text style={commonSharedStyles.itemTitle}>{item.title}</Text>
     <Text style={commonSharedStyles.baseSecondaryText}>{item.message}</Text>
     <Text style={commonSharedStyles.baseVeryLightText}>
