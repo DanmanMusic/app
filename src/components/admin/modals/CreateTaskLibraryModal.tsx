@@ -9,7 +9,6 @@ import { colors } from '../../../styles/colors';
 import { CreateTaskLibraryModalProps } from '../../../types/componentProps';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible, onClose }) => {
   const [title, setTitle] = useState('');
@@ -102,7 +101,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
       <View style={commonSharedStyles.centeredView}>
         <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>Create New Library Task</Text>
-          <ScrollView style={commonSharedStyles.scrollView}>
+          <ScrollView style={commonSharedStyles.modalScrollView}>
             <Text style={commonSharedStyles.label}>Task Title:</Text>
             <TextInput
               style={commonSharedStyles.input}

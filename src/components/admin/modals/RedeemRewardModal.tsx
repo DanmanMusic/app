@@ -22,7 +22,6 @@ import { RewardItem } from '../../../types/dataTypes';
 import { RedeemRewardModalProps } from '../../../types/componentProps';
 
 // Style Imports
-import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
@@ -205,35 +204,37 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
       >
         <View
           style={[
-            appSharedStyles.rewardItemBase,
+            commonSharedStyles.rewardItemBase,
             // Apply styles based on affordability and selection
-            canAfford === false && appSharedStyles.rewardItemUnaffordable,
-            isSelected && appSharedStyles.rewardItemSelected,
+            canAfford === false && commonSharedStyles.rewardItemUnaffordable,
+            isSelected && commonSharedStyles.rewardItemSelected,
           ]}
         >
           <Image
             source={{ uri: item.imageUrl }}
-            style={appSharedStyles.rewardImage}
+            style={commonSharedStyles.rewardImage}
             resizeMode="contain"
           />
-          <View style={appSharedStyles.itemFlex}>
-            <Text style={appSharedStyles.rewardName}>{item.name}</Text>
-            <Text style={[commonSharedStyles.baseSecondaryText, appSharedStyles.textGold]}>
+          <View style={commonSharedStyles.listItemFull}>
+            <Text style={commonSharedStyles.rewardName}>{item.name}</Text>
+            <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textGold]}>
               {item.cost} Tickets
             </Text>
             {/* Show affordability status */}
             {canAfford === false && (
-              <Text style={appSharedStyles.cannotAffordText}>
+              <Text style={commonSharedStyles.cannotAffordText}>
                 (Need {item.cost - currentBalance} more)
               </Text>
             )}
             {canAfford === null && !balanceError && (
-              <Text style={appSharedStyles.loadingAffordText}>(Checking balance...)</Text>
+              <Text style={commonSharedStyles.loadingAffordText}>(Checking balance...)</Text>
             )}
-            {balanceError && <Text style={appSharedStyles.cannotAffordText}>(Balance Error)</Text>}
+            {balanceError && (
+              <Text style={commonSharedStyles.cannotAffordText}>(Balance Error)</Text>
+            )}
           </View>
           {/* Show checkmark if selected */}
-          {isSelected && <Text style={appSharedStyles.checkmark}>✓</Text>}
+          {isSelected && <Text style={commonSharedStyles.checkmark}>✓</Text>}
         </View>
       </TouchableOpacity>
     );
@@ -267,11 +268,11 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
           {/* Rewards List */}
           {!isLoadingRewards && !isErrorRewards && (
             <FlatList
-              style={appSharedStyles.listItemFull}
+              style={commonSharedStyles.listItemFull}
               data={rewardsCatalog} // Already sorted by cost in API fetch? If not, add sort here.
               renderItem={renderRewardItem}
               keyExtractor={item => item.id}
-              ItemSeparatorComponent={() => <View style={appSharedStyles.separator} />}
+              ItemSeparatorComponent={() => <View style={commonSharedStyles.separator} />}
               ListEmptyComponent={
                 <Text style={commonSharedStyles.baseEmptyText}>No rewards available.</Text>
               }

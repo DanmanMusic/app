@@ -5,7 +5,6 @@ import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } f
 import { createUser, fetchTeachers } from '../../../api/users';
 import { fetchInstruments } from '../../../api/instruments';
 
-import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
@@ -165,7 +164,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
         <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>Create New User</Text>
 
-          <ScrollView style={commonSharedStyles.scrollView}>
+          <ScrollView style={commonSharedStyles.modalScrollView}>
             <Text style={commonSharedStyles.label}>First Name:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -194,7 +193,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
               editable={!mutation.isPending}
             />
             <Text style={commonSharedStyles.label}>Role:</Text>
-            <View style={appSharedStyles.containerRowCenter}>
+            <View style={[commonSharedStyles.baseRowCentered, { marginBottom: 15 }]}>
               {CREATABLE_ROLES.map(r => (
                 <Button
                   key={r}
@@ -207,8 +206,8 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
             </View>
 
             {isStudentRoleSelected && (
-              <View style={appSharedStyles.modalSubSection}>
-                <Text style={appSharedStyles.roleSectionTitle}>Student Details (Optional)</Text>
+              <View style={commonSharedStyles.modalSubSection}>
+                <Text style={commonSharedStyles.roleSectionTitle}>Student Details (Optional)</Text>
                 <Text style={commonSharedStyles.label}>Instruments:</Text>
                 {isLoadingInstruments && <ActivityIndicator color={colors.primary} />}
                 {isErrorInstruments && (

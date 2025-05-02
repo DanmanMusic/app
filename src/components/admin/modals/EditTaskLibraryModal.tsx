@@ -9,7 +9,6 @@ import { colors } from '../../../styles/colors';
 import { EditTaskLibraryModalProps } from '../../../types/componentProps';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
   visible,
@@ -130,8 +129,8 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       <View style={commonSharedStyles.centeredView}>
         <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>Edit Library Task</Text>
-          <Text style={commonSharedStyles.subTitle}>ID: {taskToEdit.id}</Text>
-          <ScrollView style={commonSharedStyles.scrollView}>
+          <Text style={commonSharedStyles.modalSubTitle}>ID: {taskToEdit.id}</Text>
+          <ScrollView style={commonSharedStyles.modalScrollView}>
             <Text style={commonSharedStyles.label}>Task Title:</Text>
             <TextInput
               style={commonSharedStyles.input}

@@ -4,10 +4,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-// API Imports
 import { deleteUser, toggleUserStatus } from '../../api/users'; // Use updated deleteUser
 
-// Style Imports
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
@@ -15,7 +13,6 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { getUserDisplayName } from '../../utils/helpers';
 import { DeactivateOrDeleteUserModalProps } from '../../types/componentProps';
 import ConfirmationModal from './ConfirmationModal'; // Import ConfirmationModal
-import { appSharedStyles } from '../../styles/appSharedStyles';
 
 export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = ({
   visible,

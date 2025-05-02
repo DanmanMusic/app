@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 import { fetchStudents } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { TeacherStudentsSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';

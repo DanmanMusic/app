@@ -7,7 +7,6 @@ import { fetchUserProfile, unlinkStudentFromParent } from '../../api/users';
 import { User } from '../../types/dataTypes';
 import { AdminParentDetailViewProps } from '../../types/componentProps';
 
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 import { getUserDisplayName } from '../../utils/helpers';
@@ -209,8 +208,8 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
             )}
             keyExtractor={item => item.id}
             renderItem={({ item: studentItem }) => (
-              <View style={[commonSharedStyles.baseItem, appSharedStyles.linkedStudentItem]}>
-                <Text style={appSharedStyles.itemTitle}>{getUserDisplayName(studentItem)}</Text>
+              <View style={[commonSharedStyles.baseItem, commonSharedStyles.linkedStudentItem]}>
+                <Text style={commonSharedStyles.itemTitle}>{getUserDisplayName(studentItem)}</Text>
                 <Text style={commonSharedStyles.baseSecondaryText}>
                   Status:{' '}
                   <Text
@@ -223,7 +222,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
                     {studentItem.status}
                   </Text>
                 </Text>
-                <View style={appSharedStyles.linkedStudentActions}>
+                <View style={commonSharedStyles.linkedStudentActions}>
                   <Button
                     title="View Profile"
                     onPress={() => onViewStudentProfile(studentItem.id)}

@@ -18,7 +18,6 @@ import { colors } from '../../../styles/colors';
 import { CreateRewardModalProps } from '../../../types/componentProps';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');
@@ -138,7 +137,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
       <View style={commonSharedStyles.centeredView}>
         <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>Create New Reward</Text>
-          <ScrollView style={commonSharedStyles.scrollView}>
+          <ScrollView style={commonSharedStyles.modalScrollView}>
             <Text style={commonSharedStyles.label}>Reward Name:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -163,11 +162,11 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
               editable={!mutation.isPending}
             />
             <Text style={commonSharedStyles.label}>Image (Optional):</Text>
-            <View style={appSharedStyles.containerIconPreview}>
+            <View style={commonSharedStyles.containerIconPreview}>
               {imageUri ? (
                 <Image
                   source={{ uri: imageUri }}
-                  style={appSharedStyles.iconPreview}
+                  style={commonSharedStyles.iconPreview}
                   resizeMode="contain"
                 />
               ) : (

@@ -8,7 +8,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { getUserDisplayName } from '../../utils/helpers';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 
 interface SetEmailPasswordModalProps {
   visible: boolean;
@@ -105,7 +104,7 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
           <Text style={commonSharedStyles.modalContextInfo}>
             For: {appUser ? getUserDisplayName(appUser) : 'Loading...'}
           </Text>
-          <Text style={appSharedStyles.modalMessage}>
+          <Text style={commonSharedStyles.modalMessage}>
             Set up an email and password for future logins. This will replace PIN-based login for
             this account.
           </Text>

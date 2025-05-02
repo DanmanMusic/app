@@ -12,7 +12,6 @@ import { TaskVerificationModalProps } from '../../types/componentProps';
 import { colors } from '../../styles/colors';
 import { getUserDisplayName } from '../../utils/helpers';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 
 export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   visible,
@@ -193,7 +192,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
         <View style={commonSharedStyles.centeredView}>
           <View style={commonSharedStyles.modalView}>
             <Text style={commonSharedStyles.modalTitle}>Verify Task</Text>
-            <Text style={appSharedStyles.taskTitle}>{taskTitle}</Text>
+            <Text style={commonSharedStyles.taskItemTitle}>{taskTitle}</Text>
             <Text style={commonSharedStyles.modalContextInfo}>Student: {studentNameDisplay}</Text>
             <Text style={commonSharedStyles.modalContextInfo}>
               Potential Tickets: {basePointsDisplay}
@@ -202,7 +201,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               Completed: {completedDateTime}
             </Text>
 
-            <Text style={commonSharedStyles.stepTitle}>Step 1: Select Status</Text>
+            <Text style={commonSharedStyles.modalStepTitle}>Step 1: Select Status</Text>
             {isLoadingStudent && <ActivityIndicator color={colors.primary} />}
             {studentFetchError && (
               <Text style={commonSharedStyles.errorText}>
@@ -252,13 +251,13 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
         <View style={commonSharedStyles.centeredView}>
           <View style={commonSharedStyles.modalView}>
             <Text style={commonSharedStyles.modalTitle}>Verify Task</Text>
-            <Text style={appSharedStyles.taskTitle}>{taskTitle}</Text>
+            <Text style={commonSharedStyles.taskItemTitle}>{taskTitle}</Text>
             <Text style={commonSharedStyles.modalContextInfo}>Student: {studentNameDisplay}</Text>
             <Text style={[commonSharedStyles.modalContextInfo, { marginBottom: 10 }]}>
               Status Selected:{' '}
               <Text
                 style={[
-                  appSharedStyles.statusText,
+                  commonSharedStyles.statusText,
                   {
                     color:
                       selectedStatus === 'verified'
@@ -273,15 +272,15 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               </Text>
             </Text>
 
-            <Text style={commonSharedStyles.stepTitle}>Step 2: Award Tickets</Text>
+            <Text style={commonSharedStyles.modalStepTitle}>Step 2: Award Tickets</Text>
             {selectedStatus !== 'incomplete' ? (
               <>
                 <View style={commonSharedStyles.baseRowCentered}>
                   <Text style={{ fontSize: 16 }}>Tickets Awarded:</Text>
-                  <Text style={appSharedStyles.awardedPointsText}>{awardedPoints}</Text>
+                  <Text style={commonSharedStyles.awardedPointsText}>{awardedPoints}</Text>
                 </View>
                 <Slider
-                  style={appSharedStyles.slider}
+                  style={commonSharedStyles.slider}
                   minimumValue={0}
                   maximumValue={Math.max(1, basePointsDisplay)}
                   step={1}
@@ -292,13 +291,13 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
                   thumbTintColor={colors.primary}
                   disabled={verifyMutation.isPending}
                 />
-                <View style={appSharedStyles.rangeText}>
+                <View style={commonSharedStyles.rangeText}>
                   <Text>0</Text>
                   <Text>Base: {basePointsDisplay}</Text>
                 </View>
               </>
             ) : (
-              <Text style={appSharedStyles.infoText}>
+              <Text style={commonSharedStyles.infoText}>
                 No points awarded for 'Incomplete' status.
               </Text>
             )}
@@ -352,7 +351,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
         <View style={commonSharedStyles.centeredView}>
           <View style={commonSharedStyles.modalView}>
             <Text style={commonSharedStyles.modalTitle}>Verification Complete</Text>
-            <Text style={appSharedStyles.taskTitle}>{taskTitle}</Text>
+            <Text style={commonSharedStyles.taskItemTitle}>{taskTitle}</Text>
             <Text style={commonSharedStyles.modalContextInfo}>Student: {studentNameDisplay}</Text>
             <Text style={[commonSharedStyles.modalContextInfo, { marginBottom: 20 }]}>
               Status Recorded As:{' '}

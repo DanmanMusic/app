@@ -11,7 +11,6 @@ import { CreateAnnouncementModalProps } from '../../../types/componentProps';
 
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const ANNOUNCEMENT_TYPES: AnnouncementType[] = [
   'announcement',
@@ -99,8 +98,8 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
               selectedValue={type}
               onValueChange={itemValue => setType(itemValue as AnnouncementType)}
               enabled={!mutation.isPending}
-              style={{ height: 40, width: '100%' }}
-              itemStyle={{ height: 40 }}
+              style={commonSharedStyles.picker}
+              itemStyle={commonSharedStyles.pickerItem}
             >
               {ANNOUNCEMENT_TYPES.map(typeValue => (
                 <Picker.Item

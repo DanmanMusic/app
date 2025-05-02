@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, Button } from 'react-native';
 import { AssignedTask } from '../../types/dataTypes';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 
@@ -44,12 +43,12 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
     : 'Assigned';
 
   return (
-    <View style={appSharedStyles.taskItem}>
-      <Text style={appSharedStyles.taskItemTitle}>{item.taskTitle}</Text>
+    <View style={[commonSharedStyles.baseItem, commonSharedStyles.baseColumn, { gap: 3 }]}>
+      <Text style={commonSharedStyles.taskItemTitle}>{item.taskTitle}</Text>
       <Text style={commonSharedStyles.baseSecondaryText}>
         Student: {studentName} ({studentStatus})
       </Text>
-      <Text style={appSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
+      <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
       <Text style={commonSharedStyles.baseSecondaryText}>
         Assigned: {new Date(item.assignedDate).toLocaleDateString()} by {assignerName}
       </Text>
@@ -65,14 +64,14 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
         </Text>
       )}
       {item.actualPointsAwarded !== undefined && item.verificationStatus !== 'pending' && (
-        <Text style={appSharedStyles.taskItemTickets}>
+        <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textSuccess]}>
           Awarded: {item.actualPointsAwarded ?? 0} Tickets
         </Text>
       )}
       {item.isComplete && item.verificationStatus === 'pending' && (
-        <Text style={appSharedStyles.pendingNote}>Awaiting verification...</Text>
+        <Text style={commonSharedStyles.pendingNote}>Awaiting verification...</Text>
       )}
-      <View style={appSharedStyles.assignedTaskActions}>
+      <View style={commonSharedStyles.assignedTaskActions}>
         {allowVerify && (
           <Button
             title="Verify"

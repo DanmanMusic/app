@@ -17,7 +17,6 @@ import { colors } from '../../../styles/colors';
 import { CreateInstrumentModalProps } from '../../../types/componentProps';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');
@@ -132,11 +131,11 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             editable={!mutation.isPending}
           />
           <Text style={commonSharedStyles.label}>Icon (Optional):</Text>
-          <View style={appSharedStyles.containerIconPreview}>
+          <View style={commonSharedStyles.containerIconPreview}>
             {imageUri ? (
               <Image
                 source={{ uri: imageUri }}
-                style={appSharedStyles.iconPreview}
+                style={commonSharedStyles.iconPreview}
                 resizeMode="contain"
               />
             ) : (

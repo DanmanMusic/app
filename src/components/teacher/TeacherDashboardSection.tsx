@@ -4,7 +4,6 @@ import { View, Text, FlatList, ActivityIndicator, Button } from 'react-native';
 import { fetchAssignedTasks } from '../../api/assignedTasks';
 import { fetchStudents } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { TeacherDashboardSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';

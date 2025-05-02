@@ -1,6 +1,5 @@
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { RewardItem } from '../../types/dataTypes';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const RewardGoalItem = ({
@@ -18,24 +17,26 @@ export const RewardGoalItem = ({
     <View
       style={[
         commonSharedStyles.baseItem,
-        appSharedStyles.goalSelectItem,
-        isCurrentGoal ? appSharedStyles.currentGoalItem : {},
+        commonSharedStyles.goalSelectItem,
+        isCurrentGoal ? commonSharedStyles.currentGoalItem : {},
       ]}
     >
-      <View style={appSharedStyles.goalSelectItemContent}>
+      <View style={commonSharedStyles.goalSelectItemContent}>
         <Image
           source={{ uri: item.imageUrl }}
-          style={appSharedStyles.goalSelectImage}
+          style={commonSharedStyles.goalSelectImage}
           resizeMode="contain"
         />
-        <View style={appSharedStyles.goalSelectDetails}>
-          <Text style={appSharedStyles.goalSelectName}>{item.name}</Text>
-          <Text style={[commonSharedStyles.baseSecondaryText, appSharedStyles.textGold]}>
+        <View style={commonSharedStyles.goalSelectDetails}>
+          <Text style={commonSharedStyles.goalSelectName}>{item.name}</Text>
+          <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textGold]}>
             {item.cost} Tickets
           </Text>
-          {!canAfford && <Text style={appSharedStyles.cannotAffordText}>(Need more tickets)</Text>}
+          {!canAfford && (
+            <Text style={commonSharedStyles.cannotAffordText}>(Need more tickets)</Text>
+          )}
         </View>
-        {isCurrentGoal && <Text style={appSharedStyles.checkmark}>✓</Text>}
+        {isCurrentGoal && <Text style={commonSharedStyles.checkmark}>✓</Text>}
       </View>
     </View>
   </TouchableOpacity>

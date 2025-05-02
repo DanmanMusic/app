@@ -1,6 +1,5 @@
 import { Button, Text, View } from 'react-native';
 import { AssignedTask } from '../../types/dataTypes';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const AssignedTaskItem = ({
@@ -23,10 +22,10 @@ export const AssignedTaskItem = ({
 
   return (
     <View style={commonSharedStyles.baseItem}>
-      <Text style={appSharedStyles.itemTitle}>{task.taskTitle}</Text>
+      <Text style={commonSharedStyles.itemTitle}>{task.taskTitle}</Text>
       <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
       {task.actualPointsAwarded !== undefined && task.verificationStatus !== 'pending' && (
-        <Text style={[commonSharedStyles.baseSecondaryText, appSharedStyles.textSuccess]}>
+        <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textSuccess]}>
           Awarded: {task.actualPointsAwarded ?? 0} Tickets
         </Text>
       )}

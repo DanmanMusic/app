@@ -3,7 +3,6 @@ import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 
 import { fetchTaskLibrary } from '../../api/taskLibrary';
 
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminTaskLibraryItem } from '../common/AdminTaskLibraryItem';

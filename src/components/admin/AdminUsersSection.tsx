@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, Button, FlatList, TextInput, ActivityIndicator } from 'react-native';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminUsersSectionProps } from '../../types/componentProps';
@@ -229,7 +228,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
 
       {activeTab !== 'students' && <View style={{ height: 5 }} />}
 
-      <View style={appSharedStyles.listArea}>
+      <View style={commonSharedStyles.listArea}>
         {(isLoading || isFetching) && (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
         )}

@@ -14,7 +14,6 @@ import { ManualTicketAdjustmentModalProps } from '../../../types/componentProps'
 // Style Imports
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = ({
   visible,
@@ -163,7 +162,13 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
           )}
 
           {/* Add/Subtract Toggle */}
-          <View style={appSharedStyles.containerRowFull}>
+          <View
+            style={[
+              commonSharedStyles.baseRow,
+              commonSharedStyles.full,
+              { justifyContent: 'space-around', marginBottom: 15 },
+            ]}
+          >
             <Button
               title="Add Tickets"
               onPress={() => setIsSubtracting(false)}
@@ -204,7 +209,7 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
           />
 
           {/* New Balance Preview */}
-          <Text style={appSharedStyles.previewText}>
+          <Text style={commonSharedStyles.previewText}>
             New Balance Preview: {newBalancePreview} Tickets
           </Text>
 

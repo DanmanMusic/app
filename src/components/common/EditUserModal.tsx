@@ -4,19 +4,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-// API Imports
 import { updateUser, fetchTeachers, fetchUserProfile } from '../../api/users';
 import { fetchInstruments } from '../../api/instruments';
 
-// Context & Hooks
 import { useAuth } from '../../contexts/AuthContext'; // Import useAuth
-
-// Style Imports
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
-// Type Imports
 import { EditUserModalProps } from '../../types/componentProps';
 import { User, Instrument } from '../../types/dataTypes';
 import { getUserDisplayName } from '../../utils/helpers';
@@ -282,11 +276,11 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       <View style={commonSharedStyles.centeredView}>
         <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>Edit User: {currentUserDisplayName}</Text>
-          <Text style={commonSharedStyles.subTitle}>
+          <Text style={commonSharedStyles.modalSubTitle}>
             Role: {userToEdit.role.toUpperCase()} (ID: {userToEdit.id})
           </Text>
 
-          <ScrollView style={commonSharedStyles.scrollView}>
+          <ScrollView style={commonSharedStyles.modalScrollView}>
             {/* Basic Info Fields */}
             <Text style={commonSharedStyles.label}>First Name:</Text>
             <TextInput
@@ -314,8 +308,8 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
             {isStudentRole && (
               <>
-                <View style={appSharedStyles.roleSpecificSection}>
-                  <Text style={appSharedStyles.roleSectionTitle}>Instruments</Text>
+                <View style={commonSharedStyles.roleSpecificSection}>
+                  <Text style={commonSharedStyles.roleSectionTitle}>Instruments</Text>
                   {isLoadingInstruments && <ActivityIndicator color={colors.primary} />}
                   {isErrorInstruments && (
                     <Text style={commonSharedStyles.errorText}>
@@ -347,10 +341,10 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                 </View>
 
                 {/* Teachers Section (Teachers CANNOT edit this) */}
-                <View style={appSharedStyles.roleSpecificSection}>
-                  <Text style={appSharedStyles.roleSectionTitle}>Linked Teachers</Text>
+                <View style={commonSharedStyles.roleSpecificSection}>
+                  <Text style={commonSharedStyles.roleSectionTitle}>Linked Teachers</Text>
                   {!isCallerAdmin && (
-                    <Text style={appSharedStyles.infoText}>
+                    <Text style={commonSharedStyles.infoText}>
                       Only Admins can modify teacher links.
                     </Text>
                   )}

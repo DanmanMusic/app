@@ -20,7 +20,6 @@ import { EditInstrumentModalProps } from '../../../types/componentProps';
 import { getInstrumentIconSource } from '../../../utils/helpers';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
   visible,
@@ -184,7 +183,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
       <View style={commonSharedStyles.centeredView}>
         <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>Edit Instrument</Text>
-          <Text style={commonSharedStyles.subTitle}>ID: {instrumentToEdit.id}</Text>
+          <Text style={commonSharedStyles.modalSubTitle}>ID: {instrumentToEdit.id}</Text>
 
           <Text style={commonSharedStyles.label}>Instrument Name:</Text>
           <TextInput
@@ -197,11 +196,11 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
             editable={!mutation.isPending}
           />
           <Text style={commonSharedStyles.label}>Icon:</Text>
-          <View style={appSharedStyles.containerIconPreview}>
+          <View style={commonSharedStyles.containerIconPreview}>
             {previewSource ? (
               <Image
                 source={previewSource}
-                style={appSharedStyles.iconPreview}
+                style={commonSharedStyles.iconPreview}
                 resizeMode="contain"
               />
             ) : (

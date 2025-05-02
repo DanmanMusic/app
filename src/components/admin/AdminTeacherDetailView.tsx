@@ -6,7 +6,6 @@ import { fetchStudents, fetchUserProfile } from '../../api/users';
 
 import { User, SimplifiedStudent } from '../../types/dataTypes';
 
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 import { getUserDisplayName } from '../../utils/helpers';
@@ -143,8 +142,8 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
           data={linkedStudents.sort((a, b) => a.name.localeCompare(b.name))}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <View style={[commonSharedStyles.baseItem, appSharedStyles.linkedStudentItem]}>
-              <Text style={appSharedStyles.itemTitle}>{item.name}</Text>
+            <View style={[commonSharedStyles.baseItem, commonSharedStyles.linkedStudentItem]}>
+              <Text style={commonSharedStyles.itemTitle}>{item.name}</Text>
               <Text style={commonSharedStyles.baseSecondaryText}>
                 Status:{' '}
                 <Text
@@ -157,7 +156,7 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
                   {item.isActive ? 'Active' : 'Inactive'}
                 </Text>
               </Text>
-              <View style={appSharedStyles.linkedStudentActions}>
+              <View style={commonSharedStyles.linkedStudentActions}>
                 <Button title="View Profile" onPress={() => onViewStudentProfile(item.id)} />
               </View>
             </View>

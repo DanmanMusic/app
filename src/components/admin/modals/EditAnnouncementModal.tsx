@@ -11,7 +11,6 @@ import { colors } from '../../../styles/colors';
 import { EditAnnouncementModalProps } from '../../../types/componentProps';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const ANNOUNCEMENT_TYPES: AnnouncementType[] = [
   'announcement',
@@ -124,7 +123,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
       <View style={commonSharedStyles.centeredView}>
         <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>Edit Announcement</Text>
-          <Text style={commonSharedStyles.subTitle}>ID: {announcementToEdit.id}</Text>
+          <Text style={commonSharedStyles.modalSubTitle}>ID: {announcementToEdit.id}</Text>
 
           <Text style={commonSharedStyles.label}>Type:</Text>
           <View>
@@ -132,8 +131,8 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
               selectedValue={type}
               onValueChange={itemValue => setType(itemValue as AnnouncementType)}
               enabled={!mutation.isPending}
-              style={appSharedStyles.picker}
-              itemStyle={appSharedStyles.pickerItem}
+              style={commonSharedStyles.picker}
+              itemStyle={commonSharedStyles.pickerItem}
             >
               {ANNOUNCEMENT_TYPES.map(typeValue => (
                 <Picker.Item
@@ -147,7 +146,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
 
           <Text style={commonSharedStyles.label}>Title:</Text>
           <TextInput
-            style={commonSharedStyles.input}
+            style={commonSharedStyles.picker}
             value={title}
             onChangeText={setTitle}
             placeholder="Announcement Title"

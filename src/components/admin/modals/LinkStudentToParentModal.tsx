@@ -13,15 +13,9 @@ import {
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-// API Imports
 import { fetchStudents } from '../../../api/users'; // To find students
 import { linkStudentToParent } from '../../../api/users'; // API to create the link
-
-// Type Imports
 import { SimplifiedStudent, User } from '../../../types/dataTypes';
-
-// Style Imports
-import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
@@ -140,11 +134,11 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
         <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>Link Student to Parent</Text>
           <Text style={commonSharedStyles.modalContextInfo}>Parent: {parentName}</Text>
-          <Text style={commonSharedStyles.stepTitle}>Select Student to Link:</Text>
+          <Text style={commonSharedStyles.modalStepTitle}>Select Student to Link:</Text>
 
           {/* Search Input */}
           <TextInput
-            style={[commonSharedStyles.input, appSharedStyles.searchInput]}
+            style={[commonSharedStyles.input, commonSharedStyles.searchInput]}
             placeholder="Search active students by name..."
             placeholderTextColor={colors.textLight}
             value={searchTerm}
@@ -155,7 +149,7 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
           />
 
           {/* Student List */}
-          <View style={appSharedStyles.itemBordered}>
+          <View style={commonSharedStyles.listItemFull}>
             {isLoadingStudents && (
               <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
             )}
@@ -173,16 +167,16 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
                     onPress={() => handleSelectStudent(item)}
                     disabled={linkMutation.isPending}
                     style={[
-                      item.id === selectedStudentId ? appSharedStyles.selectedStudentItem : {},
+                      item.id === selectedStudentId ? commonSharedStyles.selectedStudentItem : {},
                     ]}
                   >
-                    <Text style={appSharedStyles.textPrimaryLarge}>{item.name}</Text>
+                    <Text style={commonSharedStyles.textPrimaryLarge}>{item.name}</Text>
                     {item.id === selectedStudentId && (
-                      <Text style={appSharedStyles.checkmark}>✓</Text>
+                      <Text style={commonSharedStyles.checkmark}>✓</Text>
                     )}
                   </TouchableOpacity>
                 )}
-                ItemSeparatorComponent={() => <View style={appSharedStyles.separator} />}
+                ItemSeparatorComponent={() => <View style={commonSharedStyles.separator} />}
                 ListEmptyComponent={
                   <Text style={commonSharedStyles.baseEmptyText}>
                     {searchTerm
@@ -196,7 +190,7 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
 
           {/* Selected Student Confirmation Display */}
           {selectedStudentName && (
-            <Text style={appSharedStyles.selectionConfirmation}>
+            <Text style={commonSharedStyles.selectionConfirmation}>
               Selected: {selectedStudentName}
             </Text>
           )}

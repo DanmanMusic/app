@@ -22,7 +22,6 @@ import { ViewAllAssignedTasksModalProps } from '../../../types/componentProps';
 
 // Import Styles & Helpers
 import { getUserDisplayName } from '../../../utils/helpers';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
@@ -159,7 +158,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
         <View style={commonSharedStyles.centeredView}>
           <View style={commonSharedStyles.modalView}>
             {/* Header */}
-            <View style={appSharedStyles.modalHeader}>
+            <View style={commonSharedStyles.modalHeader}>
               <Text style={commonSharedStyles.modalTitle}>Assigned Tasks ({totalItems})</Text>
               {isFetchingTasks && !isLoadingTasks && (
                 <ActivityIndicator
@@ -171,9 +170,9 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
             </View>
 
             {/* Filters */}
-            <View style={appSharedStyles.filterSection}>
-              <View style={appSharedStyles.containerRowCenter}>
-                <Text style={appSharedStyles.filterLabel}>Task Status:</Text>
+            <View style={commonSharedStyles.filterSection}>
+              <View style={commonSharedStyles.baseRowCentered}>
+                <Text style={commonSharedStyles.filterLabel}>Task Status:</Text>
                 <Button
                   title="All"
                   onPress={() => setAssignmentFilter('all')}
@@ -195,8 +194,8 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                   color={assignmentFilter === 'completed' ? colors.success : colors.secondary}
                 />
               </View>
-              <View style={appSharedStyles.containerRowCenter}>
-                <Text style={appSharedStyles.filterLabel}>Student Status:</Text>
+              <View style={commonSharedStyles.baseRowCentered}>
+                <Text style={commonSharedStyles.filterLabel}>Student Status:</Text>
                 <Button
                   title="Active"
                   onPress={() => setStudentStatusFilter('active')}
@@ -236,7 +235,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
             {!isDataLoading && isLoadingUsers && (
               <Text
                 style={[
-                  appSharedStyles.textCenter,
+                  commonSharedStyles.textCenter,
                   { color: colors.textLight, marginVertical: 10 },
                 ]}
               >
@@ -247,7 +246,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
             {/* Task List */}
             {!isDataLoading && !isErrorTasks && (
               <FlatList
-                style={appSharedStyles.listItemFull}
+                style={commonSharedStyles.listItemFull}
                 data={tasks}
                 keyExtractor={item => item.id}
                 renderItem={({ item }) => {
@@ -285,7 +284,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
             )}
 
             {/* Footer with Pagination and Close Button */}
-            <View style={appSharedStyles.footer}>
+            <View style={commonSharedStyles.modalFooter}>
               {!isDataLoading && !isErrorTasks && totalPages > 1 && (
                 <PaginationControls
                   currentPage={currentPage}

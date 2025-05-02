@@ -19,7 +19,6 @@ import { colors } from '../../../styles/colors';
 import { EditRewardModalProps } from '../../../types/componentProps';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
 
 const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit, onClose }) => {
   const [name, setName] = useState('');
@@ -204,8 +203,8 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
       <View style={commonSharedStyles.centeredView}>
         <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>Edit Reward</Text>
-          <Text style={commonSharedStyles.subTitle}>ID: {rewardToEdit.id}</Text>
-          <ScrollView style={commonSharedStyles.scrollView}>
+          <Text style={commonSharedStyles.modalSubTitle}>ID: {rewardToEdit.id}</Text>
+          <ScrollView style={commonSharedStyles.modalScrollView}>
             <Text style={commonSharedStyles.label}>Reward Name:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -227,11 +226,11 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
               editable={!mutation.isPending}
             />
             <Text style={commonSharedStyles.label}>Image:</Text>
-            <View style={appSharedStyles.containerIconPreview}>
+            <View style={commonSharedStyles.containerIconPreview}>
               {previewSource ? (
                 <Image
                   source={previewSource}
-                  style={appSharedStyles.iconPreview}
+                  style={commonSharedStyles.iconPreview}
                   resizeMode="contain"
                 />
               ) : (

@@ -355,7 +355,10 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
                     {item.actualPointsAwarded !== undefined &&
                       item.verificationStatus !== 'pending' && (
                         <Text
-                          style={[commonSharedStyles.baseSubTitleText, { color: colors.success }]}
+                          style={[
+                            commonSharedStyles.baseSubTitleText,
+                            commonSharedStyles.textSuccess,
+                          ]}
                         >
                           Awarded: {item.actualPointsAwarded ?? 0} Tickets
                         </Text>
@@ -455,7 +458,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
       <ConfirmationModal
         visible={isDeleteTaskConfirmVisible}
         title="Confirm Remove Task"
-        message={`Are you sure you want to remove the assigstyle={appSharedStyles.assignedTaskActions}ned task "${taskToDelete?.taskTitle || 'selected task'}"? This cannot be undone.`}
+        message={`Are you sure you want to remove the assigned task "${taskToDelete?.taskTitle || 'selected task'}"? This cannot be undone.`}
         confirmText={deleteTaskMutation.isPending ? 'Removing...' : 'Remove Task'}
         onConfirm={handleConfirmDeleteTaskAction}
         onCancel={closeDeleteConfirmModal}

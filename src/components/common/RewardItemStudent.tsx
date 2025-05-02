@@ -1,6 +1,5 @@
 import { Image, Text, View } from 'react-native';
 import { RewardItem } from '../../types/dataTypes';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 
@@ -20,26 +19,26 @@ export const RewardItemStudent = ({
     <View
       style={[
         commonSharedStyles.baseItem,
-        canEarn ? appSharedStyles.rewardItemAffordable : {},
-        isGoal ? appSharedStyles.rewardItemGoal : {},
+        canEarn ? commonSharedStyles.rewardItemAffordable : {},
+        isGoal ? commonSharedStyles.rewardItemGoal : {},
       ]}
     >
-      <View style={appSharedStyles.containerRowCenter}>
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseAlignCenter]}>
         <Image
           source={{ uri: item.imageUrl }}
-          style={appSharedStyles.itemImageMedium}
+          style={commonSharedStyles.itemImageMedium}
           resizeMode="contain"
         />
-        <View style={appSharedStyles.itemFlex}>
-          <Text style={appSharedStyles.rewardName}>{item.name}</Text>
-          <Text style={[commonSharedStyles.baseSecondaryText, appSharedStyles.textGold]}>
+        <View style={commonSharedStyles.flex1}>
+          <Text style={commonSharedStyles.rewardName}>{item.name}</Text>
+          <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textGold]}>
             {item.cost} Tickets
           </Text>
           {item.description && (
             <Text style={commonSharedStyles.baseSecondaryText}>{item.description}</Text>
           )}
           {canEarn ? (
-            <Text style={[commonSharedStyles.baseSecondaryText, appSharedStyles.textSuccess]}>
+            <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textSuccess]}>
               Available Now!
             </Text>
           ) : (

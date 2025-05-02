@@ -1,7 +1,6 @@
 import { Button, Image, Text, View } from 'react-native';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { getInstrumentIconSource } from '../../utils/helpers';
 import { AdminInstrumentItemProps } from '../../types/componentProps';
 
@@ -18,7 +17,7 @@ export const AdminInstrumentItem: React.FC<AdminInstrumentItemProps> = ({
       commonSharedStyles.baseItem,
     ]}
   >
-    <View style={appSharedStyles.containerRowCenter}>
+    <View style={[commonSharedStyles.baseRowCentered, commonSharedStyles.baseAlignCenter]}>
       <Image
         source={getInstrumentIconSource(item)}
         style={commonSharedStyles.baseIcon}

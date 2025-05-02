@@ -1,11 +1,13 @@
+// src/components/admin/AdminAnnouncementsSection.tsx
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 import { fetchAnnouncements, deleteAnnouncement } from '../../api/announcements';
 
 import { Announcement } from '../../types/dataTypes';
-import { appSharedStyles } from '../../styles/appSharedStyles';
+// Correctly using commonSharedStyles
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 
@@ -13,7 +15,6 @@ import ConfirmationModal from '../common/ConfirmationModal';
 import CreateAnnouncementModal from './modals/CreateAnnouncementModal';
 import EditAnnouncementModal from './modals/EditAnnouncementModal';
 import { AnnouncementListItem } from '../common/AnnouncementListItem';
-import Toast from 'react-native-toast-message';
 
 export const AdminAnnouncementsSection = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -146,7 +147,7 @@ export const AdminAnnouncementsSection = () => {
               </View>
             </View>
           )}
-          scrollEnabled={false}
+          scrollEnabled={false} // Assuming this list won't be long enough to need scrolling within the main view's scroll
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
           ListEmptyComponent={() => (
             <Text style={commonSharedStyles.baseEmptyText}>No announcements found.</Text>

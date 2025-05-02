@@ -1,6 +1,5 @@
 import { Button, Text, View } from 'react-native';
 import { Instrument, SimplifiedStudent, UserRole } from '../../types/dataTypes';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { getInstrumentNames } from '../../utils/helpers';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
@@ -22,15 +21,15 @@ export const AdminStudentItem = ({
         commonSharedStyles.baseItem,
         commonSharedStyles.baseRow,
         commonSharedStyles.justifySpaceBetween,
-        !student.isActive ? appSharedStyles.inactiveItem : {},
+        !student.isActive ? commonSharedStyles.inactiveItem : {},
       ]}
     >
       <View>
-        <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
+        <Text style={commonSharedStyles.itemTitle}>{student.name}</Text>
         <Text style={commonSharedStyles.baseSecondaryText}>
           Instrument(s): {getInstrumentNames(student.instrumentIds, instruments)}
         </Text>
-        <Text style={[commonSharedStyles.baseSecondaryText, appSharedStyles.textGold]}>
+        <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textGold]}>
           Balance: {student.balance}
         </Text>
         <Text

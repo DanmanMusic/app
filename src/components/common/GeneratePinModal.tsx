@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, Button, ActivityIndicator, Platform } from 'react-native';
+import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { generatePinForUser } from '../../api/users';
 import { User, UserRole } from '../../types/dataTypes';
