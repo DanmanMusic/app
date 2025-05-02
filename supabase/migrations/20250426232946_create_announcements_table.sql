@@ -52,19 +52,6 @@ END $$;
 CREATE INDEX idx_announcements_type_date ON public.announcements (type, date DESC);
 CREATE INDEX idx_announcements_related_student ON public.announcements (related_student_id);
 
--- Remove potentially existing policies first (including old TEMP/authenticated ones)
-DROP POLICY IF EXISTS "Announcements: Allow authenticated read access" ON public.announcements;
-DROP POLICY IF EXISTS "Announcements: Allow public read access" ON public.announcements;
-DROP POLICY IF EXISTS "Announcements: Allow admin insert access" ON public.announcements;
-DROP POLICY IF EXISTS "Announcements: Allow admin update access" ON public.announcements;
-DROP POLICY IF EXISTS "Announcements: Allow admin delete access" ON public.announcements;
-DROP POLICY IF EXISTS "TEMP Allow anon select on announcements" ON public.announcements;
-DROP POLICY IF EXISTS "TEMP Allow anon write on announcements" ON public.announcements;
-DROP POLICY IF EXISTS "TEMP Allow anon insert access on announcements" ON public.announcements;
-DROP POLICY IF EXISTS "TEMP Allow anon update access on announcements" ON public.announcements;
-DROP POLICY IF EXISTS "TEMP Allow anon delete access on announcements" ON public.announcements;
-
-
 -- SELECT Policy: Allow ANYONE (public) to read announcements.
 CREATE POLICY "Announcements: Allow public read access"
 ON public.announcements

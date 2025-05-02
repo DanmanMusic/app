@@ -255,7 +255,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   };
 
   return (
-    <SafeAreaView style={commonSharedStyles.flex1}>
+    <SafeAreaView style={[commonSharedStyles.flex1]}>
       <View
         style={[
           commonSharedStyles.baseRow,

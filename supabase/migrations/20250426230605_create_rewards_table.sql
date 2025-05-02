@@ -38,25 +38,6 @@ BEGIN
   END IF;
 END $$;
 
--- == Row Level Security (RLS) Policies (SECURE VERSION) ==
--- These policies assume a function `public.is_admin(uuid)` exists that returns true
--- if the given user ID belongs to an active administrator.
-
--- Clean up potentially existing policies (including TEMP/old/authenticated ones)
-DROP POLICY IF EXISTS "Rewards: Allow authenticated read access" ON public.rewards;
-DROP POLICY IF EXISTS "Rewards: Allow public read access" ON public.rewards;
-DROP POLICY IF EXISTS "Rewards: Allow admin insert access" ON public.rewards;
-DROP POLICY IF EXISTS "Rewards: Allow admin update access" ON public.rewards;
-DROP POLICY IF EXISTS "Rewards: Allow admin delete access" ON public.rewards;
-DROP POLICY IF EXISTS "Allow public read access on rewards" ON public.rewards;
-DROP POLICY IF EXISTS "Allow authenticated users to read rewards" ON public.rewards;
-DROP POLICY IF EXISTS "Allow admin users to insert rewards" ON public.rewards;
-DROP POLICY IF EXISTS "Allow admin users to update rewards" ON public.rewards;
-DROP POLICY IF EXISTS "Allow admin users to delete rewards" ON public.rewards;
-DROP POLICY IF EXISTS "TEMP Allow anon insert access on rewards" ON public.rewards;
-DROP POLICY IF EXISTS "TEMP Allow anon update access on rewards" ON public.rewards;
-DROP POLICY IF EXISTS "TEMP Allow anon delete access on rewards" ON public.rewards;
-
 -- SELECT Policy: Allow ANYONE (public) to read the rewards catalog.
 CREATE POLICY "Rewards: Allow public read access"
 ON public.rewards

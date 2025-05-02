@@ -40,16 +40,6 @@ CREATE INDEX idx_transactions_type ON public.ticket_transactions (type);
 
 -- === RLS for public.ticket_transactions ===
 
--- Clean up existing policies (including TEMP/old ones)
-DROP POLICY IF EXISTS "Ticket Transactions: Allow admin read access" ON public.ticket_transactions;
-DROP POLICY IF EXISTS "Ticket Transactions: Allow students read own" ON public.ticket_transactions;
-DROP POLICY IF EXISTS "Ticket Transactions: Allow parents read children" ON public.ticket_transactions;
-DROP POLICY IF EXISTS "Ticket Transactions: Allow teachers read linked students" ON public.ticket_transactions;
-DROP POLICY IF EXISTS "Ticket Transactions: Block direct writes" ON public.ticket_transactions;
-DROP POLICY IF EXISTS "TEMP Allow anon select on ticket_transactions" ON public.ticket_transactions;
-DROP POLICY IF EXISTS "TEMP Allow anon write on ticket_transactions" ON public.ticket_transactions;
-
-
 -- SELECT Policies
 CREATE POLICY "Ticket Transactions: Allow admin read access" ON public.ticket_transactions
   FOR SELECT TO authenticated USING (public.is_admin(auth.uid()));

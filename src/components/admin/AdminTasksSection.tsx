@@ -1,30 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
-
 import { fetchTaskLibrary } from '../../api/taskLibrary';
-
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminTaskLibraryItem } from '../common/AdminTaskLibraryItem';
-
 import { AdminTasksSectionProps } from '../../types/componentProps';
 import { useQuery } from '@tanstack/react-query';
 import { TaskLibraryItem } from '../../types/dataTypes';
-import { ViewAllAssignedTasksModal } from './modals/ViewAllAssignedTasksModal';
 
 export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
   onInitiateAssignTask,
   onInitiateCreateTask,
   onInitiateEditTask,
   onInitiateDeleteTask,
-  handleInternalInitiateVerificationModal,
+  onViewVerifications,
   deleteTaskMutationPending,
 }) => {
-  const [isViewAllAssignedTasksModalVisible, setIsViewAllAssignedTasksModalVisible] =
-    useState(false);
-  const handleViewAllAssignedTasks = () => setIsViewAllAssignedTasksModalVisible(true);
-  const handleViewAllAssignedTasksModalClose = () => setIsViewAllAssignedTasksModalVisible(false);
-
   const {
     data: taskLibrary = [],
     isLoading,
@@ -53,7 +44,7 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
             onPress={onInitiateAssignTask}
             disabled={deleteTaskMutationPending}
           />
-          <Button title="View All Assigned Tasks" onPress={handleViewAllAssignedTasks} />
+          <Button title="View All Assigned Tasks" onPress={() => onViewVerifications(false)} />
         </View>
         <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
           Task Library ({taskLibrary.length})
@@ -94,11 +85,6 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
           />
         )}
       </View>
-      <ViewAllAssignedTasksModal
-        visible={isViewAllAssignedTasksModalVisible}
-        onClose={handleViewAllAssignedTasksModalClose}
-        onInitiateVerification={handleInternalInitiateVerificationModal}
-      />
     </>
   );
 };

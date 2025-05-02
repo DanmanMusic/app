@@ -1,15 +1,19 @@
-import React, { useState, useMemo } from 'react';
+// src/views/StudentView.tsx
+import React, { useState, useMemo } from 'react'; // Removed useEffect as it's no longer needed for local goal state
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { View, Text, ScrollView, FlatList, Button, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
+// API Imports
 import { fetchAnnouncements } from '../api/announcements';
 import { updateAssignedTask } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
 import { fetchRewards } from '../api/rewards';
 import { fetchStudentBalance } from '../api/tickets';
-import { fetchUserProfile } from '../api/users';
+import { fetchUserProfile, updateStudentGoal } from '../api/users'; // Import updateStudentGoal
 
+// Component Imports
 import PaginationControls from '../components/admin/PaginationControls';
 import SetGoalModal from '../components/student/modals/SetGoalModal';
 import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
@@ -17,19 +21,21 @@ import { TicketHistoryItem } from '../components/common/TicketHistoryItem';
 import { RewardItemStudent } from '../components/common/RewardItemStudent';
 import { AssignedTaskItem } from '../components/common/AssignedTaskItem';
 import { AnnouncementListItem } from '../components/common/AnnouncementListItem';
+import { SharedHeader } from '../components/common/SharedHeader';
 
+// Context & Hooks Imports
 import { useAuth } from '../contexts/AuthContext';
 import { usePaginatedStudentHistory } from '../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../hooks/usePaginatedStudentTasks';
 
+// Type Imports
 import { Announcement, Instrument, RewardItem, User } from '../types/dataTypes';
 import { StudentViewProps } from '../types/componentProps';
 
+// Style & Helper Imports
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
 import { getInstrumentNames, getUserDisplayName } from '../utils/helpers';
-import Toast from 'react-native-toast-message';
-import { SharedHeader } from '../components/common/SharedHeader';
 
 type StudentTab = 'dashboard' | 'tasks' | 'rewards' | 'announcements';
 
@@ -39,11 +45,13 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
 
   const targetStudentId = studentIdToView ?? loggedInUserId;
 
+  // State for UI control
   const [activeTab, setActiveTab] = useState<StudentTab>('dashboard');
-  const [goalRewardId, setGoalRewardId] = useState<string | null>(null);
   const [isSetGoalModalVisible, setIsSetGoalModalVisible] = useState(false);
   const [isSetCredentialsModalVisible, setIsSetCredentialsModalVisible] = useState(false);
+  // Local state for goalRewardId is REMOVED
 
+  // --- Data Fetching Queries ---
   const {
     data: user,
     isLoading: userLoading,
@@ -53,7 +61,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     queryKey: ['userProfile', targetStudentId],
     queryFn: () => fetchUserProfile(targetStudentId!),
     enabled: !!targetStudentId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // Re-fetch profile data occasionally
   });
 
   const {
@@ -65,7 +73,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     queryKey: ['balance', targetStudentId],
     queryFn: () => fetchStudentBalance(targetStudentId!),
     enabled: !!user && user.status === 'active',
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1 * 60 * 1000, // Re-fetch balance more frequently
   });
 
   const {
@@ -76,7 +84,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   } = useQuery<RewardItem[], Error>({
     queryKey: ['rewards'],
     queryFn: fetchRewards,
-    staleTime: 10 * 60 * 1000,
+    staleTime: 10 * 60 * 1000, // Rewards change less often
   });
 
   const {
@@ -98,9 +106,10 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   } = useQuery<Instrument[], Error>({
     queryKey: ['instruments'],
     queryFn: fetchInstruments,
-    staleTime: Infinity,
+    staleTime: Infinity, // Instruments rarely change
   });
 
+  // --- Paginated Data Hooks ---
   const {
     tasks: paginatedTasks,
     currentPage: tasksCurrentPage,
@@ -125,6 +134,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     totalItems: totalHistoryCount,
   } = usePaginatedStudentHistory(targetStudentId);
 
+  // --- Mutations ---
   const markCompleteMutation = useMutation({
     mutationFn: (assignmentId: string) =>
       updateAssignedTask({ assignmentId, updates: { isComplete: true } }),
@@ -133,7 +143,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
       queryClient.invalidateQueries({
         queryKey: ['assigned-tasks', { studentId: targetStudentId }],
       });
-
       Toast.show({
         type: 'success',
         text1: 'Task Complete!',
@@ -153,11 +162,67 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     },
   });
 
-  const studentAnnouncements = useMemo(() => [...allAnnouncements], [allAnnouncements]);
+  const updateGoalMutation = useMutation({
+    mutationFn: (variables: { studentId: string; rewardId: string | null }) =>
+      updateStudentGoal(variables.studentId, variables.rewardId),
+    onSuccess: updatedProfileSubset => {
+      // API returns { id, current_goal_reward_id }
+      console.log('[StudentView] Goal updated successfully via mutation:', updatedProfileSubset);
+
+      // --- START Immediate Cache Update ---
+      const profileQueryKey = ['userProfile', targetStudentId];
+      // Get the current cached user data
+      const previousUserData = queryClient.getQueryData<User | null>(profileQueryKey);
+
+      if (previousUserData) {
+        // Create the updated user data object
+        const updatedUserData: User = {
+          ...previousUserData,
+          current_goal_reward_id: updatedProfileSubset.current_goal_reward_id, // Use the ID from the API response
+        };
+        // Immediately update the cache
+        queryClient.setQueryData(profileQueryKey, updatedUserData);
+        console.log('[StudentView] Manually updated profile cache with new goal ID.');
+      } else {
+        console.warn(
+          '[StudentView] Could not find previous user data in cache to update goal immediately.'
+        );
+        // If cache is empty, invalidation is the only way
+        queryClient.invalidateQueries({ queryKey: profileQueryKey });
+      }
+
+      Toast.show({
+        type: 'success',
+        text1: 'Goal Updated!',
+        position: 'bottom',
+      });
+      setIsSetGoalModalVisible(false); // Close modal on success
+    },
+    onError: (error: Error) => {
+      console.error('[StudentView] Error updating goal:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Update Failed',
+        text2: error.message || 'Could not update goal.',
+        position: 'bottom',
+      });
+      // Keep modal open on error? Or close? Closing for now based on previous logic.
+      setIsSetGoalModalVisible(false);
+    },
+  });
+
+  // ... (rest of the component)
+
+  // --- Memos and Derived State ---
+  const studentGoalRewardId = useMemo(() => user?.current_goal_reward_id, [user]); // Use profile data
+
   const goalReward = useMemo(
-    () => rewardsCatalog.find(reward => reward.id === goalRewardId),
-    [rewardsCatalog, goalRewardId]
+    () => rewardsCatalog.find(reward => reward.id === studentGoalRewardId), // Use studentGoalRewardId
+    [rewardsCatalog, studentGoalRewardId] // Update dependency
   );
+
+  const studentAnnouncements = useMemo(() => [...allAnnouncements], [allAnnouncements]);
+
   const rawProgressTowardGoal = useMemo(
     () => (goalReward ? (balance / goalReward.cost) * 100 : 0),
     [balance, goalReward]
@@ -172,18 +237,27 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     [loggedInUserId, targetStudentId, currentUserRole]
   );
 
+  // --- Handlers ---
   const handleSetGoalPress = () => setIsSetGoalModalVisible(true);
 
   const handleGoalSelected = (newGoalId: string | null) => {
-    setGoalRewardId(newGoalId);
-    setIsSetGoalModalVisible(false);
+    if (!targetStudentId) {
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Student ID not found.' });
+      return;
+    }
+    if (updateGoalMutation.isPending) return;
+
+    console.log(`[StudentView] handleGoalSelected called. New Goal ID: ${newGoalId}`);
+    updateGoalMutation.mutate({ studentId: targetStudentId, rewardId: newGoalId });
   };
+
   const handleMarkTaskComplete = (assignmentId: string) => {
     if (!markCompleteMutation.isPending) {
       markCompleteMutation.mutate(assignmentId);
     }
   };
 
+  // --- Loading and Error Handling ---
   const isLoadingCore = userLoading || instrumentsLoading;
 
   if (isLoadingCore) {
@@ -229,9 +303,11 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     );
   }
 
+  // --- Render ---
   return (
     <SafeAreaView style={commonSharedStyles.flex1}>
       <View style={[commonSharedStyles.flex1, commonSharedStyles.baseMargin]}>
+        {/* Render header only if not being viewed by parent */}
         {!studentIdToView && (
           <View
             style={[
@@ -243,6 +319,8 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
             <SharedHeader onSetLoginPress={() => setIsSetCredentialsModalVisible(true)} />
           </View>
         )}
+
+        {/* Instrument and Balance Info */}
         <View style={commonSharedStyles.baseMarginTopBottom}>
           <Text style={commonSharedStyles.baseTitleText}>
             Instrument(s):{' '}
@@ -262,6 +340,8 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
             </Text>
           )}
         </View>
+
+        {/* Tab Navigation Buttons */}
         <View
           style={[
             commonSharedStyles.baseRow,
@@ -273,24 +353,26 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           <Button
             title="Dashboard"
             onPress={() => setActiveTab('dashboard')}
-            color={activeTab === 'dashboard' ? '' : colors.secondary}
+            color={activeTab === 'dashboard' ? colors.primary : colors.secondary}
           />
           <Button
             title="Tasks"
             onPress={() => setActiveTab('tasks')}
-            color={activeTab === 'tasks' ? '' : colors.secondary}
+            color={activeTab === 'tasks' ? colors.primary : colors.secondary}
           />
           <Button
             title="Rewards"
             onPress={() => setActiveTab('rewards')}
-            color={activeTab === 'rewards' ? '' : colors.secondary}
+            color={activeTab === 'rewards' ? colors.primary : colors.secondary}
           />
           <Button
             title="Announcements"
             onPress={() => setActiveTab('announcements')}
-            color={activeTab === 'announcements' ? '' : colors.secondary}
+            color={activeTab === 'announcements' ? colors.primary : colors.secondary}
           />
         </View>
+
+        {/* Tab Content Area */}
         <View style={commonSharedStyles.flex1}>
           {activeTab === 'dashboard' && (
             <ScrollView>
@@ -299,6 +381,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
               >
                 My Goal
               </Text>
+              {/* Goal Display */}
               {rewardsLoading && <ActivityIndicator color={colors.primary} />}
               {rewardsError && (
                 <Text style={commonSharedStyles.errorText}>Error loading rewards for goal.</Text>
@@ -364,6 +447,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                     <Button title="Set a Goal" onPress={handleSetGoalPress} />
                   </View>
                 ))}
+              {/* History Display */}
               <Text
                 style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}
               >
@@ -386,7 +470,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                   ListEmptyComponent={() => (
                     <Text style={commonSharedStyles.baseEmptyText}>No history yet.</Text>
                   )}
-                  scrollEnabled={false}
+                  scrollEnabled={false} // Prevent nested scrolling issues
                   contentContainerStyle={{ paddingBottom: 5 }}
                   ListHeaderComponent={
                     historyFetching ? (
@@ -404,9 +488,10 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                   }
                 />
               )}
-              <View style={{ height: 30 }} />
+              <View style={{ height: 30 }} /> {/* Spacer at the bottom */}
             </ScrollView>
           )}
+
           {activeTab === 'tasks' && (
             <>
               {tasksLoading && (
@@ -456,6 +541,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
               )}
             </>
           )}
+
           {activeTab === 'rewards' && (
             <>
               {rewardsLoading && (
@@ -468,13 +554,13 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
               )}
               {!rewardsLoading && !rewardsError && (
                 <FlatList
-                  data={rewardsCatalog}
+                  data={rewardsCatalog} // Catalog is already sorted by cost in the query
                   keyExtractor={item => `reward-${item.id}`}
                   renderItem={({ item }) => (
                     <RewardItemStudent
                       item={item}
                       currentBalance={balance}
-                      isGoal={item.id === goalRewardId}
+                      isGoal={item.id === studentGoalRewardId} // Use studentGoalRewardId
                     />
                   )}
                   ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
@@ -487,6 +573,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
               )}
             </>
           )}
+
           {activeTab === 'announcements' && (
             <>
               {announcementsLoading && (
@@ -499,7 +586,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
               )}
               {!announcementsLoading && !announcementsError && (
                 <FlatList
-                  data={studentAnnouncements}
+                  data={studentAnnouncements} // Use memoized announcements
                   keyExtractor={item => `announcement-${item.id}`}
                   renderItem={({ item }) => <AnnouncementListItem item={item} />}
                   ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
@@ -514,6 +601,8 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           )}
         </View>
       </View>
+
+      {/* Modals */}
       <SetEmailPasswordModal
         visible={isSetCredentialsModalVisible}
         onClose={() => setIsSetCredentialsModalVisible(false)}
@@ -522,8 +611,8 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
         visible={isSetGoalModalVisible}
         onClose={() => setIsSetGoalModalVisible(false)}
         currentBalance={balance}
-        currentGoalId={goalRewardId}
-        onSetGoal={handleGoalSelected}
+        currentGoalId={studentGoalRewardId ?? null} // Pass goal ID from user data
+        onSetGoal={handleGoalSelected} // Pass the updated handler
       />
     </SafeAreaView>
   );

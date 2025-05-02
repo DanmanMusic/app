@@ -40,7 +40,7 @@ export const StudentListItem = ({
         Status: {student.isActive ? 'Active' : 'Inactive'}
       </Text>
     </View>
-    <View>
+    <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
       <Button title="View Profile" onPress={() => onViewProfile(student.id)} />
       {student.isActive && <Button title="Assign Task" onPress={() => onAssignTask(student.id)} />}
     </View>

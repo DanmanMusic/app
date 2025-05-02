@@ -60,30 +60,6 @@ CREATE INDEX idx_assigned_tasks_status ON public.assigned_tasks (is_complete, ve
 CREATE INDEX idx_assigned_tasks_assigned_by_id ON public.assigned_tasks (assigned_by_id);
 
 
--- === RLS for public.assigned_tasks ===
--- Assumes helper function public.is_admin(uuid) exists.
--- Assumes helper function public.can_student_or_parent_mark_task_complete(uuid) exists and checks ownership (student or linked parent).
-
--- Clean up potentially existing policies first
-DROP POLICY IF EXISTS "Assigned Tasks: Allow admin full access" ON public.assigned_tasks;
-DROP POLICY IF EXISTS "Assigned Tasks: Allow students read own" ON public.assigned_tasks;
-DROP POLICY IF EXISTS "Assigned Tasks: Allow parents read children" ON public.assigned_tasks;
-DROP POLICY IF EXISTS "Assigned Tasks: Allow teachers read linked students" ON public.assigned_tasks;
-DROP POLICY IF EXISTS "Assigned Tasks: Allow teachers insert for linked students" ON public.assigned_tasks;
-DROP POLICY IF EXISTS "Assigned Tasks: Allow students update own completion" ON public.assigned_tasks;
-DROP POLICY IF EXISTS "Assigned Tasks: Allow parents update children completion" ON public.assigned_tasks;
-DROP POLICY IF EXISTS "Assigned Tasks: Allow teachers update linked students verification" ON public.assigned_tasks;
-DROP POLICY IF EXISTS "Assigned Tasks: Allow teachers delete own assignments (pre-verification)" ON public.assigned_tasks;
-DROP POLICY IF EXISTS "TEMP Allow anon select on assigned_tasks" ON public.assigned_tasks;
-DROP POLICY IF EXISTS "TEMP Allow anon write on assigned_tasks" ON public.assigned_tasks;
-DROP POLICY IF EXISTS "_disabled_Assigned Tasks: Allow students update own completion" ON public.assigned_tasks;
-DROP POLICY IF EXISTS "TEMP_Student_Update_Check_Only" ON public.assigned_tasks;
-DROP POLICY IF EXISTS "Student Update - Check Only V2" ON public.assigned_tasks;
-DROP POLICY IF EXISTS "Student/Parent Update - Mark Complete Check" ON public.assigned_tasks;
-DROP POLICY IF EXISTS "Student Update - Via Function" ON public.assigned_tasks; -- Older name using only student check
-DROP POLICY IF EXISTS "Student/Parent Update - Mark Complete Via Function" ON public.assigned_tasks; -- Drop potentially existing policy name
-
-
 -- ==================
 -- SELECT Policies
 -- ==================

@@ -48,17 +48,6 @@ BEGIN
 END $$;
 
 
--- === RLS for public.task_library ===
-
--- Clean up existing policies (including TEMP/old ones)
-DROP POLICY IF EXISTS "Task Library: Allow authenticated read access" ON public.task_library;
-DROP POLICY IF EXISTS "Task Library: Allow admin write access" ON public.task_library;
-DROP POLICY IF EXISTS "Allow public read access on task_library" ON public.task_library;
-DROP POLICY IF EXISTS "TEMP Allow anon insert access on task_library" ON public.task_library;
-DROP POLICY IF EXISTS "TEMP Allow anon update access on task_library" ON public.task_library;
-DROP POLICY IF EXISTS "TEMP Allow anon delete access on task_library" ON public.task_library;
-
-
 -- SELECT Policy: Allow ANY authenticated user to read the task library.
 CREATE POLICY "Task Library: Allow authenticated read access"
 ON public.task_library

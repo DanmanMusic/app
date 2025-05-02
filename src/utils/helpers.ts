@@ -2,11 +2,6 @@ import { ImageSourcePropType, ImageURISource } from 'react-native';
 import { getSupabase } from '../lib/supabaseClient';
 import { Instrument, TaskLibraryItem, User } from '../types/dataTypes';
 
-export const getTaskTitle = (taskId: string, taskLibrary: TaskLibraryItem[]): string => {
-  const taskDetail = taskLibrary.find(libTask => libTask.id === taskId);
-  return taskDetail?.title || `Custom Task (${taskId})`;
-};
-
 export const getUserDisplayName = (
   userOrProfile:
     | Pick<User, 'firstName' | 'lastName' | 'nickname'>

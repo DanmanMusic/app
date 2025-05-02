@@ -1,8 +1,5 @@
 -- supabase/migrations/<timestamp>_create_parent_students_table.sql
 
--- == Create Parent Students Link Table ==
--- Many-to-Many relationship between parents and students (both profiles)
-
 CREATE TABLE public.parent_students (
     parent_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     student_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -21,16 +18,6 @@ ALTER TABLE public.parent_students ENABLE ROW LEVEL SECURITY;
 -- == Indexes ==
 CREATE INDEX idx_parent_students_parent_id ON public.parent_students (parent_id);
 CREATE INDEX idx_parent_students_student_id ON public.parent_students (student_id);
-
-
--- === RLS for public.parent_students ===
-
--- Clean up existing policies (including TEMP/old ones)
-DROP POLICY IF EXISTS "Parent Students: Allow admin full access" ON public.parent_students;
-DROP POLICY IF EXISTS "Parent Students: Allow related read access" ON public.parent_students;
-DROP POLICY IF EXISTS "TEMP Allow anon select on parent_students" ON public.parent_students; -- If exists
-DROP POLICY IF EXISTS "TEMP Allow anon write on parent_students" ON public.parent_students; -- If exists
-
 
 -- SELECT Policy: Allow Admins, the linked Parent, or the linked Student to read.
 CREATE POLICY "Parent Students: Allow related read access"

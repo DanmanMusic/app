@@ -35,7 +35,7 @@ interface UpdateAuthResponse {
 }
 
 const mapProfileToUser = async (
-  profile: any,
+  profile: any, // Keep 'any' for now as profile structure varies slightly by fetch point
   client: ReturnType<typeof getSupabase>
 ): Promise<User> => {
   console.log(`[mapProfileToUser] Mapping profile for ID: ${profile.id}, Role: ${profile.role}`);
@@ -44,9 +44,9 @@ const mapProfileToUser = async (
   let linkedTeacherIds: string[] | undefined = undefined;
   let linkedStudentIds: string[] | undefined = undefined;
 
+  // Fetch links based on role (existing logic)
   if (profile.role === 'student') {
-    console.log(`[mapProfileToUser] Fetching student links for ${userId}`);
-
+    // ... (fetch instruments - existing logic) ...
     const { data: instruments, error: instError } = await client
       .from('student_instruments')
       .select('instrument_id')
@@ -56,11 +56,9 @@ const mapProfileToUser = async (
         `[mapProfileToUser] Error fetching instruments for student ${userId}:`,
         instError.message
       );
-    else {
-      instrumentIds = instruments?.map(i => i.instrument_id) || [];
-      console.log(`[mapProfileToUser] Fetched instrumentIds for ${userId}:`, instrumentIds);
-    }
+    else instrumentIds = instruments?.map(i => i.instrument_id) || [];
 
+    // ... (fetch teachers - existing logic) ...
     const { data: teachers, error: teachError } = await client
       .from('student_teachers')
       .select('teacher_id')
@@ -70,13 +68,9 @@ const mapProfileToUser = async (
         `[mapProfileToUser] Error fetching teachers for student ${userId}:`,
         teachError.message
       );
-    else {
-      linkedTeacherIds = teachers?.map(t => t.teacher_id) || [];
-      console.log(`[mapProfileToUser] Fetched linkedTeacherIds for ${userId}:`, linkedTeacherIds);
-    }
+    else linkedTeacherIds = teachers?.map(t => t.teacher_id) || [];
   } else if (profile.role === 'parent') {
-    console.log(`[mapProfileToUser] Fetching parent links for ${userId}`);
-
+    // ... (fetch students - existing logic) ...
     const { data: students, error: stuError } = await client
       .from('parent_students')
       .select('student_id')
@@ -86,12 +80,10 @@ const mapProfileToUser = async (
         `[mapProfileToUser] Error fetching students for parent ${userId}:`,
         stuError.message
       );
-    else {
-      linkedStudentIds = students?.map(s => s.student_id) || [];
-      console.log(`[mapProfileToUser] Fetched linkedStudentIds for ${userId}:`, linkedStudentIds);
-    }
+    else linkedStudentIds = students?.map(s => s.student_id) || [];
   }
 
+  // Map the core profile fields AND the new goal field
   const mappedUser: User = {
     id: profile.id,
     role: profile.role as UserRole,
@@ -99,12 +91,16 @@ const mapProfileToUser = async (
     lastName: profile.last_name,
     nickname: profile.nickname ?? undefined,
     status: profile.status as UserStatus,
+    current_goal_reward_id: profile.current_goal_reward_id ?? null, // <-- MAP THE GOAL ID HERE
 
+    // Conditionally add link arrays only if they were fetched/defined
     ...(instrumentIds !== undefined && { instrumentIds }),
     ...(linkedTeacherIds !== undefined && { linkedTeacherIds }),
     ...(linkedStudentIds !== undefined && { linkedStudentIds }),
   };
-  console.log(`[mapProfileToUser] Successfully mapped profile for ${userId}`);
+  console.log(
+    `[mapProfileToUser] Successfully mapped profile for ${userId}, Goal ID: ${mappedUser.current_goal_reward_id}`
+  );
   return mappedUser;
 };
 
@@ -285,41 +281,50 @@ export const fetchUserProfile = async (userId: string): Promise<User | null> => 
   const client = getSupabase();
   console.log(`[fetchUserProfile] Attempting to fetch profile for user: ${userId}`);
 
-  let profile: any = null;
+  let profile: any = null; // Keep 'any' for raw DB result
   try {
+    // Modify the select string to include the goal column
     const { data, error } = await client
       .from('profiles')
-      .select('id, role, first_name, last_name, nickname, status')
+      .select('id, role, first_name, last_name, nickname, status, current_goal_reward_id') // <-- ADDED goal column
       .eq('id', userId)
       .single();
 
-    console.log(`[fetchUserProfile] Profiles query result for ${userId}:`, {
-      data: !!data,
-      error: error?.message,
-    });
-
+    // ... (existing error handling for fetch) ...
     if (error) {
       if (error.code === 'PGRST116') {
-        return null;
+        // Resource Not Found
+        console.warn(`[fetchUserProfile] Profile not found for user ${userId}.`);
+        return null; // Return null specifically for not found
       }
+      // Log other errors but still throw
       console.error(`[fetchUserProfile] Error fetching profile for ${userId}:`, error.message);
       throw new Error(`Failed to fetch profile: ${error.message}`);
     }
     if (!data) {
-      return null;
+      console.warn(
+        `[fetchUserProfile] No profile data returned for user ${userId}, but no error received.`
+      );
+      return null; // Return null if no data but no error
     }
 
     profile = data;
-    console.log(`[fetchUserProfile] Profile data fetched for ${userId}.`);
+    console.log(
+      `[fetchUserProfile] Profile data fetched for ${userId}. Raw Goal ID: ${profile.current_goal_reward_id}`
+    );
     console.log(`[fetchUserProfile] Proceeding to map...`);
+    // mapProfileToUser will now handle mapping the goal ID
     const mappedUser = await mapProfileToUser(profile, client);
-    console.log(`[fetchUserProfile] Successfully fetched and mapped profile for ${userId}.`);
+    console.log(
+      `[fetchUserProfile] Successfully fetched and mapped profile for ${userId}. Mapped Goal ID: ${mappedUser.current_goal_reward_id}`
+    );
     return mappedUser;
   } catch (catchError: any) {
     console.error(
       `[fetchUserProfile] CAUGHT ERROR fetching/mapping profile for ${userId}:`,
       catchError.message
     );
+    // Re-throw the error to be handled by react-query
     throw catchError;
   }
 };
@@ -569,36 +574,6 @@ export const toggleUserStatus = async (userId: string): Promise<User> => {
     `[API toggleUserStatus] Successfully toggled status and refetched profile for ${userId}.`
   );
   return updatedUser; // Return the freshly fetched full user profile
-};
-
-export const fetchActiveProfilesForDevSelector = async (): Promise<
-  Pick<User, 'id' | 'role' | 'firstName' | 'lastName' | 'nickname' | 'status'>[]
-> => {
-  const client = getSupabase();
-  console.log(`[Supabase] Fetching Active Profiles for Dev Selector`);
-
-  const { data, error } = await client
-    .from('profiles')
-    .select('id, role, first_name, last_name, nickname, status')
-    .eq('status', 'active')
-    .order('role')
-    .order('last_name')
-    .order('first_name');
-
-  if (error) {
-    console.error(`[Supabase] Error fetching active profiles for selector:`, error.message);
-
-    return [];
-  }
-
-  return (data || []).map(profile => ({
-    id: profile.id,
-    role: profile.role as UserRole,
-    firstName: profile.first_name,
-    lastName: profile.last_name,
-    nickname: profile.nickname ?? undefined,
-    status: profile.status as UserStatus,
-  }));
 };
 
 /**
@@ -851,4 +826,44 @@ export const unlinkStudentFromParent = async (
   } else {
     console.log(`[API unlinkStudentFromParent] Link deleted successfully.`);
   }
+};
+
+export const updateStudentGoal = async (
+  studentId: string,
+  rewardId: string | null
+): Promise<{ id: string; current_goal_reward_id?: string | null }> => {
+  // Adjusted return type for clarity
+  const client = getSupabase();
+  console.log(
+    `[API updateStudentGoal] Updating goal for student ${studentId} to reward ${rewardId}`
+  );
+
+  const { data, error } = await client
+    .from('profiles')
+    .update({ current_goal_reward_id: rewardId }) // Use snake_case for DB column
+    .eq('id', studentId)
+    .select('id, current_goal_reward_id') // Select the updated fields
+    .single(); // Expect single row update
+
+  if (error) {
+    console.error(`[API updateStudentGoal] Error updating goal for student ${studentId}:`, error);
+    // Check for RLS violation error (though it shouldn't happen if called correctly)
+    if (error.code === '42501') {
+      throw new Error('Permission denied. You might not be allowed to update this goal.');
+    }
+    throw new Error(error.message || 'Failed to update student goal.');
+  }
+
+  if (!data) {
+    console.error(`[API updateStudentGoal] No data returned after update for student ${studentId}`);
+    throw new Error('Failed to confirm goal update.');
+  }
+
+  console.log(`[API updateStudentGoal] Goal updated successfully for ${studentId}`);
+
+  // Return the relevant part of the updated profile data
+  return {
+    id: data.id,
+    current_goal_reward_id: data.current_goal_reward_id, // Keep snake_case as returned by DB select
+  };
 };

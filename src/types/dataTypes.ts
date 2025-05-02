@@ -75,6 +75,7 @@ export interface User {
   instrumentIds?: string[];
   linkedTeacherIds?: string[];
   linkedStudentIds?: string[];
+  current_goal_reward_id?: string | null;
   status: UserStatus;
 }
 
@@ -84,16 +85,4 @@ export interface SimplifiedStudent {
   instrumentIds?: string[];
   balance: number;
   isActive: boolean;
-}
-
-export interface StudentProfileData {
-  user: User;
-  balance: number;
-  assignedTasks: AssignedTask[];
-  history: TicketTransaction[];
-  rewardsCatalog: RewardItem[];
-  announcements: Announcement[];
-  taskLibrary: TaskLibraryItem[];
-  instruments: Instrument[];
-  onMarkTaskComplete?: (taskId: string) => void;
 }

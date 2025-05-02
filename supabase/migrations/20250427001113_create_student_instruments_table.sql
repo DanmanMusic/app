@@ -22,15 +22,6 @@ CREATE INDEX idx_student_instruments_student_id ON public.student_instruments (s
 CREATE INDEX idx_student_instruments_instrument_id ON public.student_instruments (instrument_id);
 
 
--- === RLS for public.student_instruments ===
-
--- Clean up existing policies (including TEMP/old ones)
-DROP POLICY IF EXISTS "Student Instruments: Allow admin full access" ON public.student_instruments;
-DROP POLICY IF EXISTS "Student Instruments: Allow related read access" ON public.student_instruments;
-DROP POLICY IF EXISTS "TEMP Allow anon select on student_instruments" ON public.student_instruments; -- If exists
-DROP POLICY IF EXISTS "TEMP Allow anon write on student_instruments" ON public.student_instruments; -- If exists
-
-
 -- SELECT Policy: Allow Admins and related users (student, linked teacher, linked parent) to read.
 CREATE POLICY "Student Instruments: Allow related read access"
 ON public.student_instruments

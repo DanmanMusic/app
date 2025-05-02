@@ -66,7 +66,7 @@ export const commonSharedStyles = StyleSheet.create({
     resizeMode: 'contain',
   },
   baseItem: {
-    padding: 10,
+    padding: 8,
     borderWidth: 1,
     borderRadius: 8,
     borderColor: colors.borderPrimary,
@@ -82,8 +82,8 @@ export const commonSharedStyles = StyleSheet.create({
     margin: 5,
   },
   baseMarginTopBottom: {
-    marginTop: 10,
-    marginBottom: 10,
+    marginTop: 15,
+    marginBottom: 15,
   },
   basePadding: {
     padding: 5,
@@ -208,7 +208,6 @@ export const commonSharedStyles = StyleSheet.create({
     textAlign: 'right',
   },
   filterSection: {
-    backgroundColor: colors.backgroundPrimary,
     borderBottomColor: colors.borderSecondary,
     borderBottomWidth: 1,
     paddingBottom: 10,
@@ -339,12 +338,6 @@ export const commonSharedStyles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 5,
     width: '100%',
-  },
-  linkedStudentActions: {
-    marginTop: 8,
-    flexDirection: 'row',
-    gap: 10,
-    justifyContent: 'flex-start',
   },
   linkedStudentItem: {
     backgroundColor: colors.backgroundGrey,

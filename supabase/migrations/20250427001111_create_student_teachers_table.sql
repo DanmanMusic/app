@@ -24,16 +24,6 @@ ALTER TABLE public.student_teachers ENABLE ROW LEVEL SECURITY;
 CREATE INDEX idx_student_teachers_student_id ON public.student_teachers (student_id);
 CREATE INDEX idx_student_teachers_teacher_id ON public.student_teachers (teacher_id);
 
-
--- === RLS for public.student_teachers ===
-
--- Clean up existing policies (including TEMP/old ones)
-DROP POLICY IF EXISTS "Student Teachers: Allow admin full access" ON public.student_teachers;
-DROP POLICY IF EXISTS "Student Teachers: Allow related read access" ON public.student_teachers;
-DROP POLICY IF EXISTS "TEMP Allow anon select on student_teachers" ON public.student_teachers; -- If exists
-DROP POLICY IF EXISTS "TEMP Allow anon write on student_teachers" ON public.student_teachers; -- If exists
-
-
 -- SELECT Policy: Allow Admins and related users (student, teacher, linked parent) to read.
 CREATE POLICY "Student Teachers: Allow related read access"
 ON public.student_teachers

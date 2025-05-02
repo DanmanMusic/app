@@ -100,7 +100,7 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
   }
 
   return (
-    <ScrollView style={commonSharedStyles.flex1}>
+    <ScrollView style={[commonSharedStyles.flex1, commonSharedStyles.baseMargin]}>
       <Text style={commonSharedStyles.baseSubTitleText}>Teacher Details</Text>
       <Text style={commonSharedStyles.baseSecondaryText}>Name: {teacherDisplayName}</Text>
       <Text style={commonSharedStyles.baseSecondaryText}>ID: {teacher.id}</Text>
@@ -114,7 +114,13 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
           {teacher.status}
         </Text>
       </Text>
-      <View style={[commonSharedStyles.flex1]}>
+      <View
+        style={[
+          commonSharedStyles.baseRow,
+          commonSharedStyles.baseMarginTopBottom,
+          commonSharedStyles.baseGap,
+        ]}
+      >
         <Button title="Edit Info" onPress={handleEdit} color={colors.warning} />
         <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
         {onInitiatePinGeneration && (
@@ -142,21 +148,29 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
           data={linkedStudents.sort((a, b) => a.name.localeCompare(b.name))}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <View style={[commonSharedStyles.baseItem, commonSharedStyles.linkedStudentItem]}>
-              <Text style={commonSharedStyles.itemTitle}>{item.name}</Text>
-              <Text style={commonSharedStyles.baseSecondaryText}>
-                Status:{' '}
-                <Text
-                  style={
-                    item.isActive
-                      ? commonSharedStyles.activeStatus
-                      : commonSharedStyles.inactiveStatus
-                  }
-                >
-                  {item.isActive ? 'Active' : 'Inactive'}
+            <View
+              style={[
+                commonSharedStyles.baseItem,
+                commonSharedStyles.baseRow,
+                commonSharedStyles.justifySpaceBetween,
+              ]}
+            >
+              <View>
+                <Text style={commonSharedStyles.itemTitle}>{item.name}</Text>
+                <Text style={commonSharedStyles.baseSecondaryText}>
+                  Status:{' '}
+                  <Text
+                    style={
+                      item.isActive
+                        ? commonSharedStyles.activeStatus
+                        : commonSharedStyles.inactiveStatus
+                    }
+                  >
+                    {item.isActive ? 'Active' : 'Inactive'}
+                  </Text>
                 </Text>
-              </Text>
-              <View style={commonSharedStyles.linkedStudentActions}>
+              </View>
+              <View>
                 <Button title="View Profile" onPress={() => onViewStudentProfile(item.id)} />
               </View>
             </View>

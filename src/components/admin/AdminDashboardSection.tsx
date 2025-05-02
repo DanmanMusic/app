@@ -7,7 +7,7 @@ import { AdminDashboardSectionProps, UserTab } from '../../types/componentProps'
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
-  onViewPendingVerifications,
+  onViewVerifications,
   setActiveTab,
   setViewingSection,
   onInitiateCreateUser,
@@ -137,12 +137,14 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
                   commonSharedStyles.baseMarginTopBottom,
                 ]}
               >
-                <Button
-                  title={`View Pending Verifications (${isErrorTaskStats ? '!' : pendingVerificationsCount})`}
-                  onPress={onViewPendingVerifications}
-                  color={colors.warning}
-                  disabled={isErrorTaskStats}
-                />
+                {!isErrorTaskStats && pendingVerificationsCount > 0 && (
+                  <Button
+                    title={`View Pending Verifications (${isErrorTaskStats ? '!' : pendingVerificationsCount})`}
+                    onPress={() => onViewVerifications(true)}
+                    color={colors.warning}
+                    disabled={isErrorTaskStats}
+                  />
+                )}
                 <Button title="Tasks" onPress={() => setViewingSection('tasks')} />
                 <Button title="History" onPress={() => setViewingSection('history')} />
               </View>

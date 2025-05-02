@@ -32,7 +32,7 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
 
   return (
     <View style={[commonSharedStyles.baseMargin]}>
-      <Text style={commonSharedStyles.baseSubTitleText}>
+      <Text style={[commonSharedStyles.baseSubTitleText, commonSharedStyles.baseMarginTopBottom]}>
         My Students ({studentsLinkedToTeacher.length})
       </Text>
       {isLoading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />}

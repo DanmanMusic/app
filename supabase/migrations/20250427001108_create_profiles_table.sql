@@ -8,20 +8,28 @@ CREATE TABLE public.profiles (
     last_name text NOT NULL,
     nickname text NULL,
     status text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+    current_goal_reward_id uuid NULL, -- ADDED: Column for student goal
     created_at timestamptz NOT NULL DEFAULT now(),
-    updated_at timestamptz NOT NULL DEFAULT now()
+    updated_at timestamptz NOT NULL DEFAULT now(),
+
+    -- ADDED: Foreign key constraint directly in the table definition
+    CONSTRAINT fk_profiles_goal_reward FOREIGN KEY (current_goal_reward_id)
+    REFERENCES public.rewards(id) ON DELETE SET NULL
 );
 
 -- == Comments ==
-COMMENT ON TABLE public.profiles IS 'Stores user profile information, extending Supabase auth.users. Writes primarily handled by Edge Functions.'; -- Updated Comment
+COMMENT ON TABLE public.profiles IS 'Stores user profile information, extending Supabase auth.users. Writes primarily handled by Edge Functions.';
 COMMENT ON COLUMN public.profiles.id IS 'Matches the id from auth.users.';
 COMMENT ON COLUMN public.profiles.role IS 'Defines the user role within the application.';
 COMMENT ON COLUMN public.profiles.status IS 'Indicates if the user account is active or inactive.';
+COMMENT ON COLUMN public.profiles.nickname IS 'Optional display name chosen by the user.';
+COMMENT ON COLUMN public.profiles.current_goal_reward_id IS 'The ID of the reward item the student has set as their current goal.'; -- ADDED Comment
 
 -- == Enable RLS ==
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 -- == Updated At Trigger ==
+-- Ensure the handle_updated_at function exists (defined in another migration)
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'handle_updated_at' AND pg_namespace.nspname = 'public') THEN
@@ -38,30 +46,26 @@ END $$;
 -- == Indexes ==
 CREATE INDEX idx_profiles_role ON public.profiles (role);
 CREATE INDEX idx_profiles_status ON public.profiles (status);
+CREATE INDEX idx_profiles_current_goal ON public.profiles (current_goal_reward_id);
 
-
--- === RLS for public.profiles (Revised for Edge Function Writes) ===
--- Assumes the function `public.is_admin(uuid)` exists.
--- Assumes INSERT, DELETE, and status UPDATEs are handled by Edge Functions.
-
--- Clean up ALL previous policies for profiles
+-- Clean up ALL previous policies for profiles to ensure a clean state
 DROP POLICY IF EXISTS "Profiles: Allow admin read access" ON public.profiles;
 DROP POLICY IF EXISTS "Profiles: Allow individual read own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Profiles: Allow teachers read linked students" ON public.profiles;
 DROP POLICY IF EXISTS "Profiles: Allow parents read linked children" ON public.profiles;
 DROP POLICY IF EXISTS "Profiles: Allow admin update access" ON public.profiles;
 DROP POLICY IF EXISTS "Profiles: Allow individual update own non-critical fields" ON public.profiles;
+DROP POLICY IF EXISTS "Profiles: Allow individual update own limited fields" ON public.profiles; -- Newer name including goal
 DROP POLICY IF EXISTS "Allow individual read access" ON public.profiles; -- Older names
 DROP POLICY IF EXISTS "Allow admin read access" ON public.profiles;
 DROP POLICY IF EXISTS "Allow teacher read access to linked students" ON public.profiles;
 DROP POLICY IF EXISTS "Allow parent read access to linked children" ON public.profiles;
 DROP POLICY IF EXISTS "Allow individual update access" ON public.profiles;
 DROP POLICY IF EXISTS "Allow admin update access" ON public.profiles;
-DROP POLICY IF EXISTS "TEMP_Admin_Update_Direct_Role_Check" ON public.profiles; -- Temp debug policy
-
+DROP POLICY IF EXISTS "TEMP_Admin_Update_Direct_Role_Check" ON public.profiles;
 
 -- ==================
--- SELECT Policies (Remain largely the same)
+-- SELECT Policies
 -- ==================
 CREATE POLICY "Profiles: Allow admin read access" ON public.profiles
   FOR SELECT TO authenticated USING (public.is_admin(auth.uid()));
@@ -81,17 +85,10 @@ COMMENT ON POLICY "Profiles: Allow parents read linked children" ON public.profi
 
 
 -- ==================
--- INSERT Policy
--- ==================
--- NO INSERT POLICY needed for client roles. Handled by 'createUser' Edge Function.
-
-
--- ==================
 -- UPDATE Policy
 -- ==================
--- Allow users to update ONLY specific, non-critical fields on their OWN profile.
--- Admins/Teachers updating others is handled by the 'updateUserWithLinks' Edge Function.
--- Status changes are handled by the 'toggleUserStatus' Edge Function.
+-- Allow non-admin users to update ONLY their own nickname OR current_goal_reward_id.
+-- Other updates (status, names, links) are handled by Edge Functions.
 CREATE POLICY "Profiles: Allow individual update own limited fields"
 ON public.profiles FOR UPDATE
 TO authenticated
@@ -103,21 +100,15 @@ USING (
 WITH CHECK (
     auth.uid() = id -- Re-check ownership on write
     AND
-    -- Explicitly allow ONLY nickname to be changed by the user directly for now
-    -- Check that role and status remain unchanged from the existing row's values
+    -- Ensure critical fields remain unchanged from the existing row's values
     role = (SELECT p.role FROM public.profiles p WHERE p.id = auth.uid()) AND
     status = (SELECT p.status FROM public.profiles p WHERE p.id = auth.uid()) AND
     first_name = (SELECT p.first_name FROM public.profiles p WHERE p.id = auth.uid()) AND
     last_name = (SELECT p.last_name FROM public.profiles p WHERE p.id = auth.uid())
-    -- Only the 'nickname' column is implicitly allowed to change by not being checked here.
+    -- By *not* checking nickname and current_goal_reward_id here,
+    -- we implicitly allow them to be changed by the owner.
 );
 COMMENT ON POLICY "Profiles: Allow individual update own limited fields" ON public.profiles
-IS 'Allows non-admin users to update ONLY their own nickname. Other updates via Edge Functions.';
+IS 'Allows non-admin users to update ONLY their own nickname or current_goal_reward_id. Other updates via Edge Functions.';
 
--- NO specific Admin UPDATE policy needed here, as Admins use Edge Functions ('updateUserWithLinks', 'toggleUserStatus') which bypass RLS.
-
-
--- ==================
--- DELETE Policy
--- ==================
--- NO DELETE POLICY needed for client roles. Handled by 'deleteUser' Edge Function / Cascade.
+-- NO specific Admin UPDATE policy needed here, as Admins use Edge Functions which bypass RLS.

@@ -32,21 +32,6 @@ FOR EACH ROW
 EXECUTE FUNCTION public.handle_updated_at();
 
 
--- === RLS for public.instruments (with Public Read) ===
-
--- Remove existing policies (including TEMP/old/authenticated ones)
-DROP POLICY IF EXISTS "Instruments: Allow public read access" ON public.instruments;
-DROP POLICY IF EXISTS "Instruments: Allow admin insert access" ON public.instruments;
-DROP POLICY IF EXISTS "Instruments: Allow admin update access" ON public.instruments;
-DROP POLICY IF EXISTS "Instruments: Allow admin delete access" ON public.instruments;
-DROP POLICY IF EXISTS "Allow public read access" ON public.instruments; -- Older name
-DROP POLICY IF EXISTS "TEMP Allow anon or auth insert access" ON public.instruments; -- Older TEMP name
-DROP POLICY IF EXISTS "TEMP Allow anon or auth update access" ON public.instruments; -- Older TEMP name
-DROP POLICY IF EXISTS "TEMP Allow anon or auth delete access" ON public.instruments; -- Older TEMP name
-DROP POLICY IF EXISTS "Allow authenticated insert access" ON public.instruments; -- Older name
-DROP POLICY IF EXISTS "Allow authenticated update access" ON public.instruments; -- Older name
-DROP POLICY IF EXISTS "Allow authenticated delete access" ON public.instruments; -- Older name
-
 -- SELECT Policy: Allow ANYONE (public) to read instruments.
 CREATE POLICY "Instruments: Allow public read access"
 ON public.instruments

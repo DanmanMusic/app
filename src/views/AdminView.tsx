@@ -1,13 +1,14 @@
-import React, { useState, useMemo } from 'react';
+// src/views/AdminView.tsx
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { View, Text, ScrollView, Button, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Button, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
-import { fetchAssignedTasks } from '../api/assignedTasks';
+import { deleteAssignedTask } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
 import { deleteTaskLibraryItem } from '../api/taskLibrary';
-import { fetchUserProfile, fetchStudents } from '../api/users';
+import { fetchUserProfile } from '../api/users';
 
 import { AdminAnnouncementsSection } from '../components/admin/AdminAnnouncementsSection';
 import { AdminDashboardSection } from '../components/admin/AdminDashboardSection';
@@ -19,8 +20,8 @@ import { AdminUsersSection } from '../components/admin/AdminUsersSection';
 import { AdminStudentDetailView } from '../components/common/StudentDetailView';
 import { AdminTeacherDetailView } from '../components/admin/AdminTeacherDetailView';
 import { AdminParentDetailView } from '../components/admin/AdminParentDetailView';
-import { AdminAdminDetailView } from '../components/admin/AdminAdminDetailView'; // Keep
-import { PendingVerificationItem } from '../components/common/PendingVerificationItem';
+import { AdminAdminDetailView } from '../components/admin/AdminAdminDetailView';
+import { PaginatedTasksList } from '../components/common/PaginatedTasksList'; // Import the new component
 import CreateUserModal from '../components/admin/modals/CreateUserModal';
 import CreateTaskLibraryModal from '../components/admin/modals/CreateTaskLibraryModal';
 import EditTaskLibraryModal from '../components/admin/modals/EditTaskLibraryModal';
@@ -35,6 +36,7 @@ import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
 import { SharedHeader } from '../components/common/SharedHeader';
 
 import { useAuth } from '../contexts/AuthContext';
+
 import {
   AssignedTask,
   Instrument,
@@ -43,8 +45,10 @@ import {
   UserRole,
   UserStatus,
 } from '../types/dataTypes';
+import { TaskAssignmentFilterStatusAPI, StudentTaskFilterStatusAPI } from '../api/assignedTasks'; // Import filter types
 import { AdminSection, AdminViewProps, UserTab } from '../types/componentProps';
 
+// Helper & Style Imports
 import { getUserDisplayName } from '../utils/helpers';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
@@ -53,28 +57,39 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const { currentUserId: adminUserId } = useAuth();
   const queryClient = useQueryClient();
 
+  // --- State Management ---
   const [viewingSection, setViewingSection] = useState<AdminSection>('dashboard');
   const [activeUserTab, setActiveUserTab] = useState<UserTab>('students');
   const [studentFilter, setStudentFilter] = useState<UserStatus | 'all'>('active');
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
   const [viewingUserRole, setViewingUserRole] = useState<UserRole | null>(null);
+
   const [isCreateUserModalVisible, setIsCreateUserModalVisible] = useState(false);
   const [isAssignTaskModalVisible, setIsAssignTaskModalVisible] = useState(false);
   const [assignTaskTargetStudentId, setAssignTaskTargetStudentId] = useState<string | null>(null);
   const [isCreateTaskModalVisible, setIsCreateTaskModalVisible] = useState(false);
   const [isEditTaskModalVisible, setIsEditTaskModalVisible] = useState(false);
-  const [isDeleteTaskModalVisible, setIsDeleteTaskModalVisible] = useState(false);
+  const [isDeleteTaskLibModalVisible, setIsDeleteTaskLibModalVisible] = useState(false);
   const [isEditUserModalVisible, setIsEditUserModalVisible] = useState(false);
   const [isStatusModalVisible, setIsStatusModalVisible] = useState(false);
   const [isAdjustmentModalVisible, setIsAdjustmentModalVisible] = useState(false);
   const [isRedeemModalVisible, setIsRedeemModalVisible] = useState(false);
   const [isGeneratePinModalVisible, setIsGeneratePinModalVisible] = useState(false);
-  const [isSetCredentialsModalVisible, setIsSetCredentialsModalVisible] = useState(false); // Keep state for the modal
+  const [isSetCredentialsModalVisible, setIsSetCredentialsModalVisible] = useState(false);
+  const [isDeleteAssignedTaskConfirmVisible, setIsDeleteAssignedTaskConfirmVisible] =
+    useState(false);
+
   const [taskToEdit, setTaskToEdit] = useState<TaskLibraryItem | null>(null);
-  const [taskToDelete, setTaskToDelete] = useState<TaskLibraryItem | null>(null);
+  const [taskLibToDelete, setTaskLibToDelete] = useState<TaskLibraryItem | null>(null);
+  const [assignedTaskToDelete, setAssignedTaskToDelete] = useState<AssignedTask | null>(null);
   const [userToManage, setUserToManage] = useState<User | null>(null);
   const [userForPin, setUserForPin] = useState<User | null>(null);
+
+  const [adminTaskInitialFilters, setAdminTaskInitialFilters] = useState<{
+    assignment: TaskAssignmentFilterStatusAPI;
+    student: StudentTaskFilterStatusAPI;
+  } | null>(null);
 
   const {
     data: adminUser,
@@ -97,36 +112,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     staleTime: Infinity,
   });
 
-  const {
-    data: pendingTasksResult,
-    isLoading: pendingTasksLoading,
-    isError: pendingTasksError,
-    error: pendingTasksErrorMsg,
-  } = useQuery({
-    queryKey: [
-      'assigned-tasks',
-      { assignmentStatus: 'pending', studentStatus: 'active', scope: 'dashboard-preview' },
-    ],
-    queryFn: () =>
-      fetchAssignedTasks({ assignmentStatus: 'pending', studentStatus: 'active', limit: 1000 }),
-    staleTime: 1 * 60 * 1000,
-  });
-  const pendingVerifications = useMemo(() => pendingTasksResult?.items ?? [], [pendingTasksResult]);
-
-  const { data: allStudentsResult, isLoading: allStudentsLoading } = useQuery({
-    queryKey: ['students', { filter: 'all', limit: 9999, context: 'pending-verification-lookup' }],
-    queryFn: () => fetchStudents({ page: 1, limit: 9999, filter: 'all' }),
-    staleTime: 5 * 60 * 1000,
-    enabled: viewingSection === 'dashboard-pending-verification',
-  });
-  const studentNameLookup = useMemo(() => {
-    const lookup: Record<string, string> = {};
-    (allStudentsResult?.students ?? []).forEach(s => {
-      lookup[s.id] = s.name;
-    });
-    return lookup;
-  }, [allStudentsResult]);
-
   const { data: detailUserData, isLoading: detailUserLoading } = useQuery<User | null, Error>({
     queryKey: ['userProfile', viewingUserId],
     queryFn: () => fetchUserProfile(viewingUserId!),
@@ -134,15 +119,15 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     staleTime: 5 * 60 * 1000,
   });
 
-  const deleteTaskMutation = useMutation({
+  const deleteTaskLibMutation = useMutation({
     mutationFn: deleteTaskLibraryItem,
     onSuccess: (_, deletedTaskId) => {
       queryClient.invalidateQueries({ queryKey: ['task-library'] });
-      handleCloseDeleteTaskModal();
+      handleCloseDeleteTaskLibModal();
       Toast.show({ type: 'success', text1: 'Success', text2: 'Task library item deleted.' });
     },
-    onError: (error: Error, deletedTaskId) => {
-      handleCloseDeleteTaskModal();
+    onError: (error: Error) => {
+      handleCloseDeleteTaskLibModal();
       Toast.show({
         type: 'error',
         text1: 'Deletion Failed',
@@ -151,10 +136,27 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     },
   });
 
-  // Keep handlers
+  const deleteAssignedTaskMutation = useMutation({
+    mutationFn: deleteAssignedTask,
+    onSuccess: (_, deletedAssignmentId) => {
+      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
+      closeDeleteAssignedTaskConfirmModal();
+      Toast.show({ type: 'success', text1: 'Success', text2: 'Assigned task removed.' });
+    },
+    onError: (error: Error) => {
+      closeDeleteAssignedTaskConfirmModal();
+      Toast.show({
+        type: 'error',
+        text1: 'Removal Failed',
+        text2: error.message || 'Could not remove assigned task.',
+      });
+    },
+  });
+
   const handleViewManageUser = (userId: string, role: UserRole) => {
     setViewingUserId(userId);
     setViewingUserRole(role);
+    setAdminTaskInitialFilters(null);
   };
   const handleBackFromDetailView = () => {
     setViewingUserId(null);
@@ -165,6 +167,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
       onInitiateVerificationModal(task);
     } else {
       console.warn('[AdminView] onInitiateVerificationModal not provided.');
+      Toast.show({
+        type: 'error',
+        text1: 'Setup Error',
+        text2: 'Verification modal handler missing.',
+      });
     }
   };
   const handleInitiateAssignTaskForStudent = (studentId: string) => {
@@ -190,20 +197,36 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     setIsEditTaskModalVisible(false);
     setTaskToEdit(null);
   };
-  const handleInitiateDeleteTask = (task: TaskLibraryItem) => {
-    setTaskToDelete(task);
-    setIsDeleteTaskModalVisible(true);
+  const handleInitiateDeleteTaskLib = (task: TaskLibraryItem) => {
+    setTaskLibToDelete(task);
+    setIsDeleteTaskLibModalVisible(true);
   };
-  const handleCloseDeleteTaskModal = () => {
-    setIsDeleteTaskModalVisible(false);
-    setTaskToDelete(null);
-    deleteTaskMutation.reset();
+  const handleCloseDeleteTaskLibModal = () => {
+    setIsDeleteTaskLibModalVisible(false);
+    setTaskLibToDelete(null);
+    deleteTaskLibMutation.reset();
   };
-  const handleConfirmDeleteTask = () => {
-    if (taskToDelete && !deleteTaskMutation.isPending) {
-      deleteTaskMutation.mutate(taskToDelete.id);
+  const handleConfirmDeleteTaskLib = () => {
+    if (taskLibToDelete && !deleteTaskLibMutation.isPending) {
+      deleteTaskLibMutation.mutate(taskLibToDelete.id);
     }
   };
+  const handleInitiateDeleteAssignedTask = (task: AssignedTask) => {
+    setAssignedTaskToDelete(task);
+    setIsDeleteAssignedTaskConfirmVisible(true);
+  };
+  const handleConfirmDeleteAssignedTaskAction = () => {
+    if (assignedTaskToDelete && !deleteAssignedTaskMutation.isPending) {
+      deleteAssignedTaskMutation.mutate(assignedTaskToDelete.id);
+    }
+  };
+  const closeDeleteAssignedTaskConfirmModal = () => {
+    setIsDeleteAssignedTaskConfirmVisible(false);
+    setAssignedTaskToDelete(null);
+    deleteAssignedTaskMutation.reset();
+  };
+
+  // Other handlers remain the same
   const handleInitiateEditUser = (user: User) => {
     setUserToManage(user);
     setIsEditUserModalVisible(true);
@@ -254,9 +277,18 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const handleViewStudentProfileFromParentOrTeacher = (studentId: string) => {
     setViewingUserId(studentId);
     setViewingUserRole('student');
+    setAdminTaskInitialFilters(null);
   };
 
-  // Keep loading/error checks
+  const handleViewVerifications = (pending: boolean) => {
+    if (pending) {
+      setAdminTaskInitialFilters({ assignment: 'pending', student: 'active' });
+    } else {
+      setAdminTaskInitialFilters(null);
+    }
+    setViewingSection('tasks-full');
+  };
+
   const isLoadingCoreData = adminLoading || instrumentsLoading;
   if (isLoadingCoreData) {
     return (
@@ -271,7 +303,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   if (!adminUser || adminError) {
     return (
       <SafeAreaView style={commonSharedStyles.flex1}>
-        <View style={commonSharedStyles.flex1}>
+        <View style={commonSharedStyles.baseCentered}>
           <Text style={commonSharedStyles.errorText}>
             Error loading Admin user data: {adminErrorMsg?.message || 'Not found.'}
           </Text>
@@ -282,8 +314,20 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   if (adminUser.role !== 'admin') {
     return (
       <SafeAreaView style={commonSharedStyles.flex1}>
-        <View>
+        <View style={commonSharedStyles.baseCentered}>
           <Text style={commonSharedStyles.errorText}>Error: User is not an Admin.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  if (adminUser.status !== 'active') {
+    return (
+      <SafeAreaView style={commonSharedStyles.flex1}>
+        <View style={commonSharedStyles.baseCentered}>
+          <Text style={commonSharedStyles.baseHeaderText}>Account Inactive</Text>
+          <Text style={commonSharedStyles.baseSubTitleText}>
+            Your admin account is currently inactive.
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -299,7 +343,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           </View>
         );
       }
-
       if (!detailUserData) {
         return (
           <View style={commonSharedStyles.flex1}>
@@ -352,13 +395,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
               onInitiatePinGeneration={handleInitiatePinGeneration}
             />
           );
-
         default:
           console.error('Invalid user role in renderMainContent:', viewingUserRole);
           return <Text>Invalid user role selected for detail view.</Text>;
       }
     }
-
     switch (viewingSection) {
       case 'dashboard':
         return (
@@ -370,7 +411,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             ]}
           >
             <AdminDashboardSection
-              onViewPendingVerifications={() => setViewingSection('dashboard-pending-verification')}
+              onViewVerifications={handleViewVerifications}
               setActiveTab={setActiveUserTab}
               setViewingSection={setViewingSection}
               onInitiateCreateUser={handleInitiateCreateUser}
@@ -392,51 +433,32 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
                   commonSharedStyles.baseGap,
                 ]}
               >
-                <Button title="Announcements" onPress={() => setViewingSection('announcements')} />
-                <Button title="Instruments" onPress={() => setViewingSection('instruments')} />
-                <Button title="Rewards" onPress={() => setViewingSection('rewards')} />
+                <Button
+                  title="Announcements"
+                  onPress={() => {
+                    setViewingSection('announcements');
+                    setAdminTaskInitialFilters(null);
+                  }}
+                />
+                <Button
+                  title="Instruments"
+                  onPress={() => {
+                    setViewingSection('instruments');
+                    setAdminTaskInitialFilters(null);
+                  }}
+                />
+                <Button
+                  title="Rewards"
+                  onPress={() => {
+                    setViewingSection('rewards');
+                    setAdminTaskInitialFilters(null);
+                  }}
+                />
               </View>
             </View>
           </View>
         );
-      case 'dashboard-pending-verification':
-        return (
-          <View>
-            <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.bold]}>
-              Pending Verifications ({pendingVerifications.length})
-            </Text>
-            {pendingTasksLoading || allStudentsLoading ? (
-              <ActivityIndicator style={{ marginVertical: 10 }} color={colors.primary} />
-            ) : pendingTasksError ? (
-              <Text style={commonSharedStyles.errorText}>
-                Error loading tasks: {pendingTasksErrorMsg?.message}
-              </Text>
-            ) : pendingVerifications.length > 0 ? (
-              <FlatList
-                data={pendingVerifications.sort(
-                  (a, b) =>
-                    new Date(a.completedDate || 0).getTime() -
-                    new Date(b.completedDate || 0).getTime()
-                )}
-                keyExtractor={item => item.id}
-                renderItem={({ item }) => (
-                  <PendingVerificationItem
-                    task={item}
-                    studentName={
-                      studentNameLookup[item.studentId] ||
-                      `ID: ${item.studentId.substring(0, 6)}...`
-                    }
-                    onInitiateVerification={handleInternalInitiateVerificationModal}
-                  />
-                )}
-                scrollEnabled={false}
-                ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-              />
-            ) : (
-              <Text style={commonSharedStyles.baseEmptyText}>No tasks pending verification.</Text>
-            )}
-          </View>
-        );
+
       case 'users':
         return (
           <AdminUsersSection
@@ -456,10 +478,28 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             onInitiateAssignTask={handleInitiateAssignTaskGeneral}
             onInitiateCreateTask={handleInitiateCreateTask}
             onInitiateEditTask={handleInitiateEditTask}
-            onInitiateDeleteTask={handleInitiateDeleteTask}
-            handleInternalInitiateVerificationModal={handleInternalInitiateVerificationModal}
-            deleteTaskMutationPending={deleteTaskMutation.isPending}
+            onInitiateDeleteTask={handleInitiateDeleteTaskLib}
+            onViewVerifications={handleViewVerifications}
+            deleteTaskMutationPending={deleteTaskLibMutation.isPending}
           />
+        );
+      case 'tasks-full':
+        return (
+          <View style={commonSharedStyles.baseMargin}>
+            <Text
+              style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}
+            >
+              Assigned Tasks
+            </Text>
+            <PaginatedTasksList
+              key={JSON.stringify(adminTaskInitialFilters)}
+              viewingRole="admin"
+              initialAssignmentFilter={adminTaskInitialFilters?.assignment ?? 'all'}
+              initialStudentStatusFilter={adminTaskInitialFilters?.student ?? 'all'}
+              onInitiateVerification={handleInternalInitiateVerificationModal}
+              onInitiateDelete={handleInitiateDeleteAssignedTask}
+            />
+          </View>
         );
       case 'rewards':
         return <AdminRewardsSection />;
@@ -495,7 +535,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseMargin]}>
             <Button
               title="Dashboard"
-              onPress={() => setViewingSection('dashboard')}
+              onPress={() => {
+                setViewingSection('dashboard');
+                setAdminTaskInitialFilters(null);
+              }}
               disabled={viewingSection === 'dashboard'}
             />
           </View>
@@ -511,7 +554,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           <View style={commonSharedStyles.flex1}>{renderMainContent()}</View>
         </>
       )}
-
       <CreateUserModal
         visible={isCreateUserModalVisible}
         onClose={() => setIsCreateUserModalVisible(false)}
@@ -531,13 +573,22 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         onClose={handleCloseEditTaskModal}
       />
       <ConfirmationModal
-        visible={isDeleteTaskModalVisible}
+        visible={isDeleteTaskLibModalVisible}
         title="Confirm Delete Task"
-        message={`Delete library task "${taskToDelete?.title || ''}"?`}
-        confirmText={deleteTaskMutation.isPending ? 'Deleting...' : 'Delete Task'}
-        onConfirm={handleConfirmDeleteTask}
-        onCancel={handleCloseDeleteTaskModal}
-        confirmDisabled={deleteTaskMutation.isPending}
+        message={`Delete library task "${taskLibToDelete?.title || ''}"? This cannot be undone.`}
+        confirmText={deleteTaskLibMutation.isPending ? 'Deleting...' : 'Delete Task'}
+        onConfirm={handleConfirmDeleteTaskLib}
+        onCancel={handleCloseDeleteTaskLibModal}
+        confirmDisabled={deleteTaskLibMutation.isPending}
+      />
+      <ConfirmationModal
+        visible={isDeleteAssignedTaskConfirmVisible}
+        title="Confirm Remove Task"
+        message={`Are you sure you want to remove the assigned task "${assignedTaskToDelete?.taskTitle || 'selected task'}"? This cannot be undone.`}
+        confirmText={deleteAssignedTaskMutation.isPending ? 'Removing...' : 'Remove Task'}
+        onConfirm={handleConfirmDeleteAssignedTaskAction}
+        onCancel={closeDeleteAssignedTaskConfirmModal}
+        confirmDisabled={deleteAssignedTaskMutation.isPending}
       />
       <EditUserModal
         visible={isEditUserModalVisible}

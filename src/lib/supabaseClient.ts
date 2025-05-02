@@ -1,15 +1,13 @@
 // src/lib/supabaseClient.ts
 import { createClient, SupabaseClientOptions } from '@supabase/supabase-js';
-import { Platform } from 'react-native'; // Restore Platform import
-import * as SecureStore from 'expo-secure-store'; // Restore SecureStore import
+import { Platform } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-// --- Restore SecureStoreAdapter ---
 const SecureStoreAdapter = {
   getItem: (key: string) => {
-    // Ensure SecureStore is only used on native
     if (Platform.OS === 'web') return null;
     return SecureStore.getItemAsync(key);
   },
@@ -23,19 +21,12 @@ const SecureStoreAdapter = {
   },
 };
 
-// --- Restore storageOptions with persistSession: true ---
 const storageOptions: SupabaseClientOptions<'public'>['auth'] = {
-  autoRefreshToken: true,
-  persistSession: true, // <-- RESTORE TO TRUE
+  autoRefreshToken: false,
+  persistSession: true,
   detectSessionInUrl: false,
-  // Use the adapter only on native platforms
   storage: Platform.OS === 'web' ? undefined : SecureStoreAdapter,
 };
-
-// --- Log the actual configuration ---
-console.log(
-  `[SupabaseClient] Using ${Platform.OS === 'web' ? 'default localStorage' : 'SecureStore'} adapter (persistSession: ${storageOptions.persistSession}).`
-);
 
 if (!supabaseUrl || !supabaseAnonKey) {
   const errorMessage =

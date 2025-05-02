@@ -222,7 +222,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
                     {studentItem.status}
                   </Text>
                 </Text>
-                <View style={commonSharedStyles.linkedStudentActions}>
+                <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
                   <Button
                     title="View Profile"
                     onPress={() => onViewStudentProfile(studentItem.id)}

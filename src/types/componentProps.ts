@@ -3,7 +3,6 @@ import {
   AssignedTask,
   Instrument,
   RewardItem,
-  SimplifiedStudent,
   TaskLibraryItem,
   User,
   UserRole,
@@ -124,7 +123,7 @@ export type UserTab = 'students' | 'teachers' | 'parents' | 'admins';
 export type TeacherSection = 'dashboard' | 'students' | 'tasks';
 export type AdminSection =
   | 'dashboard'
-  | 'dashboard-pending-verification'
+  | 'tasks-full'
   | 'users'
   | 'tasks'
   | 'rewards'
@@ -146,7 +145,7 @@ export interface AdminUsersSectionProps {
 }
 
 export interface AdminDashboardSectionProps {
-  onViewPendingVerifications: () => void;
+  onViewVerifications: (pending: boolean) => void;
   setActiveTab: React.Dispatch<React.SetStateAction<UserTab>>;
   setViewingSection: React.Dispatch<React.SetStateAction<AdminSection>>;
   onInitiateCreateUser: () => void;
@@ -157,7 +156,7 @@ export interface AdminTasksSectionProps {
   onInitiateCreateTask: () => void;
   onInitiateEditTask: (task: TaskLibraryItem) => void;
   onInitiateDeleteTask: (task: TaskLibraryItem) => void;
-  handleInternalInitiateVerificationModal: (task: AssignedTask) => void;
+  onViewVerifications: (pending: boolean) => void;
   deleteTaskMutationPending: boolean;
 }
 
