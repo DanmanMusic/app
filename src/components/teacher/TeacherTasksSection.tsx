@@ -8,8 +8,8 @@ import { TaskLibraryItem } from '../../types/dataTypes';
 import { TaskLibraryItemTeacher } from '../common/TaskLibraryItemTeacher';
 import { TeacherTasksSectionProps } from '../../types/componentProps';
 
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
   onInitiateAssignTaskGeneral,
@@ -27,14 +27,16 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
 
   return (
     <View>
-      <Text style={appSharedStyles.sectionTitle}>Task Management</Text>
+      <Text style={commonSharedStyles.baseSubTitleText}>Task Management</Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 20 }}>
         <Button title="Assign Task" onPress={onInitiateAssignTaskGeneral} />
       </View>
-      <Text style={appSharedStyles.sectionSubTitle}> Task Library ({taskLibrary.length}) </Text>
+      <Text style={commonSharedStyles.baseSubTitleText}> Task Library ({taskLibrary.length}) </Text>
       {isLoading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />}
       {isError && (
-        <Text style={appSharedStyles.textDanger}>Error loading task library: {error?.message}</Text>
+        <Text style={commonSharedStyles.textDanger}>
+          Error loading task library: {error?.message}
+        </Text>
       )}
       {!isLoading &&
         !isError &&
@@ -47,7 +49,7 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
             ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
           />
         ) : (
-          <Text style={appSharedStyles.emptyListText}>Task library is empty.</Text>
+          <Text style={commonSharedStyles.baseEmptyText}>Task library is empty.</Text>
         ))}
     </View>
   );

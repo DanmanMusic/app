@@ -5,9 +5,9 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const AnnouncementListItem = ({ item }: { item: Announcement }) => (
   <View style={commonSharedStyles.baseItem}>
-    <Text style={commonSharedStyles.announcementTitle}>{item.title}</Text>
-    <Text style={appSharedStyles.itemDetailText}>{item.message}</Text>
-    <Text style={commonSharedStyles.announcementDate}>
+    <Text style={commonSharedStyles.baseSubTitleText}>{item.title}</Text>
+    <Text style={commonSharedStyles.baseSecondaryText}>{item.message}</Text>
+    <Text style={commonSharedStyles.baseVeryLightText}>
       {new Date(item.date).toLocaleDateString()}
     </Text>
   </View>

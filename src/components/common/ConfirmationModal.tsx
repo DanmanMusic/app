@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, View, Text, Button } from 'react-native';
 import { colors } from '../../styles/colors';
 import { ConfirmationModalProps } from '../../types/componentProps';
-import { appSharedStyles } from '../../styles/appSharedStyles';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   visible,
@@ -16,12 +16,12 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 }) => {
   return (
     <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={onCancel}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>{title}</Text>
-          <Text style={appSharedStyles.modalMessage}>{message}</Text>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>{title}</Text>
+          <Text style={commonSharedStyles.modalMessage}>{message}</Text>
 
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             <Button
               title={confirmText}
               onPress={onConfirm}

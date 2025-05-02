@@ -121,10 +121,10 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Edit Announcement</Text>
-          <Text style={appSharedStyles.subTitle}>ID: {announcementToEdit.id}</Text>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Edit Announcement</Text>
+          <Text style={commonSharedStyles.subTitle}>ID: {announcementToEdit.id}</Text>
 
           <Text style={commonSharedStyles.label}>Type:</Text>
           <View>
@@ -169,9 +169,9 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
           />
 
           {mutation.isPending && (
-            <View style={appSharedStyles.containerRowCentered}>
+            <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={appSharedStyles.loadingText}>Saving Changes...</Text>
+              <Text style={commonSharedStyles.baseSecondaryText}>Saving Changes...</Text>
             </View>
           )}
 
@@ -182,14 +182,14 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
             </Text>
           )}
 
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
               disabled={isSaveDisabled}
             />
           </View>
-          <View style={appSharedStyles.footerButton}>
+          <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
             <Button
               title="Cancel"
               onPress={onClose}

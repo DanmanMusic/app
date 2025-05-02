@@ -181,10 +181,10 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Edit Instrument</Text>
-          <Text style={appSharedStyles.subTitle}>ID: {instrumentToEdit.id}</Text>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Edit Instrument</Text>
+          <Text style={commonSharedStyles.subTitle}>ID: {instrumentToEdit.id}</Text>
 
           <Text style={commonSharedStyles.label}>Instrument Name:</Text>
           <TextInput
@@ -216,9 +216,9 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
           </View>
 
           {mutation.isPending && (
-            <View style={appSharedStyles.containerRowCentered}>
+            <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={appSharedStyles.loadingText}>Saving Changes...</Text>
+              <Text style={commonSharedStyles.baseSecondaryText}>Saving Changes...</Text>
             </View>
           )}
           {mutation.isError && (
@@ -228,14 +228,14 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
             </Text>
           )}
 
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
               disabled={mutation.isPending || !name.trim()}
             />
           </View>
-          <View style={appSharedStyles.footerButton}>
+          <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
             <Button
               title="Cancel"
               onPress={onClose}

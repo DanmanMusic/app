@@ -93,8 +93,10 @@ export const AdminInstrumentsSection = () => {
   };
 
   return (
-    <View>
-      <Text style={appSharedStyles.sectionTitle}>Instruments ({instruments.length})</Text>
+    <View style={commonSharedStyles.baseMargin}>
+      <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
+        Instruments ({instruments.length})
+      </Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button title="Add New Instrument" onPress={handleAddPress} />
       </View>
@@ -121,7 +123,7 @@ export const AdminInstrumentsSection = () => {
           scrollEnabled={false}
           ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
           ListEmptyComponent={() => (
-            <Text style={appSharedStyles.emptyListText}>No instruments found.</Text>
+            <Text style={commonSharedStyles.baseEmptyText}>No instruments found.</Text>
           )}
         />
       )}

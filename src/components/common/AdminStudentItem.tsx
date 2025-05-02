@@ -21,20 +21,21 @@ export const AdminStudentItem = ({
       style={[
         commonSharedStyles.baseItem,
         commonSharedStyles.baseRow,
+        commonSharedStyles.justifySpaceBetween,
         !student.isActive ? appSharedStyles.inactiveItem : {},
       ]}
     >
       <View>
         <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
-        <Text style={appSharedStyles.itemDetailText}>
+        <Text style={commonSharedStyles.baseSecondaryText}>
           Instrument(s): {getInstrumentNames(student.instrumentIds, instruments)}
         </Text>
-        <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
+        <Text style={[commonSharedStyles.baseSecondaryText, appSharedStyles.textGold]}>
           Balance: {student.balance}
         </Text>
         <Text
           style={[
-            appSharedStyles.itemDetailText,
+            commonSharedStyles.baseSecondaryText,
             { fontWeight: 'bold', color: student.isActive ? colors.success : colors.secondary },
           ]}
         >

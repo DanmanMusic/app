@@ -8,6 +8,7 @@ import { colors } from '../../styles/colors';
 import { TeacherStudentsSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';
 import { StudentListItem } from '../common/StudentListItem';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
   instruments,
@@ -22,7 +23,7 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
     isError,
     error,
   } = useQuery({
-    queryKey: ['students', { context: 'teacherStudentsSection', teacherId }],
+    queryKey: ['students', { context: 'teacherStudents', teacherId }],
     queryFn: () => fetchStudents({ page: 1, filter: 'all', teacherId: teacherId ?? undefined }),
     enabled: !!teacherId,
     staleTime: 5 * 60 * 1000,
@@ -31,13 +32,13 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
   const studentsLinkedToTeacher: SimplifiedStudent[] = studentsResult?.students ?? [];
 
   return (
-    <View>
-      <Text style={appSharedStyles.sectionTitle}>
+    <View style={[commonSharedStyles.baseMargin]}>
+      <Text style={commonSharedStyles.baseSubTitleText}>
         My Students ({studentsLinkedToTeacher.length})
       </Text>
       {isLoading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />}
       {isError && (
-        <Text style={appSharedStyles.textDanger}>Error loading students: {error?.message}</Text>
+        <Text style={commonSharedStyles.textDanger}>Error loading students: {error?.message}</Text>
       )}
       {!isLoading &&
         !isError &&
@@ -57,7 +58,7 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
             ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
           />
         ) : (
-          <Text style={appSharedStyles.emptyListText}> No students linked to you. </Text>
+          <Text style={commonSharedStyles.baseEmptyText}> No students linked to you. </Text>
         ))}
     </View>
   );

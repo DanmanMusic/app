@@ -201,11 +201,11 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Edit Reward</Text>
-          <Text style={appSharedStyles.subTitle}>ID: {rewardToEdit.id}</Text>
-          <ScrollView style={appSharedStyles.scrollView}>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Edit Reward</Text>
+          <Text style={commonSharedStyles.subTitle}>ID: {rewardToEdit.id}</Text>
+          <ScrollView style={commonSharedStyles.scrollView}>
             <Text style={commonSharedStyles.label}>Reward Name:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -268,9 +268,9 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
             />
           </ScrollView>
           {mutation.isPending && (
-            <View style={appSharedStyles.containerRowCentered}>
+            <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={appSharedStyles.loadingText}>Saving Changes...</Text>
+              <Text style={commonSharedStyles.baseSecondaryText}>Saving Changes...</Text>
             </View>
           )}
           {mutation.isError && (
@@ -279,14 +279,14 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
               {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
             </Text>
           )}
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
               disabled={isSaveDisabled}
             />
           </View>
-          <View style={appSharedStyles.footerButton}>
+          <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
             <Button
               title="Cancel"
               onPress={onClose}

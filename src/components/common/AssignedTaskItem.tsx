@@ -26,17 +26,17 @@ export const AssignedTaskItem = ({
       <Text style={appSharedStyles.itemTitle}>{task.taskTitle}</Text>
       <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
       {task.actualPointsAwarded !== undefined && task.verificationStatus !== 'pending' && (
-        <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textSuccess]}>
+        <Text style={[commonSharedStyles.baseSecondaryText, appSharedStyles.textSuccess]}>
           Awarded: {task.actualPointsAwarded ?? 0} Tickets
         </Text>
       )}
       {task.completedDate && (
-        <Text style={appSharedStyles.itemDetailText}>
+        <Text style={commonSharedStyles.baseSecondaryText}>
           Completed: {new Date(task.completedDate).toLocaleDateString()}
         </Text>
       )}
       {task.verifiedDate && task.verificationStatus !== 'pending' && (
-        <Text style={appSharedStyles.itemDetailText}>
+        <Text style={commonSharedStyles.baseSecondaryText}>
           Verified: {new Date(task.verifiedDate).toLocaleDateString()}
         </Text>
       )}

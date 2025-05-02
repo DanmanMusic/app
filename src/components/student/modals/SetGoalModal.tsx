@@ -4,10 +4,10 @@ import { Modal, View, Text, Button, FlatList, ActivityIndicator } from 'react-na
 
 import { fetchRewards } from '../../../api/rewards';
 import { RewardItem } from '../../../types/dataTypes';
-import { appSharedStyles } from '../../../styles/appSharedStyles';
 import { colors } from '../../../styles/colors';
 import { SetGoalModalProps } from '../../../types/componentProps';
 import { RewardGoalItem } from '../../common/RewardGoalItem';
+import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
 export const SetGoalModal: React.FC<SetGoalModalProps> = ({
   visible,
@@ -40,22 +40,22 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>
             {currentGoalId ? 'Change Your Goal' : 'Set Your Goal'}
           </Text>
           {isLoading && (
             <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} size="large" />
           )}
           {isError && (
-            <Text style={[appSharedStyles.textDanger, { marginVertical: 10 }]}>
+            <Text style={[commonSharedStyles.textDanger, { marginVertical: 10 }]}>
               Error loading rewards: {error?.message}
             </Text>
           )}
           {!isLoading && !isError && (
             <FlatList
-              style={appSharedStyles.listItemFull}
+              style={commonSharedStyles.listItemFull}
               data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
@@ -68,14 +68,14 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
               )}
               ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
               ListEmptyComponent={
-                <Text style={appSharedStyles.emptyListText}>
+                <Text style={commonSharedStyles.baseEmptyText}>
                   No rewards available to set as goal.
                 </Text>
               }
               ListFooterComponent={<View style={{ height: 10 }} />}
             />
           )}
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             {currentGoalId && (
               <Button title="Clear Current Goal" onPress={handleClearGoal} color={colors.warning} />
             )}

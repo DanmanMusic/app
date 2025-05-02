@@ -218,7 +218,7 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
           />
           <View style={appSharedStyles.itemFlex}>
             <Text style={appSharedStyles.rewardName}>{item.name}</Text>
-            <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
+            <Text style={[commonSharedStyles.baseSecondaryText, appSharedStyles.textGold]}>
               {item.cost} Tickets
             </Text>
             {/* Show affordability status */}
@@ -241,11 +241,11 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Redeem Reward</Text>
-          <Text style={appSharedStyles.modalContextInfo}>For: {studentName}</Text>
-          <Text style={appSharedStyles.modalContextInfo}>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Redeem Reward</Text>
+          <Text style={commonSharedStyles.modalContextInfo}>For: {studentName}</Text>
+          <Text style={commonSharedStyles.modalContextInfo}>
             Current Balance:{' '}
             {balanceLoading ? 'Loading...' : balanceError ? 'Error' : `${currentBalance} Tickets`}
           </Text>
@@ -273,14 +273,14 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
               keyExtractor={item => item.id}
               ItemSeparatorComponent={() => <View style={appSharedStyles.separator} />}
               ListEmptyComponent={
-                <Text style={appSharedStyles.emptyListText}>No rewards available.</Text>
+                <Text style={commonSharedStyles.baseEmptyText}>No rewards available.</Text>
               }
               extraData={selectedRewardId || currentBalance} // Re-render list if selection or balance changes
             />
           )}
 
           {/* Footer Buttons */}
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             <Button
               title={redeemMutation.isPending ? 'Redeeming...' : `Redeem Selected`}
               onPress={handleConfirmRedemption}

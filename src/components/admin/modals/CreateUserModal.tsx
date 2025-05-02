@@ -161,11 +161,11 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Create New User</Text>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Create New User</Text>
 
-          <ScrollView style={appSharedStyles.scrollView}>
+          <ScrollView style={commonSharedStyles.scrollView}>
             <Text style={commonSharedStyles.label}>First Name:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -217,7 +217,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
                   </Text>
                 )}
                 {!isLoadingInstruments && !isErrorInstruments && (
-                  <View style={appSharedStyles.containerRowCentered}>
+                  <View style={commonSharedStyles.baseRowCentered}>
                     {instruments.length > 0 ? (
                       instruments.map(inst => (
                         <Button
@@ -233,7 +233,9 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
                         />
                       ))
                     ) : (
-                      <Text style={appSharedStyles.emptyListText}>No instruments available.</Text>
+                      <Text style={commonSharedStyles.baseEmptyText}>
+                        No instruments available.
+                      </Text>
                     )}
                   </View>
                 )}
@@ -246,7 +248,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
                   </Text>
                 )}
                 {!isLoadingTeachers && !isErrorTeachers && (
-                  <View style={appSharedStyles.containerRowCentered}>
+                  <View style={commonSharedStyles.baseRowCentered}>
                     {activeTeachers.length > 0 ? (
                       activeTeachers.map(teacher => (
                         <Button
@@ -262,7 +264,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
                         />
                       ))
                     ) : (
-                      <Text style={appSharedStyles.emptyListText}>
+                      <Text style={commonSharedStyles.baseEmptyText}>
                         No active teachers available.
                       </Text>
                     )}
@@ -273,9 +275,9 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
           </ScrollView>
 
           {mutation.isPending && (
-            <View style={appSharedStyles.containerRowCentered}>
+            <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={appSharedStyles.loadingText}>Creating User...</Text>
+              <Text style={commonSharedStyles.baseSecondaryText}>Creating User...</Text>
             </View>
           )}
           {mutation.isError && (
@@ -285,14 +287,14 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
             </Text>
           )}
 
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create User'}
               onPress={handleCreatePress}
               disabled={isCreateDisabled}
             />
           </View>
-          <View style={appSharedStyles.footerButton}>
+          <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
             <Button
               title="Cancel"
               onPress={onClose}

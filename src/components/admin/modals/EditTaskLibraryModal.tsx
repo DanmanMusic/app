@@ -127,11 +127,11 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Edit Library Task</Text>
-          <Text style={appSharedStyles.subTitle}>ID: {taskToEdit.id}</Text>
-          <ScrollView style={appSharedStyles.scrollView}>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Edit Library Task</Text>
+          <Text style={commonSharedStyles.subTitle}>ID: {taskToEdit.id}</Text>
+          <ScrollView style={commonSharedStyles.scrollView}>
             <Text style={commonSharedStyles.label}>Task Title:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -167,9 +167,9 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
           </ScrollView>
 
           {mutation.isPending && (
-            <View style={appSharedStyles.containerRowCentered}>
+            <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={appSharedStyles.loadingText}>Saving Changes...</Text>
+              <Text style={commonSharedStyles.baseSecondaryText}>Saving Changes...</Text>
             </View>
           )}
 
@@ -180,14 +180,14 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
             </Text>
           )}
 
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
               disabled={isSaveDisabled}
             />
           </View>
-          <View style={appSharedStyles.footerButton}>
+          <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
             <Button
               title="Cancel"
               onPress={onClose}

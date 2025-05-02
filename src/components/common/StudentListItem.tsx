@@ -18,26 +18,30 @@ export const StudentListItem = ({
 }) => (
   <View
     style={[
+      commonSharedStyles.baseRow,
+      commonSharedStyles.justifySpaceBetween,
       commonSharedStyles.baseItem,
       !student.isActive ? appSharedStyles.inactiveItemStyle : {},
     ]}
   >
-    <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
-    <Text style={appSharedStyles.itemDetailText}>
-      Instrument(s): {getInstrumentNames(student.instrumentIds, instruments)}
-    </Text>
-    <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
-      Balance: {student.balance} Tickets
-    </Text>
-    <Text
-      style={[
-        appSharedStyles.itemDetailText,
-        { fontWeight: 'bold', color: student.isActive ? colors.success : colors.secondary },
-      ]}
-    >
-      Status: {student.isActive ? 'Active' : 'Inactive'}
-    </Text>
-    <View style={appSharedStyles.studentActions}>
+    <View style={commonSharedStyles.flex1}>
+      <Text style={appSharedStyles.itemTitle}>{student.name}</Text>
+      <Text style={commonSharedStyles.baseSecondaryText}>
+        Instrument(s): {getInstrumentNames(student.instrumentIds, instruments)}
+      </Text>
+      <Text style={[commonSharedStyles.baseSecondaryText, appSharedStyles.textGold]}>
+        Balance: {student.balance} Tickets
+      </Text>
+      <Text
+        style={[
+          commonSharedStyles.baseSecondaryText,
+          { fontWeight: 'bold', color: student.isActive ? colors.success : colors.secondary },
+        ]}
+      >
+        Status: {student.isActive ? 'Active' : 'Inactive'}
+      </Text>
+    </View>
+    <View>
       <Button title="View Profile" onPress={() => onViewProfile(student.id)} />
       {student.isActive && <Button title="Assign Task" onPress={() => onAssignTask(student.id)} />}
     </View>

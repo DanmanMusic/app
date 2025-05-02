@@ -4,13 +4,11 @@ import { View, Text, ScrollView, Button, FlatList, ActivityIndicator } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
-// API Imports (keep as is)
 import { fetchAssignedTasks } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
 import { deleteTaskLibraryItem } from '../api/taskLibrary';
 import { fetchUserProfile, fetchStudents } from '../api/users';
 
-// Component Imports (Add SharedHeader, remove unused things if needed)
 import { AdminAnnouncementsSection } from '../components/admin/AdminAnnouncementsSection';
 import { AdminDashboardSection } from '../components/admin/AdminDashboardSection';
 import { AdminHistorySection } from '../components/admin/AdminHistorySection';
@@ -18,7 +16,7 @@ import { AdminInstrumentsSection } from '../components/admin/AdminInstrumentsSec
 import { AdminRewardsSection } from '../components/admin/AdminRewardsSection';
 import { AdminTasksSection } from '../components/admin/AdminTasksSection';
 import { AdminUsersSection } from '../components/admin/AdminUsersSection';
-import { AdminStudentDetailView } from '../components/admin/AdminStudentDetailView';
+import { AdminStudentDetailView } from '../components/common/StudentDetailView';
 import { AdminTeacherDetailView } from '../components/admin/AdminTeacherDetailView';
 import { AdminParentDetailView } from '../components/admin/AdminParentDetailView';
 import { AdminAdminDetailView } from '../components/admin/AdminAdminDetailView'; // Keep
@@ -33,10 +31,9 @@ import ConfirmationModal from '../components/common/ConfirmationModal';
 import EditUserModal from '../components/common/EditUserModal';
 import DeactivateOrDeleteUserModal from '../components/common/DeactivateOrDeleteUserModal';
 import GeneratePinModal from '../components/common/GeneratePinModal';
-import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal'; // Keep
-import { SharedHeader } from '../components/common/SharedHeader'; // *** IMPORT NEW HEADER ***
+import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
+import { SharedHeader } from '../components/common/SharedHeader';
 
-// Context & Type Imports (keep as is)
 import { useAuth } from '../contexts/AuthContext';
 import {
   AssignedTask,
@@ -48,18 +45,14 @@ import {
 } from '../types/dataTypes';
 import { AdminSection, AdminViewProps, UserTab } from '../types/componentProps';
 
-// Style & Helper Imports (keep as is)
 import { getUserDisplayName } from '../utils/helpers';
-import { appSharedStyles } from '../styles/appSharedStyles';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
-// Removed StyledButton import as it's not used here directly anymore
 
 export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModal }) => {
-  const { currentUserId: adminUserId } = useAuth(); // Keep useAuth
+  const { currentUserId: adminUserId } = useAuth();
   const queryClient = useQueryClient();
 
-  // Keep existing state
   const [viewingSection, setViewingSection] = useState<AdminSection>('dashboard');
   const [activeUserTab, setActiveUserTab] = useState<UserTab>('students');
   const [studentFilter, setStudentFilter] = useState<UserStatus | 'all'>('active');
@@ -83,7 +76,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const [userToManage, setUserToManage] = useState<User | null>(null);
   const [userForPin, setUserForPin] = useState<User | null>(null);
 
-  // Keep existing queries
   const {
     data: adminUser,
     isLoading: adminLoading,
@@ -142,7 +134,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     staleTime: 5 * 60 * 1000,
   });
 
-  // Keep mutations
   const deleteTaskMutation = useMutation({
     mutationFn: deleteTaskLibraryItem,
     onSuccess: (_, deletedTaskId) => {
@@ -269,18 +260,18 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const isLoadingCoreData = adminLoading || instrumentsLoading;
   if (isLoadingCoreData) {
     return (
-      <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.centered}>
+      <SafeAreaView style={commonSharedStyles.flex1}>
+        <View style={commonSharedStyles.baseCentered}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={appSharedStyles.loadingText}>Loading Admin Data...</Text>
+          <Text style={commonSharedStyles.baseSecondaryText}>Loading Admin Data...</Text>
         </View>
       </SafeAreaView>
     );
   }
   if (!adminUser || adminError) {
     return (
-      <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.containerBase}>
+      <SafeAreaView style={commonSharedStyles.flex1}>
+        <View style={commonSharedStyles.flex1}>
           <Text style={commonSharedStyles.errorText}>
             Error loading Admin user data: {adminErrorMsg?.message || 'Not found.'}
           </Text>
@@ -290,31 +281,28 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   }
   if (adminUser.role !== 'admin') {
     return (
-      <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.containerBase}>
+      <SafeAreaView style={commonSharedStyles.flex1}>
+        <View>
           <Text style={commonSharedStyles.errorText}>Error: User is not an Admin.</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  // Keep main content rendering logic
   const renderMainContent = () => {
-    // ... (Keep the existing switch/case logic for viewingUserId and viewingSection) ...
     if (viewingUserId && viewingUserRole) {
       if (detailUserLoading) {
         return (
-          <View style={appSharedStyles.centered}>
+          <View style={commonSharedStyles.baseCentered}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={appSharedStyles.loadingText}>Loading User Details...</Text>
+            <Text style={commonSharedStyles.baseSecondaryText}>Loading User Details...</Text>
           </View>
         );
       }
 
       if (!detailUserData) {
-        // Handled user deleted case in handleDeletionSuccess, this is for fetch errors
         return (
-          <View style={appSharedStyles.containerBase}>
+          <View style={commonSharedStyles.flex1}>
             <Text style={commonSharedStyles.errorText}>
               Failed to load details for user ID: {viewingUserId}. User might have been deleted.
             </Text>
@@ -374,7 +362,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     switch (viewingSection) {
       case 'dashboard':
         return (
-          <View style={[commonSharedStyles.baseColumn, commonSharedStyles.baseGap, commonSharedStyles.baseSelfAlignStretch]}>
+          <View
+            style={[
+              commonSharedStyles.baseColumn,
+              commonSharedStyles.baseGap,
+              commonSharedStyles.baseSelfAlignStretch,
+            ]}
+          >
             <AdminDashboardSection
               onViewPendingVerifications={() => setViewingSection('dashboard-pending-verification')}
               setActiveTab={setActiveUserTab}
@@ -384,7 +378,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             <View style={[commonSharedStyles.baseColumn, commonSharedStyles.baseGap]}>
               <Text
                 style={[
-                  commonSharedStyles.baseSubTitle,
+                  commonSharedStyles.baseSubTitleText,
                   commonSharedStyles.bold,
                   commonSharedStyles.baseMargin,
                 ]}
@@ -408,7 +402,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
       case 'dashboard-pending-verification':
         return (
           <View>
-            <Text style={appSharedStyles.sectionTitle}>
+            <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.bold]}>
               Pending Verifications ({pendingVerifications.length})
             </Text>
             {pendingTasksLoading || allStudentsLoading ? (
@@ -439,7 +433,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
                 ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
               />
             ) : (
-              <Text style={appSharedStyles.emptyListText}>No tasks pending verification.</Text>
+              <Text style={commonSharedStyles.baseEmptyText}>No tasks pending verification.</Text>
             )}
           </View>
         );
@@ -447,7 +441,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         return (
           <AdminUsersSection
             activeTab={activeUserTab}
-            setActiveTab={setActiveUserTab}
             studentFilter={studentFilter}
             setStudentFilter={setStudentFilter}
             studentSearchTerm={studentSearchTerm}
@@ -455,7 +448,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             instruments={fetchedInstruments}
             onViewManageUser={handleViewManageUser}
             onInitiateAssignTaskForStudent={handleInitiateAssignTaskForStudent}
-            onInitiateCreateUser={handleInitiateCreateUser}
           />
         );
       case 'tasks':
@@ -486,13 +478,20 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const showBackButton = !!viewingUserId;
 
   return (
-    <SafeAreaView style={appSharedStyles.safeArea}>
-      <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseAlign, commonSharedStyles.justifySpaceBetween, commonSharedStyles.baseMargin]}>
+    <SafeAreaView style={commonSharedStyles.flex1}>
+      <View
+        style={[
+          commonSharedStyles.baseRow,
+          commonSharedStyles.baseAlignCenter,
+          commonSharedStyles.justifySpaceBetween,
+          commonSharedStyles.baseMargin,
+        ]}
+      >
         <SharedHeader onSetLoginPress={() => setIsSetCredentialsModalVisible(true)} />
       </View>
 
       {!viewingUserId ? (
-        <ScrollView style={appSharedStyles.contentArea}>
+        <ScrollView style={commonSharedStyles.flex1}>
           <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseMargin]}>
             <Button
               title="Dashboard"
@@ -509,7 +508,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
               <Button title="← Back" onPress={handleBackFromDetailView} />
             </View>
           )}
-          <View style={appSharedStyles.contentArea}>{renderMainContent()}</View>
+          <View style={commonSharedStyles.flex1}>{renderMainContent()}</View>
         </>
       )}
 
@@ -570,7 +569,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           onClose={handleCloseRedeemModal}
           studentId={userToManage.id}
           studentName={getUserDisplayName(userToManage)}
-          redeemerId={adminUserId} // Keep passing adminId here for now
+          redeemerId={adminUserId}
         />
       )}
       <SetEmailPasswordModal

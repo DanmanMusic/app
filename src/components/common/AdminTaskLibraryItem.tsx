@@ -1,7 +1,5 @@
 import { Button, Text, View } from 'react-native';
-
 import { colors } from '../../styles/colors';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { AdminTaskLibraryItemProps } from '../../types/componentProps';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
@@ -12,17 +10,19 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
   disabled,
 }) => (
   <View
-    style={[commonSharedStyles.baseItem, commonSharedStyles.baseFull, commonSharedStyles.baseRow]}
+    style={[
+      commonSharedStyles.baseRow,
+      commonSharedStyles.justifySpaceBetween,
+      commonSharedStyles.baseItem,
+    ]}
   >
     <View>
-      <Text style={appSharedStyles.itemTitle}>
+      <Text style={commonSharedStyles.baseSubTitleText}>
         {item.title} ({item.baseTickets} pts)
       </Text>
-      <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
+      <Text style={commonSharedStyles.baseSecondaryText}>{item.description}</Text>
     </View>
-    <View
-      style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap, commonSharedStyles.baseSelfAlign]}
-    >
+    <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
       <Button title="Edit" onPress={() => onEdit(item)} disabled={disabled} />
       <Button
         title="Delete"

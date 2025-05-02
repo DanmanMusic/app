@@ -99,10 +99,10 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Create New Library Task</Text>
-          <ScrollView style={appSharedStyles.scrollView}>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Create New Library Task</Text>
+          <ScrollView style={commonSharedStyles.scrollView}>
             <Text style={commonSharedStyles.label}>Task Title:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -141,9 +141,9 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
           </ScrollView>
 
           {mutation.isPending && (
-            <View style={appSharedStyles.containerRowCentered}>
+            <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={appSharedStyles.loadingText}>Creating Task...</Text>
+              <Text style={commonSharedStyles.baseSecondaryText}>Creating Task...</Text>
             </View>
           )}
 
@@ -154,14 +154,14 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
             </Text>
           )}
 
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Task'}
               onPress={handleCreate}
               disabled={isCreateDisabled}
             />
           </View>
-          <View style={appSharedStyles.footerButton}>
+          <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
             <Button
               title="Cancel"
               onPress={onClose}

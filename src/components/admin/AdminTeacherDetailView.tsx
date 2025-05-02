@@ -76,7 +76,7 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
 
   if (teacherLoading) {
     return (
-      <View style={[appSharedStyles.centered]}>
+      <View style={[commonSharedStyles.baseCentered]}>
         <ActivityIndicator size="large" color={colors.primary} />
         <Text>Loading Teacher Details...</Text>
       </View>
@@ -85,7 +85,7 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
 
   if (teacherError || !teacher) {
     return (
-      <View style={appSharedStyles.containerBase}>
+      <View style={commonSharedStyles.flex1}>
         <Text style={commonSharedStyles.errorText}>
           Error loading teacher details: {teacherErrorMsg?.message || 'Teacher not found.'}
         </Text>
@@ -94,26 +94,28 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
   }
   if (teacher.role !== 'teacher') {
     return (
-      <View style={appSharedStyles.containerBase}>
+      <View style={commonSharedStyles.flex1}>
         <Text style={commonSharedStyles.errorText}>Error: User found but is not a teacher.</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={appSharedStyles.containerBase}>
-      <Text style={appSharedStyles.sectionTitle}>Teacher Details</Text>
-      <Text style={appSharedStyles.itemDetailText}>Name: {teacherDisplayName}</Text>
-      <Text style={appSharedStyles.itemDetailText}>ID: {teacher.id}</Text>
-      <Text style={appSharedStyles.itemDetailText}>
+    <ScrollView style={commonSharedStyles.flex1}>
+      <Text style={commonSharedStyles.baseSubTitleText}>Teacher Details</Text>
+      <Text style={commonSharedStyles.baseSecondaryText}>Name: {teacherDisplayName}</Text>
+      <Text style={commonSharedStyles.baseSecondaryText}>ID: {teacher.id}</Text>
+      <Text style={commonSharedStyles.baseSecondaryText}>
         Status:{' '}
         <Text
-          style={isTeacherActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus}
+          style={
+            isTeacherActive ? commonSharedStyles.activeStatus : commonSharedStyles.inactiveStatus
+          }
         >
           {teacher.status}
         </Text>
       </Text>
-      <View style={[appSharedStyles.containerBase]}>
+      <View style={[commonSharedStyles.flex1]}>
         <Button title="Edit Info" onPress={handleEdit} color={colors.warning} />
         <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
         {onInitiatePinGeneration && (
@@ -125,7 +127,9 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
           />
         )}
       </View>
-      <Text style={appSharedStyles.sectionTitle}>Linked Students ({linkedStudents.length})</Text>
+      <Text style={commonSharedStyles.baseSubTitleText}>
+        Linked Students ({linkedStudents.length})
+      </Text>
       {isLoadingLinkedStudents && (
         <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
       )}
@@ -141,11 +145,13 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
           renderItem={({ item }) => (
             <View style={[commonSharedStyles.baseItem, appSharedStyles.linkedStudentItem]}>
               <Text style={appSharedStyles.itemTitle}>{item.name}</Text>
-              <Text style={appSharedStyles.itemDetailText}>
+              <Text style={commonSharedStyles.baseSecondaryText}>
                 Status:{' '}
                 <Text
                   style={
-                    item.isActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus
+                    item.isActive
+                      ? commonSharedStyles.activeStatus
+                      : commonSharedStyles.inactiveStatus
                   }
                 >
                   {item.isActive ? 'Active' : 'Inactive'}
@@ -159,7 +165,7 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
           scrollEnabled={false}
           ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
           ListEmptyComponent={() => (
-            <Text style={appSharedStyles.emptyListText}>
+            <Text style={commonSharedStyles.baseEmptyText}>
               No students currently linked to this teacher.
             </Text>
           )}

@@ -46,20 +46,20 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
   return (
     <View style={appSharedStyles.taskItem}>
       <Text style={appSharedStyles.taskItemTitle}>{item.taskTitle}</Text>
-      <Text style={appSharedStyles.itemDetailText}>
+      <Text style={commonSharedStyles.baseSecondaryText}>
         Student: {studentName} ({studentStatus})
       </Text>
       <Text style={appSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
-      <Text style={appSharedStyles.itemDetailText}>
+      <Text style={commonSharedStyles.baseSecondaryText}>
         Assigned: {new Date(item.assignedDate).toLocaleDateString()} by {assignerName}
       </Text>
       {item.completedDate && (
-        <Text style={appSharedStyles.itemDetailText}>
+        <Text style={commonSharedStyles.baseSecondaryText}>
           Completed: {new Date(item.completedDate).toLocaleDateString()}
         </Text>
       )}
       {item.verifiedDate && item.verificationStatus !== 'pending' && (
-        <Text style={appSharedStyles.itemDetailText}>
+        <Text style={commonSharedStyles.baseSecondaryText}>
           Verified: {new Date(item.verifiedDate).toLocaleDateString()} by{' '}
           {verifierName || item.verifiedById || 'Unknown'}
         </Text>

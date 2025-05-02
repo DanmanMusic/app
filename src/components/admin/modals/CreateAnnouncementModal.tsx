@@ -89,9 +89,9 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Create New Announcement</Text>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Create New Announcement</Text>
 
           <Text style={commonSharedStyles.label}>Type:</Text>
           <View style={commonSharedStyles.input}>
@@ -136,9 +136,9 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
           />
 
           {mutation.isPending && (
-            <View style={appSharedStyles.containerRowCentered}>
+            <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={appSharedStyles.loadingText}>Creating Announcement...</Text>
+              <Text style={commonSharedStyles.baseSecondaryText}>Creating Announcement...</Text>
             </View>
           )}
 
@@ -151,14 +151,14 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
             </Text>
           )}
 
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Announcement'}
               onPress={handleCreate}
               disabled={isCreateDisabled}
             />
           </View>
-          <View style={appSharedStyles.footerButton}>
+          <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
             <Button
               title="Cancel"
               onPress={onClose}

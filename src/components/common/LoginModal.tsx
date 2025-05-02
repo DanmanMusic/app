@@ -18,7 +18,6 @@ import { storeItem, removeItem, CUSTOM_REFRESH_TOKEN_KEY } from '../../lib/stora
 
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 
 interface LoginModalProps {
   visible: boolean;
@@ -153,22 +152,22 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Login</Text>
-          <View style={appSharedStyles.containerToggle}>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Login</Text>
+          <View style={commonSharedStyles.containerToggle}>
             <TouchableOpacity
               style={[
-                appSharedStyles.toggleButton,
-                mode === 'email' && appSharedStyles.toggleButtonActive,
+                commonSharedStyles.toggleButton,
+                mode === 'email' && commonSharedStyles.toggleButtonActive,
               ]}
               onPress={() => setMode('email')}
               disabled={isLoading}
             >
               <Text
                 style={[
-                  appSharedStyles.toggleButtonText,
-                  mode === 'email' && appSharedStyles.toggleButtonTextActive,
+                  commonSharedStyles.toggleButtonText,
+                  mode === 'email' && commonSharedStyles.toggleButtonTextActive,
                 ]}
               >
                 Email / Password
@@ -176,16 +175,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
             </TouchableOpacity>
             <TouchableOpacity
               style={[
-                appSharedStyles.toggleButton,
-                mode === 'pin' && appSharedStyles.toggleButtonActive,
+                commonSharedStyles.toggleButton,
+                mode === 'pin' && commonSharedStyles.toggleButtonActive,
               ]}
               onPress={() => setMode('pin')}
               disabled={isLoading}
             >
               <Text
                 style={[
-                  appSharedStyles.toggleButtonText,
-                  mode === 'pin' && appSharedStyles.toggleButtonTextActive,
+                  commonSharedStyles.toggleButtonText,
+                  mode === 'pin' && commonSharedStyles.toggleButtonTextActive,
                 ]}
               >
                 Login PIN
@@ -194,7 +193,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
           </View>
 
           {mode === 'email' && (
-            <View style={appSharedStyles.itemFull}>
+            <View style={commonSharedStyles.full}>
               <Text style={commonSharedStyles.label}>Email:</Text>
               <TextInput
                 style={commonSharedStyles.input}
@@ -218,7 +217,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
                 autoComplete="password"
                 editable={!isLoading}
               />
-              <View style={appSharedStyles.itemFull}>
+              <View style={commonSharedStyles.full}>
                 <Button
                   title={isLoading ? 'Logging In...' : 'Login with Email'}
                   onPress={handleEmailLogin}
@@ -229,7 +228,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
           )}
 
           {mode === 'pin' && (
-            <View style={appSharedStyles.itemFull}>
+            <View style={commonSharedStyles.full}>
               <Text style={commonSharedStyles.label}>One-Time PIN:</Text>
               <TextInput
                 style={commonSharedStyles.input}
@@ -242,7 +241,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
                 editable={!isLoading}
                 secureTextEntry={true}
               />
-              <View style={appSharedStyles.itemFull}>
+              <View style={commonSharedStyles.full}>
                 <Button
                   title={isLoading ? 'Verifying...' : 'Login with PIN'}
                   onPress={handlePinLogin}
@@ -253,16 +252,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
           )}
 
           {isLoading && (
-            <View style={appSharedStyles.containerRowCentered}>
+            <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={appSharedStyles.loadingText}>Processing...</Text>
+              <Text style={commonSharedStyles.baseSecondaryText}>Processing...</Text>
             </View>
           )}
           {error && (
             <Text style={[commonSharedStyles.errorText, { marginTop: 10 }]}> Error: {error} </Text>
           )}
 
-          <View style={appSharedStyles.footerButton}>
+          <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
             <Button
               title="Cancel"
               onPress={onClose}

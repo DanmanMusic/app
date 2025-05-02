@@ -145,7 +145,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
 
   if (parentLoading) {
     return (
-      <View style={[appSharedStyles.containerBase, appSharedStyles.centered]}>
+      <View style={[commonSharedStyles.flex1, commonSharedStyles.baseCentered]}>
         <ActivityIndicator size="large" color={colors.primary} />
         <Text>Loading Parent Details...</Text>
       </View>
@@ -154,7 +154,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
 
   if (parentError || !parent) {
     return (
-      <View style={appSharedStyles.containerBase}>
+      <View style={commonSharedStyles.flex1}>
         <Text style={commonSharedStyles.errorText}>
           Error loading parent details: {parentErrorMsg?.message || 'Parent not found.'}
         </Text>
@@ -164,7 +164,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
 
   if (parent.role !== 'parent') {
     return (
-      <View style={appSharedStyles.containerBase}>
+      <View style={commonSharedStyles.flex1}>
         <Text style={commonSharedStyles.errorText}>Error: User found but is not a parent.</Text>
       </View>
     );
@@ -172,24 +172,28 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
 
   return (
     <>
-      <ScrollView style={appSharedStyles.containerBase}>
-        <Text style={appSharedStyles.sectionTitle}>Parent Details</Text>
-        <Text style={appSharedStyles.itemDetailText}>Name: {parentDisplayName}</Text>
-        <Text style={appSharedStyles.itemDetailText}>ID: {parent.id}</Text>
-        <Text style={appSharedStyles.itemDetailText}>
+      <ScrollView style={commonSharedStyles.flex1}>
+        <Text style={commonSharedStyles.baseSubTitleText}>Parent Details</Text>
+        <Text style={commonSharedStyles.baseSecondaryText}>Name: {parentDisplayName}</Text>
+        <Text style={commonSharedStyles.baseSecondaryText}>ID: {parent.id}</Text>
+        <Text style={commonSharedStyles.baseSecondaryText}>
           Status:{' '}
           <Text
-            style={isParentActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus}
+            style={
+              isParentActive ? commonSharedStyles.activeStatus : commonSharedStyles.inactiveStatus
+            }
           >
             {parent.status}
           </Text>
         </Text>
-        <View style={[appSharedStyles.containerRowStart]}>
+        <View style={[commonSharedStyles.baseRow]}>
           <Button title="Edit Info" onPress={handleEdit} color={colors.warning} />
           <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
           <Button title="Link Student" onPress={handleLinkStudent} color={colors.info} />
         </View>
-        <Text style={appSharedStyles.sectionTitle}>Linked Students ({linkedStudents.length})</Text>
+        <Text style={commonSharedStyles.baseSubTitleText}>
+          Linked Students ({linkedStudents.length})
+        </Text>
         {isLoadingLinkedStudents && (
           <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
         )}
@@ -207,13 +211,13 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
             renderItem={({ item: studentItem }) => (
               <View style={[commonSharedStyles.baseItem, appSharedStyles.linkedStudentItem]}>
                 <Text style={appSharedStyles.itemTitle}>{getUserDisplayName(studentItem)}</Text>
-                <Text style={appSharedStyles.itemDetailText}>
+                <Text style={commonSharedStyles.baseSecondaryText}>
                   Status:{' '}
                   <Text
                     style={
                       studentItem.status === 'active'
-                        ? appSharedStyles.activeStatus
-                        : appSharedStyles.inactiveStatus
+                        ? commonSharedStyles.activeStatus
+                        : commonSharedStyles.inactiveStatus
                     }
                   >
                     {studentItem.status}
@@ -236,7 +240,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
             scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
             ListEmptyComponent={() => (
-              <Text style={appSharedStyles.emptyListText}>
+              <Text style={commonSharedStyles.baseEmptyText}>
                 No students currently linked to this parent.
               </Text>
             )}

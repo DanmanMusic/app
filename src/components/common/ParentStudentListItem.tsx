@@ -13,7 +13,7 @@ export const ParentStudentListItem: React.FC<ParentStudentListItemProps> = ({
     <Text style={appSharedStyles.itemTitle}>{getUserDisplayName(student)}</Text>
     <Text
       style={[
-        appSharedStyles.itemDetailText,
+        commonSharedStyles.baseSecondaryText,
         {
           fontWeight: 'bold',
           color: student.status === 'active' ? colors.success : colors.secondary,

@@ -117,9 +117,9 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Add New Instrument</Text>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Add New Instrument</Text>
 
           <Text style={commonSharedStyles.label}>Instrument Name:</Text>
           <TextInput
@@ -151,9 +151,9 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
           </View>
 
           {mutation.isPending && (
-            <View style={appSharedStyles.containerRowCentered}>
+            <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={appSharedStyles.loadingText}>Creating Instrument...</Text>
+              <Text style={commonSharedStyles.baseSecondaryText}>Creating Instrument...</Text>
             </View>
           )}
           {mutation.isError && (
@@ -164,14 +164,14 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
                 : 'Failed to create instrument'}
             </Text>
           )}
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Instrument'}
               onPress={handleCreate}
               disabled={mutation.isPending || !name.trim()}
             />
           </View>
-          <View style={appSharedStyles.footerButton}>
+          <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
             <Button
               title="Cancel"
               onPress={onClose}

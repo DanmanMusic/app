@@ -100,8 +100,10 @@ export const AdminRewardsSection = () => {
   };
 
   return (
-    <View>
-      <Text style={appSharedStyles.sectionTitle}>Rewards Catalog ({rewardsCatalog.length})</Text>
+    <View style={commonSharedStyles.baseMargin}>
+      <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
+        Rewards Catalog ({rewardsCatalog.length})
+      </Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button
           title="Add New Reward"
@@ -132,7 +134,7 @@ export const AdminRewardsSection = () => {
           scrollEnabled={false}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
           ListEmptyComponent={() => (
-            <Text style={appSharedStyles.emptyListText}>No rewards found in the catalog.</Text>
+            <Text style={commonSharedStyles.baseEmptyText}>No rewards found in the catalog.</Text>
           )}
         />
       )}

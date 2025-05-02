@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { View, Text, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, Button } from 'react-native';
 import { fetchAssignedTasks } from '../../api/assignedTasks';
 import { fetchStudents } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,9 +9,11 @@ import { colors } from '../../styles/colors';
 import { TeacherDashboardSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';
 import { PendingVerificationItem } from '../common/PendingVerificationItem';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = ({
   onInitiateVerificationModal,
+  setViewingSection,
 }) => {
   const { currentUserId: teacherId } = useAuth();
 
@@ -43,7 +45,12 @@ export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = (
 
   const pendingVerifications = pendingTasksResult?.items ?? [];
 
-  const { data: allStudentsResult, isLoading: isLoadingStudents } = useQuery({
+  const {
+    data: allStudentsResult,
+    isLoading: isLoadingStudents,
+    isError: isErrorStudents,
+    error: errorStudents,
+  } = useQuery({
     queryKey: ['students', { filter: 'all', context: 'teacherDashboardLookup' }],
     queryFn: () => fetchStudents({ filter: 'all', page: 1 }),
     enabled: !!teacherId,
@@ -54,13 +61,47 @@ export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = (
   const isLoading = isLoadingTasks || isLoadingStudents;
 
   return (
-    <View>
-      <Text style={appSharedStyles.sectionTitle}>
+    <View style={[commonSharedStyles.baseMargin]}>
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+        <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
+          Dashboard Overview
+        </Text>
+      </View>
+      {isLoadingStudents && (
+        <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
+      )}
+      {isErrorStudents && (
+        <Text style={[commonSharedStyles.textDanger, { marginVertical: 5 }]}>
+          Error loading students: {errorStudents?.message}
+        </Text>
+      )}
+      {!isLoadingStudents &&
+        !isErrorStudents &&
+        (allStudentsSimple.length > 0 ? (
+          <View
+            style={[
+              commonSharedStyles.baseRow,
+              commonSharedStyles.baseGap,
+              commonSharedStyles.baseMarginTopBottom,
+            ]}
+          >
+            <Button
+              title={`My Students: (${allStudentsSimple.length})`}
+              onPress={() => setViewingSection('students')}
+              color={colors.warning}
+            />
+            <Button title="Tasks" onPress={() => setViewingSection('tasks')} />
+          </View>
+        ) : (
+          <Text style={commonSharedStyles.baseEmptyText}>No students.</Text>
+        ))}
+
+      <Text style={commonSharedStyles.baseSubTitleText}>
         Pending Verifications ({pendingVerifications.length})
       </Text>
       {isLoading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />}
       {isErrorTasks && (
-        <Text style={[appSharedStyles.textDanger, { marginVertical: 5 }]}>
+        <Text style={[commonSharedStyles.textDanger, { marginVertical: 5 }]}>
           Error loading tasks: {errorTasks?.message}
         </Text>
       )}
@@ -88,7 +129,7 @@ export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = (
             ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
           />
         ) : (
-          <Text style={appSharedStyles.emptyListText}>No tasks pending verification.</Text>
+          <Text style={commonSharedStyles.baseEmptyText}>No tasks pending verification.</Text>
         ))}
     </View>
   );

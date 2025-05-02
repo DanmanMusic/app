@@ -12,7 +12,6 @@ import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
 
 import { User } from '../types/dataTypes';
 import { getUserDisplayName } from '../utils/helpers';
-import { appSharedStyles } from '../styles/appSharedStyles';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
 
@@ -91,8 +90,8 @@ export const ParentView = () => {
 
   if (isLoadingParent) {
     return (
-      <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.centered}>
+      <SafeAreaView style={commonSharedStyles.flex1}>
+        <View style={commonSharedStyles.baseCentered}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text>Loading Parent Data...</Text>
         </View>
@@ -102,8 +101,8 @@ export const ParentView = () => {
 
   if (isErrorParent || !parentUser) {
     return (
-      <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.containerBase}>
+      <SafeAreaView style={commonSharedStyles.flex1}>
+        <View style={commonSharedStyles.flex1}>
           <Text style={commonSharedStyles.errorText}>
             Error loading parent data: {errorParent?.message || 'Parent not found.'}
           </Text>
@@ -114,8 +113,8 @@ export const ParentView = () => {
 
   if (parentUser.role !== 'parent') {
     return (
-      <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.containerBase}>
+      <SafeAreaView style={commonSharedStyles.flex1}>
+        <View style={commonSharedStyles.flex1}>
           <Text style={commonSharedStyles.errorText}>Error: Logged in user is not a parent.</Text>
         </View>
       </SafeAreaView>
@@ -134,8 +133,8 @@ export const ParentView = () => {
     if (!studentToView) {
       if (specificQueryResult?.isLoading || specificQueryResult?.isFetching) {
         return (
-          <SafeAreaView style={appSharedStyles.safeArea}>
-            <View style={appSharedStyles.centered}>
+          <SafeAreaView style={commonSharedStyles.flex1}>
+            <View style={commonSharedStyles.baseCentered}>
               <ActivityIndicator size="large" color={colors.primary} />
               <Text>Loading Student Details...</Text>
               <Button title="Back to Students" onPress={() => setViewingStudentId(null)} />
@@ -150,8 +149,8 @@ export const ParentView = () => {
           : 'Selected student data could not be loaded or is no longer linked.';
 
       return (
-        <SafeAreaView style={appSharedStyles.safeArea}>
-          <View style={appSharedStyles.containerBase}>
+        <SafeAreaView style={commonSharedStyles.flex1}>
+          <View style={commonSharedStyles.flex1}>
             <Text style={commonSharedStyles.errorText}>Error: {specificErrorMsg}</Text>
             <Button title="Back to Students" onPress={() => setViewingStudentId(null)} />
           </View>
@@ -160,9 +159,9 @@ export const ParentView = () => {
     }
 
     return (
-      <SafeAreaView style={appSharedStyles.safeArea}>
-        <View style={appSharedStyles.parentHeader}>
-          <Text style={appSharedStyles.parentHeaderText} numberOfLines={1} ellipsizeMode="tail">
+      <SafeAreaView style={commonSharedStyles.flex1}>
+        <View style={commonSharedStyles.parentHeader}>
+          <Text style={commonSharedStyles.parentHeaderText} numberOfLines={1} ellipsizeMode="tail">
             Viewing: {getUserDisplayName(studentToView)}
           </Text>
           {hasMultipleStudents && (
@@ -179,10 +178,10 @@ export const ParentView = () => {
   }
 
   return (
-    <SafeAreaView style={appSharedStyles.safeArea}>
-      <View style={appSharedStyles.containerBase}>
-        <View style={appSharedStyles.parentHeader}>
-          <Text style={appSharedStyles.parentHeaderText} numberOfLines={1} ellipsizeMode="tail">
+    <SafeAreaView style={commonSharedStyles.flex1}>
+      <View style={commonSharedStyles.flex1}>
+        <View style={commonSharedStyles.parentHeader}>
+          <Text style={commonSharedStyles.parentHeaderText} numberOfLines={1} ellipsizeMode="tail">
             Parent: {getUserDisplayName(parentUser)}
           </Text>
           <Button
@@ -192,7 +191,7 @@ export const ParentView = () => {
           />
         </View>
 
-        <Text style={appSharedStyles.sectionTitle}>Your Students</Text>
+        <Text style={commonSharedStyles.baseSubTitleText}>Your Students</Text>
         {isLoadingStudents && (
           <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
         )}
@@ -212,7 +211,7 @@ export const ParentView = () => {
             contentContainerStyle={{ paddingBottom: 10 }}
           />
         ) : !isLoadingStudents && !isErrorStudents && linkedStudents.length === 0 ? (
-          <Text style={appSharedStyles.emptyListText}>No students linked to your account.</Text>
+          <Text style={commonSharedStyles.baseEmptyText}>No students linked to your account.</Text>
         ) : null}
 
         <View style={{ marginTop: 20 }}>

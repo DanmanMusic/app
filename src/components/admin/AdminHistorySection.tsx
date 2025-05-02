@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 import { usePaginatedTicketHistory } from '../../hooks/usePaginatedTicketHistory';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 
 import PaginationControls from './PaginationControls';
@@ -28,7 +27,9 @@ export const AdminHistorySection = () => {
 
   return (
     <View>
-      <Text style={appSharedStyles.sectionTitle}>Full Ticket History ({totalItems})</Text>
+      <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
+        Full Ticket History ({totalItems})
+      </Text>
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
       )}
@@ -45,7 +46,7 @@ export const AdminHistorySection = () => {
           scrollEnabled={false}
           ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
           ListEmptyComponent={() => (
-            <Text style={appSharedStyles.emptyListText}>No history entries found.</Text>
+            <Text style={commonSharedStyles.baseEmptyText}>No history entries found.</Text>
           )}
           ListHeaderComponent={
             isFetching && !isLoading ? (

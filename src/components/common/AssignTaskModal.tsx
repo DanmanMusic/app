@@ -303,7 +303,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     if (step === 1 && !preselectedStudentId) {
       return (
         <>
-          <Text style={appSharedStyles.stepTitle}>Step 1: Select Student</Text>
+          <Text style={commonSharedStyles.stepTitle}>Step 1: Select Student</Text>
           <TextInput
             style={appSharedStyles.searchInput}
             placeholder={
@@ -323,7 +323,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           )}
           {!isLoadingStudents && !isErrorStudents && (
             <FlatList
-              style={appSharedStyles.contentScrollView}
+              style={commonSharedStyles.contentScrollView}
               data={filteredStudents}
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
@@ -334,7 +334,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
-                <Text style={appSharedStyles.emptyListText}>
+                <Text style={commonSharedStyles.baseEmptyText}>
                   {studentSearchTerm ? 'No students match search.' : 'No active students found.'}
                 </Text>
               }
@@ -348,7 +348,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     if (step === 2) {
       return (
         <>
-          <Text style={appSharedStyles.stepTitle}>
+          <Text style={commonSharedStyles.stepTitle}>
             Step {preselectedStudentId ? 1 : 2}: Assign Task to {selectedStudentName}
           </Text>
           <View style={appSharedStyles.containerRowFull}>
@@ -362,7 +362,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             />
             <Text style={commonSharedStyles.label}>Create Custom Task</Text>
           </View>
-          <ScrollView style={appSharedStyles.contentScrollView}>
+          <ScrollView style={commonSharedStyles.contentScrollView}>
             {isAdHocMode ? (
               // Ad-Hoc Task Input Fields
               <View>
@@ -435,7 +435,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                       </TouchableOpacity>
                     )}
                     ListEmptyComponent={
-                      <Text style={appSharedStyles.emptyListText}>Task library is empty.</Text>
+                      <Text style={commonSharedStyles.baseEmptyText}>Task library is empty.</Text>
                     }
                   />
                 )}
@@ -452,7 +452,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       const taskPoints = isAdHocMode ? adHocBasePoints : selectedLibraryTask?.baseTickets;
       return (
         <>
-          <Text style={appSharedStyles.stepTitle}>
+          <Text style={commonSharedStyles.stepTitle}>
             Step {preselectedStudentId ? 2 : 3}: Confirm Assignment
           </Text>
           <Text style={appSharedStyles.confirmationText}>
@@ -468,18 +468,18 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Assign Task</Text>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Assign Task</Text>
 
           {/* Render content based on current step */}
           {renderStepContent()}
 
           {/* Loading/Error for mutation */}
           {mutation.isPending && (
-            <View style={appSharedStyles.containerRowCentered}>
+            <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={appSharedStyles.loadingText}>Assigning Task...</Text>
+              <Text style={commonSharedStyles.baseSecondaryText}>Assigning Task...</Text>
             </View>
           )}
           {mutation.isError && (
@@ -490,7 +490,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           )}
 
           {/* Footer Buttons */}
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             {step === 3 && (
               <Button
                 title={mutation.isPending ? 'Assigning...' : 'Confirm & Assign'}

@@ -246,10 +246,10 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   if (visible && isLoadingUserToEdit) {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-        <View style={appSharedStyles.centeredView}>
-          <View style={appSharedStyles.modalView}>
+        <View style={commonSharedStyles.centeredView}>
+          <View style={commonSharedStyles.modalView}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={appSharedStyles.loadingText}>Loading user data...</Text>
+            <Text style={commonSharedStyles.baseSecondaryText}>Loading user data...</Text>
           </View>
         </View>
       </Modal>
@@ -270,43 +270,23 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     return null; // Render nothing while closing
   }
 
-  // Ensure userToEdit is loaded before proceeding
   if (!userToEdit) {
     return null;
   }
-
-  // Prevent rendering Parent edit UI for now
-  // if (userToEdit.role === 'parent') {
-  //   return (
-  //     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-  //       <View style={appSharedStyles.centeredView}>
-  //         <View style={appSharedStyles.modalView}>
-  //           <Text style={appSharedStyles.modalTitle}>Edit User</Text>
-  //           <Text style={commonSharedStyles.errorText}>
-  //             Editing Parent details is not fully supported via this modal yet.
-  //           </Text>
-  //           <View style={appSharedStyles.footerButton}>
-  //             <Button title="Close" onPress={onClose} color={colors.secondary} />
-  //           </View>
-  //         </View>
-  //       </View>
-  //     </Modal>
-  //   );
-  // }
 
   const currentUserDisplayName = getUserDisplayName(userToEdit);
 
   // --- JSX Rendering ---
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Edit User: {currentUserDisplayName}</Text>
-          <Text style={appSharedStyles.subTitle}>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Edit User: {currentUserDisplayName}</Text>
+          <Text style={commonSharedStyles.subTitle}>
             Role: {userToEdit.role.toUpperCase()} (ID: {userToEdit.id})
           </Text>
 
-          <ScrollView style={appSharedStyles.scrollView}>
+          <ScrollView style={commonSharedStyles.scrollView}>
             {/* Basic Info Fields */}
             <Text style={commonSharedStyles.label}>First Name:</Text>
             <TextInput
@@ -332,10 +312,8 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
               editable={!mutation.isPending}
             />
 
-            {/* Student Specific Fields */}
             {isStudentRole && (
               <>
-                {/* Instruments Section (Teachers CAN edit this) */}
                 <View style={appSharedStyles.roleSpecificSection}>
                   <Text style={appSharedStyles.roleSectionTitle}>Instruments</Text>
                   {isLoadingInstruments && <ActivityIndicator color={colors.primary} />}
@@ -345,7 +323,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     </Text>
                   )}
                   {!isLoadingInstruments && !isErrorInstruments && (
-                    <View style={appSharedStyles.containerRowCentered}>
+                    <View style={commonSharedStyles.baseRowCentered}>
                       {instruments.length > 0 ? (
                         instruments.map(inst => {
                           const isSelected = selectedInstrumentIds.includes(inst.id);
@@ -360,7 +338,9 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                           );
                         })
                       ) : (
-                        <Text style={appSharedStyles.emptyListText}>No instruments available.</Text>
+                        <Text style={commonSharedStyles.baseEmptyText}>
+                          No instruments available.
+                        </Text>
                       )}
                     </View>
                   )}
@@ -381,7 +361,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     </Text>
                   )}
                   {!isLoadingTeachers && !isErrorTeachers && (
-                    <View style={appSharedStyles.containerRowCentered}>
+                    <View style={commonSharedStyles.baseRowCentered}>
                       {activeTeachers.length > 0 ? (
                         activeTeachers.map(teacher => {
                           const isSelected = selectedTeacherIds.includes(teacher.id);
@@ -397,7 +377,9 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                           );
                         })
                       ) : (
-                        <Text style={appSharedStyles.emptyListText}>No active teachers found.</Text>
+                        <Text style={commonSharedStyles.baseEmptyText}>
+                          No active teachers found.
+                        </Text>
                       )}
                     </View>
                   )}
@@ -408,9 +390,9 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
           {/* Mutation Status */}
           {mutation.isPending && (
-            <View style={appSharedStyles.containerRowCentered}>
+            <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={appSharedStyles.loadingText}>Saving Changes...</Text>
+              <Text style={commonSharedStyles.baseSecondaryText}>Saving Changes...</Text>
             </View>
           )}
           {mutation.isError && (
@@ -421,14 +403,14 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
           )}
 
           {/* Action Buttons */}
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSaveChanges}
               disabled={isSaveDisabled}
             />
           </View>
-          <View style={appSharedStyles.footerButton}>
+          <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
             <Button
               title="Cancel"
               onPress={onClose}

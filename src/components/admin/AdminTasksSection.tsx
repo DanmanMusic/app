@@ -45,8 +45,10 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
   return (
     <>
       <View style={commonSharedStyles.baseMargin}>
-        <Text style={appSharedStyles.sectionTitle}>Task Management</Text>
-        <View style={[appSharedStyles.containerRowStart, commonSharedStyles.baseGap]}>
+        <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
+          Task Management
+        </Text>
+        <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
           <Button
             title="Assign Task to Student"
             onPress={onInitiateAssignTask}
@@ -54,8 +56,10 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
           />
           <Button title="View All Assigned Tasks" onPress={handleViewAllAssignedTasks} />
         </View>
-        <Text style={appSharedStyles.sectionSubTitle}>Task Library ({taskLibrary.length})</Text>
-        <View style={[appSharedStyles.containerRowStart]}>
+        <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
+          Task Library ({taskLibrary.length})
+        </Text>
+        <View style={[commonSharedStyles.baseRow]}>
           <Button
             title="Create New Task Library Item"
             onPress={onInitiateCreateTask}
@@ -86,7 +90,7 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
             style={commonSharedStyles.baseMarginTopBottom}
             ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
             ListEmptyComponent={() => (
-              <Text style={appSharedStyles.emptyListText}>No task library items found.</Text>
+              <Text style={commonSharedStyles.baseEmptyText}>No task library items found.</Text>
             )}
           />
         )}

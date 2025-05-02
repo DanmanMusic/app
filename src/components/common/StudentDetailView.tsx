@@ -2,24 +2,17 @@ import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { View, Text, ScrollView, Button, FlatList, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
-
 import { deleteAssignedTask } from '../../api/assignedTasks';
 import { fetchInstruments } from '../../api/instruments';
 import { fetchStudentBalance } from '../../api/tickets';
 import { fetchUserProfile, fetchTeachers } from '../../api/users';
-
-import { useAuth } from '../../contexts/AuthContext';
 import { usePaginatedStudentHistory } from '../../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../../hooks/usePaginatedStudentTasks';
-
-import { TicketHistoryItem } from '../common/TicketHistoryItem';
-import ConfirmationModal from '../common/ConfirmationModal';
+import { TicketHistoryItem } from './TicketHistoryItem';
+import ConfirmationModal from './ConfirmationModal';
 import PaginationControls from '../admin/PaginationControls';
-
 import { AssignedTask, Instrument, User } from '../../types/dataTypes';
-
 import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminStudentDetailViewProps } from '../../types/componentProps';
@@ -34,7 +27,6 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   onInitiateRedemption,
   onInitiatePinGeneration,
 }) => {
-  const { currentUserId: adminUserId } = useAuth();
   const queryClient = useQueryClient();
 
   const [isDeleteTaskConfirmVisible, setIsDeleteTaskConfirmVisible] = useState(false);
@@ -207,7 +199,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
 
   if (isLoading) {
     return (
-      <View style={appSharedStyles.centered}>
+      <View style={commonSharedStyles.baseCentered}>
         <ActivityIndicator size="large" />
         <Text>Loading Student Details...</Text>
       </View>
@@ -215,7 +207,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   }
   if (studentError || !student) {
     return (
-      <View style={appSharedStyles.containerBase}>
+      <View style={commonSharedStyles.flex1}>
         <Text style={commonSharedStyles.errorText}>
           Error loading student: {studentErrorMsg?.message || 'Student not found.'}
         </Text>
@@ -224,7 +216,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   }
   if (student.role !== 'student') {
     return (
-      <View style={appSharedStyles.containerBase}>
+      <View style={commonSharedStyles.flex1}>
         <Text style={commonSharedStyles.errorText}>Error: User is not a student.</Text>
       </View>
     );
@@ -232,40 +224,58 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
 
   return (
     <>
-      <ScrollView style={appSharedStyles.containerBase}>
-        <Text style={appSharedStyles.sectionTitle}>Student Details</Text>
-        <Text style={appSharedStyles.itemDetailText}>Name: {studentDisplayName}</Text>
-        <Text style={appSharedStyles.itemDetailText}>ID: {student.id}</Text>
-        <Text style={appSharedStyles.itemDetailText}>
+      <ScrollView
+        style={[
+          commonSharedStyles.flex1,
+          commonSharedStyles.baseMargin,
+          commonSharedStyles.baseMarginTopBottom,
+        ]}
+      >
+        <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
+          Student Details
+        </Text>
+        <Text style={commonSharedStyles.baseSecondaryText}>
+          Name: <Text style={commonSharedStyles.bold}>{studentDisplayName}</Text>
+        </Text>
+        <Text style={commonSharedStyles.baseSecondaryText}>
+          ID: <Text style={commonSharedStyles.bold}>{student.id}</Text>
+        </Text>
+        <Text style={commonSharedStyles.baseSecondaryText}>
           Status:{' '}
           <Text
-            style={isStudentActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus}
+            style={
+              isStudentActive ? commonSharedStyles.activeStatus : commonSharedStyles.inactiveStatus
+            }
           >
             {student.status}
           </Text>
         </Text>
-        <Text style={appSharedStyles.itemDetailText}>Instrument(s): {instrumentNames}</Text>
-        <Text style={appSharedStyles.itemDetailText}>Linked Teachers: {teacherNames}</Text>
+        <Text style={commonSharedStyles.baseSecondaryText}>
+          Instrument(s): <Text style={commonSharedStyles.bold}>{instrumentNames}</Text>
+        </Text>
+        <Text style={commonSharedStyles.baseSecondaryText}>
+          Linked Teachers: <Text style={commonSharedStyles.bold}>{teacherNames}</Text>
+        </Text>
         {balanceLoading ? (
-          <Text style={[appSharedStyles.itemDetailText, appSharedStyles.balance]}>
-            Balance: Loading...
+          <Text style={[commonSharedStyles.baseSecondaryText]}>
+            Balance: <Text style={commonSharedStyles.bold}>Loading...</Text>
           </Text>
         ) : balanceError ? (
-          <Text
-            style={[
-              appSharedStyles.itemDetailText,
-              appSharedStyles.balance,
-              commonSharedStyles.errorText,
-            ]}
-          >
-            Balance: Error
+          <Text style={commonSharedStyles.baseSecondaryText}>
+            Balance: <Text style={commonSharedStyles.errorText}>Error</Text>
           </Text>
         ) : (
-          <Text style={[appSharedStyles.itemDetailText, appSharedStyles.balance]}>
-            Balance: {balance} Tickets
+          <Text style={[commonSharedStyles.baseSecondaryText]}>
+            Balance: <Text style={commonSharedStyles.bold}>{balance} Tickets</Text>
           </Text>
         )}
-        <View style={[appSharedStyles.containerRowStart]}>
+        <View
+          style={[
+            commonSharedStyles.baseRow,
+            commonSharedStyles.baseGap,
+            commonSharedStyles.baseMarginTopBottom,
+          ]}
+        >
           {onInitiateTicketAdjustment && (
             <Button
               title="Adjust Tickets"
@@ -295,7 +305,9 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
             />
           )}
         </View>
-        <Text style={appSharedStyles.sectionTitle}>Assigned Tasks ({totalTasksCount})</Text>
+        <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
+          Assigned Tasks ({totalTasksCount})
+        </Text>
         {studentTasksLoading && <ActivityIndicator />}
         {studentTasksError && (
           <Text style={commonSharedStyles.errorText}>
@@ -320,30 +332,43 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
                 : 'Assigned';
 
               return (
-                <View style={appSharedStyles.taskItem}>
-                  <Text style={appSharedStyles.taskItemTitle}>{item.taskTitle}</Text>
-                  <Text style={appSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
-                  {item.completedDate && (
-                    <Text style={appSharedStyles.itemDetailText}>
-                      Completed: {new Date(item.completedDate).toLocaleDateString()}
-                    </Text>
-                  )}
-                  {item.verifiedDate && item.verificationStatus !== 'pending' && (
-                    <Text style={appSharedStyles.itemDetailText}>
-                      Verified: {new Date(item.verifiedDate).toLocaleDateString()}
-                    </Text>
-                  )}
-                  {item.actualPointsAwarded !== undefined &&
-                    item.verificationStatus !== 'pending' && (
-                      <Text style={appSharedStyles.taskItemTickets}>
-                        Awarded: {item.actualPointsAwarded ?? 0} Tickets
+                <View
+                  style={[
+                    commonSharedStyles.baseItem,
+                    commonSharedStyles.baseRow,
+                    commonSharedStyles.justifySpaceBetween,
+                  ]}
+                >
+                  <View>
+                    <Text style={commonSharedStyles.baseTitleText}>{item.taskTitle}</Text>
+                    <Text style={commonSharedStyles.baseSubTitleText}>Status: {taskStatus}</Text>
+                    {item.completedDate && (
+                      <Text style={commonSharedStyles.baseSecondaryText}>
+                        Completed: {new Date(item.completedDate).toLocaleDateString()}
                       </Text>
                     )}
-                  {item.isComplete && item.verificationStatus === 'pending' && (
-                    <Text style={appSharedStyles.pendingNote}>Awaiting verification...</Text>
-                  )}
-
-                  <View style={appSharedStyles.assignedTaskActions}>
+                    {item.verifiedDate && item.verificationStatus !== 'pending' && (
+                      <Text style={commonSharedStyles.baseSecondaryText}>
+                        Verified: {new Date(item.verifiedDate).toLocaleDateString()}
+                      </Text>
+                    )}
+                    {item.actualPointsAwarded !== undefined &&
+                      item.verificationStatus !== 'pending' && (
+                        <Text
+                          style={[commonSharedStyles.baseSubTitleText, { color: colors.success }]}
+                        >
+                          Awarded: {item.actualPointsAwarded ?? 0} Tickets
+                        </Text>
+                      )}
+                    {item.isComplete && item.verificationStatus === 'pending' && (
+                      <Text
+                        style={[commonSharedStyles.baseSubTitleText, { color: colors.warning }]}
+                      >
+                        Awaiting verification...
+                      </Text>
+                    )}
+                  </View>
+                  <View>
                     {allowVerify && (
                       <Button
                         title="Verify"
@@ -370,7 +395,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
             scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
             ListEmptyComponent={
-              <Text style={appSharedStyles.emptyListText}>No tasks assigned.</Text>
+              <Text style={commonSharedStyles.baseEmptyText}>No tasks assigned.</Text>
             }
             ListHeaderComponent={
               studentTasksFetching && !studentTasksLoading ? (
@@ -379,7 +404,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
             }
             ListFooterComponent={
               tasksTotalPages > 1 ? (
-                <PaginationControls
+                <PaginationControlsommonSharedStyles
                   currentPage={tasksCurrentPage}
                   totalPages={tasksTotalPages}
                   onPageChange={setTasksPage}
@@ -389,7 +414,9 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
             contentContainerStyle={{ paddingBottom: 10 }}
           />
         )}
-        <Text style={appSharedStyles.sectionTitle}>History ({totalHistoryCount})</Text>
+        <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
+          History ({totalHistoryCount})
+        </Text>
         {studentHistoryLoading && <ActivityIndicator />}
         {studentHistoryError && (
           <Text style={commonSharedStyles.errorText}>
@@ -403,7 +430,9 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
             renderItem={({ item }) => <TicketHistoryItem item={item} />}
             scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
-            ListEmptyComponent={<Text style={appSharedStyles.emptyListText}>No history yet.</Text>}
+            ListEmptyComponent={
+              <Text style={commonSharedStyles.baseEmptyText}>No history yet.</Text>
+            }
             ListHeaderComponent={
               studentHistoryFetching && !studentHistoryLoading ? (
                 <ActivityIndicator size="small" color={colors.secondary} />
@@ -426,7 +455,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
       <ConfirmationModal
         visible={isDeleteTaskConfirmVisible}
         title="Confirm Remove Task"
-        message={`Are you sure you want to remove the assigned task "${taskToDelete?.taskTitle || 'selected task'}"? This cannot be undone.`}
+        message={`Are you sure you want to remove the assigstyle={appSharedStyles.assignedTaskActions}ned task "${taskToDelete?.taskTitle || 'selected task'}"? This cannot be undone.`}
         confirmText={deleteTaskMutation.isPending ? 'Removing...' : 'Remove Task'}
         onConfirm={handleConfirmDeleteTaskAction}
         onCancel={closeDeleteConfirmModal}

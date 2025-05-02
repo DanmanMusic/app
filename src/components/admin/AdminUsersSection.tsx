@@ -1,18 +1,13 @@
 import React from 'react';
 import { View, Text, Button, FlatList, TextInput, ActivityIndicator } from 'react-native';
-
 import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
-
 import { AdminUsersSectionProps } from '../../types/componentProps';
-import { SimplifiedStudent, User, UserRole, UserStatus, Instrument } from '../../types/dataTypes';
-
+import { SimplifiedStudent, User, UserStatus } from '../../types/dataTypes';
 import { AdminUserItem } from '../common/AdminUserItem';
 import { AdminStudentItem } from '../common/AdminStudentItem';
-
 import PaginationControls from './PaginationControls';
-
 import { usePaginatedStudents } from '../../hooks/usePaginatedStudents';
 import { usePaginatedTeachers } from '../../hooks/usePaginatedTeachers';
 import { usePaginatedParents } from '../../hooks/usePaginatedParents';
@@ -20,7 +15,6 @@ import { usePaginatedAdmins } from '../../hooks/usePaginatedAdmins';
 
 export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   activeTab,
-  setActiveTab,
   studentFilter,
   setStudentFilter,
   studentSearchTerm,
@@ -28,7 +22,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   instruments,
   onViewManageUser,
   onInitiateAssignTaskForStudent,
-  onInitiateCreateUser,
 }) => {
   const {
     students,
@@ -190,8 +183,22 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
         setStudentFilter &&
         setStudentSearchTerm && (
           <View>
-            <View style={appSharedStyles.containerRowCenter}>
-              <Text style={appSharedStyles.filterLabel}>Show:</Text>
+            <View
+              style={[
+                commonSharedStyles.baseRow,
+                commonSharedStyles.justifyCenter,
+                commonSharedStyles.baseGap,
+              ]}
+            >
+              <Text
+                style={[
+                  commonSharedStyles.baseSecondaryText,
+                  commonSharedStyles.bold,
+                  commonSharedStyles.baseSelfAlignCenter,
+                ]}
+              >
+                Show:
+              </Text>
               <Button
                 title="Active"
                 onPress={() => handleFilterChange('active')}
@@ -209,7 +216,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
               />
             </View>
             <TextInput
-              style={appSharedStyles.searchInput}
+              style={[commonSharedStyles.input, commonSharedStyles.baseMarginTopBottom]}
               placeholder="Search Students by Name..."
               placeholderTextColor={colors.textLight}
               value={studentSearchTerm}
@@ -239,7 +246,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
             scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
             ListEmptyComponent={() => (
-              <Text style={appSharedStyles.emptyListText}>
+              <Text style={commonSharedStyles.baseEmptyText}>
                 {activeTab === 'students'
                   ? 'No students match filters/search.'
                   : activeTab === 'teachers'

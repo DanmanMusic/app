@@ -121,6 +121,7 @@ export interface ManualTicketAdjustmentModalProps {
 }
 
 export type UserTab = 'students' | 'teachers' | 'parents' | 'admins';
+export type TeacherSection = 'dashboard' | 'students' | 'tasks';
 export type AdminSection =
   | 'dashboard'
   | 'dashboard-pending-verification'
@@ -136,14 +137,12 @@ type StudentFilter = UserStatus | 'all';
 export interface AdminUsersSectionProps {
   instruments: Instrument[];
   activeTab: UserTab;
-  setActiveTab: React.Dispatch<React.SetStateAction<UserTab>>;
   studentFilter?: StudentFilter;
   setStudentFilter?: (filter: StudentFilter) => void;
   studentSearchTerm?: string;
   setStudentSearchTerm?: (term: string) => void;
   onViewManageUser: (userId: string, role: UserRole) => void;
   onInitiateAssignTaskForStudent: (studentId: string) => void;
-  onInitiateCreateUser: () => void;
 }
 
 export interface AdminDashboardSectionProps {
@@ -187,6 +186,7 @@ export interface PaginationControlsProps {
 
 export interface TeacherDashboardSectionProps {
   onInitiateVerificationModal: (task: AssignedTask) => void;
+  setViewingSection: React.Dispatch<React.SetStateAction<TeacherSection>>;
 }
 
 export interface TeacherStudentsSectionProps {

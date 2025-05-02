@@ -6,8 +6,8 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 export const TaskLibraryItemTeacher = ({ item }: { item: TaskLibraryItem }) => (
   <View style={commonSharedStyles.baseItem}>
     <Text style={appSharedStyles.itemTitle}>{item.title}</Text>
-    <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
-    <Text style={[appSharedStyles.itemDetailText, appSharedStyles.taskLibraryItemTickets]}>
+    <Text style={commonSharedStyles.baseSecondaryText}>{item.description}</Text>
+    <Text style={[commonSharedStyles.baseSecondaryText, appSharedStyles.taskLibraryItemTickets]}>
       {item.baseTickets} Base Tickets
     </Text>
   </View>

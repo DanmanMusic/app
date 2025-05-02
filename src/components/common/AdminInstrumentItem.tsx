@@ -11,16 +11,22 @@ export const AdminInstrumentItem: React.FC<AdminInstrumentItemProps> = ({
   onDelete,
   disabled,
 }) => (
-  <View style={commonSharedStyles.baseItem}>
+  <View
+    style={[
+      commonSharedStyles.baseRow,
+      commonSharedStyles.justifySpaceBetween,
+      commonSharedStyles.baseItem,
+    ]}
+  >
     <View style={appSharedStyles.containerRowCenter}>
       <Image
         source={getInstrumentIconSource(item)}
-        style={appSharedStyles.instrumentIcon}
+        style={commonSharedStyles.baseIcon}
         resizeMode="contain"
       />
-      <Text style={[appSharedStyles.itemTitle, appSharedStyles.itemTitleText]}>{item.name}</Text>
+      <Text style={[commonSharedStyles.baseSubTitleText]}>{item.name}</Text>
     </View>
-    <View>
+    <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
       <Button title="Edit" onPress={() => onEdit(item)} disabled={disabled} />
       <Button
         title="Delete"

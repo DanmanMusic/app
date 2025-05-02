@@ -32,18 +32,18 @@ export const RewardItemStudent = ({
         />
         <View style={appSharedStyles.itemFlex}>
           <Text style={appSharedStyles.rewardName}>{item.name}</Text>
-          <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
+          <Text style={[commonSharedStyles.baseSecondaryText, appSharedStyles.textGold]}>
             {item.cost} Tickets
           </Text>
           {item.description && (
-            <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>
+            <Text style={commonSharedStyles.baseSecondaryText}>{item.description}</Text>
           )}
           {canEarn ? (
-            <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textSuccess]}>
+            <Text style={[commonSharedStyles.baseSecondaryText, appSharedStyles.textSuccess]}>
               Available Now!
             </Text>
           ) : (
-            <Text style={[appSharedStyles.itemDetailText, { color: colors.textPrimary }]}>
+            <Text style={[commonSharedStyles.baseSecondaryText, { color: colors.textPrimary }]}>
               Need {ticketsNeeded} more tickets
             </Text>
           )}

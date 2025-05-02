@@ -2,7 +2,6 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { View, Text, Button, ActivityIndicator } from 'react-native';
 import { fetchUserCounts, fetchPendingTaskCount, UserCounts, TaskStats } from '../../api/stats';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import { AdminDashboardSectionProps, UserTab } from '../../types/componentProps';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
@@ -55,7 +54,7 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
   return (
     <View style={[commonSharedStyles.baseMargin]}>
       <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
-        <Text style={[commonSharedStyles.baseTitle, commonSharedStyles.baseMarginTopBottom]}>
+        <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
           Dashboard Overview
         </Text>
       </View>
@@ -76,7 +75,7 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
                   commonSharedStyles.baseMarginTopBottom,
                 ]}
               >
-                <Text style={commonSharedStyles.baseSubTitle}>
+                <Text style={commonSharedStyles.baseSubTitleText}>
                   <Text style={{ fontWeight: 'bold' }}>Users</Text>:{' '}
                   {studentCount + teacherCount + parentCount + adminCount}
                 </Text>
@@ -128,7 +127,9 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
                 commonSharedStyles.baseMarginTopBottom,
               ]}
             >
-              <Text style={[commonSharedStyles.baseSubTitle, commonSharedStyles.bold]}>Tasks</Text>
+              <Text style={[commonSharedStyles.baseSubTitleText, commonSharedStyles.bold]}>
+                Tasks
+              </Text>
               <View
                 style={[
                   commonSharedStyles.baseRow,

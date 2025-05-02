@@ -135,10 +135,10 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Create New Reward</Text>
-          <ScrollView style={appSharedStyles.scrollView}>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Create New Reward</Text>
+          <ScrollView style={commonSharedStyles.scrollView}>
             <Text style={commonSharedStyles.label}>Reward Name:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -196,9 +196,9 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
             />
           </ScrollView>
           {mutation.isPending && (
-            <View style={appSharedStyles.containerRowCentered}>
+            <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={appSharedStyles.loadingText}>Creating Reward...</Text>
+              <Text style={commonSharedStyles.baseSecondaryText}>Creating Reward...</Text>
             </View>
           )}
           {mutation.isError && (
@@ -207,14 +207,14 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
               {mutation.error instanceof Error ? mutation.error.message : 'Failed to create reward'}
             </Text>
           )}
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Reward'}
               onPress={handleCreate}
               disabled={isCreateDisabled}
             />
           </View>
-          <View style={appSharedStyles.footerButton}>
+          <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
             <Button
               title="Cancel"
               onPress={onClose}

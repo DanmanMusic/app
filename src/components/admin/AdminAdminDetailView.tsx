@@ -1,14 +1,9 @@
 import React, { useMemo } from 'react';
 import { View, Text, Button, ActivityIndicator, ScrollView } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-
 import { fetchUserProfile, fetchAuthUser } from '../../api/users';
-
 import { User } from '../../types/dataTypes';
-
 import { AdminAdminDetailViewProps } from '../../types/componentProps';
-
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 import { getUserDisplayName } from '../../utils/helpers';
@@ -90,16 +85,16 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
 
   if (isLoading) {
     return (
-      <View style={[appSharedStyles.centered]}>
+      <View style={[commonSharedStyles.baseCentered]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={appSharedStyles.loadingText}>Loading Admin Details...</Text>
+        <Text style={commonSharedStyles.baseSecondaryText}>Loading Admin Details...</Text>
       </View>
     );
   }
 
   if (profileError || !adminProfile) {
     return (
-      <View style={appSharedStyles.containerBase}>
+      <View style={commonSharedStyles.flex1}>
         <Text style={commonSharedStyles.errorText}>
           Error loading admin profile: {profileErrorMsg?.message || 'Admin not found.'}
         </Text>
@@ -109,7 +104,7 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
 
   if (adminProfile.role !== 'admin') {
     return (
-      <View style={appSharedStyles.containerBase}>
+      <View style={commonSharedStyles.flex1}>
         <Text style={commonSharedStyles.errorText}>Error: User found but is not an admin.</Text>
       </View>
     );
@@ -122,25 +117,31 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
   }
 
   return (
-    <ScrollView style={appSharedStyles.containerBase}>
-      <Text style={appSharedStyles.sectionTitle}>Admin Details</Text>
-      <Text style={appSharedStyles.itemDetailText}>Name: {adminDisplayName}</Text>
-      <Text style={appSharedStyles.itemDetailText}>ID: {adminProfile.id}</Text>
-      <Text style={appSharedStyles.itemDetailText}>
+    <ScrollView style={commonSharedStyles.flex1}>
+      <Text style={commonSharedStyles.baseSubTitleText}>Admin Details</Text>
+      <Text style={commonSharedStyles.baseSecondaryText}>Name: {adminDisplayName}</Text>
+      <Text style={commonSharedStyles.baseSecondaryText}>ID: {adminProfile.id}</Text>
+      <Text style={commonSharedStyles.baseSecondaryText}>
         Status:{' '}
-        <Text style={isAdminActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus}>
+        <Text
+          style={
+            isAdminActive ? commonSharedStyles.activeStatus : commonSharedStyles.inactiveStatus
+          }
+        >
           {adminProfile.status}
         </Text>
       </Text>
-      <Text style={appSharedStyles.itemDetailText}>
+      <Text style={commonSharedStyles.baseSecondaryText}>
         Email:{' '}
         {adminAuthDetails?.email ??
           (authDetailsError ? '(Error Fetching)' : '(Not Found/No Email)')}
       </Text>
       {!needsPinLogin && !authDetailsError && adminAuthDetails?.email && (
-        <Text style={appSharedStyles.infoText}>(Email/Password login appears to be set up)</Text>
+        <Text style={commonSharedStyles.baseVeryLightText}>
+          (Email/Password login appears to be set up)
+        </Text>
       )}
-      <View style={[appSharedStyles.containerRowStart]}>
+      <View style={[commonSharedStyles.baseRow]}>
         <Button
           title="Manage Status"
           onPress={handleStatus}
@@ -164,7 +165,7 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
           !needsPinLogin &&
           !authDetailsError &&
           adminAuthDetails?.email && (
-            <Text style={appSharedStyles.infoText}>(PIN login not needed)</Text>
+            <Text style={commonSharedStyles.baseVeryLightText}>(PIN login not needed)</Text>
           )}
       </View>
       <View style={{ height: 30 }} />

@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, Button, ActivityIndicator, Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
-
 import { generatePinForUser } from '../../api/users';
-
 import { User, UserRole } from '../../types/dataTypes';
 import { getUserDisplayName } from '../../utils/helpers';
 import { colors } from '../../styles/colors';
-import { appSharedStyles } from '../../styles/appSharedStyles';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 interface GeneratePinModalProps {
   visible: boolean;
@@ -82,32 +80,32 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Generate Login PIN</Text>
-          <Text style={appSharedStyles.modalContextInfo}>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Generate Login PIN</Text>
+          <Text style={commonSharedStyles.modalContextInfo}>
             For User: {displayName} ({userActualRole})
           </Text>
 
           {isLoading && (
-            <View style={appSharedStyles.containerRowCentered}>
+            <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={appSharedStyles.loadingText}>Generating PIN...</Text>
+              <Text style={commonSharedStyles.baseSecondaryText}>Generating PIN...</Text>
             </View>
           )}
 
           {generatedPin && !isLoading && (
-            <View style={appSharedStyles.containerPinDisplay}>
-              <Text style={appSharedStyles.pinLabel}>Generated PIN for {generatedForRole}:</Text>
-              <Text style={appSharedStyles.pinValue}>{generatedPin}</Text>
-              <Text style={appSharedStyles.pinInstructions}>
+            <View style={commonSharedStyles.containerPinDisplay}>
+              <Text style={commonSharedStyles.pinLabel}>Generated PIN for {generatedForRole}:</Text>
+              <Text style={commonSharedStyles.pinValue}>{generatedPin}</Text>
+              <Text style={commonSharedStyles.pinInstructions}>
                 Provide this PIN to the {generatedForRole} for login. It will expire shortly.
               </Text>
             </View>
           )}
 
           {!generatedPin && !isLoading && (
-            <View style={appSharedStyles.itemFull}>
+            <View style={commonSharedStyles.full}>
               {(userActualRole === 'student' ||
                 userActualRole === 'teacher' ||
                 userActualRole === 'admin') && (
@@ -120,7 +118,7 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
             </View>
           )}
 
-          <View style={appSharedStyles.footerButton}>
+          <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
             <Button
               title={generatedPin ? 'Close' : 'Cancel'}
               onPress={onClose}

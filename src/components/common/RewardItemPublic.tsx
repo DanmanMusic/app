@@ -13,10 +13,12 @@ export const RewardItemPublic = ({ item }: { item: RewardItem }) => (
       />
       <View style={appSharedStyles.itemFlex}>
         <Text style={appSharedStyles.rewardName}>{item.name}</Text>
-        <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
+        <Text style={[commonSharedStyles.baseSecondaryText, appSharedStyles.textGold]}>
           {item.cost} Tickets
         </Text>
-        {item.description && <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>}
+        {item.description && (
+          <Text style={commonSharedStyles.baseSecondaryText}>{item.description}</Text>
+        )}
       </View>
     </View>
   </View>

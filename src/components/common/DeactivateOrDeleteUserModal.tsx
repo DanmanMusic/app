@@ -167,15 +167,17 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
     <>
       {/* Main Management Modal */}
       <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={onClose}>
-        <View style={appSharedStyles.centeredView}>
-          <View style={appSharedStyles.modalView}>
-            <Text style={appSharedStyles.modalTitle}>Manage User Status</Text>
-            <Text style={appSharedStyles.modalContextInfo}>User: {displayName}</Text>
-            <Text style={appSharedStyles.modalContextInfo}>
+        <View style={commonSharedStyles.centeredView}>
+          <View style={commonSharedStyles.modalView}>
+            <Text style={commonSharedStyles.modalTitle}>Manage User Status</Text>
+            <Text style={commonSharedStyles.modalContextInfo}>User: {displayName}</Text>
+            <Text style={commonSharedStyles.modalContextInfo}>
               Current Status:{' '}
               <Text
                 style={
-                  isCurrentlyActive ? appSharedStyles.activeStatus : appSharedStyles.inactiveStatus
+                  isCurrentlyActive
+                    ? commonSharedStyles.activeStatus
+                    : commonSharedStyles.inactiveStatus
                 }
               >
                 {currentStatusText}
@@ -184,9 +186,9 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
 
             {/* Loading indicator for toggle status */}
             {toggleStatusMutation.isPending && (
-              <View style={appSharedStyles.containerRowCentered}>
+              <View style={commonSharedStyles.baseRowCentered}>
                 <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={appSharedStyles.loadingText}>Updating Status...</Text>
+                <Text style={commonSharedStyles.baseSecondaryText}>Updating Status...</Text>
               </View>
             )}
             {/* Error display for toggle status */}
@@ -200,7 +202,7 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
             )}
 
             {/* Action Buttons */}
-            <View style={appSharedStyles.itemFull}>
+            <View style={commonSharedStyles.full}>
               <Button
                 title={toggleButtonText}
                 onPress={handleToggle}
@@ -226,7 +228,7 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
             )}
 
             {/* Footer Close Button */}
-            <View style={appSharedStyles.footerButton}>
+            <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
               <Button
                 title="Close"
                 onPress={onClose}

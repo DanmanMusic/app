@@ -30,7 +30,7 @@ export const RewardGoalItem = ({
         />
         <View style={appSharedStyles.goalSelectDetails}>
           <Text style={appSharedStyles.goalSelectName}>{item.name}</Text>
-          <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
+          <Text style={[commonSharedStyles.baseSecondaryText, appSharedStyles.textGold]}>
             {item.cost} Tickets
           </Text>
           {!canAfford && <Text style={appSharedStyles.cannotAffordText}>(Need more tickets)</Text>}

@@ -4,11 +4,14 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 
 export const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
-  <View style={commonSharedStyles.historyItemContainer}>
-    <Text style={commonSharedStyles.historyItemTimestamp}>
-      {new Date(item.timestamp).toLocaleString()}
-    </Text>
-    <Text style={commonSharedStyles.historyItemDetails}>
+  <View
+    style={[
+      commonSharedStyles.baseItem,
+      commonSharedStyles.baseRow,
+      commonSharedStyles.justifySpaceBetween,
+    ]}
+  >
+    <Text style={commonSharedStyles.baseSecondaryText}>
       {item.type === 'task_award'
         ? 'Task Award'
         : item.type === 'manual_add'
@@ -21,13 +24,16 @@ export const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => (
       :
       <Text
         style={[
-          commonSharedStyles.historyItemAmount,
+          commonSharedStyles.bold,
           item.amount > 0 ? { color: colors.success } : { color: colors.danger },
         ]}
       >
         {item.amount > 0 ? `+${item.amount}` : item.amount} Tickets
       </Text>
     </Text>
-    {item.notes && <Text style={commonSharedStyles.historyItemNotes}>{item.notes}</Text>}
+    <Text style={commonSharedStyles.baseVeryLightText}>
+      {new Date(item.timestamp).toLocaleString()}
+    </Text>
+    {item.notes && <Text style={commonSharedStyles.baseVeryLightText}>{item.notes}</Text>}
   </View>
 );

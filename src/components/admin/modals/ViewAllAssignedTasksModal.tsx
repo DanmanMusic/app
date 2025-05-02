@@ -156,11 +156,11 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
   return (
     <>
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-        <View style={appSharedStyles.centeredView}>
-          <View style={appSharedStyles.modalView}>
+        <View style={commonSharedStyles.centeredView}>
+          <View style={commonSharedStyles.modalView}>
             {/* Header */}
             <View style={appSharedStyles.modalHeader}>
-              <Text style={appSharedStyles.modalTitle}>Assigned Tasks ({totalItems})</Text>
+              <Text style={commonSharedStyles.modalTitle}>Assigned Tasks ({totalItems})</Text>
               {isFetchingTasks && !isLoadingTasks && (
                 <ActivityIndicator
                   size="small"
@@ -276,7 +276,7 @@ export const ViewAllAssignedTasksModal: React.FC<ViewAllAssignedTasksModalProps>
                 }}
                 ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
                 ListEmptyComponent={
-                  <Text style={[appSharedStyles.emptyListText, { padding: 20 }]}>
+                  <Text style={[commonSharedStyles.baseEmptyText, { padding: 20 }]}>
                     No tasks match the current filters.
                   </Text>
                 }

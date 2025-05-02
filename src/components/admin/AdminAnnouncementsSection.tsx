@@ -99,8 +99,8 @@ export const AdminAnnouncementsSection = () => {
   };
 
   return (
-    <View>
-      <Text style={appSharedStyles.sectionTitle}>
+    <View style={commonSharedStyles.baseMargin}>
+      <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
         Announcements & Challenges ({announcements.length})
       </Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
@@ -123,9 +123,15 @@ export const AdminAnnouncementsSection = () => {
           data={announcements}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <View style={commonSharedStyles.baseItem}>
+            <View
+              style={[
+                commonSharedStyles.baseRow,
+                commonSharedStyles.justifySpaceBetween,
+                commonSharedStyles.baseItem,
+              ]}
+            >
               <AnnouncementListItem item={item} />
-              <View>
+              <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
                 <Button
                   title="Edit"
                   onPress={() => handleEditPress(item)}
@@ -143,7 +149,7 @@ export const AdminAnnouncementsSection = () => {
           scrollEnabled={false}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
           ListEmptyComponent={() => (
-            <Text style={appSharedStyles.emptyListText}>No announcements found.</Text>
+            <Text style={commonSharedStyles.baseEmptyText}>No announcements found.</Text>
           )}
         />
       )}

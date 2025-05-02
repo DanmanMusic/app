@@ -99,10 +99,10 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Set Email & Password</Text>
-          <Text style={appSharedStyles.modalContextInfo}>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Set Email & Password</Text>
+          <Text style={commonSharedStyles.modalContextInfo}>
             For: {appUser ? getUserDisplayName(appUser) : 'Loading...'}
           </Text>
           <Text style={appSharedStyles.modalMessage}>
@@ -147,9 +147,9 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
           />
 
           {mutation.isPending && (
-            <View style={appSharedStyles.containerRowCentered}>
+            <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={appSharedStyles.loadingText}>Saving Credentials...</Text>
+              <Text style={commonSharedStyles.baseSecondaryText}>Saving Credentials...</Text>
             </View>
           )}
           {mutation.isError && (
@@ -158,14 +158,14 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
             </Text>
           )}
 
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Credentials'}
               onPress={handleSave}
               disabled={isSaveDisabled}
             />
           </View>
-          <View style={appSharedStyles.footerButton}>
+          <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
             <Button
               title="Cancel"
               onPress={onClose}

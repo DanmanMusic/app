@@ -148,11 +148,11 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={appSharedStyles.centeredView}>
-        <View style={appSharedStyles.modalView}>
-          <Text style={appSharedStyles.modalTitle}>Manual Ticket Adjustment</Text>
-          <Text style={appSharedStyles.modalContextInfo}>Student: {studentName}</Text>
-          <Text style={appSharedStyles.modalContextInfo}>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
+          <Text style={commonSharedStyles.modalTitle}>Manual Ticket Adjustment</Text>
+          <Text style={commonSharedStyles.modalContextInfo}>Student: {studentName}</Text>
+          <Text style={commonSharedStyles.modalContextInfo}>
             Current Balance:{' '}
             {balanceLoading ? 'Loading...' : balanceError ? 'Error' : `${currentBalance} Tickets`}
           </Text>
@@ -210,9 +210,9 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
 
           {/* Mutation Status */}
           {mutation.isPending && (
-            <View style={appSharedStyles.containerRowCentered}>
+            <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={appSharedStyles.loadingText}>Adjusting Tickets...</Text>
+              <Text style={commonSharedStyles.baseSecondaryText}>Adjusting Tickets...</Text>
             </View>
           )}
           {mutation.isError &&
@@ -226,7 +226,7 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
             )}
 
           {/* Action Buttons */}
-          <View style={appSharedStyles.itemFull}>
+          <View style={commonSharedStyles.full}>
             <Button
               title={confirmButtonText}
               onPress={handleAdjust}
@@ -234,7 +234,7 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
               disabled={isConfirmDisabled}
             />
           </View>
-          <View style={appSharedStyles.footerButton}>
+          <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
             <Button
               title="Cancel"
               onPress={onClose}

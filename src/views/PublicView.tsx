@@ -8,7 +8,6 @@ import { fetchRewards } from '../api/rewards';
 
 import { Announcement, RewardItem } from '../types/dataTypes';
 
-import { appSharedStyles } from '../styles/appSharedStyles';
 import { colors } from '../styles/colors';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 
@@ -52,15 +51,30 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress }) => {
   };
 
   return (
-    <SafeAreaView style={appSharedStyles.safeArea}>
-      <View style={appSharedStyles.itemOuter}>
-        <View style={appSharedStyles.headerSection}>
-          <Text style={[appSharedStyles.header, appSharedStyles.publicHeader]}>
+    <SafeAreaView style={[commonSharedStyles.flex1]}>
+      <View>
+        <View style={commonSharedStyles.baseMarginTopBottom}>
+          <Text
+            style={[
+              commonSharedStyles.baseHeaderTextLarge,
+              commonSharedStyles.textCenter,
+              commonSharedStyles.baseMarginTopBottom,
+            ]}
+          >
             Danmans Music School
           </Text>
-          <Text style={appSharedStyles.subheader}>Virtual Ticket Rewards Program</Text>
+          <Text style={[commonSharedStyles.baseSubTitleText, commonSharedStyles.textCenter]}>
+            Virtual Ticket Rewards Program
+          </Text>
         </View>
-        <View style={appSharedStyles.containerRowCentered}>
+        <View
+          style={[
+            commonSharedStyles.baseRow,
+            commonSharedStyles.baseCentered,
+            commonSharedStyles.baseGap,
+            commonSharedStyles.baseMarginTopBottom,
+          ]}
+        >
           <Button
             title="Welcome"
             onPress={() => setActiveTab('welcome')}
@@ -77,68 +91,85 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress }) => {
             color={activeTab === 'rewards' ? colors.primary : colors.secondary}
           />
         </View>
-        <View style={appSharedStyles.contentArea}>
-          {activeTab === 'welcome' && (
-            <View style={appSharedStyles.itemFlexCenter}>
-              <Text style={appSharedStyles.textWelcome}>
-                Welcome! Check out the latest announcements and the cool rewards you can earn.
+      </View>
+      <View style={commonSharedStyles.flex1}>
+        {activeTab === 'welcome' && (
+          <View
+            style={[
+              commonSharedStyles.flex1,
+              commonSharedStyles.baseRow,
+              commonSharedStyles.justifyCenter,
+            ]}
+          >
+            <Text style={[commonSharedStyles.baseSubTitleText, { paddingTop: 100 }]}>
+              Welcome! Check out the latest announcements and the cool rewards you can earn.
+            </Text>
+          </View>
+        )}
+
+        {activeTab === 'rewards' && (
+          <>
+            {isLoadingRewards && <ActivityIndicator size="large" color={colors.primary} />}
+            {isErrorRewards && (
+              <Text style={[commonSharedStyles.errorText, commonSharedStyles.textCenter]}>
+                Error loading rewards catalog: {getErrorMessage(errorRewards)}
               </Text>
-              <Text style={appSharedStyles.textWelcome}>Login required to track progress.</Text>
-            </View>
-          )}
+            )}
+            {!isLoadingRewards && !isErrorRewards && (
+              <FlatList
+                data={rewardsCatalog}
+                keyExtractor={item => `reward-${item.id}`}
+                renderItem={({ item }) => <RewardItemPublic item={item} />}
+                ItemSeparatorComponent={() => <View style={commonSharedStyles.separator} />}
+                ListEmptyComponent={() => (
+                  <Text style={commonSharedStyles.baseEmptyText}>
+                    No rewards currently available.
+                  </Text>
+                )}
+              />
+            )}
+          </>
+        )}
 
-          {activeTab === 'rewards' && (
-            <>
-              {isLoadingRewards && <ActivityIndicator size="large" color={colors.primary} />}
-              {isErrorRewards && (
-                <Text style={[commonSharedStyles.errorText, appSharedStyles.textCenter]}>
-                  Error loading rewards catalog: {getErrorMessage(errorRewards)}
-                </Text>
-              )}
-              {!isLoadingRewards && !isErrorRewards && (
-                <FlatList
-                  data={rewardsCatalog}
-                  keyExtractor={item => `reward-${item.id}`}
-                  renderItem={({ item }) => <RewardItemPublic item={item} />}
-                  ItemSeparatorComponent={() => <View style={appSharedStyles.separator} />}
-                  ListEmptyComponent={() => (
-                    <Text style={appSharedStyles.emptyListText}>
-                      No rewards currently available.
-                    </Text>
-                  )}
-                  contentContainerStyle={appSharedStyles.containerListContent}
-                />
-              )}
-            </>
-          )}
-
-          {activeTab === 'announcements' && (
-            <>
-              {isLoadingAnnouncements && <ActivityIndicator size="large" color={colors.primary} />}
-              {isErrorAnnouncements && (
-                <Text style={[commonSharedStyles.errorText, appSharedStyles.textCenter]}>
-                  Error loading announcements: {getErrorMessage(errorAnnouncements)}
-                </Text>
-              )}
-              {!isLoadingAnnouncements && !isErrorAnnouncements && (
-                <FlatList
-                  data={announcements}
-                  keyExtractor={item => `announcement-${item.id}`}
-                  renderItem={({ item }) => <AnnouncementListItem item={item} />}
-                  ItemSeparatorComponent={() => <View style={appSharedStyles.separator} />}
-                  ListEmptyComponent={() => (
-                    <Text style={appSharedStyles.emptyListText}>No announcements found.</Text>
-                  )}
-                  contentContainerStyle={appSharedStyles.containerListContent}
-                />
-              )}
-            </>
-          )}
-        </View>
-        <View style={appSharedStyles.containerFooter}>
-          <Text style={appSharedStyles.footer}>Ready to track progress?</Text>
-          <Button title="Login / Enter PIN" onPress={onLoginPress} color={colors.primary} />
-        </View>
+        {activeTab === 'announcements' && (
+          <>
+            {isLoadingAnnouncements && <ActivityIndicator size="large" color={colors.primary} />}
+            {isErrorAnnouncements && (
+              <Text style={[commonSharedStyles.errorText, commonSharedStyles.textCenter]}>
+                Error loading announcements: {getErrorMessage(errorAnnouncements)}
+              </Text>
+            )}
+            {!isLoadingAnnouncements && !isErrorAnnouncements && (
+              <FlatList
+                data={announcements}
+                keyExtractor={item => `announcement-${item.id}`}
+                renderItem={({ item }) => <AnnouncementListItem item={item} />}
+                ItemSeparatorComponent={() => <View style={commonSharedStyles.separator} />}
+                ListEmptyComponent={() => (
+                  <Text style={commonSharedStyles.baseEmptyText}>No announcements found.</Text>
+                )}
+              />
+            )}
+          </>
+        )}
+      </View>
+      <View
+        style={[
+          commonSharedStyles.baseMarginTopBottom,
+          commonSharedStyles.baseColumn,
+          commonSharedStyles.baseAlignCenter,
+        ]}
+      >
+        <Text
+          style={[
+            commonSharedStyles.baseSubTitleText,
+            commonSharedStyles.textCenter,
+            commonSharedStyles.baseMargin,
+          ]}
+        >
+          Ready to track progress?
+        </Text>
+        <Button title="Login / Enter PIN" onPress={onLoginPress} color={colors.primary} />
       </View>
     </SafeAreaView>
   );

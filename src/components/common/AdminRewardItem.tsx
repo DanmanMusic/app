@@ -1,7 +1,6 @@
 import { Button, Image, Text, View } from 'react-native';
 import { RewardItem } from '../../types/dataTypes';
 import { colors } from '../../styles/colors';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const AdminRewardItem = ({
@@ -15,22 +14,28 @@ export const AdminRewardItem = ({
   onDelete: (reward: RewardItem) => void;
   disabled?: boolean;
 }) => (
-  <View style={commonSharedStyles.baseItem}>
-    <View style={appSharedStyles.containerRowCenter}>
+  <View
+    style={[
+      commonSharedStyles.baseRow,
+      commonSharedStyles.justifySpaceBetween,
+      commonSharedStyles.baseItem,
+    ]}
+  >
+    <View>
       <Image
         source={{ uri: item.imageUrl }}
-        style={appSharedStyles.itemImageMedium}
+        style={commonSharedStyles.baseIcon}
         resizeMode="contain"
       />
-      <View style={appSharedStyles.itemFlex}>
-        <Text style={appSharedStyles.itemTitle}>{item.name}</Text>
-        <Text style={[appSharedStyles.itemDetailText, appSharedStyles.textGold]}>
-          {item.cost} Tickets
-        </Text>
-        {item.description && <Text style={appSharedStyles.itemDetailText}>{item.description}</Text>}
+      <View>
+        <Text style={[commonSharedStyles.baseSubTitleText]}>{item.name}</Text>
+        <Text style={[commonSharedStyles.baseSecondaryText]}>{item.cost} Tickets</Text>
+        {item.description && (
+          <Text style={commonSharedStyles.baseSecondaryText}>{item.description}</Text>
+        )}
       </View>
     </View>
-    <View>
+    <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
       <Button title="Edit" onPress={() => onEdit(item)} disabled={disabled} />
       <Button
         title="Delete"
