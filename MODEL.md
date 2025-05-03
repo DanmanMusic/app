@@ -149,29 +149,29 @@ This document provides the technical details of the database schema intended for
 
 - `auth.users` 1-to-1 `profiles` (via `profiles.id` FK -> `auth.users.id` ON DELETE CASCADE)
 - `profiles` 1-to-many `assigned_tasks`
-    - `assigned_tasks.student_id` FK -> `profiles.id` ON DELETE CASCADE
-    - `assigned_tasks.assigned_by_id` FK -> `profiles.id` ON DELETE SET NULL
-    - `assigned_tasks.verified_by_id` FK -> `profiles.id` ON DELETE SET NULL
+  - `assigned_tasks.student_id` FK -> `profiles.id` ON DELETE CASCADE
+  - `assigned_tasks.assigned_by_id` FK -> `profiles.id` ON DELETE SET NULL
+  - `assigned_tasks.verified_by_id` FK -> `profiles.id` ON DELETE SET NULL
 - `profiles` 1-to-many `ticket_transactions`
-    - `ticket_transactions.student_id` FK -> `profiles.id` ON DELETE CASCADE
+  - `ticket_transactions.student_id` FK -> `profiles.id` ON DELETE CASCADE
 - `profiles` 1-to-many `announcements`
-    - `announcements.related_student_id` FK -> `profiles.id` ON DELETE SET NULL
+  - `announcements.related_student_id` FK -> `profiles.id` ON DELETE SET NULL
 - `profiles` 1-to-1 `user_credentials`
-    - `user_credentials.user_id` FK -> `profiles.id` ON DELETE CASCADE
+  - `user_credentials.user_id` FK -> `profiles.id` ON DELETE CASCADE
 - `profiles` 1-to-many `onetime_pins`
-    - `onetime_pins.user_id` FK -> `profiles.id` ON DELETE CASCADE
+  - `onetime_pins.user_id` FK -> `profiles.id` ON DELETE CASCADE
 - `profiles` 1-to-many `active_refresh_tokens`
-    - `active_refresh_tokens.user_id` FK -> `profiles.id` ON DELETE CASCADE
+  - `active_refresh_tokens.user_id` FK -> `profiles.id` ON DELETE CASCADE
 - `profiles` many-to-many `instruments` (via `student_instruments`)
-    - `student_instruments.student_id` FK -> `profiles.id` ON DELETE CASCADE
-    - `student_instruments.instrument_id` FK -> `instruments.id` ON DELETE CASCADE
+  - `student_instruments.student_id` FK -> `profiles.id` ON DELETE CASCADE
+  - `student_instruments.instrument_id` FK -> `instruments.id` ON DELETE CASCADE
 - `profiles` many-to-many `profiles` (Students <-> Teachers via `student_teachers`)
-    - `student_teachers.student_id` FK -> `profiles.id` ON DELETE CASCADE
-    - `student_teachers.teacher_id` FK -> `profiles.id` ON DELETE CASCADE
+  - `student_teachers.student_id` FK -> `profiles.id` ON DELETE CASCADE
+  - `student_teachers.teacher_id` FK -> `profiles.id` ON DELETE CASCADE
 - `profiles` many-to-many `profiles` (Parents <-> Students via `parent_students`)
-    - `parent_students.parent_id` FK -> `profiles.id` ON DELETE CASCADE
-    - `parent_students.student_id` FK -> `profiles.id` ON DELETE CASCADE
+  - `parent_students.parent_id` FK -> `profiles.id` ON DELETE CASCADE
+  - `parent_students.student_id` FK -> `profiles.id` ON DELETE CASCADE
 - `rewards` 1-to-many `profiles` (for goals)
-    - `profiles.current_goal_reward_id` FK -> `rewards.id` ON DELETE SET NULL
+  - `profiles.current_goal_reward_id` FK -> `rewards.id` ON DELETE SET NULL
 - `rewards` conceptually linked to `ticket_transactions` (via `source_id` when `type='redemption'`)
 - `assigned_tasks` conceptually linked to `ticket_transactions` (via `source_id` when `type='task_award'`)
