@@ -1,23 +1,22 @@
-import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// src/components/common/StudentDetailView.tsx
+import React, { useMemo } from 'react'; // Removed useState
+import { useQuery } from '@tanstack/react-query'; // Removed useMutation
 import { View, Text, ScrollView, Button, FlatList, ActivityIndicator } from 'react-native';
-import Toast from 'react-native-toast-message';
-import { deleteAssignedTask } from '../../api/assignedTasks';
+import Toast from 'react-native-toast-message'; // Removed Toast as it's handled by parent
 import { fetchInstruments } from '../../api/instruments';
 import { fetchStudentBalance } from '../../api/tickets';
 import { fetchUserProfile, fetchTeachers } from '../../api/users';
 import { usePaginatedStudentHistory } from '../../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../../hooks/usePaginatedStudentTasks';
 import { TicketHistoryItem } from './TicketHistoryItem';
-import ConfirmationModal from './ConfirmationModal';
 import PaginationControls from '../admin/PaginationControls';
-import { AssignedTask, Instrument, User } from '../../types/dataTypes';
+import { AssignedTask, Instrument, User } from '../../types/dataTypes'; // Removed UserRole
 import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
-import { AdminStudentDetailViewProps } from '../../types/componentProps';
+import { StudentDetailViewProps } from '../../types/componentProps'; // Props will need updating
 
-export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
+export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
   viewingStudentId,
   onInitiateVerification,
   onInitiateAssignTaskForStudent,
@@ -26,12 +25,8 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
   onInitiateTicketAdjustment,
   onInitiateRedemption,
   onInitiatePinGeneration,
+  onInitiateDeleteTask,
 }) => {
-  const queryClient = useQueryClient();
-
-  const [isDeleteTaskConfirmVisible, setIsDeleteTaskConfirmVisible] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<AssignedTask | null>(null);
-
   const {
     data: student,
     isLoading: studentLoading,
@@ -99,25 +94,8 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
     totalItems: totalHistoryCount,
   } = usePaginatedStudentHistory(viewingStudentId);
 
-  const deleteTaskMutation = useMutation({
-    mutationFn: deleteAssignedTask,
-    onSuccess: (_, deletedAssignmentId) => {
-      queryClient.invalidateQueries({
-        queryKey: ['assigned-tasks', { studentId: viewingStudentId }],
-      });
-      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
-      closeDeleteConfirmModal();
-      Toast.show({ type: 'success', text1: 'Success', text2: 'Task removed successfully.' });
-    },
-    onError: (error: Error, deletedAssignmentId) => {
-      closeDeleteConfirmModal();
-      Toast.show({
-        type: 'error',
-        text1: 'Removal Failed',
-        text2: error.message || 'Could not remove task.',
-      });
-    },
-  });
+  // --- Removed Delete Task Mutation ---
+  // const deleteTaskMutation = useMutation({...});
 
   const isStudentActive = useMemo(() => student?.status === 'active', [student]);
   const studentDisplayName = useMemo(
@@ -143,21 +121,13 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
     );
   }, [student, activeTeachers, teachersLoading]);
 
-  const closeDeleteConfirmModal = () => {
-    setIsDeleteTaskConfirmVisible(false);
-    setTaskToDelete(null);
-    deleteTaskMutation.reset();
-  };
-  const handleInitiateDeleteTaskClick = (task: AssignedTask) => {
-    setTaskToDelete(task);
-    setIsDeleteTaskConfirmVisible(true);
-  };
-  const handleConfirmDeleteTaskAction = () => {
-    if (taskToDelete && !deleteTaskMutation.isPending) {
-      deleteTaskMutation.mutate(taskToDelete.id);
-    }
-  };
-  const handleVerifyTaskClick = (task: AssignedTask) => {
+  // --- Removed Delete Confirmation Handlers ---
+  // const closeDeleteConfirmModal = () => {...};
+  // const handleInitiateDeleteTaskClick = (task: AssignedTask) => {...};
+  // const handleConfirmDeleteTaskAction = () => {...};
+
+  // Renamed internal handler to avoid naming clash if parent uses same name
+  const handleVerifyTaskClicked = (task: AssignedTask) => {
     onInitiateVerification?.(task);
   };
   const handleAssignTaskClick = () => {
@@ -231,9 +201,17 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
           commonSharedStyles.baseMarginTopBottom,
         ]}
       >
-        <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
-          Student Details
-        </Text>
+        <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+          <Text
+            style={[
+              commonSharedStyles.baseTitleText,
+              commonSharedStyles.baseMarginTopBottom,
+              commonSharedStyles.bold,
+            ]}
+          >
+            Student Details
+          </Text>
+        </View>
         <Text style={commonSharedStyles.baseSecondaryText}>
           Name: <Text style={commonSharedStyles.bold}>{studentDisplayName}</Text>
         </Text>
@@ -324,7 +302,9 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
                 item.isComplete &&
                 item.verificationStatus === 'pending' &&
                 isStudentActive;
-              const allowDelete = !item.isComplete || item.verificationStatus === 'pending';
+              // Task can be deleted if it's not yet completed OR if it's complete but still pending verification
+              const allowDelete =
+                onInitiateDeleteTask && (!item.isComplete || item.verificationStatus === 'pending');
               const taskStatus = item.isComplete
                 ? item.verificationStatus === 'pending'
                   ? 'Complete (Pending)'
@@ -339,8 +319,8 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
                     commonSharedStyles.justifySpaceBetween,
                   ]}
                 >
-                  <View>
-                    <Text style={commonSharedStyles.baseTitleText}>{item.taskTitle}</Text>
+                  <View style={commonSharedStyles.flex1}>
+                    <Text style={commonSharedStyles.itemTitle}>{item.taskTitle}</Text>
                     <Text style={commonSharedStyles.baseSubTitleText}>Status: {taskStatus}</Text>
                     {item.completedDate && (
                       <Text style={commonSharedStyles.baseSecondaryText}>
@@ -371,24 +351,21 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
                       </Text>
                     )}
                   </View>
-                  <View>
+                  {/* Action Buttons */}
+                  <View style={[commonSharedStyles.baseColumn, commonSharedStyles.baseGap]}>
                     {allowVerify && (
                       <Button
                         title="Verify"
-                        onPress={() => handleVerifyTaskClick(item)}
-                        disabled={deleteTaskMutation.isPending}
+                        onPress={() => handleVerifyTaskClicked(item)}
+                        // Consider if parent needs to pass down a global isDeleting state
                       />
                     )}
                     {allowDelete && (
                       <Button
-                        title={
-                          deleteTaskMutation.isPending && taskToDelete?.id === item.id
-                            ? 'Removing...'
-                            : 'Remove'
-                        }
-                        onPress={() => handleInitiateDeleteTaskClick(item)}
+                        title="Remove"
+                        onPress={() => onInitiateDeleteTask(item)} // Call the prop passed from parent
                         color={colors.danger}
-                        disabled={deleteTaskMutation.isPending}
+                        // Consider if parent needs to pass down a global isDeleting state
                       />
                     )}
                   </View>
@@ -407,7 +384,7 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
             }
             ListFooterComponent={
               tasksTotalPages > 1 ? (
-                <PaginationControlsommonSharedStyles
+                <PaginationControls
                   currentPage={tasksCurrentPage}
                   totalPages={tasksTotalPages}
                   onPageChange={setTasksPage}
@@ -455,15 +432,6 @@ export const AdminStudentDetailView: React.FC<AdminStudentDetailViewProps> = ({
         )}
         <View style={{ height: 30 }} />
       </ScrollView>
-      <ConfirmationModal
-        visible={isDeleteTaskConfirmVisible}
-        title="Confirm Remove Task"
-        message={`Are you sure you want to remove the assigned task "${taskToDelete?.taskTitle || 'selected task'}"? This cannot be undone.`}
-        confirmText={deleteTaskMutation.isPending ? 'Removing...' : 'Remove Task'}
-        onConfirm={handleConfirmDeleteTaskAction}
-        onCancel={closeDeleteConfirmModal}
-        confirmDisabled={deleteTaskMutation.isPending}
-      />
     </>
   );
 };

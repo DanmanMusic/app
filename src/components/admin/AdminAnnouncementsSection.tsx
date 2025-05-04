@@ -101,9 +101,17 @@ export const AdminAnnouncementsSection = () => {
 
   return (
     <View style={commonSharedStyles.baseMargin}>
-      <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
-        Announcements & Challenges ({announcements.length})
-      </Text>
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+        <Text
+          style={[
+            commonSharedStyles.baseTitleText,
+            commonSharedStyles.baseMarginTopBottom,
+            commonSharedStyles.bold,
+          ]}
+        >
+          Announcements & Challenges ({announcements.length})
+        </Text>
+      </View>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button
           title="Create New Announcement"

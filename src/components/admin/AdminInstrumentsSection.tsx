@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 import { fetchInstruments, deleteInstrument } from '../../api/instruments';
 import { Instrument } from '../../types/dataTypes';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { colors } from '../../styles/colors';
 import ConfirmationModal from '../common/ConfirmationModal';
 import CreateInstrumentModal from './modals/CreateInstrumentModal';
@@ -94,9 +93,17 @@ export const AdminInstrumentsSection = () => {
 
   return (
     <View style={commonSharedStyles.baseMargin}>
-      <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
-        Instruments ({instruments.length})
-      </Text>
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+        <Text
+          style={[
+            commonSharedStyles.baseTitleText,
+            commonSharedStyles.baseMarginTopBottom,
+            commonSharedStyles.bold,
+          ]}
+        >
+          Instruments ({instruments.length})
+        </Text>
+      </View>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button title="Add New Instrument" onPress={handleAddPress} />
       </View>

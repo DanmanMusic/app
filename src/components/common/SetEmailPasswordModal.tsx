@@ -34,6 +34,7 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
         text1: 'Credentials Set!',
         text2: 'You can now log in using your email and password. Please log out and back in.',
         visibilityTime: 6000,
+        position: 'bottom',
       });
 
       onClose();
@@ -71,6 +72,7 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
         type: 'error',
         text1: 'Invalid Email',
         text2: 'Please enter a valid email address.',
+        position: 'bottom',
       });
       return;
     }
@@ -79,6 +81,7 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
         type: 'error',
         text1: 'Password Too Short',
         text2: 'Password must be at least 6 characters.',
+        position: 'bottom',
       });
       return;
     }
@@ -87,6 +90,7 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
         type: 'error',
         text1: "Passwords Don't Match",
         text2: 'Please re-enter matching passwords.',
+        position: 'bottom',
       });
       return;
     }

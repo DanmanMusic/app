@@ -26,10 +26,18 @@ export const AdminHistorySection = () => {
   };
 
   return (
-    <View>
-      <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
-        Full Ticket History ({totalItems})
-      </Text>
+    <View style={commonSharedStyles.baseMargin}>
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+        <Text
+          style={[
+            commonSharedStyles.baseTitleText,
+            commonSharedStyles.baseMarginTopBottom,
+            commonSharedStyles.bold,
+          ]}
+        >
+          Full Ticket History ({totalItems})
+        </Text>
+      </View>
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
       )}

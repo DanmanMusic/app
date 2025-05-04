@@ -75,11 +75,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
       console.log(
         `[LoginModal] Sign In Success for user: ${data.user.id}. AuthContext will handle profile.`
       );
-      Toast.show({ type: 'success', text1: 'Login Initiated!' });
+      Toast.show({ type: 'success', text1: 'Login Initiated!', position: 'bottom' });
       onClose();
     } catch (catchError: any) {
       setError(catchError.message);
-      Toast.show({ type: 'error', text1: 'Login Failed', text2: catchError.message });
+      Toast.show({
+        type: 'error',
+        text1: 'Login Failed',
+        text2: catchError.message,
+        position: 'bottom',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -110,6 +115,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
           type: 'error',
           text1: 'Session Error',
           text2: 'Could not save session token locally.',
+          position: 'bottom',
         });
         // --- Use storage helper for cleanup if store fails ---
         try {
@@ -127,7 +133,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
       });
       console.log('[LoginModal] Supabase session set. AuthContext will handle profile fetch.');
 
-      Toast.show({ type: 'success', text1: 'Login Successful via PIN!' });
+      Toast.show({ type: 'success', text1: 'Login Successful via PIN!', position: 'bottom' });
       onClose();
     } catch (catchError: any) {
       console.error('[LoginModal] Error claiming PIN via API or storing token:', catchError);

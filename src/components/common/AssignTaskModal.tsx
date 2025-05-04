@@ -7,15 +7,15 @@ import {
   Text,
   Button,
   FlatList,
-  TouchableOpacity,
+  TouchableOpacity, // *** Import TouchableOpacity ***
   TextInput,
   ScrollView,
-  Switch,
+  // Switch, // *** Remove Switch import ***
   ActivityIndicator,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-import { createAssignedTask } from '../../api/assignedTasks'; // Use the updated API function
+import { createAssignedTask } from '../../api/assignedTasks';
 import { fetchTaskLibrary } from '../../api/taskLibrary';
 import { fetchStudents } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
@@ -29,24 +29,20 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   onClose,
   preselectedStudentId,
 }) => {
-  const { currentUserId: assignerId, currentUserRole } = useAuth(); // assignerId used for filtering students if teacher
+  const { currentUserId: assignerId, currentUserRole } = useAuth();
   const queryClient = useQueryClient();
 
-  // State for modal steps and selections
   const [step, setStep] = useState(1);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedLibraryTask, setSelectedLibraryTask] = useState<TaskLibraryItem | null>(null);
-  const [isAdHocMode, setIsAdHocMode] = useState(false);
+  const [isAdHocMode, setIsAdHocMode] = useState(false); // false = Library, true = Custom
 
-  // State for Ad-Hoc task details
   const [adHocTitle, setAdHocTitle] = useState('');
   const [adHocDescription, setAdHocDescription] = useState('');
   const [adHocBasePoints, setAdHocBasePoints] = useState<number | ''>('');
 
-  // State for student search
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
 
-  // Query for Task Library
   const {
     data: taskLibrary = [],
     isLoading: isLoadingLibrary,
@@ -56,13 +52,11 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     queryKey: ['task-library'],
     queryFn: fetchTaskLibrary,
     staleTime: 10 * 60 * 1000,
-    enabled: visible && step === 2 && !isAdHocMode, // Only fetch when needed
+    enabled: visible && step === 2 && !isAdHocMode,
   });
 
-  // Determine if we need to filter students by teacher ID
   const filterTeacherId = currentUserRole === 'teacher' ? assignerId : undefined;
 
-  // Query for Students (active only, potentially filtered by teacher)
   const {
     data: studentListResult,
     isLoading: isLoadingStudents,
@@ -74,72 +68,56 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       {
         filter: 'active',
         context: 'assignTaskModal',
-        teacherId: filterTeacherId, // Apply filter if teacher
-        limit: 500, // Fetch a reasonable limit for selection
+        teacherId: filterTeacherId,
+        limit: 500,
         page: 1,
       },
     ],
     queryFn: () =>
-      fetchStudents({
-        filter: 'active',
-        page: 1,
-        limit: 500,
-        teacherId: filterTeacherId,
-      }),
-    // Only run if modal is visible, on step 1, no student preselected, and assignerId is available
+      fetchStudents({ filter: 'active', page: 1, limit: 500, teacherId: filterTeacherId }),
     enabled: visible && step === 1 && !preselectedStudentId && !!assignerId,
     staleTime: 5 * 60 * 1000,
   });
 
-  // Memoized sorted task library
   const sortedTasks = useMemo(
     () => [...taskLibrary].sort((a, b) => a.title.localeCompare(b.title)),
     [taskLibrary]
   );
-
-  // Memoized list of available students from query result
-  const availableStudents: SimplifiedStudent[] = useMemo(() => {
-    return studentListResult?.students ?? [];
-  }, [studentListResult]);
-
-  // Memoized list of students filtered by search term
+  const availableStudents: SimplifiedStudent[] = useMemo(
+    () => studentListResult?.students ?? [],
+    [studentListResult]
+  );
   const filteredStudents = useMemo(() => {
     const searchTermLower = studentSearchTerm.toLowerCase().trim();
-    if (!searchTermLower) {
-      // Sort alphabetically if no search term
+    if (!searchTermLower)
       return [...availableStudents].sort((a, b) => a.name.localeCompare(b.name));
-    }
-    // Filter and sort if search term exists
     return availableStudents
       .filter(student => student.name.toLowerCase().includes(searchTermLower))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [availableStudents, studentSearchTerm]);
 
-  // Memoized display name of the selected student
   const selectedStudentName = useMemo(() => {
     if (!selectedStudentId) return 'Unknown Student';
     const student = availableStudents.find(s => s.id === selectedStudentId);
-    return student?.name || `ID: ${selectedStudentId}`; // Fallback to ID
+    return student?.name || `ID: ${selectedStudentId}`;
   }, [selectedStudentId, availableStudents]);
 
-  // Mutation for assigning the task (calls the API function which calls the Edge Function)
   const mutation = useMutation({
-    mutationFn: createAssignedTask, // Uses the API function
+    mutationFn: createAssignedTask,
     onSuccess: createdAssignment => {
-      console.log(
-        '[AssignTaskModal] Task assigned successfully (via Edge Function):',
-        createdAssignment
-      );
-      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] }); // Broad invalidation
+      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
       queryClient.invalidateQueries({
         queryKey: ['assigned-tasks', { studentId: createdAssignment.studentId }],
-      }); // Specific student invalidation
-      onClose(); // Close modal on success
-      Toast.show({ type: 'success', text1: 'Success', text2: 'Task assigned successfully.' });
+      });
+      onClose();
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Task assigned successfully.',
+        position: 'bottom',
+      });
     },
     onError: (error: Error) => {
-      // Explicitly type error
-      console.error('[AssignTaskModal] Error assigning task:', error);
       Toast.show({
         type: 'error',
         text1: 'Assignment Failed',
@@ -150,10 +128,8 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     },
   });
 
-  // Effect to reset state when modal visibility changes or preselected student changes
   useEffect(() => {
     if (visible) {
-      // Reset common state
       setIsAdHocMode(false);
       setSelectedLibraryTask(null);
       setAdHocTitle('');
@@ -161,17 +137,14 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       setAdHocBasePoints('');
       setStudentSearchTerm('');
       mutation.reset();
-
-      // Handle preselection or initial step
       if (preselectedStudentId) {
         setSelectedStudentId(preselectedStudentId);
-        setStep(2); // Go directly to task selection
+        setStep(2);
       } else {
         setSelectedStudentId(null);
-        setStep(1); // Start at student selection
+        setStep(1);
       }
     } else {
-      // Clear all state when modal is hidden
       setStep(1);
       setSelectedStudentId(null);
       setSelectedLibraryTask(null);
@@ -181,22 +154,18 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       setAdHocBasePoints('');
       setStudentSearchTerm('');
     }
-  }, [visible, preselectedStudentId]); // Rerun when visibility or preselection changes
+  }, [visible, preselectedStudentId]);
 
-  // Handlers for UI actions
   const handleStudentSelect = (studentId: string) => {
     setSelectedStudentId(studentId);
-    setStep(2); // Move to task selection
+    setStep(2);
   };
-
   const handleLibraryTaskSelect = (task: TaskLibraryItem) => {
     setSelectedLibraryTask(task);
-    setIsAdHocMode(false); // Ensure not in AdHoc mode
-    setStep(3); // Move to confirmation
+    setIsAdHocMode(false);
+    setStep(3);
   };
-
   const handleAdHocSubmit = () => {
-    // Validate AdHoc fields before proceeding
     const numericPoints =
       typeof adHocBasePoints === 'number'
         ? adHocBasePoints
@@ -214,25 +183,19 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       });
       return;
     }
-    setSelectedLibraryTask(null); // Ensure no library task is selected
-    setIsAdHocMode(true); // Confirm AdHoc mode
-    setStep(3); // Move to confirmation
+    setSelectedLibraryTask(null);
+    setIsAdHocMode(true);
+    setStep(3);
   };
-
-  // Handler for the final confirmation and mutation trigger
   const handleConfirm = () => {
-    if (!selectedStudentId) {
-      // Assignee ID comes from token in Edge Function
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Student ID missing.' });
+    if (!selectedStudentId || !assignerId) {
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Student or Assigner ID missing.' });
       return;
     }
-
-    // Prepare payload for the client API function createAssignedTask
     let assignmentPayload: Omit<
       AssignedTask,
-      'id' | 'assignedById' | 'assignedDate' | 'isComplete' | 'verificationStatus'
+      'id' | 'assignedById' | 'assignedDate' | 'isComplete' | 'verificationStatus' | 'studentStatus'
     >;
-
     if (isAdHocMode) {
       const numericPoints =
         typeof adHocBasePoints === 'number'
@@ -272,26 +235,18 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       });
       return;
     }
-
-    console.log('[AssignTaskModal] Calling mutation with payload:', assignmentPayload);
-    mutation.mutate(assignmentPayload); // Trigger the mutation
+    mutation.mutate(assignmentPayload);
   };
 
-  // Handler for going back between steps
   const goBack = () => {
-    if (step === 3) {
-      setStep(2); // Go back to task selection
-    } else if (step === 2 && !preselectedStudentId) {
-      setStep(1); // Go back to student selection (if not preselected)
-      setSelectedStudentId(null); // Clear student selection
-    } else {
-      onClose(); // Otherwise, close modal
-    }
+    if (step === 3) setStep(2);
+    else if (step === 2 && !preselectedStudentId) {
+      setSelectedStudentId(null);
+      setStep(1);
+    } else onClose();
   };
 
-  // Function to render content based on the current step
   const renderStepContent = () => {
-    // Step 1: Select Student (only if not preselected)
     if (step === 1 && !preselectedStudentId) {
       return (
         <>
@@ -336,31 +291,52 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       );
     }
 
-    // Step 2: Select Task (Library or Ad-Hoc)
     if (step === 2) {
       return (
         <>
           <Text style={commonSharedStyles.modalStepTitle}>
             Step {preselectedStudentId ? 1 : 2}: Assign Task to {selectedStudentName}
           </Text>
-          <View
-            style={[
-              commonSharedStyles.baseRow,
-              commonSharedStyles.justifySpaceBetween,
-              commonSharedStyles.baseAlignCenter,
-              { marginBottom: 15 },
-            ]}
-          >
-            <Text style={commonSharedStyles.label}>Select from Library</Text>
-            <Switch
-              trackColor={{ false: colors.secondary, true: colors.primary }}
-              thumbColor={colors.backgroundPrimary}
-              ios_backgroundColor={colors.secondary}
-              onValueChange={setIsAdHocMode}
-              value={isAdHocMode}
-            />
-            <Text style={commonSharedStyles.label}>Create Custom Task</Text>
+
+          {/* *** START: New Toggle Button Implementation *** */}
+          <View style={[commonSharedStyles.containerToggle, { marginBottom: 15 }]}>
+            <TouchableOpacity
+              style={[
+                commonSharedStyles.toggleButton,
+                !isAdHocMode && commonSharedStyles.toggleButtonActive, // Active when NOT ad-hoc
+              ]}
+              onPress={() => setIsAdHocMode(false)}
+              disabled={mutation.isPending}
+            >
+              <Text
+                style={[
+                  commonSharedStyles.toggleButtonText,
+                  !isAdHocMode && commonSharedStyles.toggleButtonTextActive,
+                ]}
+              >
+                Select from Library
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                commonSharedStyles.toggleButton,
+                isAdHocMode && commonSharedStyles.toggleButtonActive, // Active when ad-hoc IS true
+              ]}
+              onPress={() => setIsAdHocMode(true)}
+              disabled={mutation.isPending}
+            >
+              <Text
+                style={[
+                  commonSharedStyles.toggleButtonText,
+                  isAdHocMode && commonSharedStyles.toggleButtonTextActive,
+                ]}
+              >
+                Create Custom Task
+              </Text>
+            </TouchableOpacity>
           </View>
+          {/* *** END: New Toggle Button Implementation *** */}
+
           <ScrollView style={commonSharedStyles.modalScrollView}>
             {isAdHocMode ? (
               // Ad-Hoc Task Input Fields
@@ -447,7 +423,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       );
     }
 
-    // Step 3: Confirmation
     if (step === 3) {
       const taskTitle = isAdHocMode ? adHocTitle : selectedLibraryTask?.title;
       const taskPoints = isAdHocMode ? adHocBasePoints : selectedLibraryTask?.baseTickets;
@@ -460,11 +435,10 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             Assign task "{taskTitle || 'N/A'}" ({taskPoints ?? '?'} points) to "
             {selectedStudentName}"?
           </Text>
-          {/* Removed the deferred info text */}
         </>
       );
     }
-    return null; // Should not happen
+    return null;
   };
 
   return (
@@ -472,11 +446,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       <View style={commonSharedStyles.centeredView}>
         <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>Assign Task</Text>
-
-          {/* Render content based on current step */}
           {renderStepContent()}
-
-          {/* Loading/Error for mutation */}
           {mutation.isPending && (
             <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -489,17 +459,14 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
               {mutation.error instanceof Error ? mutation.error.message : 'Failed to assign task'}
             </Text>
           )}
-
-          {/* Footer Buttons */}
           <View style={commonSharedStyles.modalFooter}>
             {step === 3 && (
               <Button
                 title={mutation.isPending ? 'Assigning...' : 'Confirm & Assign'}
                 onPress={handleConfirm}
-                disabled={mutation.isPending} // Only disable if mutation is running
+                disabled={mutation.isPending}
               />
             )}
-
             {((step > 1 && !preselectedStudentId) ||
               step === 3 ||
               (step === 2 && preselectedStudentId)) && (
@@ -510,7 +477,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                 disabled={mutation.isPending}
               />
             )}
-
             <Button
               title="Cancel"
               onPress={onClose}

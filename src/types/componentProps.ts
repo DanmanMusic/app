@@ -120,7 +120,7 @@ export interface ManualTicketAdjustmentModalProps {
 }
 
 export type UserTab = 'students' | 'teachers' | 'parents' | 'admins';
-export type TeacherSection = 'dashboard' | 'students' | 'tasks';
+export type TeacherSection = 'dashboard' | 'students' | 'tasks' | 'tasks-full';
 export type AdminSection =
   | 'dashboard'
   | 'tasks-full'
@@ -131,15 +131,9 @@ export type AdminSection =
   | 'announcements'
   | 'instruments';
 
-type StudentFilter = UserStatus | 'all';
-
 export interface AdminUsersSectionProps {
   instruments: Instrument[];
   activeTab: UserTab;
-  studentFilter?: StudentFilter;
-  setStudentFilter?: (filter: StudentFilter) => void;
-  studentSearchTerm?: string;
-  setStudentSearchTerm?: (term: string) => void;
   onViewManageUser: (userId: string, role: UserRole) => void;
   onInitiateAssignTaskForStudent: (studentId: string) => void;
 }
@@ -160,7 +154,7 @@ export interface AdminTasksSectionProps {
   deleteTaskMutationPending: boolean;
 }
 
-export interface AdminStudentDetailViewProps {
+export interface StudentDetailViewProps {
   viewingStudentId: string;
   onInitiateVerification?: (task: AssignedTask) => void;
   onInitiateAssignTaskForStudent: (studentId: string) => void;
@@ -169,6 +163,7 @@ export interface AdminStudentDetailViewProps {
   onInitiateTicketAdjustment?: (user: User) => void;
   onInitiateRedemption?: (user: User) => void;
   onInitiatePinGeneration?: (user: User) => void;
+  onInitiateDeleteTask?: (task: AssignedTask) => void;
 }
 
 export interface ViewAllAssignedTasksModalProps {
@@ -196,6 +191,7 @@ export interface TeacherStudentsSectionProps {
 
 export interface TeacherTasksSectionProps {
   onInitiateAssignTaskGeneral: () => void;
+  onViewAllTasks: () => void;
 }
 
 export interface ParentStudentListItemProps {

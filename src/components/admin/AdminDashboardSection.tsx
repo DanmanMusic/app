@@ -54,7 +54,13 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
   return (
     <View style={[commonSharedStyles.baseMargin]}>
       <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
-        <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
+        <Text
+          style={[
+            commonSharedStyles.baseTitleText,
+            commonSharedStyles.baseMarginTopBottom,
+            commonSharedStyles.bold,
+          ]}
+        >
           Dashboard Overview
         </Text>
       </View>

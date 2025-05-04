@@ -91,7 +91,12 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       if (updatedUser.role === 'admin') queryClient.invalidateQueries({ queryKey: ['admins'] });
       queryClient.invalidateQueries({ queryKey: ['activeProfilesForDevSelector'] });
       onClose();
-      Toast.show({ type: 'success', text1: 'Success', text2: 'User updated successfully.' });
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'User updated successfully.',
+        position: 'bottom',
+      });
     },
     onError: (error: Error) => {
       console.error('[EditUserModal] Error updating user:', error);
@@ -99,6 +104,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         type: 'error',
         text1: 'Update Failed',
         text2: error.message || 'Could not update user.',
+        position: 'bottom',
       });
     },
   });

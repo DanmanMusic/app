@@ -32,9 +32,17 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
 
   return (
     <View style={[commonSharedStyles.baseMargin]}>
-      <Text style={[commonSharedStyles.baseSubTitleText, commonSharedStyles.baseMarginTopBottom]}>
-        My Students ({studentsLinkedToTeacher.length})
-      </Text>
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+        <Text
+          style={[
+            commonSharedStyles.baseTitleText,
+            commonSharedStyles.baseMarginTopBottom,
+            commonSharedStyles.bold,
+          ]}
+        >
+          My Students ({studentsLinkedToTeacher.length})
+        </Text>
+      </View>
       {isLoading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />}
       {isError && (
         <Text style={commonSharedStyles.textDanger}>Error loading students: {error?.message}</Text>

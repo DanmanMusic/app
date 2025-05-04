@@ -5,7 +5,6 @@ import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 import { fetchRewards, deleteReward } from '../../api/rewards';
 
 import { RewardItem } from '../../types/dataTypes';
-import { appSharedStyles } from '../../styles/appSharedStyles';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 
@@ -101,9 +100,17 @@ export const AdminRewardsSection = () => {
 
   return (
     <View style={commonSharedStyles.baseMargin}>
-      <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
-        Rewards Catalog ({rewardsCatalog.length})
-      </Text>
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+        <Text
+          style={[
+            commonSharedStyles.baseTitleText,
+            commonSharedStyles.baseMarginTopBottom,
+            commonSharedStyles.bold,
+          ]}
+        >
+          Rewards Catalog ({rewardsCatalog.length})
+        </Text>
+      </View>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button
           title="Add New Reward"

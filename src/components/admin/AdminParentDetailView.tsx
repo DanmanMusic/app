@@ -82,7 +82,12 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
     mutationFn: (variables: { parentId: string; studentId: string }) =>
       unlinkStudentFromParent(variables.parentId, variables.studentId),
     onSuccess: (_, variables) => {
-      Toast.show({ type: 'success', text1: 'Success', text2: 'Student unlinked successfully.' });
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Student unlinked successfully.',
+        position: 'bottom',
+      });
       queryClient.invalidateQueries({ queryKey: ['userProfile', variables.parentId] });
       queryClient.invalidateQueries({ queryKey: ['userProfile', variables.studentId] });
       queryClient.invalidateQueries({ queryKey: ['parents'] });
@@ -95,6 +100,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
         type: 'error',
         text1: 'Unlinking Failed',
         text2: error.message || 'Could not unlink student.',
+        position: 'bottom',
       });
       // Keep confirmation modal open on error? Or close? Closing for now.
       closeUnlinkConfirmModal();

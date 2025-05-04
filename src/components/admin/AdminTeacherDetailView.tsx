@@ -101,9 +101,23 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
 
   return (
     <ScrollView style={[commonSharedStyles.flex1, commonSharedStyles.baseMargin]}>
-      <Text style={commonSharedStyles.baseSubTitleText}>Teacher Details</Text>
-      <Text style={commonSharedStyles.baseSecondaryText}>Name: {teacherDisplayName}</Text>
-      <Text style={commonSharedStyles.baseSecondaryText}>ID: {teacher.id}</Text>
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+        <Text
+          style={[
+            commonSharedStyles.baseTitleText,
+            commonSharedStyles.baseMarginTopBottom,
+            commonSharedStyles.bold,
+          ]}
+        >
+          Teacher Details
+        </Text>
+      </View>
+      <Text style={commonSharedStyles.baseSecondaryText}>
+        Name: <Text style={commonSharedStyles.bold}>{teacherDisplayName}</Text>
+      </Text>
+      <Text style={commonSharedStyles.baseSecondaryText}>
+        ID: <Text style={commonSharedStyles.bold}>{teacher.id}</Text>
+      </Text>
       <Text style={commonSharedStyles.baseSecondaryText}>
         Status:{' '}
         <Text
@@ -184,7 +198,6 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
           )}
         />
       )}
-      <View style={{ height: 30 }} />
     </ScrollView>
   );
 };

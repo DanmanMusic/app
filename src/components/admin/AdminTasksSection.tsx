@@ -35,9 +35,17 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
   return (
     <>
       <View style={commonSharedStyles.baseMargin}>
-        <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
-          Task Management
-        </Text>
+        <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+          <Text
+            style={[
+              commonSharedStyles.baseTitleText,
+              commonSharedStyles.baseMarginTopBottom,
+              commonSharedStyles.bold,
+            ]}
+          >
+            Task Management
+          </Text>
+        </View>
         <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
           <Button
             title="Assign Task to Student"
@@ -46,7 +54,7 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
           />
           <Button title="View All Assigned Tasks" onPress={() => onViewVerifications(false)} />
         </View>
-        <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
+        <Text style={[commonSharedStyles.baseSubTitleText, commonSharedStyles.baseMarginTopBottom]}>
           Task Library ({taskLibrary.length})
         </Text>
         <View style={[commonSharedStyles.baseRow]}>

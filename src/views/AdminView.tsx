@@ -5,6 +5,7 @@ import { View, Text, ScrollView, Button, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
+// *** Import deleteAssignedTask and AssignedTask ***
 import { deleteAssignedTask } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
 import { deleteTaskLibraryItem } from '../api/taskLibrary';
@@ -17,11 +18,11 @@ import { AdminInstrumentsSection } from '../components/admin/AdminInstrumentsSec
 import { AdminRewardsSection } from '../components/admin/AdminRewardsSection';
 import { AdminTasksSection } from '../components/admin/AdminTasksSection';
 import { AdminUsersSection } from '../components/admin/AdminUsersSection';
-import { AdminStudentDetailView } from '../components/common/StudentDetailView';
+import { StudentDetailView } from '../components/common/StudentDetailView';
 import { AdminTeacherDetailView } from '../components/admin/AdminTeacherDetailView';
 import { AdminParentDetailView } from '../components/admin/AdminParentDetailView';
 import { AdminAdminDetailView } from '../components/admin/AdminAdminDetailView';
-import { PaginatedTasksList } from '../components/common/PaginatedTasksList'; // Import the new component
+import { PaginatedTasksList } from '../components/common/PaginatedTasksList';
 import CreateUserModal from '../components/admin/modals/CreateUserModal';
 import CreateTaskLibraryModal from '../components/admin/modals/CreateTaskLibraryModal';
 import EditTaskLibraryModal from '../components/admin/modals/EditTaskLibraryModal';
@@ -45,10 +46,9 @@ import {
   UserRole,
   UserStatus,
 } from '../types/dataTypes';
-import { TaskAssignmentFilterStatusAPI, StudentTaskFilterStatusAPI } from '../api/assignedTasks'; // Import filter types
+import { TaskAssignmentFilterStatusAPI, StudentTaskFilterStatusAPI } from '../api/assignedTasks';
 import { AdminSection, AdminViewProps, UserTab } from '../types/componentProps';
 
-// Helper & Style Imports
 import { getUserDisplayName } from '../utils/helpers';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
@@ -60,8 +60,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   // --- State Management ---
   const [viewingSection, setViewingSection] = useState<AdminSection>('dashboard');
   const [activeUserTab, setActiveUserTab] = useState<UserTab>('students');
-  const [studentFilter, setStudentFilter] = useState<UserStatus | 'all'>('active');
-  const [studentSearchTerm, setStudentSearchTerm] = useState('');
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
   const [viewingUserRole, setViewingUserRole] = useState<UserRole | null>(null);
 
@@ -77,12 +75,14 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const [isRedeemModalVisible, setIsRedeemModalVisible] = useState(false);
   const [isGeneratePinModalVisible, setIsGeneratePinModalVisible] = useState(false);
   const [isSetCredentialsModalVisible, setIsSetCredentialsModalVisible] = useState(false);
+  // *** State for Assigned Task Deletion ***
   const [isDeleteAssignedTaskConfirmVisible, setIsDeleteAssignedTaskConfirmVisible] =
     useState(false);
+  const [assignedTaskToDelete, setAssignedTaskToDelete] = useState<AssignedTask | null>(null);
 
   const [taskToEdit, setTaskToEdit] = useState<TaskLibraryItem | null>(null);
   const [taskLibToDelete, setTaskLibToDelete] = useState<TaskLibraryItem | null>(null);
-  const [assignedTaskToDelete, setAssignedTaskToDelete] = useState<AssignedTask | null>(null);
+  // Removed assignedTaskToDelete state from here, moved above
   const [userToManage, setUserToManage] = useState<User | null>(null);
   const [userForPin, setUserForPin] = useState<User | null>(null);
 
@@ -136,10 +136,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     },
   });
 
+  // *** Mutation for Deleting Assigned Tasks ***
   const deleteAssignedTaskMutation = useMutation({
-    mutationFn: deleteAssignedTask,
+    mutationFn: deleteAssignedTask, // Use the imported API function
     onSuccess: (_, deletedAssignmentId) => {
-      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
+      console.log(`Assigned task ${deletedAssignmentId} removed successfully.`);
+      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] }); // Invalidate all task lists
       closeDeleteAssignedTaskConfirmModal();
       Toast.show({ type: 'success', text1: 'Success', text2: 'Assigned task removed.' });
     },
@@ -211,15 +213,19 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
       deleteTaskLibMutation.mutate(taskLibToDelete.id);
     }
   };
+
+  // *** Handlers for Assigned Task Deletion ***
   const handleInitiateDeleteAssignedTask = (task: AssignedTask) => {
     setAssignedTaskToDelete(task);
     setIsDeleteAssignedTaskConfirmVisible(true);
   };
+
   const handleConfirmDeleteAssignedTaskAction = () => {
     if (assignedTaskToDelete && !deleteAssignedTaskMutation.isPending) {
       deleteAssignedTaskMutation.mutate(assignedTaskToDelete.id);
     }
   };
+
   const closeDeleteAssignedTaskConfirmModal = () => {
     setIsDeleteAssignedTaskConfirmVisible(false);
     setAssignedTaskToDelete(null);
@@ -357,7 +363,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
       switch (viewingUserRole) {
         case 'student':
           return (
-            <AdminStudentDetailView
+            <StudentDetailView
               viewingStudentId={viewingUserId}
               onInitiateVerification={handleInternalInitiateVerificationModal}
               onInitiateAssignTaskForStudent={handleInitiateAssignTaskForStudent}
@@ -366,6 +372,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
               onInitiateTicketAdjustment={handleInitiateTicketAdjustment}
               onInitiateRedemption={handleInitiateRedemption}
               onInitiatePinGeneration={handleInitiatePinGeneration}
+              // *** Pass the delete handler ***
+              onInitiateDeleteTask={handleInitiateDeleteAssignedTask}
             />
           );
         case 'teacher':
@@ -463,10 +471,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         return (
           <AdminUsersSection
             activeTab={activeUserTab}
-            studentFilter={studentFilter}
-            setStudentFilter={setStudentFilter}
-            studentSearchTerm={studentSearchTerm}
-            setStudentSearchTerm={setStudentSearchTerm}
             instruments={fetchedInstruments}
             onViewManageUser={handleViewManageUser}
             onInitiateAssignTaskForStudent={handleInitiateAssignTaskForStudent}
@@ -486,13 +490,19 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
       case 'tasks-full':
         return (
           <View style={commonSharedStyles.baseMargin}>
-            <Text
-              style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}
-            >
-              Assigned Tasks
-            </Text>
+            <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+              <Text
+                style={[
+                  commonSharedStyles.baseTitleText,
+                  commonSharedStyles.baseMarginTopBottom,
+                  commonSharedStyles.bold,
+                ]}
+              >
+                Assigned Tasks
+              </Text>
+            </View>
             <PaginatedTasksList
-              key={JSON.stringify(adminTaskInitialFilters)}
+              key={JSON.stringify(adminTaskInitialFilters)} // Force re-render if filters change
               viewingRole="admin"
               initialAssignmentFilter={adminTaskInitialFilters?.assignment ?? 'all'}
               initialStudentStatusFilter={adminTaskInitialFilters?.student ?? 'all'}
@@ -620,7 +630,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           onClose={handleCloseRedeemModal}
           studentId={userToManage.id}
           studentName={getUserDisplayName(userToManage)}
-          redeemerId={adminUserId}
+          redeemerId={adminUserId} // Assuming admin redeems
         />
       )}
       <SetEmailPasswordModal

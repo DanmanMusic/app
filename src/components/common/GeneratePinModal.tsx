@@ -1,3 +1,4 @@
+// src/components/common/GeneratePinModal.tsx
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -16,7 +17,6 @@ interface GeneratePinModalProps {
 export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, user, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedPin, setGeneratedPin] = useState<string | null>(null);
-
   const [generatedForRole, setGeneratedForRole] = useState<UserRole | null>(null);
 
   useEffect(() => {
@@ -44,15 +44,13 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
       console.log(
         `[GeneratePinModal] Calling API to generate PIN for user ${user.id} (User Role: ${user.role}), intended login role: ${generateAsRole}`
       );
-
       const pinFromApi = await generatePinForUser(user.id, generateAsRole);
 
       setGeneratedPin(pinFromApi);
       Toast.show({
         type: 'success',
-
-        text1: `Generated PIN for ${generatedForRole}`,
-        text2: `Tell ${generatedForRole === 'parent' ? 'Parent' : getUserDisplayName(user)} to use: ${pinFromApi}`,
+        text1: `Generated PIN for ${generateAsRole.charAt(0).toUpperCase() + generateAsRole.slice(1)}`,
+        text2: `Tell ${generateAsRole === 'parent' ? 'Parent' : getUserDisplayName(user)} to use: ${pinFromApi}`,
         visibilityTime: 20000,
         position: 'bottom',
       });
@@ -77,6 +75,7 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
 
   const displayName = getUserDisplayName(user);
   const userActualRole = user.role;
+  const possibleTargetRoles: UserRole[] = [userActualRole];
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -94,27 +93,31 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
             </View>
           )}
 
-          {generatedPin && !isLoading && (
+          {generatedPin && !isLoading && generatedForRole && (
             <View style={commonSharedStyles.containerPinDisplay}>
-              <Text style={commonSharedStyles.pinLabel}>Generated PIN for {generatedForRole}:</Text>
+              <Text style={commonSharedStyles.pinLabel}>
+                Generated PIN for{' '}
+                {generatedForRole.charAt(0).toUpperCase() + generatedForRole.slice(1)}:
+              </Text>
               <Text style={commonSharedStyles.pinValue}>{generatedPin}</Text>
               <Text style={commonSharedStyles.pinInstructions}>
-                Provide this PIN to the {generatedForRole} for login. It will expire shortly.
+                Provide this PIN to the {generatedForRole === 'parent' ? 'Parent' : 'User'} for
+                login. It will expire shortly.
               </Text>
             </View>
           )}
 
           {!generatedPin && !isLoading && (
             <View style={commonSharedStyles.full}>
-              {(userActualRole === 'student' ||
-                userActualRole === 'teacher' ||
-                userActualRole === 'admin') && (
+              {possibleTargetRoles.map(targetRole => (
                 <Button
-                  title={`Generate PIN for ${userActualRole.charAt(0).toUpperCase() + userActualRole.slice(1)} Login`}
-                  onPress={() => handleGeneratePin(userActualRole)}
+                  key={targetRole}
+                  title={`Generate PIN for ${targetRole.charAt(0).toUpperCase() + targetRole.slice(1)} Login`}
+                  onPress={() => handleGeneratePin(targetRole)}
                   disabled={isLoading}
+                  color={colors.info}
                 />
-              )}
+              ))}
             </View>
           )}
 

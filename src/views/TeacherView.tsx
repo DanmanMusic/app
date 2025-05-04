@@ -1,32 +1,43 @@
 // src/views/TeacherView.tsx
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; // Added useMutation, useQueryClient
 import { View, Text, ScrollView, Button, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
+// *** Import deleteAssignedTask ***
+import { deleteAssignedTask } from '../api/assignedTasks';
 import { fetchUserProfile } from '../api/users';
 
 import { TeacherDashboardSection } from '../components/teacher/TeacherDashboardSection';
 import { TeacherStudentsSection } from '../components/teacher/TeacherStudentsSection';
 import { TeacherTasksSection } from '../components/teacher/TeacherTasksSection';
-import { AdminStudentDetailView } from '../components/common/StudentDetailView';
+import { StudentDetailView } from '../components/common/StudentDetailView';
 import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
 import AssignTaskModal from '../components/common/AssignTaskModal';
 import EditUserModal from '../components/common/EditUserModal';
 import GeneratePinModal from '../components/common/GeneratePinModal';
+// *** Import ConfirmationModal and PaginatedTasksList ***
+import ConfirmationModal from '../components/common/ConfirmationModal';
+import { PaginatedTasksList } from '../components/common/PaginatedTasksList';
+import { SharedHeader } from '../components/common/SharedHeader';
 
 import { useAuth } from '../contexts/AuthContext';
+// *** Update TeacherSection type ***
 import { TeacherSection, TeacherViewProps } from '../types/componentProps';
+// *** Import AssignedTask type ***
 import { AssignedTask, Instrument, User } from '../types/dataTypes';
 
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
 import { fetchInstruments } from '../api/instruments';
-import { SharedHeader } from '../components/common/SharedHeader';
+
+// *** Update TeacherSection type definition if not done in types file yet ***
+// type TeacherSection = 'dashboard' | 'students' | 'tasks' | 'tasks-full';
 
 export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId: teacherId } = useAuth();
+  const queryClient = useQueryClient(); // *** Add queryClient ***
 
   const [viewingSection, setViewingSection] = useState<TeacherSection>('dashboard');
   const [viewingStudentId, setViewingStudentId] = useState<string | null>(null);
@@ -38,6 +49,11 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   const [isGeneratePinModalVisible, setIsGeneratePinModalVisible] = useState(false);
   const [userForPin, setUserForPin] = useState<User | null>(null);
 
+  // *** State for Assigned Task Deletion ***
+  const [isDeleteAssignedTaskConfirmVisible, setIsDeleteAssignedTaskConfirmVisible] =
+    useState(false);
+  const [assignedTaskToDelete, setAssignedTaskToDelete] = useState<AssignedTask | null>(null);
+
   const {
     data: teacherUser,
     isLoading: teacherLoading,
@@ -45,7 +61,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     error: teacherErrorMsg,
   } = useQuery<User | null, Error>({
     queryKey: ['userProfile', teacherId],
-    queryFn: () => (teacherId ? fetchUserProfile(teacherId) : Promise.resolve(null)), // Fetch only if teacherId exists
+    queryFn: () => (teacherId ? fetchUserProfile(teacherId) : Promise.resolve(null)),
     enabled: !!teacherId,
     staleTime: 15 * 60 * 1000,
   });
@@ -81,6 +97,44 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     refetchOnWindowFocus: true,
   });
 
+  // *** Mutation for Deleting Assigned Tasks ***
+  const deleteAssignedTaskMutation = useMutation({
+    mutationFn: deleteAssignedTask,
+    onSuccess: (_, deletedAssignmentId) => {
+      console.log(`Teacher removed assigned task ${deletedAssignmentId} successfully.`);
+      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] }); // Invalidate all task lists
+      closeDeleteAssignedTaskConfirmModal();
+      Toast.show({ type: 'success', text1: 'Success', text2: 'Assigned task removed.' });
+    },
+    onError: (error: Error) => {
+      closeDeleteAssignedTaskConfirmModal();
+      Toast.show({
+        type: 'error',
+        text1: 'Removal Failed',
+        text2: error.message || 'Could not remove assigned task.',
+      });
+    },
+  });
+
+  // *** Handlers for Assigned Task Deletion ***
+  const handleInitiateDeleteAssignedTask = (task: AssignedTask) => {
+    setAssignedTaskToDelete(task);
+    setIsDeleteAssignedTaskConfirmVisible(true);
+  };
+
+  const handleConfirmDeleteAssignedTaskAction = () => {
+    if (assignedTaskToDelete && !deleteAssignedTaskMutation.isPending) {
+      deleteAssignedTaskMutation.mutate(assignedTaskToDelete.id);
+    }
+  };
+
+  const closeDeleteAssignedTaskConfirmModal = () => {
+    setIsDeleteAssignedTaskConfirmVisible(false);
+    setAssignedTaskToDelete(null);
+    deleteAssignedTaskMutation.reset();
+  };
+
+  // --- Other Handlers ---
   const handleViewProfile = (studentId: string) => setViewingStudentId(studentId);
   const handleBackFromProfile = () => setViewingStudentId(null);
 
@@ -137,6 +191,12 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     setUserForPin(null);
   };
 
+  // *** Handler to switch to the full task view ***
+  const handleViewAllTasks = () => {
+    setViewingSection('tasks-full');
+  };
+
+  // --- Loading / Error States ---
   const isLoadingCore = teacherLoading || instrumentsLoading;
 
   if (isLoadingCore) {
@@ -151,6 +211,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   }
 
   if (teacherError || !teacherUser) {
+    // Error handling for teacher profile fetch
     return (
       <SafeAreaView style={commonSharedStyles.flex1}>
         <View style={commonSharedStyles.baseCentered}>
@@ -162,6 +223,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     );
   }
   if (teacherUser.role !== 'teacher') {
+    // Role check
     return (
       <SafeAreaView style={commonSharedStyles.flex1}>
         <View style={commonSharedStyles.baseCentered}>
@@ -171,6 +233,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     );
   }
   if (teacherUser.status === 'inactive') {
+    // Status check
     return (
       <SafeAreaView style={commonSharedStyles.flex1}>
         <View style={commonSharedStyles.baseCentered}>
@@ -184,6 +247,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   }
 
   const renderMainContent = () => {
+    // Viewing a specific student profile
     if (viewingStudentId) {
       if (studentDetailLoading) {
         return (
@@ -206,10 +270,11 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
       }
       return (
         <>
+          {/* Keep Back button */}
           <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseMargin]}>
             <Button title="← Back" onPress={handleBackFromProfile} />
           </View>
-          <AdminStudentDetailView
+          <StudentDetailView
             viewingStudentId={viewingStudentId}
             onInitiateVerification={handleInternalInitiateVerification}
             onInitiateAssignTaskForStudent={handleInitiateAssignTaskForStudent}
@@ -217,26 +282,34 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
             onInitiatePinGeneration={
               studentDetailUser ? () => handleInitiatePinGeneration(studentDetailUser) : undefined
             }
+            // *** Pass delete handler ***
+            onInitiateDeleteTask={handleInitiateDeleteAssignedTask}
           />
         </>
       );
     }
 
+    // Main Teacher View (Not viewing specific student)
     return (
       <ScrollView style={commonSharedStyles.flex1}>
-        {!viewingStudentId && (
-          <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseMargin]}>
-            <Button
-              title="Dashboard"
-              onPress={() => setViewingSection('dashboard')}
-              disabled={viewingSection === 'dashboard'}
-            />
-          </View>
-        )}
+        <View
+          style={[
+            commonSharedStyles.baseRow,
+            commonSharedStyles.baseMargin,
+            commonSharedStyles.baseGap,
+          ]}
+        >
+          <Button
+            title="Dashboard"
+            onPress={() => setViewingSection('dashboard')}
+            disabled={viewingSection === 'dashboard'}
+          />
+        </View>
+
         {viewingSection === 'dashboard' && (
           <TeacherDashboardSection
             onInitiateVerificationModal={handleInternalInitiateVerification}
-            setViewingSection={setViewingSection}
+            setViewingSection={setViewingSection} // Pass setter if needed for navigation from dashboard
           />
         )}
         {viewingSection === 'students' && (
@@ -247,7 +320,35 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
           />
         )}
         {viewingSection === 'tasks' && (
-          <TeacherTasksSection onInitiateAssignTaskGeneral={handleInitiateAssignTaskGeneral} />
+          <TeacherTasksSection
+            onInitiateAssignTaskGeneral={handleInitiateAssignTaskGeneral}
+            onViewAllTasks={handleViewAllTasks} // Pass the handler
+          />
+        )}
+        {/* *** Render Paginated Task List for 'tasks-full' section *** */}
+        {viewingSection === 'tasks-full' && (
+          <View style={commonSharedStyles.baseMargin}>
+            <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+              <Text
+                style={[
+                  commonSharedStyles.baseTitleText,
+                  commonSharedStyles.baseMarginTopBottom,
+                  commonSharedStyles.bold,
+                ]}
+              >
+                Assigned Tasks (My Students)
+              </Text>
+            </View>
+            <PaginatedTasksList
+              key={`teacher-tasks-${teacherId}`} // Add key for potential remount on teacher change (though unlikely here)
+              viewingRole="teacher"
+              teacherId={teacherId} // Filter by this teacher
+              initialAssignmentFilter="all" // Or set different default
+              initialStudentStatusFilter="active" // Or set different default
+              onInitiateVerification={handleInternalInitiateVerification}
+              onInitiateDelete={handleInitiateDeleteAssignedTask} // Pass delete handler
+            />
+          </View>
         )}
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -261,7 +362,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
           commonSharedStyles.baseRow,
           commonSharedStyles.baseAlignCenter,
           commonSharedStyles.justifySpaceBetween,
-
           commonSharedStyles.baseMargin,
         ]}
       >
@@ -270,6 +370,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
 
       {renderMainContent()}
 
+      {/* Modals */}
       <SetEmailPasswordModal
         visible={isSetCredentialsModalVisible}
         onClose={() => setIsSetCredentialsModalVisible(false)}
@@ -288,6 +389,16 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
         visible={isGeneratePinModalVisible}
         user={userForPin}
         onClose={handleClosePinGeneration}
+      />
+      {/* *** Add Assigned Task Deletion Modal *** */}
+      <ConfirmationModal
+        visible={isDeleteAssignedTaskConfirmVisible}
+        title="Confirm Remove Task"
+        message={`Are you sure you want to remove the assigned task "${assignedTaskToDelete?.taskTitle || 'selected task'}"? This cannot be undone.`}
+        confirmText={deleteAssignedTaskMutation.isPending ? 'Removing...' : 'Remove Task'}
+        onConfirm={handleConfirmDeleteAssignedTaskAction}
+        onCancel={closeDeleteAssignedTaskConfirmModal}
+        confirmDisabled={deleteAssignedTaskMutation.isPending}
       />
     </SafeAreaView>
   );

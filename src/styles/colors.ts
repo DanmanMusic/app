@@ -6,7 +6,7 @@ export const colors = {
   danger: 'red',
   warning: 'orange',
   info: '#17a2b8',
-  gold: 'gold',
+  gold: '#A0830E',
 
   textPrimary: '#333',
   textSecondary: '#555',

@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import ConfirmationModal from './ConfirmationModal';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { capitalizeFirstLetter } from '../../utils/helpers';
 
 interface SharedHeaderProps {
   onSetLoginPress: () => void;
@@ -51,7 +52,8 @@ export const SharedHeader: React.FC<SharedHeaderProps> = ({ onSetLoginPress }) =
   return (
     <>
       <Text style={commonSharedStyles.baseTitleText} numberOfLines={1} ellipsizeMode="tail">
-        <Text style={commonSharedStyles.bold}>{appUser?.role}</Text>: {displayName}
+        <Text style={commonSharedStyles.bold}>{capitalizeFirstLetter(appUser?.role || '')}</Text>:{' '}
+        {displayName}
       </Text>
       <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
         {canSetLogin && <Button title="Set Login" onPress={onSetLoginPress} color={colors.info} />}

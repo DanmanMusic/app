@@ -1,8 +1,9 @@
-import React from 'react';
+// src/components/admin/AdminUsersSection.tsx
+import React from 'react'; // No longer needs { useState }
 import { View, Text, Button, FlatList, TextInput, ActivityIndicator } from 'react-native';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
-import { AdminUsersSectionProps } from '../../types/componentProps';
+import { AdminUsersSectionProps } from '../../types/componentProps'; // Assumes type is updated
 import { SimplifiedStudent, User, UserStatus } from '../../types/dataTypes';
 import { AdminUserItem } from '../common/AdminUserItem';
 import { AdminStudentItem } from '../common/AdminStudentItem';
@@ -11,17 +12,16 @@ import { usePaginatedStudents } from '../../hooks/usePaginatedStudents';
 import { usePaginatedTeachers } from '../../hooks/usePaginatedTeachers';
 import { usePaginatedParents } from '../../hooks/usePaginatedParents';
 import { usePaginatedAdmins } from '../../hooks/usePaginatedAdmins';
+import { capitalizeFirstLetter } from '../../utils/helpers';
 
 export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   activeTab,
-  studentFilter,
-  setStudentFilter,
-  studentSearchTerm,
-  setStudentSearchTerm,
-  instruments,
+  instruments, // Keep instruments prop
   onViewManageUser,
   onInitiateAssignTaskForStudent,
+  // REMOVED filter/search props
 }) => {
+  // Get ALL state and setters needed for students from the hook
   const {
     students,
     currentPage: studentCurrentPage,
@@ -32,8 +32,13 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     isFetching: isStudentFetching,
     isError: isStudentError,
     error: studentError,
+    currentFilter: studentFilterState, // State for filter
+    setFilter: setStudentFilterState, // Setter for filter
+    searchTerm: studentSearchTermState, // State for search
+    setSearchTerm: setStudentSearchTermState, // Setter for search
   } = usePaginatedStudents();
 
+  // Other hooks remain the same
   const {
     teachers,
     currentPage: teacherCurrentPage,
@@ -70,6 +75,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     error: adminError,
   } = usePaginatedAdmins();
 
+  // Switch logic remains the same
   let displayData: Array<User | SimplifiedStudent>;
   let currentPage: number;
   let totalPages: number;
@@ -114,7 +120,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
       isError = isParentError;
       error = parentError;
       break;
-
     case 'admins':
       displayData = admins;
       currentPage = adminCurrentPage;
@@ -138,12 +143,13 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
       error = null;
   }
 
+  // renderUserItem remains the same
   const renderUserItem = ({ item }: { item: User | SimplifiedStudent }) => {
     if (activeTab === 'students') {
       return (
         <AdminStudentItem
           student={item as SimplifiedStudent}
-          instruments={instruments}
+          instruments={instruments} // Pass instruments prop down
           onViewManage={onViewManageUser}
           onInitiateAssignTask={onInitiateAssignTaskForStudent}
         />
@@ -159,75 +165,79 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     return `Error loading ${resource}: ${error.message}`;
   };
 
+  // Handlers now use setters directly from the student hook
   const handleFilterChange = (filter: UserStatus | 'all') => {
-    if (setStudentFilter) {
-      setStudentFilter(filter);
-    } else {
-      console.warn('setStudentFilter handler not provided to AdminUsersSection');
-    }
+    setStudentFilterState(filter);
   };
 
   const handleSearchTermChange = (term: string) => {
-    if (setStudentSearchTerm) {
-      setStudentSearchTerm(term);
-    } else {
-      console.warn('setStudentSearchTerm handler not provided to AdminUsersSection');
-    }
+    setStudentSearchTermState(term);
   };
 
   return (
     <View style={commonSharedStyles.baseMargin}>
-      {activeTab === 'students' &&
-        studentFilter !== undefined &&
-        setStudentFilter &&
-        setStudentSearchTerm && (
-          <View>
-            <View
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+        <Text
+          style={[
+            commonSharedStyles.baseTitleText,
+            commonSharedStyles.baseMarginTopBottom,
+            commonSharedStyles.bold,
+          ]}
+        >
+          {capitalizeFirstLetter(activeTab)}
+        </Text>
+      </View>
+      {activeTab === 'students' && (
+        <View>
+          <View
+            style={[
+              commonSharedStyles.baseRow,
+              commonSharedStyles.justifyCenter,
+              commonSharedStyles.baseGap,
+            ]}
+          >
+            <Text
               style={[
-                commonSharedStyles.baseRow,
-                commonSharedStyles.justifyCenter,
-                commonSharedStyles.baseGap,
+                commonSharedStyles.baseSecondaryText,
+                commonSharedStyles.bold,
+                commonSharedStyles.baseSelfAlignCenter,
               ]}
             >
-              <Text
-                style={[
-                  commonSharedStyles.baseSecondaryText,
-                  commonSharedStyles.bold,
-                  commonSharedStyles.baseSelfAlignCenter,
-                ]}
-              >
-                Show:
-              </Text>
-              <Button
-                title="Active"
-                onPress={() => handleFilterChange('active')}
-                color={studentFilter === 'active' ? colors.success : colors.secondary}
-              />
-              <Button
-                title="Inactive"
-                onPress={() => handleFilterChange('inactive')}
-                color={studentFilter === 'inactive' ? colors.warning : colors.secondary}
-              />
-              <Button
-                title="All"
-                onPress={() => handleFilterChange('all')}
-                color={studentFilter === 'all' ? colors.info : colors.secondary}
-              />
-            </View>
-            <TextInput
-              style={[commonSharedStyles.input, commonSharedStyles.baseMarginTopBottom]}
-              placeholder="Search Students by Name..."
-              placeholderTextColor={colors.textLight}
-              value={studentSearchTerm}
-              onChangeText={handleSearchTermChange}
-              autoCapitalize="none"
-              autoCorrect={false}
+              Show:
+            </Text>
+            {/* Buttons use state from hook and call internal handler */}
+            <Button
+              title="Active"
+              onPress={() => handleFilterChange('active')}
+              color={studentFilterState === 'active' ? colors.success : colors.secondary}
+            />
+            <Button
+              title="Inactive"
+              onPress={() => handleFilterChange('inactive')}
+              color={studentFilterState === 'inactive' ? colors.warning : colors.secondary}
+            />
+            <Button
+              title="All"
+              onPress={() => handleFilterChange('all')}
+              color={studentFilterState === 'all' ? colors.info : colors.secondary}
             />
           </View>
-        )}
+          {/* Input uses state from hook and calls internal handler */}
+          <TextInput
+            style={[commonSharedStyles.input, commonSharedStyles.baseMarginTopBottom]}
+            placeholder="Search Students by Name..."
+            placeholderTextColor={colors.textLight}
+            value={studentSearchTermState}
+            onChangeText={handleSearchTermChange}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
+      )}
 
       {activeTab !== 'students' && <View style={{ height: 5 }} />}
 
+      {/* List rendering area remains the same */}
       <View style={commonSharedStyles.listArea}>
         {(isLoading || isFetching) && (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />

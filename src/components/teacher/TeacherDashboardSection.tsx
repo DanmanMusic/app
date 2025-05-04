@@ -62,7 +62,13 @@ export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = (
   return (
     <View style={[commonSharedStyles.baseMargin]}>
       <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
-        <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
+        <Text
+          style={[
+            commonSharedStyles.baseTitleText,
+            commonSharedStyles.baseMarginTopBottom,
+            commonSharedStyles.bold,
+          ]}
+        >
           Dashboard Overview
         </Text>
       </View>
@@ -95,7 +101,7 @@ export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = (
           <Text style={commonSharedStyles.baseEmptyText}>No students.</Text>
         ))}
 
-      <Text style={commonSharedStyles.baseSubTitleText}>
+      <Text style={[commonSharedStyles.baseSubTitleText, commonSharedStyles.baseMarginTopBottom]}>
         Pending Verifications ({pendingVerifications.length})
       </Text>
       {isLoading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />}

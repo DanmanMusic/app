@@ -1,3 +1,4 @@
+// src/components/teacher/TeacherTasksSection.tsx
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { View, Text, FlatList, Button, ActivityIndicator } from 'react-native';
@@ -6,13 +7,20 @@ import { fetchTaskLibrary } from '../../api/taskLibrary';
 
 import { TaskLibraryItem } from '../../types/dataTypes';
 import { TaskLibraryItemTeacher } from '../common/TaskLibraryItemTeacher';
-import { TeacherTasksSectionProps } from '../../types/componentProps';
+import { TeacherTasksSectionProps } from '../../types/componentProps'; // Will need updating
 
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
+// Update interface if not already done in types file
+// interface TeacherTasksSectionProps {
+//   onInitiateAssignTaskGeneral: () => void;
+//   onViewAllTasks: () => void; // Add the new prop
+// }
+
 export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
   onInitiateAssignTaskGeneral,
+  onViewAllTasks, // Accept the new prop
 }) => {
   const {
     data: taskLibrary = [],
@@ -26,12 +34,33 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
   });
 
   return (
-    <View>
-      <Text style={commonSharedStyles.baseSubTitleText}>Task Management</Text>
-      <View style={{ alignItems: 'flex-start', marginBottom: 20 }}>
-        <Button title="Assign Task" onPress={onInitiateAssignTaskGeneral} />
+    <View style={commonSharedStyles.baseMargin}>
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+        <Text
+          style={[
+            commonSharedStyles.baseTitleText,
+            commonSharedStyles.baseMarginTopBottom,
+            commonSharedStyles.bold,
+          ]}
+        >
+          Task Management
+        </Text>
       </View>
-      <Text style={commonSharedStyles.baseSubTitleText}> Task Library ({taskLibrary.length}) </Text>
+      <View
+        style={[
+          commonSharedStyles.baseRow,
+          commonSharedStyles.baseGap,
+          commonSharedStyles.baseMarginTopBottom,
+        ]}
+      >
+        <Button title="Assign Task" onPress={onInitiateAssignTaskGeneral} />
+        <Button title="View All Assigned Tasks" onPress={onViewAllTasks} />
+      </View>
+
+      <Text style={[commonSharedStyles.baseSubTitleText, commonSharedStyles.baseMarginTopBottom]}>
+        {' '}
+        Task Library ({taskLibrary.length}){' '}
+      </Text>
       {isLoading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />}
       {isError && (
         <Text style={commonSharedStyles.textDanger}>

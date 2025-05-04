@@ -121,7 +121,6 @@ export const commonSharedStyles = StyleSheet.create({
   baseTitleText: {
     color: colors.textPrimary,
     fontSize: 18,
-    fontWeight: '600',
   },
   baseVeryLightText: {
     color: colors.textVeryLight,

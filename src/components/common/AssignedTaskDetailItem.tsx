@@ -1,48 +1,40 @@
 // src/components/common/AssignedTaskDetailItem.tsx
 import React from 'react';
 import { View, Text, Button } from 'react-native';
-import { AssignedTask, UserStatus } from '../../types/dataTypes'; // Added UserStatus
+import { AssignedTask } from '../../types/dataTypes';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 
 interface AssignedTaskDetailItemProps {
   item: AssignedTask;
   studentName: string;
-  assignerName: string;
-  verifierName?: string | null;
-  studentStatus: UserStatus | 'unknown'; // Use UserStatus type
   onInitiateVerification?: (task: AssignedTask) => void;
-  // --- Updated Delete Props ---
-  canDelete?: boolean; // Simple flag calculated by parent
-  onDelete?: (taskId: string) => void; // Simple callback with ID
-  // --- End Updated Delete Props ---
-  disabled?: boolean; // Kept for potentially disabling verify button during delete confirm
+  canDelete?: boolean;
+  onDelete?: (taskId: string) => void;
+  disabled?: boolean;
 }
 
 export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
   item,
   studentName,
-  assignerName,
-  verifierName,
-  studentStatus,
   onInitiateVerification,
-  // --- Use Updated Delete Props ---
   canDelete,
   onDelete,
-  // --- End Use Updated Delete Props ---
-  disabled, // Still used for potentially disabling verify button
+  disabled,
 }) => {
-  // Simplify verify button logic
+  const assignerNameDisplay = item.assignerName || `ID: ${item.assignedById}`;
+  const verifierNameDisplay =
+    item.verifierName || (item.verifiedById ? `ID: ${item.verifiedById}` : 'Unknown');
+  const studentStatusDisplay = item.studentStatus || 'unknown';
+
   const allowVerify =
     onInitiateVerification &&
     item.isComplete &&
     item.verificationStatus === 'pending' &&
-    studentStatus === 'active'; // Student must be active to verify
+    studentStatusDisplay === 'active';
 
-  // Delete button logic now simply uses the canDelete prop
   const allowDelete = canDelete && onDelete;
 
-  // Status text logic remains the same
   const taskStatus = item.isComplete
     ? item.verificationStatus === 'pending'
       ? 'Complete (Pending Verification)'
@@ -53,12 +45,12 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
     <View style={[commonSharedStyles.baseItem, commonSharedStyles.baseColumn, { gap: 3 }]}>
       <Text style={commonSharedStyles.itemTitle}>{item.taskTitle}</Text>
       <Text style={commonSharedStyles.baseSecondaryText}>
-        {/* Display student status clearly */}
-        Student: {studentName} ({studentStatus === 'unknown' ? 'Status Unknown' : studentStatus})
+        Student: {studentName} (
+        {studentStatusDisplay === 'unknown' ? 'Status Unknown' : studentStatusDisplay})
       </Text>
       <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
       <Text style={commonSharedStyles.baseSecondaryText}>
-        Assigned: {new Date(item.assignedDate).toLocaleDateString()} by {assignerName}
+        Assigned: {new Date(item.assignedDate).toLocaleDateString()} by {assignerNameDisplay}
       </Text>
       {item.completedDate && (
         <Text style={commonSharedStyles.baseSecondaryText}>
@@ -67,8 +59,7 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
       )}
       {item.verifiedDate && item.verificationStatus !== 'pending' && (
         <Text style={commonSharedStyles.baseSecondaryText}>
-          Verified: {new Date(item.verifiedDate).toLocaleDateString()} by{' '}
-          {verifierName || item.verifiedById?.substring(0, 6) || 'Unknown'}
+          Verified: {new Date(item.verifiedDate).toLocaleDateString()} by {verifierNameDisplay}
         </Text>
       )}
       {item.actualPointsAwarded !== undefined && item.verificationStatus !== 'pending' && (
@@ -79,23 +70,19 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
       {item.isComplete && item.verificationStatus === 'pending' && (
         <Text style={commonSharedStyles.pendingNote}>Awaiting verification...</Text>
       )}
-
-      {/* Actions Container */}
       <View style={commonSharedStyles.assignedTaskActions}>
         {allowVerify && (
           <Button
             title="Verify"
-            onPress={() => onInitiateVerification!(item)} // Non-null assertion ok due to allowVerify check
-            disabled={disabled} // Disable if parent indicates (e.g., during delete confirm)
+            onPress={() => onInitiateVerification!(item)}
+            disabled={disabled}
           />
         )}
-        {/* Use the simplified allowDelete check */}
         {allowDelete && (
           <Button
             title="Remove"
-            onPress={() => onDelete!(item.id)} // Non-null assertion ok due to allowDelete check
+            onPress={() => onDelete!(item.id)} // Pass only ID to the parent handler
             color={colors.danger}
-            // disabled prop here is likely redundant if parent handles modal state, but kept for safety
             disabled={disabled}
           />
         )}

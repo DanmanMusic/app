@@ -13,21 +13,21 @@ export type TaskVerificationStatus = 'pending' | 'verified' | 'partial' | 'incom
 
 export interface AssignedTask {
   id: string;
-
   studentId: string;
   assignedById: string;
   assignedDate: string;
-
   taskTitle: string;
   taskDescription: string;
   taskBasePoints: number;
-
   isComplete: boolean;
   completedDate?: string;
   verificationStatus?: TaskVerificationStatus;
   verifiedById?: string;
   verifiedDate?: string;
   actualPointsAwarded?: number;
+  assignerName?: string;
+  verifierName?: string;
+  studentStatus?: UserStatus | 'unknown';
 }
 
 export interface Instrument {

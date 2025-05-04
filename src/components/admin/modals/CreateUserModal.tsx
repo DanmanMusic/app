@@ -75,6 +75,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
         type: 'success',
         text1: 'Success',
         text2: `User "${getUserDisplayName(createdUser)}" created.`,
+        position: 'bottom',
       });
     },
     onError: (error: Error) => {
@@ -160,11 +161,11 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={commonSharedStyles.centeredView}>
+      <View style={[commonSharedStyles.centeredView]}>
         <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>Create New User</Text>
 
-          <ScrollView style={commonSharedStyles.modalScrollView}>
+          <ScrollView style={[commonSharedStyles.modalScrollView, { paddingHorizontal: 2 }]}>
             <Text style={commonSharedStyles.label}>First Name:</Text>
             <TextInput
               style={commonSharedStyles.input}

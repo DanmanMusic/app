@@ -143,7 +143,11 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress }) => {
               <FlatList
                 data={announcements}
                 keyExtractor={item => `announcement-${item.id}`}
-                renderItem={({ item }) => <AnnouncementListItem item={item} />}
+                renderItem={({ item }) => (
+                  <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseItem]}>
+                    <AnnouncementListItem item={item} />
+                  </View>
+                )}
                 ItemSeparatorComponent={() => <View style={commonSharedStyles.separator} />}
                 ListEmptyComponent={() => (
                   <Text style={commonSharedStyles.baseEmptyText}>No announcements found.</Text>
