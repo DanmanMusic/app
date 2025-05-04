@@ -9,7 +9,7 @@ import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
 import { UserRole, User, Instrument } from '../../../types/dataTypes';
-import { getUserDisplayName } from '../../../utils/helpers';
+import { capitalizeFirstLetter, getUserDisplayName } from '../../../utils/helpers';
 import Toast from 'react-native-toast-message';
 
 const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'student', 'parent'];
@@ -198,7 +198,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
               {CREATABLE_ROLES.map(r => (
                 <Button
                   key={r}
-                  title={r.charAt(0).toUpperCase() + r.slice(1)}
+                  title={capitalizeFirstLetter(r)}
                   onPress={() => setRole(r)}
                   color={role === r ? colors.primary : colors.secondary}
                   disabled={mutation.isPending}

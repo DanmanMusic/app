@@ -356,11 +356,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
                 <TouchableOpacity onPress={() => handleStudentSelect(item.id)}>
-                  {' '}
                   <View style={commonSharedStyles.listItem}>
-                    {' '}
-                    <Text style={commonSharedStyles.listItemText}>{item.name}</Text>{' '}
-                  </View>{' '}
+                    <Text style={commonSharedStyles.listItemText}>{item.name}</Text>
+                  </View>
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
@@ -379,8 +377,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       return (
         <>
           <Text style={commonSharedStyles.modalStepTitle}>
-            {' '}
-            Step {preselectedStudentId ? 1 : 2}: Assign Task to {selectedStudentName}{' '}
+            Step {preselectedStudentId ? 1 : 2}: Assign Task to {selectedStudentName}
           </Text>
           <View style={[commonSharedStyles.containerToggle, { marginBottom: 15 }]}>
             <TouchableOpacity
@@ -397,8 +394,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                   !isAdHocMode && commonSharedStyles.toggleButtonTextActive,
                 ]}
               >
-                {' '}
-                Select from Library{' '}
+                Select from Library
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -415,8 +411,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                   isAdHocMode && commonSharedStyles.toggleButtonTextActive,
                 ]}
               >
-                {' '}
-                Create Custom Task{' '}
+                Create Custom Task
               </Text>
             </TouchableOpacity>
           </View>
@@ -512,9 +507,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                             </Text>
                             {item.instrumentIds && item.instrumentIds.length > 0 && (
                               <Text style={commonSharedStyles.baseLightText}>
-                                {' '}
-                                (Instruments: {getInstrumentNames(item.instrumentIds, instruments)}
-                                ){' '}
+                                (Instruments: {getInstrumentNames(item.instrumentIds, instruments)})
                               </Text>
                             )}
                             <Text style={commonSharedStyles.baseSecondaryText}>
@@ -525,10 +518,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                       )}
                       ListEmptyComponent={
                         <Text style={commonSharedStyles.baseEmptyText}>
-                          {' '}
                           {taskLibrary.length === 0
                             ? 'Task library is empty.'
-                            : "No relevant tasks found for this student's instrument(s)."}{' '}
+                            : "No relevant tasks found for this student's instrument(s)."}
                         </Text>
                       }
                     />

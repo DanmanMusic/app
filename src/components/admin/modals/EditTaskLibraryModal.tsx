@@ -454,9 +454,8 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
           {/* Mutation Status & Buttons */}
           {mutation.isPending && (
             <View style={commonSharedStyles.baseRowCentered}>
-              {' '}
-              <ActivityIndicator size="small" color={colors.primary} />{' '}
-              <Text style={commonSharedStyles.baseSecondaryText}>Saving Changes...</Text>{' '}
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={commonSharedStyles.baseSecondaryText}>Saving Changes...</Text>
             </View>
           )}
           {mutation.isError && (

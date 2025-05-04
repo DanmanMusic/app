@@ -62,6 +62,7 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
             title="Create New Task Library Item"
             onPress={onInitiateCreateTask}
             disabled={deleteTaskMutationPending || isLoading}
+            color={colors.success}
           />
         </View>
         {isLoading && (

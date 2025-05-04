@@ -8,19 +8,31 @@ export const ParentStudentListItem: React.FC<ParentStudentListItemProps> = ({
   student,
   onSelectStudent,
 }) => (
-  <View style={commonSharedStyles.baseItem}>
-    <Text style={commonSharedStyles.itemTitle}>{getUserDisplayName(student)}</Text>
-    <Text
-      style={[
-        commonSharedStyles.baseSecondaryText,
-        {
-          fontWeight: 'bold',
-          color: student.status === 'active' ? colors.success : colors.secondary,
-        },
-      ]}
-    >
-      Status: {student.status}
-    </Text>
-    <Button title="View Dashboard" onPress={() => onSelectStudent(student.id)} />
+  <View
+    style={[
+      commonSharedStyles.baseItem,
+      commonSharedStyles.baseRow,
+      commonSharedStyles.justifySpaceBetween,
+    ]}
+  >
+    <View>
+      <Text style={commonSharedStyles.itemTitle}>{getUserDisplayName(student)}</Text>
+      <Text
+        style={[
+          commonSharedStyles.baseSecondaryText,
+          {
+            fontWeight: 'bold',
+            color: student.status === 'active' ? colors.success : colors.secondary,
+          },
+        ]}
+      >
+        Status: {student.status}
+      </Text>
+    </View>
+    <View>
+      {student.status === 'active' && (
+        <Button title="View Dashboard" onPress={() => onSelectStudent(student.id)} />
+      )}
+    </View>
   </View>
 );

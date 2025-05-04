@@ -162,8 +162,8 @@ export interface StudentDetailViewProps {
   onInitiateStatusUser?: (user: User) => void;
   onInitiateTicketAdjustment?: (user: User) => void;
   onInitiateRedemption?: (user: User) => void;
-  onInitiatePinGeneration?: (user: User) => void;
-  onInitiateDeleteTask?: (task: AssignedTask) => void;
+  onInitiatePinGeneration: (user: User) => void;
+  onInitiateDeleteTask: (task: AssignedTask) => void;
 }
 
 export interface ViewAllAssignedTasksModalProps {
@@ -231,6 +231,7 @@ export interface AdminParentDetailViewProps {
   onInitiateEditUser: (user: User) => void;
   onInitiateStatusUser: (user: User) => void;
   onViewStudentProfile: (studentId: string) => void;
+  onInitiatePinGeneration?: (user: User) => void;
 }
 
 export interface AdminInstrumentItemProps {

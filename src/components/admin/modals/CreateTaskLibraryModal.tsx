@@ -294,9 +294,8 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
           {/* Mutation Status & Buttons (same as before) */}
           {mutation.isPending && (
             <View style={commonSharedStyles.baseRowCentered}>
-              {' '}
-              <ActivityIndicator size="small" color={colors.primary} />{' '}
-              <Text style={commonSharedStyles.baseSecondaryText}>Creating Task...</Text>{' '}
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={commonSharedStyles.baseSecondaryText}>Creating Task...</Text>
             </View>
           )}
           {mutation.isError && (

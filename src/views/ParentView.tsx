@@ -14,6 +14,7 @@ import { User } from '../types/dataTypes';
 import { getUserDisplayName } from '../utils/helpers';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
+import { SharedHeader } from '../components/common/SharedHeader';
 
 export const ParentView = () => {
   const { currentUserId: parentUserId } = useAuth();
@@ -160,12 +161,29 @@ export const ParentView = () => {
 
     return (
       <SafeAreaView style={commonSharedStyles.flex1}>
-        <View style={commonSharedStyles.parentHeader}>
-          <Text style={commonSharedStyles.parentHeaderText} numberOfLines={1} ellipsizeMode="tail">
+        <View
+          style={[
+            commonSharedStyles.baseRow,
+            commonSharedStyles.baseAlignCenter,
+            commonSharedStyles.justifySpaceBetween,
+            commonSharedStyles.baseMargin,
+          ]}
+        >
+          <SharedHeader onSetLoginPress={() => setIsSetCredentialsModalVisible(true)} />
+        </View>
+        <View
+          style={[
+            commonSharedStyles.baseRow,
+            commonSharedStyles.baseMarginTopBottom,
+            commonSharedStyles.justifySpaceBetween,
+            commonSharedStyles.baseMargin,
+          ]}
+        >
+          <Text style={[commonSharedStyles.baseSubTitleText]}>
             Viewing: {getUserDisplayName(studentToView)}
           </Text>
           {hasMultipleStudents && (
-            <Button title="Select Student" onPress={() => setViewingStudentId(null)} />
+            <Button title="← Students" onPress={() => setViewingStudentId(null)} />
           )}
         </View>
         <StudentView studentIdToView={viewingStudentId} />
@@ -180,18 +198,27 @@ export const ParentView = () => {
   return (
     <SafeAreaView style={commonSharedStyles.flex1}>
       <View style={commonSharedStyles.flex1}>
-        <View style={commonSharedStyles.parentHeader}>
-          <Text style={commonSharedStyles.parentHeaderText} numberOfLines={1} ellipsizeMode="tail">
-            Parent: {getUserDisplayName(parentUser)}
-          </Text>
-          <Button
-            title="Set Login"
-            onPress={() => setIsSetCredentialsModalVisible(true)}
-            color={colors.info}
-          />
+        <View
+          style={[
+            commonSharedStyles.baseRow,
+            commonSharedStyles.baseAlignCenter,
+            commonSharedStyles.justifySpaceBetween,
+            commonSharedStyles.baseMargin,
+          ]}
+        >
+          <SharedHeader onSetLoginPress={() => setIsSetCredentialsModalVisible(true)} />
         </View>
-
-        <Text style={commonSharedStyles.baseSubTitleText}>Your Students</Text>
+        <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+          <Text
+            style={[
+              commonSharedStyles.baseTitleText,
+              commonSharedStyles.baseMarginTopBottom,
+              commonSharedStyles.bold,
+            ]}
+          >
+            Your Students
+          </Text>
+        </View>
         {isLoadingStudents && (
           <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
         )}
@@ -213,14 +240,6 @@ export const ParentView = () => {
         ) : !isLoadingStudents && !isErrorStudents && linkedStudents.length === 0 ? (
           <Text style={commonSharedStyles.baseEmptyText}>No students linked to your account.</Text>
         ) : null}
-
-        <View style={{ marginTop: 20 }}>
-          <Button
-            title="Link Another Student (Mock QR)"
-            onPress={() => alert('Simulate scanning QR code... Needs implementation.')}
-            disabled={isLoadingStudents || isLoadingParent}
-          />
-        </View>
       </View>
       <SetEmailPasswordModal
         visible={isSetCredentialsModalVisible}

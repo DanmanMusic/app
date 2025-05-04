@@ -4,7 +4,7 @@ import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { generatePinForUser } from '../../api/users';
 import { User, UserRole } from '../../types/dataTypes';
-import { getUserDisplayName } from '../../utils/helpers';
+import { capitalizeFirstLetter, getUserDisplayName } from '../../utils/helpers';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
@@ -49,7 +49,7 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
       setGeneratedPin(pinFromApi);
       Toast.show({
         type: 'success',
-        text1: `Generated PIN for ${generateAsRole.charAt(0).toUpperCase() + generateAsRole.slice(1)}`,
+        text1: `Generated PIN for ${capitalizeFirstLetter(generateAsRole)}`,
         text2: `Tell ${generateAsRole === 'parent' ? 'Parent' : getUserDisplayName(user)} to use: ${pinFromApi}`,
         visibilityTime: 20000,
         position: 'bottom',
@@ -96,8 +96,7 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
           {generatedPin && !isLoading && generatedForRole && (
             <View style={commonSharedStyles.containerPinDisplay}>
               <Text style={commonSharedStyles.pinLabel}>
-                Generated PIN for{' '}
-                {generatedForRole.charAt(0).toUpperCase() + generatedForRole.slice(1)}:
+                Generated PIN for {capitalizeFirstLetter(generatedForRole)}:
               </Text>
               <Text style={commonSharedStyles.pinValue}>{generatedPin}</Text>
               <Text style={commonSharedStyles.pinInstructions}>
@@ -112,7 +111,7 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
               {possibleTargetRoles.map(targetRole => (
                 <Button
                   key={targetRole}
-                  title={`Generate PIN for ${targetRole.charAt(0).toUpperCase() + targetRole.slice(1)} Login`}
+                  title={`Generate PIN for ${capitalizeFirstLetter(targetRole)} Login`}
                   onPress={() => handleGeneratePin(targetRole)}
                   disabled={isLoading}
                   color={colors.info}

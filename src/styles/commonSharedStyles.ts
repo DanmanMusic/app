@@ -477,23 +477,6 @@ export const commonSharedStyles = StyleSheet.create({
     paddingVertical: 8,
     marginTop: 10,
   },
-  parentHeader: {
-    alignItems: 'center',
-    backgroundColor: colors.backgroundPrimary,
-    borderBottomColor: colors.borderPrimary,
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    marginBottom: 10,
-  },
-  parentHeaderText: {
-    color: colors.textPrimary,
-    fontSize: 18,
-    fontWeight: 'bold',
-    flexShrink: 1,
-  },
   pendingDetail: {
     color: colors.textSecondary,
     fontSize: 14,

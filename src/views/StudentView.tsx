@@ -35,7 +35,7 @@ import { StudentViewProps } from '../types/componentProps';
 // Style & Helper Imports
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
-import { getInstrumentNames, getUserDisplayName } from '../utils/helpers';
+import { getInstrumentNames } from '../utils/helpers';
 
 type StudentTab = 'dashboard' | 'tasks' | 'rewards' | 'announcements';
 
@@ -488,7 +488,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                   }
                 />
               )}
-              <View style={{ height: 30 }} /> {/* Spacer at the bottom */}
+              <View style={{ height: 30 }} />
             </ScrollView>
           )}
 
@@ -588,7 +588,11 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                 <FlatList
                   data={studentAnnouncements} // Use memoized announcements
                   keyExtractor={item => `announcement-${item.id}`}
-                  renderItem={({ item }) => <AnnouncementListItem item={item} />}
+                  renderItem={({ item }) => (
+                    <View style={commonSharedStyles.baseItem}>
+                      <AnnouncementListItem item={item} />
+                    </View>
+                  )}
                   ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
                   ListEmptyComponent={() => (
                     <Text style={commonSharedStyles.baseEmptyText}>No announcements found.</Text>

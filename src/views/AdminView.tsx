@@ -372,7 +372,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
               onInitiateTicketAdjustment={handleInitiateTicketAdjustment}
               onInitiateRedemption={handleInitiateRedemption}
               onInitiatePinGeneration={handleInitiatePinGeneration}
-              // *** Pass the delete handler ***
               onInitiateDeleteTask={handleInitiateDeleteAssignedTask}
             />
           );
@@ -393,6 +392,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
               onInitiateEditUser={handleInitiateEditUser}
               onInitiateStatusUser={handleInitiateStatusUser}
               onViewStudentProfile={handleViewStudentProfileFromParentOrTeacher}
+              onInitiatePinGeneration={handleInitiatePinGeneration}
             />
           );
         case 'admin':

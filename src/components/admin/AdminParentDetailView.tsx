@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, Button, ActivityIndicator, FlatList, ScrollView } from 'react-native';
 import { useQuery, useQueries, useQueryClient, useMutation } from '@tanstack/react-query';
 
-import { fetchUserProfile, unlinkStudentFromParent } from '../../api/users';
+import { fetchAuthUser, fetchUserProfile, unlinkStudentFromParent } from '../../api/users';
 
 import { User } from '../../types/dataTypes';
 import { AdminParentDetailViewProps } from '../../types/componentProps';
@@ -19,6 +19,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
   onInitiateEditUser,
   onInitiateStatusUser,
   onViewStudentProfile,
+  onInitiatePinGeneration,
 }) => {
   const queryClient = useQueryClient();
 
@@ -32,6 +33,17 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
     queryFn: () => fetchUserProfile(viewingUserId),
     enabled: !!viewingUserId,
     staleTime: 5 * 60 * 1000,
+  });
+
+  const {
+    data: parentAuthData,
+    isLoading: isLoadingParentAuth,
+    isError: isErrorParentAuth,
+  } = useQuery<{ email: string | null } | null, Error>({
+    queryKey: ['authUser', viewingUserId],
+    queryFn: () => fetchAuthUser(viewingUserId),
+    enabled: !!viewingUserId && !!onInitiatePinGeneration, // Only fetch if PIN generation is possible
+    staleTime: 15 * 60 * 1000, // Cache for a while
   });
 
   const [isLinkStudentModalVisible, setIsLinkStudentModalVisible] = useState(false);
@@ -119,6 +131,23 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
   );
   const isParentActive = useMemo(() => parent?.status === 'active', [parent]);
 
+  const showPinButton = useMemo(() => {
+    if (!onInitiatePinGeneration || !isParentActive || isLoadingParentAuth) {
+      return false;
+    }
+    if (isErrorParentAuth) {
+      console.warn('Could not fetch student auth details to determine PIN button visibility.');
+      return true;
+    }
+    return !parentAuthData?.email || parentAuthData.email.endsWith('@placeholder.app');
+  }, [
+    onInitiatePinGeneration,
+    isParentActive,
+    parentAuthData,
+    isLoadingParentAuth,
+    isErrorParentAuth,
+  ]);
+
   const handleEdit = () => {
     if (parent && onInitiateEditUser) {
       onInitiateEditUser(parent);
@@ -145,6 +174,12 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
   const handleConfirmUnlink = () => {
     if (linkToRemove && !unlinkMutation.isPending) {
       unlinkMutation.mutate({ parentId: linkToRemove.parentId, studentId: linkToRemove.studentId });
+    }
+  };
+
+  const handlePinGenerationClick = () => {
+    if (parent && onInitiatePinGeneration) {
+      onInitiatePinGeneration(parent);
     }
   };
 
@@ -214,7 +249,15 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
         >
           <Button title="Edit Info" onPress={handleEdit} color={colors.warning} />
           <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
-          <Button title="Link Student" onPress={handleLinkStudent} color={colors.info} />
+          <Button title="Link Student" onPress={handleLinkStudent} color={colors.success} />
+          {showPinButton && (
+            <Button
+              title="Login (PIN)"
+              onPress={handlePinGenerationClick}
+              color={colors.info}
+              disabled={!isParentActive}
+            />
+          )}
         </View>
         <Text style={commonSharedStyles.baseSubTitleText}>
           Linked Students ({linkedStudents.length})

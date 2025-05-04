@@ -107,3 +107,12 @@ export const getInstrumentIconSource = (
 export const capitalizeFirstLetter = (string: string) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
+
+export const timestampDisplay = (timestamp: string) =>
+  new Date(timestamp).toLocaleString([], {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });

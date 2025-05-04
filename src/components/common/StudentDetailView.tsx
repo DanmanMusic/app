@@ -1,20 +1,35 @@
 // src/components/common/StudentDetailView.tsx
-import React, { useMemo } from 'react'; // Removed useState
-import { useQuery } from '@tanstack/react-query'; // Removed useMutation
-import { View, Text, ScrollView, Button, FlatList, ActivityIndicator } from 'react-native';
-import Toast from 'react-native-toast-message'; // Removed Toast as it's handled by parent
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  View,
+  Text,
+  ScrollView,
+  Button,
+  FlatList,
+  ActivityIndicator,
+  Linking,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
+import Toast from 'react-native-toast-message';
+
 import { fetchInstruments } from '../../api/instruments';
 import { fetchStudentBalance } from '../../api/tickets';
-import { fetchUserProfile, fetchTeachers } from '../../api/users';
+import { fetchUserProfile, fetchTeachers, fetchAuthUser } from '../../api/users';
 import { usePaginatedStudentHistory } from '../../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../../hooks/usePaginatedStudentTasks';
+import { getSupabase } from '../../lib/supabaseClient';
 import { TicketHistoryItem } from './TicketHistoryItem';
 import PaginationControls from '../admin/PaginationControls';
-import { AssignedTask, Instrument, User } from '../../types/dataTypes'; // Removed UserRole
-import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
+import { AssignedTask, Instrument, User } from '../../types/dataTypes';
+import { getInstrumentNames, getUserDisplayName, timestampDisplay } from '../../utils/helpers';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
-import { StudentDetailViewProps } from '../../types/componentProps'; // Props will need updating
+import { StudentDetailViewProps } from '../../types/componentProps';
+import { useAuth } from '../../contexts/AuthContext';
+
+const TASK_ATTACHMENT_BUCKET = 'task-library-attachments';
 
 export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
   viewingStudentId,
@@ -27,6 +42,9 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
   onInitiatePinGeneration,
   onInitiateDeleteTask,
 }) => {
+  const { currentUserId: loggedInUserId, currentUserRole } = useAuth(); // Get current user role and ID
+
+  // --- Queries ---
   const {
     data: student,
     isLoading: studentLoading,
@@ -71,6 +89,17 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
   });
 
   const {
+    data: studentAuthData,
+    isLoading: isLoadingStudentAuth,
+    isError: isErrorStudentAuth,
+  } = useQuery<{ email: string | null } | null, Error>({
+    queryKey: ['authUser', viewingStudentId],
+    queryFn: () => fetchAuthUser(viewingStudentId),
+    enabled: !!viewingStudentId && !!onInitiatePinGeneration, // Only fetch if PIN generation is possible
+    staleTime: 15 * 60 * 1000, // Cache for a while
+  });
+
+  const {
     tasks: paginatedTasks,
     currentPage: tasksCurrentPage,
     totalPages: tasksTotalPages,
@@ -94,9 +123,7 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
     totalItems: totalHistoryCount,
   } = usePaginatedStudentHistory(viewingStudentId);
 
-  // --- Removed Delete Task Mutation ---
-  // const deleteTaskMutation = useMutation({...});
-
+  // --- Memos and Derived State ---
   const isStudentActive = useMemo(() => student?.status === 'active', [student]);
   const studentDisplayName = useMemo(
     () => (student ? getUserDisplayName(student) : 'Loading...'),
@@ -110,7 +137,6 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
     if (!student || !student.linkedTeacherIds || student.linkedTeacherIds.length === 0)
       return 'None';
     if (teachersLoading) return 'Loading...';
-
     return (
       student.linkedTeacherIds
         .map(id => {
@@ -121,12 +147,27 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
     );
   }, [student, activeTeachers, teachersLoading]);
 
-  // --- Removed Delete Confirmation Handlers ---
-  // const closeDeleteConfirmModal = () => {...};
-  // const handleInitiateDeleteTaskClick = (task: AssignedTask) => {...};
-  // const handleConfirmDeleteTaskAction = () => {...};
+  const filteredTasksForDisplay = useMemo(() => {
+    return paginatedTasks.filter(task => !task.isComplete || task.verificationStatus === 'pending');
+  }, [paginatedTasks]);
 
-  // Renamed internal handler to avoid naming clash if parent uses same name
+  const showPinButton = useMemo(() => {
+    if (!onInitiatePinGeneration || !isStudentActive || isLoadingStudentAuth) {
+      return false;
+    }
+    if (isErrorStudentAuth) {
+      console.warn('Could not fetch student auth details to determine PIN button visibility.');
+      return true;
+    }
+    return !studentAuthData?.email || studentAuthData.email.endsWith('@placeholder.app');
+  }, [
+    onInitiatePinGeneration,
+    isStudentActive,
+    studentAuthData,
+    isLoadingStudentAuth,
+    isErrorStudentAuth,
+  ]);
+
   const handleVerifyTaskClicked = (task: AssignedTask) => {
     onInitiateVerification?.(task);
   };
@@ -165,13 +206,47 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
     }
   };
 
+  const handleOpenUrl = async (url: string | null | undefined) => {
+    if (!url) return;
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      Toast.show({ type: 'error', text1: 'Error', text2: `Cannot open URL: ${url}` });
+    }
+  };
+
+  const handleViewAttachment = async (attachmentPath: string | null | undefined) => {
+    if (!attachmentPath) return;
+    try {
+      const supabase = getSupabase();
+      const { data, error } = await supabase.storage
+        .from(TASK_ATTACHMENT_BUCKET)
+        .createSignedUrl(attachmentPath, 60);
+
+      if (error) throw error;
+      if (data?.signedUrl) {
+        await handleOpenUrl(data.signedUrl);
+      } else {
+        throw new Error('Could not generate download URL.');
+      }
+    } catch (error: any) {
+      console.error('Error getting/opening attachment URL:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: `Could not get/open attachment: ${error.message}`,
+      });
+    }
+  };
+
   const isLoading = studentLoading || instrumentsLoading || teachersLoading;
 
   if (isLoading) {
     return (
       <View style={commonSharedStyles.baseCentered}>
-        <ActivityIndicator size="large" />
-        <Text>Loading Student Details...</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={commonSharedStyles.baseSecondaryText}>Loading Student Details...</Text>
       </View>
     );
   }
@@ -215,9 +290,22 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
         <Text style={commonSharedStyles.baseSecondaryText}>
           Name: <Text style={commonSharedStyles.bold}>{studentDisplayName}</Text>
         </Text>
-        <Text style={commonSharedStyles.baseSecondaryText}>
-          ID: <Text style={commonSharedStyles.bold}>{student.id}</Text>
-        </Text>
+        {balanceLoading ? (
+          <Text style={[commonSharedStyles.baseSecondaryText]}>
+            Balance: <Text style={commonSharedStyles.bold}>Loading...</Text>
+          </Text>
+        ) : balanceError ? (
+          <Text style={commonSharedStyles.baseSecondaryText}>
+            Balance: <Text style={commonSharedStyles.errorText}>Error</Text>
+          </Text>
+        ) : (
+          <Text style={[commonSharedStyles.baseSecondaryText]}>
+            Balance:{' '}
+            <Text style={[commonSharedStyles.bold, commonSharedStyles.baseSubTitleText]}>
+              {balance} Tickets
+            </Text>
+          </Text>
+        )}
         <Text style={commonSharedStyles.baseSecondaryText}>
           Status:{' '}
           <Text
@@ -234,19 +322,9 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
         <Text style={commonSharedStyles.baseSecondaryText}>
           Linked Teachers: <Text style={commonSharedStyles.bold}>{teacherNames}</Text>
         </Text>
-        {balanceLoading ? (
-          <Text style={[commonSharedStyles.baseSecondaryText]}>
-            Balance: <Text style={commonSharedStyles.bold}>Loading...</Text>
-          </Text>
-        ) : balanceError ? (
-          <Text style={commonSharedStyles.baseSecondaryText}>
-            Balance: <Text style={commonSharedStyles.errorText}>Error</Text>
-          </Text>
-        ) : (
-          <Text style={[commonSharedStyles.baseSecondaryText]}>
-            Balance: <Text style={commonSharedStyles.bold}>{balance} Tickets</Text>
-          </Text>
-        )}
+        <Text style={commonSharedStyles.baseSecondaryText}>
+          ID: <Text style={commonSharedStyles.bold}>{student.id}</Text>
+        </Text>
         <View
           style={[
             commonSharedStyles.baseRow,
@@ -269,12 +347,12 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
               color={colors.success}
             />
           )}
-          <Button title="Assign Task" onPress={handleAssignTaskClick} disabled={!isStudentActive} />
+          {isStudentActive && <Button title="Assign Task" onPress={handleAssignTaskClick} />}
           <Button title="Edit Info" onPress={handleEditClick} color={colors.warning} />
           {onInitiateStatusUser && (
             <Button title="Manage Status" onPress={handleStatusClick} color={colors.secondary} />
           )}
-          {onInitiatePinGeneration && (
+          {showPinButton && (
             <Button
               title="Login (PIN)"
               onPress={handlePinGenerationClick}
@@ -282,9 +360,12 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
               disabled={!isStudentActive}
             />
           )}
+          {isLoadingStudentAuth && (
+            <Text style={commonSharedStyles.baseLightText}>Checking login type...</Text>
+          )}
         </View>
         <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>
-          Assigned Tasks ({totalTasksCount})
+          Current Tasks ({filteredTasksForDisplay.length})
         </Text>
         {studentTasksLoading && <ActivityIndicator />}
         {studentTasksError && (
@@ -294,7 +375,7 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
         )}
         {!studentTasksLoading && !studentTasksError && (
           <FlatList
-            data={paginatedTasks}
+            data={filteredTasksForDisplay}
             keyExtractor={item => `task-${item.id}`}
             renderItem={({ item }) => {
               const allowVerify =
@@ -302,14 +383,17 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
                 item.isComplete &&
                 item.verificationStatus === 'pending' &&
                 isStudentActive;
-              // Task can be deleted if it's not yet completed OR if it's complete but still pending verification
-              const allowDelete =
-                onInitiateDeleteTask && (!item.isComplete || item.verificationStatus === 'pending');
-              const taskStatus = item.isComplete
-                ? item.verificationStatus === 'pending'
-                  ? 'Complete (Pending)'
-                  : `Verified (${item.verificationStatus || '?'})`
-                : 'Assigned';
+
+              let canDelete = false;
+              if (!item.isComplete || item.verificationStatus === 'pending') {
+                if (currentUserRole === 'admin') {
+                  canDelete = true;
+                } else if (currentUserRole === 'teacher' && loggedInUserId === item.assignedById) {
+                  canDelete = true;
+                }
+              }
+
+              const taskStatus = item.isComplete ? 'Complete (Pending)' : 'Assigned';
 
               return (
                 <View
@@ -317,55 +401,55 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
                     commonSharedStyles.baseItem,
                     commonSharedStyles.baseRow,
                     commonSharedStyles.justifySpaceBetween,
+                    commonSharedStyles.baseGap,
                   ]}
                 >
-                  <View style={commonSharedStyles.flex1}>
-                    <Text style={commonSharedStyles.itemTitle}>{item.taskTitle}</Text>
-                    <Text style={commonSharedStyles.baseSubTitleText}>Status: {taskStatus}</Text>
+                  <View>
+                    <Text style={[commonSharedStyles.itemTitle, { marginBottom: 1 }]}>
+                      {item.taskTitle}
+                    </Text>
+                    <Text style={[commonSharedStyles.baseSubTitleText, { marginBottom: 1 }]}>
+                      Status: {taskStatus}
+                    </Text>
+                    <Text style={[commonSharedStyles.baseSecondaryText, { marginBottom: 1 }]}>
+                      Assigned By: {item.assignerName || 'Unknown'}
+                    </Text>
+                    {item.assignedDate && (
+                      <Text style={[commonSharedStyles.baseSecondaryText, { marginBottom: 1 }]}>
+                        Assigned: {timestampDisplay(item.assignedDate)}
+                      </Text>
+                    )}
                     {item.completedDate && (
-                      <Text style={commonSharedStyles.baseSecondaryText}>
-                        Completed: {new Date(item.completedDate).toLocaleDateString()}
+                      <Text style={[commonSharedStyles.baseSecondaryText, { marginBottom: 1 }]}>
+                        Marked Complete: {timestampDisplay(item.completedDate)}
                       </Text>
                     )}
-                    {item.verifiedDate && item.verificationStatus !== 'pending' && (
-                      <Text style={commonSharedStyles.baseSecondaryText}>
-                        Verified: {new Date(item.verifiedDate).toLocaleDateString()}
-                      </Text>
-                    )}
-                    {item.actualPointsAwarded !== undefined &&
-                      item.verificationStatus !== 'pending' && (
-                        <Text
-                          style={[
-                            commonSharedStyles.baseSubTitleText,
-                            commonSharedStyles.textSuccess,
-                          ]}
-                        >
-                          Awarded: {item.actualPointsAwarded ?? 0} Tickets
+                    {item.taskLinkUrl && (
+                      <TouchableOpacity onPress={() => handleOpenUrl(item.taskLinkUrl)}>
+                        <Text style={[localStyles.detailText, { marginBottom: 1 }]}>
+                          Reference: <Text style={localStyles.linkText}>{item.taskLinkUrl}</Text>
                         </Text>
-                      )}
-                    {item.isComplete && item.verificationStatus === 'pending' && (
-                      <Text
-                        style={[commonSharedStyles.baseSubTitleText, { color: colors.warning }]}
+                      </TouchableOpacity>
+                    )}
+                    {item.taskAttachmentPath && (
+                      <TouchableOpacity
+                        onPress={() => handleViewAttachment(item.taskAttachmentPath)}
                       >
-                        Awaiting verification...
-                      </Text>
+                        <Text style={[localStyles.detailText, { marginBottom: 1 }]}>
+                          Attachment: <Text style={localStyles.linkText}>View/Download</Text>
+                        </Text>
+                      </TouchableOpacity>
                     )}
                   </View>
-                  {/* Action Buttons */}
-                  <View style={[commonSharedStyles.baseColumn, commonSharedStyles.baseGap]}>
+                  <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
                     {allowVerify && (
-                      <Button
-                        title="Verify"
-                        onPress={() => handleVerifyTaskClicked(item)}
-                        // Consider if parent needs to pass down a global isDeleting state
-                      />
+                      <Button title="Verify" onPress={() => handleVerifyTaskClicked(item)} />
                     )}
-                    {allowDelete && (
+                    {canDelete && (
                       <Button
                         title="Remove"
-                        onPress={() => onInitiateDeleteTask(item)} // Call the prop passed from parent
+                        onPress={() => onInitiateDeleteTask(item)}
                         color={colors.danger}
-                        // Consider if parent needs to pass down a global isDeleting state
                       />
                     )}
                   </View>
@@ -375,21 +459,7 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
             scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
             ListEmptyComponent={
-              <Text style={commonSharedStyles.baseEmptyText}>No tasks assigned.</Text>
-            }
-            ListHeaderComponent={
-              studentTasksFetching && !studentTasksLoading ? (
-                <ActivityIndicator size="small" color={colors.secondary} />
-              ) : null
-            }
-            ListFooterComponent={
-              tasksTotalPages > 1 ? (
-                <PaginationControls
-                  currentPage={tasksCurrentPage}
-                  totalPages={tasksTotalPages}
-                  onPageChange={setTasksPage}
-                />
-              ) : null
+              <Text style={commonSharedStyles.baseEmptyText}>No active or pending tasks.</Text>
             }
             contentContainerStyle={{ paddingBottom: 10 }}
           />
@@ -435,3 +505,16 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
     </>
   );
 };
+
+const localStyles = StyleSheet.create({
+  detailText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 3,
+  },
+  linkText: {
+    color: colors.primary,
+    textDecorationLine: 'underline',
+    fontWeight: '600',
+  },
+});

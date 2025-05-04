@@ -30,9 +30,17 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
 
   return (
     <View style={commonSharedStyles.baseMargin}>
-      <Text style={[commonSharedStyles.baseSubTitleText, commonSharedStyles.baseMarginTopBottom]}>
-        Task Management
-      </Text>
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+        <Text
+          style={[
+            commonSharedStyles.baseTitleText,
+            commonSharedStyles.baseMarginTopBottom,
+            commonSharedStyles.bold,
+          ]}
+        >
+          Task Management
+        </Text>
+      </View>
       <View
         style={[
           commonSharedStyles.baseRow,
@@ -45,8 +53,7 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
       </View>
 
       <Text style={[commonSharedStyles.baseSubTitleText, commonSharedStyles.baseMarginTopBottom]}>
-        {' '}
-        Task Library ({taskLibrary.length}){' '}
+        Task Library ({taskLibrary.length})
       </Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
         <Button
@@ -59,8 +66,7 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
       {isLoading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />}
       {isError && (
         <Text style={commonSharedStyles.textDanger}>
-          {' '}
-          Error loading task library: {error?.message}{' '}
+          Error loading task library: {error?.message}
         </Text>
       )}
       {!isLoading &&

@@ -274,8 +274,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
       <SafeAreaView style={commonSharedStyles.flex1}>
         <View style={commonSharedStyles.baseCentered}>
           <Text style={commonSharedStyles.errorText}>
-            {' '}
-            Error loading teacher data: {teacherErrorMsg?.message || 'Not found.'}{' '}
+            Error loading teacher data: {teacherErrorMsg?.message || 'Not found.'}
           </Text>
         </View>
       </SafeAreaView>
@@ -296,8 +295,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
         <View style={commonSharedStyles.baseCentered}>
           <Text style={commonSharedStyles.baseHeaderText}>Account Inactive</Text>
           <Text style={commonSharedStyles.baseSubTitleText}>
-            {' '}
-            Your teacher account is currently inactive.{' '}
+            Your teacher account is currently inactive.
           </Text>
         </View>
       </SafeAreaView>
@@ -309,24 +307,19 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
       if (studentDetailLoading) {
         return (
           <View style={commonSharedStyles.baseCentered}>
-            {' '}
-            <ActivityIndicator size="large" color={colors.primary} />{' '}
-            <Text style={commonSharedStyles.baseSecondaryText}>
-              Loading Student Details...
-            </Text>{' '}
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={commonSharedStyles.baseSecondaryText}>Loading Student Details...</Text>
           </View>
         );
       }
       if (studentDetailError || !studentDetailUser) {
         return (
           <View style={commonSharedStyles.baseCentered}>
-            {' '}
             <Text style={commonSharedStyles.errorText}>
-              {' '}
               Error loading student details:{' '}
-              {studentDetailErrorMsg?.message || 'Student not found or error occurred.'}{' '}
-            </Text>{' '}
-            <Button title="Back to My Students" onPress={handleBackFromProfile} />{' '}
+              {studentDetailErrorMsg?.message || 'Student not found or error occurred.'}
+            </Text>
+            <Button title="Back to My Students" onPress={handleBackFromProfile} />
           </View>
         );
       }
@@ -340,9 +333,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
             onInitiateVerification={handleInternalInitiateVerification}
             onInitiateAssignTaskForStudent={handleInitiateAssignTaskForStudent}
             onInitiateEditStudent={handleInitiateEditUser}
-            onInitiatePinGeneration={
-              studentDetailUser ? () => handleInitiatePinGeneration(studentDetailUser) : undefined
-            }
+            onInitiatePinGeneration={() => handleInitiatePinGeneration(studentDetailUser)}
             onInitiateDeleteTask={handleInitiateDeleteAssignedTask}
           />
         </>
@@ -362,16 +353,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
             title="Dashboard"
             onPress={() => setViewingSection('dashboard')}
             disabled={viewingSection === 'dashboard'}
-          />
-          <Button
-            title="My Students"
-            onPress={() => setViewingSection('students')}
-            disabled={viewingSection === 'students'}
-          />
-          <Button
-            title="Tasks"
-            onPress={() => setViewingSection('tasks')}
-            disabled={viewingSection === 'tasks'}
           />
         </View>
 
@@ -403,8 +384,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
             <Text
               style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}
             >
-              {' '}
-              Assigned Tasks (My Students){' '}
+              Assigned Tasks (My Students)
             </Text>
             <PaginatedTasksList
               key={`teacher-tasks-${teacherId}`}

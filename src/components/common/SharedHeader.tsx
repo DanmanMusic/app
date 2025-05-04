@@ -1,7 +1,7 @@
 // src/components/common/SharedHeader.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react'; // Remove useMemo if no longer needed
 import { View, Text, Button } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext'; // Import useAuth
 import { colors } from '../../styles/colors';
 import ConfirmationModal from './ConfirmationModal';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
@@ -12,7 +12,7 @@ interface SharedHeaderProps {
 }
 
 export const SharedHeader: React.FC<SharedHeaderProps> = ({ onSetLoginPress }) => {
-  const { appUser, supabaseUser, session, signOut } = useAuth();
+  const { appUser, supabaseUser, signOut, isPinSession } = useAuth();
   const [isConfirmLogoutVisible, setIsConfirmLogoutVisible] = useState(false);
 
   const displayName = useMemo(() => {
@@ -28,24 +28,28 @@ export const SharedHeader: React.FC<SharedHeaderProps> = ({ onSetLoginPress }) =
     return !!supabaseUser?.email && supabaseUser.email.endsWith('@placeholder.app');
   }, [supabaseUser?.email]);
 
-  const isPinSession = useMemo(() => {
-    return session?.user?.app_metadata?.provider === 'custom_pin';
-  }, [session]);
-
   const handleLogoutPress = () => {
+    console.log('[SharedHeader] handleLogoutPress triggered.');
+    console.log('[SharedHeader] Context isPinSession:', isPinSession); // Log context value
+
     if (isPinSession) {
+      // Use the flag from context
+      console.log('[SharedHeader] PIN session detected. Setting confirmation modal visible.');
       setIsConfirmLogoutVisible(true);
     } else {
+      console.log('[SharedHeader] Non-PIN session detected. Calling signOut directly.');
       signOut();
     }
   };
 
   const onConfirmLogout = () => {
+    console.log('[SharedHeader] Logout Confirmed.');
     setIsConfirmLogoutVisible(false);
     signOut();
   };
 
   const onCancelLogout = () => {
+    console.log('[SharedHeader] Logout Cancelled.');
     setIsConfirmLogoutVisible(false);
   };
 

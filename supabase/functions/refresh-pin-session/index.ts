@@ -171,6 +171,7 @@ Deno.serve(async (req: Request) => {
       email: userEmail,
       role: 'authenticated',
       app_metadata: {
+        provider: 'custom_pin',
         role: userRole,
         ...(userRole === 'parent' && { viewing_student_id: targetUserId }),
       }, // Revisit parent viewing logic if needed
