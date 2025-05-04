@@ -28,6 +28,8 @@ export interface AssignedTask {
   assignerName?: string;
   verifierName?: string;
   studentStatus?: UserStatus | 'unknown';
+  taskLinkUrl?: string | null;
+  taskAttachmentPath?: string | null;
 }
 
 export interface Instrument {
@@ -47,8 +49,12 @@ export interface RewardItem {
 export interface TaskLibraryItem {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   baseTickets: number;
+  referenceUrl?: string | null;
+  attachmentPath?: string | null;
+  instrumentIds?: string[];
+  createdById: string;
 }
 
 export type TransactionType = 'task_award' | 'manual_add' | 'manual_subtract' | 'redemption';

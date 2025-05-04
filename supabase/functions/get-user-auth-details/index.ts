@@ -15,7 +15,7 @@ interface AuthDetailsResponse {
 }
 
 // Helper function to check if the caller is an Admin
-// Assumes is_admin() function exists in your DB
+// Assumes is_active_admin() function exists in your DB
 async function isAdmin(supabaseClient: SupabaseClient, callerUserId: string): Promise<boolean> {
   // Reusing the same helper logic from deleteUser/createUser
   console.log('[getAuthDetails] isAdmin Check: Checking profile for caller ID:', callerUserId);

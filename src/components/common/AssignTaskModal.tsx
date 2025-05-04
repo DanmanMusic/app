@@ -7,22 +7,29 @@ import {
   Text,
   Button,
   FlatList,
-  TouchableOpacity, // *** Import TouchableOpacity ***
+  TouchableOpacity,
   TextInput,
   ScrollView,
-  // Switch, // *** Remove Switch import ***
   ActivityIndicator,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 import { createAssignedTask } from '../../api/assignedTasks';
 import { fetchTaskLibrary } from '../../api/taskLibrary';
-import { fetchStudents } from '../../api/users';
+import { fetchStudents, fetchUserProfile } from '../../api/users';
+import { fetchInstruments } from '../../api/instruments'; // Need instruments for display
 import { useAuth } from '../../contexts/AuthContext';
-import { AssignedTask, TaskLibraryItem, SimplifiedStudent } from '../../types/dataTypes';
+import {
+  AssignedTask,
+  TaskLibraryItem,
+  SimplifiedStudent,
+  User,
+  Instrument,
+} from '../../types/dataTypes'; // Import Instrument
 import { AssignTaskModalProps } from '../../types/componentProps';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers'; // Import helper
 
 export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   visible,
@@ -32,36 +39,36 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   const { currentUserId: assignerId, currentUserRole } = useAuth();
   const queryClient = useQueryClient();
 
+  // State
   const [step, setStep] = useState(1);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedLibraryTask, setSelectedLibraryTask] = useState<TaskLibraryItem | null>(null);
-  const [isAdHocMode, setIsAdHocMode] = useState(false); // false = Library, true = Custom
-
+  const [isAdHocMode, setIsAdHocMode] = useState(false);
   const [adHocTitle, setAdHocTitle] = useState('');
   const [adHocDescription, setAdHocDescription] = useState('');
   const [adHocBasePoints, setAdHocBasePoints] = useState<number | ''>('');
-
+  const [adHocReferenceUrl, setAdHocReferenceUrl] = useState(''); // State for AdHoc URL
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
 
+  // Queries
   const {
     data: taskLibrary = [],
     isLoading: isLoadingLibrary,
     isError: isErrorLibrary,
     error: errorLibrary,
   } = useQuery<TaskLibraryItem[], Error>({
-    queryKey: ['task-library'],
+    queryKey: ['task-library', { viewer: currentUserRole }],
     queryFn: fetchTaskLibrary,
     staleTime: 10 * 60 * 1000,
-    enabled: visible && step === 2 && !isAdHocMode,
+    enabled: visible && step >= 2 && !isAdHocMode,
   });
 
   const filterTeacherId = currentUserRole === 'teacher' ? assignerId : undefined;
-
   const {
     data: studentListResult,
-    isLoading: isLoadingStudents,
-    isError: isErrorStudents,
-    error: errorStudents,
+    isLoading: isLoadingStudentsList,
+    isError: isErrorStudentsList,
+    error: errorStudentsList,
   } = useQuery({
     queryKey: [
       'students',
@@ -71,14 +78,42 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         teacherId: filterTeacherId,
         limit: 500,
         page: 1,
+        search: studentSearchTerm,
       },
     ],
     queryFn: () =>
-      fetchStudents({ filter: 'active', page: 1, limit: 500, teacherId: filterTeacherId }),
+      fetchStudents({
+        filter: 'active',
+        page: 1,
+        limit: 500,
+        teacherId: filterTeacherId,
+        searchTerm: studentSearchTerm,
+      }),
     enabled: visible && step === 1 && !preselectedStudentId && !!assignerId,
     staleTime: 5 * 60 * 1000,
   });
 
+  const {
+    data: selectedStudentProfile,
+    isLoading: isLoadingSelectedStudent,
+    isError: isErrorSelectedStudent,
+    error: errorSelectedStudent,
+  } = useQuery<User | null, Error>({
+    queryKey: ['userProfile', selectedStudentId],
+    queryFn: () => (selectedStudentId ? fetchUserProfile(selectedStudentId) : null),
+    enabled: !!selectedStudentId && step >= 2,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Query for all instruments (needed for display in library list item)
+  const { data: instruments = [], isLoading: isLoadingInstruments } = useQuery<Instrument[]>({
+    queryKey: ['instruments'],
+    queryFn: fetchInstruments,
+    staleTime: Infinity,
+    enabled: visible && step === 2 && !isAdHocMode, // Only when library is shown
+  });
+
+  // Memos
   const sortedTasks = useMemo(
     () => [...taskLibrary].sort((a, b) => a.title.localeCompare(b.title)),
     [taskLibrary]
@@ -88,20 +123,39 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     [studentListResult]
   );
   const filteredStudents = useMemo(() => {
-    const searchTermLower = studentSearchTerm.toLowerCase().trim();
-    if (!searchTermLower)
-      return [...availableStudents].sort((a, b) => a.name.localeCompare(b.name));
+    const term = studentSearchTerm.toLowerCase().trim();
+    if (!term) return [...availableStudents].sort((a, b) => a.name.localeCompare(b.name));
     return availableStudents
-      .filter(student => student.name.toLowerCase().includes(searchTermLower))
+      .filter(s => s.name.toLowerCase().includes(term))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [availableStudents, studentSearchTerm]);
 
   const selectedStudentName = useMemo(() => {
+    if (selectedStudentProfile) return getUserDisplayName(selectedStudentProfile);
     if (!selectedStudentId) return 'Unknown Student';
-    const student = availableStudents.find(s => s.id === selectedStudentId);
-    return student?.name || `ID: ${selectedStudentId}`;
-  }, [selectedStudentId, availableStudents]);
+    const studentFromList = availableStudents.find(s => s.id === selectedStudentId);
+    return studentFromList?.name || `ID: ${selectedStudentId}`;
+  }, [selectedStudentId, selectedStudentProfile, availableStudents]);
 
+  const filteredTaskLibraryForStudent = useMemo(() => {
+    if (
+      isLoadingSelectedStudent ||
+      !selectedStudentProfile ||
+      !selectedStudentProfile.instrumentIds ||
+      taskLibrary.length === 0
+    ) {
+      // Show all fetched tasks if student data is pending/missing or library empty
+      return sortedTasks;
+    }
+    const studentInstruments = selectedStudentProfile.instrumentIds;
+    return sortedTasks.filter(task => {
+      const taskInstruments = task.instrumentIds || [];
+      if (taskInstruments.length === 0) return true;
+      return taskInstruments.some(taskInstId => studentInstruments.includes(taskInstId));
+    });
+  }, [sortedTasks, selectedStudentProfile, isLoadingSelectedStudent, taskLibrary.length]);
+
+  // Mutation
   const mutation = useMutation({
     mutationFn: createAssignedTask,
     onSuccess: createdAssignment => {
@@ -128,6 +182,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     },
   });
 
+  // Effect to reset state
   useEffect(() => {
     if (visible) {
       setIsAdHocMode(false);
@@ -135,6 +190,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       setAdHocTitle('');
       setAdHocDescription('');
       setAdHocBasePoints('');
+      setAdHocReferenceUrl(''); // Reset adhoc URL
       setStudentSearchTerm('');
       mutation.reset();
       if (preselectedStudentId) {
@@ -145,6 +201,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         setStep(1);
       }
     } else {
+      // Clear all potentially sensitive state on close
       setStep(1);
       setSelectedStudentId(null);
       setSelectedLibraryTask(null);
@@ -152,10 +209,12 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       setAdHocTitle('');
       setAdHocDescription('');
       setAdHocBasePoints('');
+      setAdHocReferenceUrl('');
       setStudentSearchTerm('');
     }
-  }, [visible, preselectedStudentId]);
+  }, [visible, preselectedStudentId]); // Only run when visibility or preselection changes
 
+  // Handlers
   const handleStudentSelect = (studentId: string) => {
     setSelectedStudentId(studentId);
     setStep(2);
@@ -170,19 +229,26 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       typeof adHocBasePoints === 'number'
         ? adHocBasePoints
         : parseInt(String(adHocBasePoints || '-1'), 10);
-    if (
-      !adHocTitle.trim() ||
-      !adHocDescription.trim() ||
-      isNaN(numericPoints) ||
-      numericPoints < 0
-    ) {
+    const url = adHocReferenceUrl.trim();
+    if (!adHocTitle.trim()) {
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Custom title required.' });
+      return;
+    }
+    // Description is optional for AdHoc? Let's assume yes for now.
+    // if (!adHocDescription.trim()) { Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Custom description required.' }); return; }
+    if (isNaN(numericPoints) || numericPoints < 0) {
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Valid points required.' });
+      return;
+    }
+    if (url && !url.toLowerCase().startsWith('http')) {
       Toast.show({
         type: 'error',
         text1: 'Validation Error',
-        text2: 'Please fill in valid Title, Description, and Points.',
+        text2: 'URL must start with http/https.',
       });
       return;
     }
+
     setSelectedLibraryTask(null);
     setIsAdHocMode(true);
     setStep(3);
@@ -192,21 +258,26 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       Toast.show({ type: 'error', text1: 'Error', text2: 'Student or Assigner ID missing.' });
       return;
     }
+
     let assignmentPayload: Omit<
       AssignedTask,
-      'id' | 'assignedById' | 'assignedDate' | 'isComplete' | 'verificationStatus' | 'studentStatus'
-    >;
+      | 'id'
+      | 'assignedById'
+      | 'assignedDate'
+      | 'isComplete'
+      | 'verificationStatus'
+      | 'studentStatus'
+      | 'assignerName'
+      | 'verifierName'
+    > & { taskLinkUrl?: string | null };
+
     if (isAdHocMode) {
       const numericPoints =
         typeof adHocBasePoints === 'number'
           ? adHocBasePoints
           : parseInt(String(adHocBasePoints || '-1'), 10);
-      if (
-        !adHocTitle.trim() ||
-        !adHocDescription.trim() ||
-        isNaN(numericPoints) ||
-        numericPoints < 0
-      ) {
+      const url = adHocReferenceUrl.trim();
+      if (!adHocTitle.trim() || isNaN(numericPoints) || numericPoints < 0) {
         Toast.show({
           type: 'error',
           text1: 'Validation Error',
@@ -214,18 +285,26 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         });
         return;
       }
+      if (url && !url.toLowerCase().startsWith('http')) {
+        Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Invalid custom URL.' });
+        return;
+      }
+
       assignmentPayload = {
         studentId: selectedStudentId,
         taskTitle: adHocTitle.trim(),
-        taskDescription: adHocDescription.trim(),
+        taskDescription: adHocDescription.trim(), // Send empty string if needed, API/EF handles null
         taskBasePoints: numericPoints,
+        taskLinkUrl: url || null, // Send null if empty
       };
     } else if (selectedLibraryTask) {
       assignmentPayload = {
         studentId: selectedStudentId,
         taskTitle: selectedLibraryTask.title,
-        taskDescription: selectedLibraryTask.description,
+        taskDescription: selectedLibraryTask.description || '', // Use description or empty string
         taskBasePoints: selectedLibraryTask.baseTickets,
+        taskLinkUrl: selectedLibraryTask.referenceUrl || null,
+        taskAttachmentPath: selectedLibraryTask.attachmentPath || null,
       };
     } else {
       Toast.show({
@@ -246,7 +325,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     } else onClose();
   };
 
+  // Render Logic
   const renderStepContent = () => {
+    // Step 1: Select Student
     if (step === 1 && !preselectedStudentId) {
       return (
         <>
@@ -262,22 +343,24 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             autoCapitalize="none"
             autoCorrect={false}
           />
-          {isLoadingStudents && <ActivityIndicator color={colors.primary} />}
-          {isErrorStudents && (
+          {isLoadingStudentsList && <ActivityIndicator color={colors.primary} />}
+          {isErrorStudentsList && (
             <Text style={commonSharedStyles.errorText}>
-              Error loading students: {errorStudents?.message}
+              Error loading students: {errorStudentsList?.message}
             </Text>
           )}
-          {!isLoadingStudents && !isErrorStudents && (
+          {!isLoadingStudentsList && !isErrorStudentsList && (
             <FlatList
               style={commonSharedStyles.modalScrollView}
               data={filteredStudents}
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
                 <TouchableOpacity onPress={() => handleStudentSelect(item.id)}>
+                  {' '}
                   <View style={commonSharedStyles.listItem}>
-                    <Text style={commonSharedStyles.listItemText}>{item.name}</Text>
-                  </View>
+                    {' '}
+                    <Text style={commonSharedStyles.listItemText}>{item.name}</Text>{' '}
+                  </View>{' '}
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
@@ -291,19 +374,19 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       );
     }
 
+    // Step 2: Select Task
     if (step === 2) {
       return (
         <>
           <Text style={commonSharedStyles.modalStepTitle}>
-            Step {preselectedStudentId ? 1 : 2}: Assign Task to {selectedStudentName}
+            {' '}
+            Step {preselectedStudentId ? 1 : 2}: Assign Task to {selectedStudentName}{' '}
           </Text>
-
-          {/* *** START: New Toggle Button Implementation *** */}
           <View style={[commonSharedStyles.containerToggle, { marginBottom: 15 }]}>
             <TouchableOpacity
               style={[
                 commonSharedStyles.toggleButton,
-                !isAdHocMode && commonSharedStyles.toggleButtonActive, // Active when NOT ad-hoc
+                !isAdHocMode && commonSharedStyles.toggleButtonActive,
               ]}
               onPress={() => setIsAdHocMode(false)}
               disabled={mutation.isPending}
@@ -314,13 +397,14 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                   !isAdHocMode && commonSharedStyles.toggleButtonTextActive,
                 ]}
               >
-                Select from Library
+                {' '}
+                Select from Library{' '}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
                 commonSharedStyles.toggleButton,
-                isAdHocMode && commonSharedStyles.toggleButtonActive, // Active when ad-hoc IS true
+                isAdHocMode && commonSharedStyles.toggleButtonActive,
               ]}
               onPress={() => setIsAdHocMode(true)}
               disabled={mutation.isPending}
@@ -331,15 +415,14 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                   isAdHocMode && commonSharedStyles.toggleButtonTextActive,
                 ]}
               >
-                Create Custom Task
+                {' '}
+                Create Custom Task{' '}
               </Text>
             </TouchableOpacity>
           </View>
-          {/* *** END: New Toggle Button Implementation *** */}
 
           <ScrollView style={commonSharedStyles.modalScrollView}>
             {isAdHocMode ? (
-              // Ad-Hoc Task Input Fields
               <View>
                 <Text style={commonSharedStyles.label}>Custom Task Title:</Text>
                 <TextInput
@@ -374,48 +457,82 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                   keyboardType="numeric"
                   editable={!mutation.isPending}
                 />
+                {/* Add AdHoc Reference URL Input */}
+                <Text style={commonSharedStyles.label}>Reference URL (Optional):</Text>
+                <TextInput
+                  style={commonSharedStyles.input}
+                  value={adHocReferenceUrl}
+                  onChangeText={setAdHocReferenceUrl}
+                  placeholder="https://example.com/resource"
+                  placeholderTextColor={colors.textLight}
+                  keyboardType="url"
+                  autoCapitalize="none"
+                  editable={!mutation.isPending}
+                />
+
                 <Button
                   title="Use This Custom Task"
                   onPress={handleAdHocSubmit}
                   disabled={
                     mutation.isPending ||
                     !adHocTitle.trim() ||
-                    !adHocDescription.trim() ||
                     adHocBasePoints === '' ||
                     adHocBasePoints < 0
                   }
                 />
               </View>
             ) : (
-              // Task Library List
               <>
-                {isLoadingLibrary && <ActivityIndicator />}
+                {(isLoadingLibrary || isLoadingSelectedStudent || isLoadingInstruments) && (
+                  <ActivityIndicator />
+                )}
                 {isErrorLibrary && (
                   <Text style={commonSharedStyles.errorText}>
                     Error loading task library: {errorLibrary?.message}
                   </Text>
                 )}
-                {!isLoadingLibrary && !isErrorLibrary && (
-                  <FlatList
-                    data={sortedTasks}
-                    keyExtractor={item => item.id}
-                    renderItem={({ item }) => (
-                      <TouchableOpacity onPress={() => handleLibraryTaskSelect(item)}>
-                        <View style={commonSharedStyles.listItem}>
-                          <Text style={commonSharedStyles.itemTitle}>
-                            {item.title} ({item.baseTickets} pts)
-                          </Text>
-                          <Text style={commonSharedStyles.baseSecondaryText}>
-                            {item.description}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    )}
-                    ListEmptyComponent={
-                      <Text style={commonSharedStyles.baseEmptyText}>Task library is empty.</Text>
-                    }
-                  />
+                {isErrorSelectedStudent && (
+                  <Text style={commonSharedStyles.errorText}>
+                    Error loading student details: {errorSelectedStudent?.message}
+                  </Text>
                 )}
+                {!isLoadingLibrary &&
+                  !isLoadingSelectedStudent &&
+                  !isLoadingInstruments &&
+                  !isErrorLibrary &&
+                  !isErrorSelectedStudent && (
+                    <FlatList
+                      data={filteredTaskLibraryForStudent} // Use filtered list
+                      keyExtractor={item => item.id}
+                      renderItem={({ item }) => (
+                        <TouchableOpacity onPress={() => handleLibraryTaskSelect(item)}>
+                          <View style={commonSharedStyles.listItem}>
+                            <Text style={commonSharedStyles.itemTitle}>
+                              {item.title} ({item.baseTickets} pts)
+                            </Text>
+                            {item.instrumentIds && item.instrumentIds.length > 0 && (
+                              <Text style={commonSharedStyles.baseLightText}>
+                                {' '}
+                                (Instruments: {getInstrumentNames(item.instrumentIds, instruments)}
+                                ){' '}
+                              </Text>
+                            )}
+                            <Text style={commonSharedStyles.baseSecondaryText}>
+                              {item.description || '(No description)'}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      )}
+                      ListEmptyComponent={
+                        <Text style={commonSharedStyles.baseEmptyText}>
+                          {' '}
+                          {taskLibrary.length === 0
+                            ? 'Task library is empty.'
+                            : "No relevant tasks found for this student's instrument(s)."}{' '}
+                        </Text>
+                      }
+                    />
+                  )}
               </>
             )}
           </ScrollView>
@@ -423,9 +540,11 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       );
     }
 
+    // Step 3: Confirmation
     if (step === 3) {
       const taskTitle = isAdHocMode ? adHocTitle : selectedLibraryTask?.title;
       const taskPoints = isAdHocMode ? adHocBasePoints : selectedLibraryTask?.baseTickets;
+      const taskUrl = isAdHocMode ? adHocReferenceUrl : selectedLibraryTask?.referenceUrl;
       return (
         <>
           <Text style={commonSharedStyles.modalStepTitle}>
@@ -435,12 +554,14 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             Assign task "{taskTitle || 'N/A'}" ({taskPoints ?? '?'} points) to "
             {selectedStudentName}"?
           </Text>
+          {taskUrl && <Text style={commonSharedStyles.baseLightText}>Link: {taskUrl}</Text>}
         </>
       );
     }
     return null;
   };
 
+  // Modal Structure
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
       <View style={commonSharedStyles.centeredView}>
@@ -449,8 +570,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           {renderStepContent()}
           {mutation.isPending && (
             <View style={commonSharedStyles.baseRowCentered}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={commonSharedStyles.baseSecondaryText}>Assigning Task...</Text>
+              {' '}
+              <ActivityIndicator size="small" color={colors.primary} />{' '}
+              <Text style={commonSharedStyles.baseSecondaryText}>Assigning Task...</Text>{' '}
             </View>
           )}
           {mutation.isError && (

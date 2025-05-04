@@ -63,11 +63,11 @@ COMMENT ON POLICY "Announcements: Allow public read access" ON public.announceme
 IS 'Allows anyone (logged in or anonymous) to view announcements.';
 
 -- INSERT Policy: Allow ONLY admins to create new announcements.
-CREATE POLICY "Announcements: Allow admin insert access"
+CREATE POLICY "Announcements: Allow admin/teaacher insert access"
 ON public.announcements
 FOR INSERT
 TO authenticated
-WITH CHECK (public.is_admin(auth.uid()));
+WITH CHECK (public.is_active_admin_or_teacher(auth.uid()));
 
 COMMENT ON POLICY "Announcements: Allow admin insert access" ON public.announcements
 IS 'Allows users with the admin role to create announcements.';
@@ -77,8 +77,8 @@ CREATE POLICY "Announcements: Allow admin update access"
 ON public.announcements
 FOR UPDATE
 TO authenticated
-USING (public.is_admin(auth.uid()))
-WITH CHECK (public.is_admin(auth.uid()));
+USING (public.is_active_admin(auth.uid()))
+WITH CHECK (public.is_active_admin(auth.uid()));
 
 COMMENT ON POLICY "Announcements: Allow admin update access" ON public.announcements
 IS 'Allows users with the admin role to update existing announcements.';
@@ -88,7 +88,7 @@ CREATE POLICY "Announcements: Allow admin delete access"
 ON public.announcements
 FOR DELETE
 TO authenticated
-USING (public.is_admin(auth.uid()));
+USING (public.is_active_admin(auth.uid()));
 
 COMMENT ON POLICY "Announcements: Allow admin delete access" ON public.announcements
 IS 'Allows users with the admin role to delete announcements.';

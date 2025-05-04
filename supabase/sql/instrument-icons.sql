@@ -10,7 +10,7 @@
 -- Requirements:
 -- 1. The 'instrument-icons' bucket must exist.
 -- 2. A mechanism to identify admin users must be in place. The placeholder
---    function `public.is_admin()` is used here and would need to be created,
+--    function `public.is_active_admin()` is used here and would need to be created,
 --    likely checking user metadata or a roles table linked to auth.uid().
 --    Alternatively, you could check custom claims in auth.jwt().
 -- ======================================================
@@ -19,23 +19,23 @@
 -- This function would need to be created in your database.
 -- Its logic depends on how you store user roles.
 /*
-CREATE OR REPLACE FUNCTION public.is_admin(user_id uuid)
+CREATE OR REPLACE FUNCTION public.is_active_admin(user_id uuid)
 RETURNS boolean AS $$
 DECLARE
-  is_admin_user boolean;
+  is_active_admin_user boolean;
 BEGIN
   -- Example: Check a 'profiles' table with a 'role' column
   SELECT EXISTS (
     SELECT 1
     FROM public.profiles
     WHERE id = user_id AND role = 'admin' AND status = 'active' -- Ensure user is active admin
-  ) INTO is_admin_user;
-  RETURN is_admin_user;
+  ) INTO is_active_admin_user;
+  RETURN is_active_admin_user;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER; -- Use SECURITY DEFINER carefully
 
 -- Grant execute permission on the function
-GRANT EXECUTE ON FUNCTION public.is_admin(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_active_admin(uuid) TO authenticated;
 */
 -- ======================================================
 
@@ -48,7 +48,7 @@ TO authenticated -- Grant to any authenticated user...
 WITH CHECK (
   bucket_id = 'instrument-icons' AND
   auth.role() = 'authenticated' AND -- Redundant but explicit
-  public.is_admin(auth.uid()) -- ...but check if they are an admin using the helper function
+  public.is_active_admin(auth.uid()) -- ...but check if they are an admin using the helper function
 );
 
 COMMENT ON POLICY "Allow admin uploads to instrument-icons" ON storage.objects
@@ -64,11 +64,11 @@ TO authenticated -- Grant to any authenticated user...
 USING (
   bucket_id = 'instrument-icons' AND
   auth.role() = 'authenticated' AND
-  public.is_admin(auth.uid()) -- ...but check if they are an admin
+  public.is_active_admin(auth.uid()) -- ...but check if they are an admin
 )
 WITH CHECK ( -- Also apply the check condition
   bucket_id = 'instrument-icons' AND
-  public.is_admin(auth.uid())
+  public.is_active_admin(auth.uid())
 );
 
 COMMENT ON POLICY "Allow admin updates in instrument-icons" ON storage.objects
@@ -84,7 +84,7 @@ TO authenticated -- Grant to any authenticated user...
 USING (
   bucket_id = 'instrument-icons' AND
   auth.role() = 'authenticated' AND
-  public.is_admin(auth.uid()) -- ...but check if they are an admin
+  public.is_active_admin(auth.uid()) -- ...but check if they are an admin
 );
 
 COMMENT ON POLICY "Allow admin deletes from instrument-icons" ON storage.objects

@@ -47,7 +47,7 @@ CREATE POLICY "Instruments: Allow admin insert access"
 ON public.instruments
 FOR INSERT
 TO authenticated
-WITH CHECK (public.is_admin(auth.uid()));
+WITH CHECK (public.is_active_admin(auth.uid()));
 
 COMMENT ON POLICY "Instruments: Allow admin insert access" ON public.instruments
 IS 'Allows users with the admin role to create instruments.';
@@ -57,8 +57,8 @@ CREATE POLICY "Instruments: Allow admin update access"
 ON public.instruments
 FOR UPDATE
 TO authenticated
-USING (public.is_admin(auth.uid()))
-WITH CHECK (public.is_admin(auth.uid()));
+USING (public.is_active_admin(auth.uid()))
+WITH CHECK (public.is_active_admin(auth.uid()));
 
 COMMENT ON POLICY "Instruments: Allow admin update access" ON public.instruments
 IS 'Allows users with the admin role to update existing instruments.';
@@ -68,7 +68,7 @@ CREATE POLICY "Instruments: Allow admin delete access"
 ON public.instruments
 FOR DELETE
 TO authenticated
-USING (public.is_admin(auth.uid()));
+USING (public.is_active_admin(auth.uid()));
 
 COMMENT ON POLICY "Instruments: Allow admin delete access" ON public.instruments
 IS 'Allows users with the admin role to delete instruments.';

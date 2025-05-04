@@ -10,13 +10,13 @@
 -- Requirements:
 -- 1. The 'reward-icons' bucket must exist.
 -- 2. A mechanism to identify admin users must be in place. The placeholder
---    function `public.is_admin()` is used here and would need to be created,
+--    function `public.is_active_admin()` is used here and would need to be created,
 --    likely checking user metadata or a roles table linked to auth.uid().
 -- ======================================================
 
--- Ensure the is_admin function (or equivalent) exists before applying policies that use it.
+-- Ensure the is_active_admin function (or equivalent) exists before applying policies that use it.
 -- See instrument-icons.sql for an example placeholder function definition.
--- DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'is_admin') THEN RAISE EXCEPTION 'Function public.is_admin(uuid) not found. Please create it before applying these policies.'; END IF; END $$;
+-- DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'is_active_admin') THEN RAISE EXCEPTION 'Function public.is_active_admin(uuid) not found. Please create it before applying these policies.'; END IF; END $$;
 
 
 -- POLICY 1: Allow ADMIN INSERT (Upload) into 'reward-icons' bucket
@@ -28,7 +28,7 @@ TO authenticated -- Grant to any authenticated user...
 WITH CHECK (
   bucket_id = 'reward-icons' AND
   auth.role() = 'authenticated' AND
-  public.is_admin(auth.uid()) -- ...but check if they are an admin
+  public.is_active_admin(auth.uid()) -- ...but check if they are an admin
 );
 
 COMMENT ON POLICY "Allow admin uploads to reward-icons" ON storage.objects
@@ -44,11 +44,11 @@ TO authenticated
 USING (
   bucket_id = 'reward-icons' AND
   auth.role() = 'authenticated' AND
-  public.is_admin(auth.uid())
+  public.is_active_admin(auth.uid())
 )
 WITH CHECK ( -- Also apply the check condition
   bucket_id = 'reward-icons' AND
-  public.is_admin(auth.uid())
+  public.is_active_admin(auth.uid())
 );
 
 COMMENT ON POLICY "Allow admin updates in reward-icons" ON storage.objects
@@ -64,7 +64,7 @@ TO authenticated
 USING (
   bucket_id = 'reward-icons' AND
   auth.role() = 'authenticated' AND
-  public.is_admin(auth.uid())
+  public.is_active_admin(auth.uid())
 );
 
 COMMENT ON POLICY "Allow admin deletes from reward-icons" ON storage.objects

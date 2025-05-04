@@ -30,7 +30,7 @@ ON public.student_teachers
 FOR SELECT
 TO authenticated
 USING (
-    public.is_admin(auth.uid()) -- Admins can read all
+    public.is_active_admin(auth.uid()) -- Admins can read all
     OR
     auth.uid() = student_id     -- Student can see their teacher links
     OR
@@ -52,8 +52,8 @@ CREATE POLICY "Student Teachers: Allow admin write access"
 ON public.student_teachers
 FOR ALL -- Covers INSERT, UPDATE, DELETE
 TO authenticated
-USING (public.is_admin(auth.uid())) -- Allow if the user IS an admin
-WITH CHECK (public.is_admin(auth.uid())); -- Ensure they remain admin during the operation
+USING (public.is_active_admin(auth.uid())) -- Allow if the user IS an admin
+WITH CHECK (public.is_active_admin(auth.uid())); -- Ensure they remain admin during the operation
 
 COMMENT ON POLICY "Student Teachers: Allow admin write access" ON public.student_teachers
 IS 'Allows users with the admin role to create, update, and delete student-teacher links.';

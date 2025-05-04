@@ -186,6 +186,8 @@ export const createAssignedTask = async (
     taskTitle: assignmentData.taskTitle,
     taskDescription: assignmentData.taskDescription,
     taskBasePoints: assignmentData.taskBasePoints,
+    taskLinkUrl: assignmentData.taskLinkUrl || null,
+    taskAttachmentPath: assignmentData.taskAttachmentPath || null,
   };
 
   if (

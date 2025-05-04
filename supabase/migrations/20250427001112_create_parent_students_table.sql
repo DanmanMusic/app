@@ -25,7 +25,7 @@ ON public.parent_students
 FOR SELECT
 TO authenticated
 USING (
-    public.is_admin(auth.uid()) -- Admins can read all
+    public.is_active_admin(auth.uid()) -- Admins can read all
     OR
     auth.uid() = parent_id     -- The parent can see their own links
     OR
@@ -41,8 +41,8 @@ CREATE POLICY "Parent Students: Allow admin write access"
 ON public.parent_students
 FOR ALL -- Covers INSERT, UPDATE, DELETE
 TO authenticated
-USING (public.is_admin(auth.uid())) -- Allow if the user IS an admin
-WITH CHECK (public.is_admin(auth.uid())); -- Ensure they remain admin during the operation
+USING (public.is_active_admin(auth.uid())) -- Allow if the user IS an admin
+WITH CHECK (public.is_active_admin(auth.uid())); -- Ensure they remain admin during the operation
 
 COMMENT ON POLICY "Parent Students: Allow admin write access" ON public.parent_students
 IS 'Allows users with the admin role to create, update, and delete parent-student links.';

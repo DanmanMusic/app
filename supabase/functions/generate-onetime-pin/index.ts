@@ -10,7 +10,7 @@ interface GeneratePinPayload {
 }
 
 // Helper function to check if the caller is an Admin OR Teacher
-// Assumes is_admin() function exists in your DB
+// Assumes is_active_admin() function exists in your DB
 async function isAuthorizedGenerator(
   supabaseClient: SupabaseClient,
   callerUserId: string

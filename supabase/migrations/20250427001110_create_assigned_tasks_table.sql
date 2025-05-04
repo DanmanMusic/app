@@ -17,6 +17,8 @@ CREATE TABLE public.assigned_tasks (
     assigned_date timestamptz NOT NULL DEFAULT now(),
     task_title text NOT NULL,
     task_description text NOT NULL,
+    task_link_url TEXT NULL,
+    task_attachment_path TEXT NULL,
     task_base_points integer NOT NULL CHECK (task_base_points >= 0),
     is_complete boolean NOT NULL DEFAULT false,
     completed_date timestamptz NULL,
@@ -33,6 +35,8 @@ COMMENT ON TABLE public.assigned_tasks IS 'Stores specific task instances assign
 COMMENT ON COLUMN public.assigned_tasks.student_id IS 'ID of the student the task is assigned to.';
 COMMENT ON COLUMN public.assigned_tasks.assigned_by_id IS 'ID of the user (teacher/admin) who assigned the task.';
 COMMENT ON COLUMN public.assigned_tasks.is_complete IS 'Flag indicating if the student/parent marked the task as done.';
+COMMENT ON COLUMN public.assigned_tasks.task_link_url IS 'Optional URL copied from task library or added for ad-hoc tasks.';
+COMMENT ON COLUMN public.assigned_tasks.task_attachment_path IS 'Path to attachment copied from task library, if applicable.';
 COMMENT ON COLUMN public.assigned_tasks.verification_status IS 'Status set by teacher/admin upon review.';
 COMMENT ON COLUMN public.assigned_tasks.verified_by_id IS 'ID of the user who verified the task.';
 COMMENT ON COLUMN public.assigned_tasks.actual_points_awarded IS 'Actual tickets awarded after verification.';
@@ -64,7 +68,7 @@ CREATE INDEX idx_assigned_tasks_assigned_by_id ON public.assigned_tasks (assigne
 -- SELECT Policies
 -- ==================
 CREATE POLICY "Assigned Tasks: Allow admin read access" ON public.assigned_tasks
-  FOR SELECT TO authenticated USING (public.is_admin(auth.uid()));
+  FOR SELECT TO authenticated USING (public.is_active_admin(auth.uid()));
 CREATE POLICY "Assigned Tasks: Allow students read own" ON public.assigned_tasks
   FOR SELECT TO authenticated USING (auth.uid() = student_id);
 CREATE POLICY "Assigned Tasks: Allow parents read children" ON public.assigned_tasks
@@ -114,4 +118,4 @@ CREATE POLICY "Assigned Tasks: Allow teachers delete own assignments (pre-verifi
 -- Admin Full Access (Catch-all for Admins)
 -- ==================
 CREATE POLICY "Assigned Tasks: Allow admin full access" ON public.assigned_tasks
-  FOR ALL TO authenticated USING (public.is_admin(auth.uid())) WITH CHECK (public.is_admin(auth.uid()));
+  FOR ALL TO authenticated USING (public.is_active_admin(auth.uid())) WITH CHECK (public.is_active_admin(auth.uid()));

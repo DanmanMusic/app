@@ -192,6 +192,10 @@ export interface TeacherStudentsSectionProps {
 export interface TeacherTasksSectionProps {
   onInitiateAssignTaskGeneral: () => void;
   onViewAllTasks: () => void;
+  onInitiateCreateTask: () => void;
+  onInitiateEditTask: (task: TaskLibraryItem) => void;
+  onInitiateDeleteTask: (task: TaskLibraryItem) => void;
+  deleteTaskMutationPending?: boolean;
 }
 
 export interface ParentStudentListItemProps {

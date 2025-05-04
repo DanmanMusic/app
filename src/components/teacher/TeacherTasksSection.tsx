@@ -2,25 +2,20 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { View, Text, FlatList, Button, ActivityIndicator } from 'react-native';
-
 import { fetchTaskLibrary } from '../../api/taskLibrary';
-
 import { TaskLibraryItem } from '../../types/dataTypes';
 import { TaskLibraryItemTeacher } from '../common/TaskLibraryItemTeacher';
-import { TeacherTasksSectionProps } from '../../types/componentProps'; // Will need updating
-
+import { TeacherTasksSectionProps } from '../../types/componentProps';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
-// Update interface if not already done in types file
-// interface TeacherTasksSectionProps {
-//   onInitiateAssignTaskGeneral: () => void;
-//   onViewAllTasks: () => void; // Add the new prop
-// }
-
 export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
   onInitiateAssignTaskGeneral,
-  onViewAllTasks, // Accept the new prop
+  onViewAllTasks,
+  onInitiateCreateTask,
+  onInitiateEditTask,
+  onInitiateDeleteTask,
+  deleteTaskMutationPending,
 }) => {
   const {
     data: taskLibrary = [],
@@ -28,29 +23,21 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
     isError,
     error,
   } = useQuery<TaskLibraryItem[], Error>({
-    queryKey: ['task-library'],
+    queryKey: ['task-library', { viewer: 'teacher' }],
     queryFn: fetchTaskLibrary,
     staleTime: 10 * 60 * 1000,
   });
 
   return (
     <View style={commonSharedStyles.baseMargin}>
-      <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
-        <Text
-          style={[
-            commonSharedStyles.baseTitleText,
-            commonSharedStyles.baseMarginTopBottom,
-            commonSharedStyles.bold,
-          ]}
-        >
-          Task Management
-        </Text>
-      </View>
+      <Text style={[commonSharedStyles.baseSubTitleText, commonSharedStyles.baseMarginTopBottom]}>
+        Task Management
+      </Text>
       <View
         style={[
           commonSharedStyles.baseRow,
           commonSharedStyles.baseGap,
-          commonSharedStyles.baseMarginTopBottom,
+          { marginBottom: 20, alignItems: 'flex-start' },
         ]}
       >
         <Button title="Assign Task" onPress={onInitiateAssignTaskGeneral} />
@@ -61,10 +48,19 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
         {' '}
         Task Library ({taskLibrary.length}){' '}
       </Text>
+      <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
+        <Button
+          title="Create New Library Task"
+          onPress={onInitiateCreateTask}
+          color={colors.success}
+        />
+      </View>
+
       {isLoading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />}
       {isError && (
         <Text style={commonSharedStyles.textDanger}>
-          Error loading task library: {error?.message}
+          {' '}
+          Error loading task library: {error?.message}{' '}
         </Text>
       )}
       {!isLoading &&
@@ -73,12 +69,20 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
           <FlatList
             data={[...taskLibrary].sort((a, b) => a.title.localeCompare(b.title))}
             keyExtractor={item => item.id}
-            renderItem={({ item }) => <TaskLibraryItemTeacher item={item} />}
+            renderItem={({ item }) => (
+              <TaskLibraryItemTeacher
+                item={item}
+                onEdit={onInitiateEditTask}
+                onDelete={onInitiateDeleteTask}
+                disabled={deleteTaskMutationPending}
+              />
+            )}
             scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+            contentContainerStyle={{ paddingBottom: 10 }}
           />
         ) : (
-          <Text style={commonSharedStyles.baseEmptyText}>Task library is empty.</Text>
+          <Text style={commonSharedStyles.baseEmptyText}>Task library is empty. Create one!</Text>
         ))}
     </View>
   );

@@ -8,7 +8,8 @@ interface AssignTaskPayload {
   taskTitle: string;
   taskDescription: string;
   taskBasePoints: number;
-  // assignedById is determined from the caller's token, not sent in payload
+  taskLinkUrl?: string | null;
+  taskAttachmentPath?: string | null;
 }
 
 // Helper to check if caller is Admin
@@ -160,11 +161,12 @@ Deno.serve(async (req: Request) => {
     // 7. Perform Database Insert
     const taskToInsert = {
       student_id: payload.studentId,
-      assigned_by_id: assignerId, // Use the authenticated caller's ID
+      assigned_by_id: assignerId, // From auth
       task_title: payload.taskTitle.trim(),
       task_description: payload.taskDescription.trim(),
       task_base_points: payload.taskBasePoints,
-      // Defaults for other fields are handled by the database schema
+      task_link_url: payload.taskLinkUrl || null, // <-- Add to insert object
+      task_attachement_path: payload.taskAttachmentPath || null, // <-- Add to insert object
     };
 
     console.log('Attempting to insert assigned task:', taskToInsert);
@@ -202,6 +204,8 @@ Deno.serve(async (req: Request) => {
       verifiedById: createdTask.verified_by_id ?? undefined,
       verifiedDate: createdTask.verified_date ?? undefined,
       actualPointsAwarded: createdTask.actual_points_awarded ?? undefined,
+      taskLinkUrl: createdTask.task_link_url ?? undefined,
+      taskAttachmentPath: createdTask.task_attachment_path ?? undefined,
     };
 
     return new Response(JSON.stringify(responseTask), {

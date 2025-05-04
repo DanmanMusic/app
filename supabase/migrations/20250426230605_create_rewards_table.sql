@@ -53,18 +53,18 @@ CREATE POLICY "Rewards: Allow admin insert access"
 ON public.rewards
 FOR INSERT
 TO authenticated
-WITH CHECK (public.is_admin(auth.uid()));
+WITH CHECK (public.is_active_admin(auth.uid()));
 
 COMMENT ON POLICY "Rewards: Allow admin insert access" ON public.rewards
-IS 'Allows users with the admin role (checked via is_admin function) to create rewards.';
+IS 'Allows users with the admin role (checked via is_active_admin function) to create rewards.';
 
 -- UPDATE Policy: Allow ONLY admins to update existing rewards.
 CREATE POLICY "Rewards: Allow admin update access"
 ON public.rewards
 FOR UPDATE
 TO authenticated
-USING (public.is_admin(auth.uid()))
-WITH CHECK (public.is_admin(auth.uid()));
+USING (public.is_active_admin(auth.uid()))
+WITH CHECK (public.is_active_admin(auth.uid()));
 
 COMMENT ON POLICY "Rewards: Allow admin update access" ON public.rewards
 IS 'Allows users with the admin role to update existing rewards.';
@@ -74,7 +74,7 @@ CREATE POLICY "Rewards: Allow admin delete access"
 ON public.rewards
 FOR DELETE
 TO authenticated
-USING (public.is_admin(auth.uid()));
+USING (public.is_active_admin(auth.uid()));
 
 COMMENT ON POLICY "Rewards: Allow admin delete access" ON public.rewards
 IS 'Allows users with the admin role to delete rewards.';

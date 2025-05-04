@@ -42,7 +42,7 @@ CREATE INDEX idx_transactions_type ON public.ticket_transactions (type);
 
 -- SELECT Policies
 CREATE POLICY "Ticket Transactions: Allow admin read access" ON public.ticket_transactions
-  FOR SELECT TO authenticated USING (public.is_admin(auth.uid()));
+  FOR SELECT TO authenticated USING (public.is_active_admin(auth.uid()));
 CREATE POLICY "Ticket Transactions: Allow students read own" ON public.ticket_transactions
   FOR SELECT TO authenticated USING (auth.uid() = student_id);
 CREATE POLICY "Ticket Transactions: Allow parents read children" ON public.ticket_transactions

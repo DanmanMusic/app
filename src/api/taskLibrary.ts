@@ -1,194 +1,372 @@
+// src/api/taskLibrary.ts
+
 import { getSupabase } from '../lib/supabaseClient';
 import { TaskLibraryItem } from '../types/dataTypes';
+import * as FileSystem from 'expo-file-system';
+import { Platform } from 'react-native';
 
-/**
- * Fetches the entire task library from Supabase.
- */
+// Define explicit type for the Native file object expected from pickers
+interface NativeFileObject {
+  uri: string;
+  name?: string;
+  mimeType?: string; // expo-document-picker uses mimeType
+  type?: string; // expo-image-picker might use type
+  size?: number;
+  [key: string]: any; // Allow other properties
+}
+
+// Update function signature to accept File (web) or NativeFileObject (native)
+export const fileToBase64 = (file: File | NativeFileObject): Promise<string> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Use Platform.OS check FIRST for clarity
+      if (Platform.OS === 'web') {
+        // On web, we expect a File object
+        if (file instanceof File) {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => {
+            const result = reader.result as string;
+            if (result.includes(',')) {
+              resolve(result.split(',')[1]);
+            } else {
+              resolve(result);
+            }
+          };
+          reader.onerror = error => reject(new Error(`FileReader error: ${error}`));
+        }
+        // Handle edge case where web might receive a URI (less common)
+        else if (
+          typeof file === 'object' &&
+          file &&
+          'uri' in file &&
+          typeof file.uri === 'string'
+        ) {
+          console.warn('[fileToBase64 Web] Received URI on web platform, attempting fetch...');
+          try {
+            const response = await fetch(file.uri);
+            if (!response.ok) throw new Error(`Fetch failed with status ${response.status}`);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onload = () => {
+              const result = reader.result as string;
+              if (result.includes(',')) {
+                resolve(result.split(',')[1]);
+              } else {
+                resolve(result);
+              }
+            };
+            reader.onerror = error => reject(error);
+          } catch (fetchError: any) {
+            console.error('[fileToBase64 Web] Error fetching URI:', fetchError);
+            reject(new Error(`Failed to fetch file from web URI: ${fetchError.message}`));
+          }
+        } else {
+          // If it's web but not a File object, it's unsupported
+          console.error('[fileToBase64 Web] Received unsupported input type:', file);
+          reject(new Error('Unsupported file input type on web platform'));
+        }
+      }
+      // --- Native Platform ---
+      else {
+        // On native, we expect an object with a 'uri' property
+        if (typeof file === 'object' && file && 'uri' in file && typeof file.uri === 'string') {
+          // Type assertion now safe because we checked for 'uri'
+          const nativeFile = file as NativeFileObject;
+          console.log(`[fileToBase64 Native] Reading file from URI: ${nativeFile.uri}`);
+          try {
+            const base64 = await FileSystem.readAsStringAsync(nativeFile.uri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            console.log(`[fileToBase64 Native] Read successful, base64 length: ${base64.length}`);
+            resolve(base64);
+          } catch (fsError: any) {
+            console.error(
+              '[fileToBase64 Native] Error reading file with expo-file-system:',
+              fsError
+            );
+            reject(new Error(`Failed to read native file: ${fsError.message}.`));
+          }
+        } else {
+          // If it's native but not the expected object shape, it's unsupported
+          console.error('[fileToBase64 Native] Received unsupported input type:', file);
+          reject(new Error('Unsupported file input type on native platform'));
+        }
+      }
+    } catch (error) {
+      console.error('[fileToBase64] Unexpected error:', error);
+      reject(error);
+    }
+  });
+};
+
+// --- fetchTaskLibrary remains the same ---
 export const fetchTaskLibrary = async (): Promise<TaskLibraryItem[]> => {
   const client = getSupabase();
-  console.log(`[Supabase] Fetching Task Library`);
+  console.log(`[API taskLibrary] Fetching Task Library`);
   const { data, error } = await client
     .from('task_library')
-    .select('id, title, description, base_tickets')
+    .select(
+      `
+        id, title, description, base_tickets, created_by_id,
+        attachment_path, reference_url,
+        task_library_instruments ( instrument_id )
+        `
+    )
     .order('title', { ascending: true });
 
   if (error) {
-    console.error(`[Supabase] Error fetching task library:`, error.message);
+    console.error(`[API taskLibrary] Error fetching task library:`, error.message);
     throw new Error(`Failed to fetch task library: ${error.message}`);
   }
 
-  console.log(`[Supabase] Received ${data?.length ?? 0} task library items.`);
+  console.log(`[API taskLibrary] Received ${data?.length ?? 0} task library items.`);
 
   const taskLibrary: TaskLibraryItem[] = (data || []).map(item => ({
     id: item.id,
     title: item.title,
-    description: item.description ?? '',
+    description: item.description ?? null,
     baseTickets: item.base_tickets,
+    createdById: item.created_by_id,
+    attachmentPath: item.attachment_path ?? undefined,
+    referenceUrl: item.reference_url ?? null,
+    instrumentIds: item.task_library_instruments?.map((link: any) => link.instrument_id) ?? [],
   }));
 
   return taskLibrary;
 };
 
-/**
- * Creates a new task library item in Supabase.
- */
+// --- Update type hint in createTaskLibraryItem and updateTaskLibraryItem ---
 export const createTaskLibraryItem = async (
-  taskData: Omit<TaskLibraryItem, 'id'>
+  taskData: Omit<TaskLibraryItem, 'id'> & {
+    file?: File | NativeFileObject;
+    mimeType?: string;
+    fileName?: string;
+  } // Use NativeFileObject type
 ): Promise<TaskLibraryItem> => {
+  // ... function logic remains the same ...
   const client = getSupabase();
-  console.log('[Supabase] Creating task library item:', taskData.title);
+  const {
+    file,
+    mimeType: providedMimeType,
+    fileName: providedFileName,
+    ...restTaskData
+  } = taskData;
+  const payload: any = {
+    /* ... */
+  };
+  payload.title = restTaskData.title?.trim();
+  payload.description =
+    restTaskData.description === null ? null : restTaskData.description?.trim() || undefined;
+  payload.baseTickets = restTaskData.baseTickets;
+  payload.referenceUrl =
+    restTaskData.referenceUrl === null ? null : restTaskData.referenceUrl?.trim() || undefined;
+  payload.instrumentIds = restTaskData.instrumentIds || [];
 
-  const trimmedTitle = taskData.title?.trim();
-  const trimmedDescription = taskData.description?.trim();
-  const baseTickets = taskData.baseTickets;
-
-  if (!trimmedTitle) {
-    throw new Error('Task title cannot be empty.');
-  }
+  if (!payload.title) throw new Error('Task title cannot be empty.');
   if (
-    baseTickets == null ||
-    typeof baseTickets !== 'number' ||
-    baseTickets < 0 ||
-    !Number.isInteger(baseTickets)
+    payload.baseTickets == null ||
+    payload.baseTickets < 0 ||
+    !Number.isInteger(payload.baseTickets)
   ) {
     throw new Error('Base tickets must be a non-negative integer.');
   }
 
-  const itemToInsert = {
-    title: trimmedTitle,
-    description: trimmedDescription || null,
-    base_tickets: baseTickets,
-  };
+  let finalMimeType = providedMimeType;
+  let finalFileName = providedFileName;
 
-  const { data, error } = await client
-    .from('task_library')
-    .insert(itemToInsert)
-    .select('id, title, description, base_tickets')
-    .single();
+  if (file && !finalMimeType && file instanceof File) finalMimeType = file.type;
+  else if (file && !finalMimeType && typeof file === 'object' && 'mimeType' in file)
+    finalMimeType = file.mimeType; // Use mimeType for native
+  else if (file && !finalMimeType && typeof file === 'object' && 'type' in file)
+    finalMimeType = file.type; // Fallback to type
+  if (file && !finalFileName && file instanceof File) finalFileName = file.name;
+  else if (file && !finalFileName && typeof file === 'object' && 'name' in file)
+    finalFileName = file.name;
+  if (file && !finalFileName) finalFileName = `upload.${finalMimeType?.split('/')[1] || 'bin'}`;
 
-  if (error || !data) {
-    console.error(`[Supabase] Error creating task library item:`, error?.message);
-    throw new Error(`Failed to create task library item: ${error?.message || 'No data returned'}`);
+  if (file && finalMimeType && finalFileName) {
+    try {
+      const base64 = await fileToBase64(file); // Pass the correct object type
+      payload.file = { base64, mimeType: finalMimeType, fileName: finalFileName };
+    } catch (error: any) {
+      throw new Error(`Failed to process file: ${error.message}`);
+    }
+  } else if (file) {
+    /* ... warn ... */
+  }
+
+  const { data: createdTaskRaw, error } = await client.functions.invoke(
+    'create-task-library-item',
+    { body: payload }
+  );
+
+  if (error) {
+    throw new Error(`Failed to create task: ${error.message || 'EF error'}`);
+  }
+  if (!createdTaskRaw || typeof createdTaskRaw !== 'object' || !createdTaskRaw.id) {
+    throw new Error('Invalid EF response');
   }
 
   const createdTask: TaskLibraryItem = {
-    id: data.id,
-    title: data.title,
-    description: data.description ?? '',
-    baseTickets: data.base_tickets,
+    id: createdTaskRaw.id,
+    title: createdTaskRaw.title,
+    description: createdTaskRaw.description ?? null,
+    baseTickets: createdTaskRaw.base_tickets,
+    createdById: createdTaskRaw.created_by_id,
+    attachmentPath: createdTaskRaw.attachment_path ?? undefined,
+    referenceUrl: createdTaskRaw.reference_url ?? null,
+    instrumentIds: payload.instrumentIds || [],
   };
-
-  console.log(`[Supabase] Task library item created successfully (ID: ${createdTask.id})`);
   return createdTask;
 };
 
-/**
- * Updates an existing task library item in Supabase.
- */
 export const updateTaskLibraryItem = async ({
   taskId,
   updates,
+  file,
+  mimeType: providedMimeType,
+  fileName: providedFileName,
 }: {
   taskId: string;
-  updates: Partial<Omit<TaskLibraryItem, 'id'>>;
+  updates: Partial<Omit<TaskLibraryItem, 'id' | 'createdById'>>;
+  file?: File | NativeFileObject | null; // Use NativeFileObject type
+  mimeType?: string;
+  fileName?: string;
 }): Promise<TaskLibraryItem> => {
   const client = getSupabase();
-  console.log(`[Supabase] Updating task library item ${taskId}:`, updates);
-
-  const updatePayload: { title?: string; description?: string | null; base_tickets?: number } = {};
+  const updatePayload: any = {};
   let hasChanges = false;
 
-  if (updates.title !== undefined) {
-    const trimmedTitle = updates.title.trim();
-    if (!trimmedTitle) {
-      throw new Error('Task title cannot be empty.');
-    }
-    updatePayload.title = trimmedTitle;
+  // ... map text/numeric/instrument updates ...
+  if (updates.hasOwnProperty('title')) {
+    updatePayload.title = updates.title?.trim();
     hasChanges = true;
   }
-  if (updates.description !== undefined) {
-    updatePayload.description = updates.description.trim() || null;
+  if (updates.hasOwnProperty('description')) {
+    updatePayload.description = updates.description === null ? null : updates.description?.trim();
     hasChanges = true;
   }
-  if (updates.baseTickets !== undefined) {
-    const baseTickets = updates.baseTickets;
+  if (updates.hasOwnProperty('baseTickets')) {
     if (
-      baseTickets == null ||
-      typeof baseTickets !== 'number' ||
-      baseTickets < 0 ||
-      !Number.isInteger(baseTickets)
+      updates.baseTickets == null ||
+      updates.baseTickets < 0 ||
+      !Number.isInteger(updates.baseTickets)
     ) {
       throw new Error('Base tickets must be a non-negative integer.');
     }
-    updatePayload.base_tickets = baseTickets;
+    updatePayload.baseTickets = updates.baseTickets;
+    hasChanges = true;
+  }
+  if (updates.hasOwnProperty('referenceUrl')) {
+    updatePayload.referenceUrl =
+      updates.referenceUrl === null ? null : updates.referenceUrl?.trim();
+    hasChanges = true;
+  }
+  if (updates.hasOwnProperty('instrumentIds')) {
+    updatePayload.instrumentIds = updates.instrumentIds || [];
     hasChanges = true;
   }
 
-  if (Object.keys(updatePayload).length === 0) {
-    console.warn('[Supabase] updateTaskLibraryItem called with no valid updates.');
+  if (file === null) {
+    updatePayload.deleteAttachment = true;
+    hasChanges = true;
+  } else if (file) {
+    let finalMimeType = providedMimeType;
+    let finalFileName = providedFileName;
+    // ... logic to determine finalMimeType/finalFileName ...
+    if (!finalMimeType && file instanceof File) finalMimeType = file.type;
+    else if (file && !finalMimeType && typeof file === 'object' && 'mimeType' in file)
+      finalMimeType = file.mimeType;
+    else if (file && !finalMimeType && typeof file === 'object' && 'type' in file)
+      finalMimeType = file.type;
+    if (!finalFileName && file instanceof File) finalFileName = file.name;
+    else if (file && !finalFileName && typeof file === 'object' && 'name' in file)
+      finalFileName = file.name;
+    if (!finalFileName) finalFileName = `update.${finalMimeType?.split('/')[1] || 'bin'}`;
 
+    if (finalMimeType && finalFileName) {
+      try {
+        const base64 = await fileToBase64(file); // Pass correct object type
+        updatePayload.file = { base64, mimeType: finalMimeType, fileName: finalFileName };
+        hasChanges = true;
+      } catch (error: any) {
+        throw new Error(`Failed to process file for update: ${error.message}`);
+      }
+    } else {
+      console.warn('[API update] File provided but missing info.');
+    }
+  }
+
+  if (!hasChanges) {
+    // ... refetch current item logic ...
     const { data: currentData, error: currentError } = await client
       .from('task_library')
-      .select('id, title, description, base_tickets')
+      .select(`*, task_library_instruments ( instrument_id )`)
       .eq('id', taskId)
       .single();
-    if (currentError || !currentData) {
+    if (currentError || !currentData)
       throw new Error(
-        `Failed to fetch current task library item ${taskId} for no-op update: ${currentError?.message || 'Not Found'}`
+        `Failed to fetch current task ${taskId}: ${currentError?.message || 'Not found'}`
       );
-    }
     return {
-      id: currentData.id,
+      /* map currentData */ id: currentData.id,
       title: currentData.title,
-      description: currentData.description ?? '',
+      description: currentData.description ?? null,
       baseTickets: currentData.base_tickets,
+      createdById: currentData.created_by_id,
+      attachmentPath: currentData.attachment_path ?? undefined,
+      referenceUrl: currentData.reference_url ?? null,
+      instrumentIds:
+        currentData.task_library_instruments?.map((link: any) => link.instrument_id) ?? [],
     };
   }
 
-  const { data, error } = await client
-    .from('task_library')
-    .update(updatePayload)
-    .eq('id', taskId)
-    .select('id, title, description, base_tickets')
-    .single();
+  if (updatePayload.title !== undefined && !updatePayload.title)
+    throw new Error('Task title cannot be empty.');
 
-  if (error || !data) {
-    console.error(`[Supabase] Error updating task library item ${taskId}:`, error?.message);
-    throw new Error(
-      `Failed to update task library item ${taskId}: ${error?.message || 'No data returned'}`
-    );
+  const requestBody = { taskId, updates: updatePayload };
+  const { data: responseData, error } = await client.functions.invoke('update-task-library-item', {
+    body: requestBody,
+  });
+
+  if (error) {
+    throw new Error(`Failed to update task: ${error.message || 'Unknown EF error'}`);
   }
 
-  const updatedTask: TaskLibraryItem = {
-    id: data.id,
-    title: data.title,
-    description: data.description ?? '',
-    baseTickets: data.base_tickets,
-  };
+  const { data: updatedData, error: refetchError } = await client
+    .from('task_library')
+    .select(`*, task_library_instruments ( instrument_id )`)
+    .eq('id', taskId)
+    .single();
+  if (refetchError || !updatedData)
+    throw new Error(
+      `Update successful, but failed to refetch: ${refetchError?.message || 'Not found'}`
+    );
 
-  console.log(`[Supabase] Task library item ${taskId} updated successfully.`);
+  const updatedTask: TaskLibraryItem = {
+    /* map updatedData */ id: updatedData.id,
+    title: updatedData.title,
+    description: updatedData.description ?? null,
+    baseTickets: updatedData.base_tickets,
+    createdById: updatedData.created_by_id,
+    attachmentPath: updatedData.attachment_path ?? undefined,
+    referenceUrl: updatedData.reference_url ?? null,
+    instrumentIds:
+      updatedData.task_library_instruments?.map((link: any) => link.instrument_id) ?? [],
+  };
   return updatedTask;
 };
 
-/**
- * Deletes a task library item from Supabase.
- */
+// deleteTaskLibraryItem remains the same
 export const deleteTaskLibraryItem = async (taskId: string): Promise<void> => {
   const client = getSupabase();
-  console.log(`[Supabase] Deleting task library item ${taskId}`);
-
-  const { error } = await client.from('task_library').delete().eq('id', taskId);
-
+  const payload = { taskId };
+  const { data, error } = await client.functions.invoke('delete-task-library-item', {
+    body: payload,
+  });
   if (error) {
-    console.error(`[Supabase] Error deleting task library item ${taskId}:`, error.message);
-
-    if (error.code === '23503') {
-      throw new Error(
-        `Cannot delete task: It might be currently assigned to one or more students.`
-      );
-    }
-    throw new Error(`Failed to delete task library item ${taskId}: ${error.message}`);
+    throw new Error(`Failed to delete task: ${error.message || 'EF error'}`);
   }
-
-  console.log(`[Supabase] Task library item ${taskId} deleted successfully.`);
 };
