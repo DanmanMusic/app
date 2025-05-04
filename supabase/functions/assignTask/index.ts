@@ -166,7 +166,7 @@ Deno.serve(async (req: Request) => {
       task_description: payload.taskDescription.trim(),
       task_base_points: payload.taskBasePoints,
       task_link_url: payload.taskLinkUrl || null, // <-- Add to insert object
-      task_attachement_path: payload.taskAttachmentPath || null, // <-- Add to insert object
+      task_attachment_path: payload.taskAttachmentPath || null, // <-- Add to insert object
     };
 
     console.log('Attempting to insert assigned task:', taskToInsert);

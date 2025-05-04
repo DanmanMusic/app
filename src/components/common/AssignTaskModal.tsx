@@ -570,9 +570,8 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           {renderStepContent()}
           {mutation.isPending && (
             <View style={commonSharedStyles.baseRowCentered}>
-              {' '}
-              <ActivityIndicator size="small" color={colors.primary} />{' '}
-              <Text style={commonSharedStyles.baseSecondaryText}>Assigning Task...</Text>{' '}
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={commonSharedStyles.baseSecondaryText}>Assigning Task...</Text>
             </View>
           )}
           {mutation.isError && (

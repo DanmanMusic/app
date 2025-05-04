@@ -44,7 +44,7 @@ This document provides the technical details of the database schema intended for
 - `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
 - `claimed_at` (TIMESTAMPTZ, Nullable)
 
-**`active_refresh_tokens`** (Stores hashes for custom refresh tokens)
+**`active_refresh_tokens`** (Stores hashes for custom refresh tokens from PIN flow)
 
 - `id` (BIGSERIAL, PK)
 - `user_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE CASCADE)
@@ -70,9 +70,12 @@ This document provides the technical details of the database schema intended for
 - `title` (TEXT, NOT NULL)
 - `description` (TEXT, Nullable)
 - `base_tickets` (INTEGER, NOT NULL, CHECK >= 0)
+- `created_by_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE SET NULL)
+- `attachment_path` (TEXT, Nullable): Path to file in `task-library-attachments` bucket.
+- `reference_url` (TEXT, Nullable): External URL associated with the task.
 - `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
 - `updated_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-- `link_url` (TEXT, Nullable): _Optional field if task links are implemented later._
+- _Removed:_ `is_public` (logic now derived from `created_by_id` role).
 
 **`rewards`**
 
@@ -91,7 +94,7 @@ This document provides the technical details of the database schema intended for
 - `assigned_by_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE SET NULL)
 - `assigned_date` (TIMESTAMPTZ, NOT NULL, default `now()`)
 - `task_title` (TEXT, NOT NULL)
-- `task_description` (TEXT, NOT NULL)
+- `task_description` (TEXT, Nullable) -- _Note: Schema has NOT NULL, might need update if allowing blank from AdHoc_
 - `task_base_points` (INTEGER, NOT NULL, CHECK >= 0)
 - `is_complete` (BOOLEAN, NOT NULL, default false)
 - `completed_date` (TIMESTAMPTZ, Nullable)
@@ -99,10 +102,12 @@ This document provides the technical details of the database schema intended for
 - `verified_by_id` (UUID, Nullable, FK -> `profiles.id` ON DELETE SET NULL)
 - `verified_date` (TIMESTAMPTZ, Nullable)
 - `actual_points_awarded` (INTEGER, Nullable, CHECK >= 0)
+- `task_link_url` (TEXT, Nullable): Copied from `task_library.reference_url` or added for ad-hoc.
+- `task_attachment_path` (TEXT, Nullable): Copied from `task_library.attachment_path`.
 - `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
 - `updated_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-- `task_link_url` (TEXT, Nullable): _Optional field if task links are implemented later._
-- `source_challenge_id` (UUID, Nullable): _Needed only if Challenges are implemented later._
+- _Removed:_ `task_link_url` (renamed from previous model version or consolidated - keeping `task_link_url`).
+- _Removed:_ `source_challenge_id` (Challenge feature TBD).
 
 **`ticket_transactions`**
 
@@ -145,6 +150,12 @@ This document provides the technical details of the database schema intended for
 - `student_id` (UUID, PK, FK -> `profiles.id` ON DELETE CASCADE)
 - `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
 
+**`task_library_instruments`** (New Table)
+
+- `task_library_id` (UUID, PK, FK -> `task_library.id` ON DELETE CASCADE)
+- `instrument_id` (UUID, PK, FK -> `instruments.id` ON DELETE CASCADE)
+- `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
+
 ## Relationships Summary (Including Foreign Key Actions)
 
 - `auth.users` 1-to-1 `profiles` (via `profiles.id` FK -> `auth.users.id` ON DELETE CASCADE)
@@ -175,3 +186,8 @@ This document provides the technical details of the database schema intended for
   - `profiles.current_goal_reward_id` FK -> `rewards.id` ON DELETE SET NULL
 - `rewards` conceptually linked to `ticket_transactions` (via `source_id` when `type='redemption'`)
 - `assigned_tasks` conceptually linked to `ticket_transactions` (via `source_id` when `type='task_award'`)
+- `task_library` 1-to-many `profiles` (for creator)
+  - `task_library.created_by_id` FK -> `profiles.id` ON DELETE SET NULL
+- `task_library` many-to-many `instruments` (via `task_library_instruments`)
+  - `task_library_instruments.task_library_id` FK -> `task_library.id` ON DELETE CASCADE
+  - `task_library_instruments.instrument_id` FK -> `instruments.id` ON DELETE CASCADE

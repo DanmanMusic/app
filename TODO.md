@@ -49,108 +49,117 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 - [x] **Refactor API Layer (`src/api/`)**:
   - [x] `instruments.ts` (CRUD + Storage)
   - [x] `rewards.ts` (CRUD + Storage)
-  - [x] `taskLibrary.ts` (CRUD)
+  - [x] `taskLibrary.ts` (CRUD - _See Phase 3 for EF migration_)
   - [x] `announcements.ts` (CRUD)
-  - [x] `users.ts` (Reads for all roles, basic profile `updateUser`, `toggleUserStatus`. Deferred `createUser`, `deleteUser`, link table updates).
+  - [x] `users.ts` (Reads for all roles, basic profile `updateUser`, `toggleUserStatus`. Deferred `createUser`, `deleteUser`, link table updates -> _Now handled by EFs_).
   - [x] `stats.ts` (Read counts from DB).
-  - [x] `tickets.ts` (Read history/balance. Deferred `adjustTickets`, `redeemReward`).
-  - [x] `assignedTasks.ts` (Read tasks. Basic `createAssignedTask`. Deferred `updateAssignedTask` verification/points logic. Basic `deleteAssignedTask`).
+  - [x] `tickets.ts` (Read history/balance. Deferred `adjustTickets`, `redeemReward` -> _Now handled by EFs_).
+  - [x] `assignedTasks.ts` (Read tasks. Basic `createAssignedTask`. Deferred `updateAssignedTask` verification/points logic. Basic `deleteAssignedTask` -> _Now handled by EFs_).
 - [x] **Refactor Hook Layer (`src/hooks/`)**:
-  - [x] `usePaginatedStudents.ts`
+  - [x] `usePaginatedStudents.ts` (_Filter bug needs re-verification_)
   - [x] `usePaginatedTeachers.ts`
   - [x] `usePaginatedParents.ts`
+  - [x] `usePaginatedAdmins.ts`
   - [x] `usePaginatedAssignedTasks.ts`
   - [x] `usePaginatedStudentHistory.ts`
   - [x] `usePaginatedStudentTasks.ts`
   - [x] `usePaginatedTicketHistory.ts`
 - [x] **Refactor Component Layer (`src/views/`, `src/components/`)**:
   - [x] `AdminUsersSection.tsx` (Consume user hooks).
-  - [x] `AdminStudentDetailView.tsx` (Fetch profile, use task/history hooks, adjust handlers).
+  - [x] `AdminStudentDetailView.tsx` (Fetch profile, use task/history hooks, adjust handlers, removed delete confirmation).
   - [x] `AdminTeacherDetailView.tsx` (Fetch profile, use student hook).
   - [x] `AdminParentDetailView.tsx` (Fetch profile, use useQueries for students).
-  - [x] `AdminView.tsx` (Simplify state, use section components, adjust handlers).
-  - [x] `TeacherView.tsx` (Fetch profile, use section components).
+  - [x] `AdminView.tsx` (Simplify state, use section components, added task deletion confirmation).
+  - [x] `TeacherView.tsx` (Fetch profile, use section components, added task deletion confirmation, added 'tasks-full' section, added create task lib handlers).
   - [x] `ParentView.tsx` (Fetch profiles, use StudentView).
   - [x] `StudentView.tsx` (Verify data flow).
   - [x] `PublicView.tsx` (Verify data flow).
-  - [x] `Create*/Edit*` Modals for Instruments, Rewards, Task Library, Announcements (Verify API usage).
-  - [x] `EditUserModal.tsx` (Use updateUser API, acknowledge deferred links).
-  - [x] `DeactivateOrDeleteUserModal.tsx` (Use toggleUserStatus, disable delete).
-  - [x] `ManualTicketAdjustmentModal.tsx` (Fetch balance, disable action).
-  - [x] `RedeemRewardModal.tsx` (Fetch balance, disable action).
-  - [x] `AssignTaskModal.tsx` (Fetch reads, disable action).
-  - [x] `TaskVerificationModal.tsx` (Fetch profile, disable actions).
+  - [x] `Create*/Edit*` Modals for Instruments, Rewards, Announcements (Verified API usage).
+  - [x] `Task Library Modals/Items`: Updated for new fields (instruments, files, urls) and teacher creation/edit/delete capabilities.
+  - [x] `EditUserModal.tsx` (Uses EF).
+  - [x] `DeactivateOrDeleteUserModal.tsx` (Uses EFs).
+  - [x] `ManualTicketAdjustmentModal.tsx` (Uses EF).
+  - [x] `RedeemRewardModal.tsx` (Uses EF).
+  - [x] `AssignTaskModal.tsx` (Uses EF, updated for instrument filtering and copying task lib data).
+  - [x] `TaskVerificationModal.tsx` (Uses EF).
+  - [x] `PaginatedTasksList.tsx` (Updated for name lookups, handles delete initiation).
 
 ## Development Phase 3: Authentication & Server-Side Logic
 
 - [x] **Implement Authentication:**
-  - [x] Backend: Define schema/logic for PIN storage/validation (`onetime_pins`, `active_refresh_tokens`).
-  - [x] Backend: Create Supabase Edge Function (`claim-onetime-pin`).
-  - [x] Backend: Create Supabase Edge Function (`generate-onetime-pin`).
+  - [x] Backend: Define schema/logic (`onetime_pins`, `active_refresh_tokens`).
+  - [x] Backend: Create EF (`claim-onetime-pin`).
+  - [x] Backend: Create EF (`generate-onetime-pin`).
   - [x] Frontend: Build PIN Login UI (`LoginModal.tsx`).
   - [x] Frontend: Implement Email/Password login UI (`LoginModal.tsx`).
-  - [x] Frontend: Refactor `AuthContext` for real Supabase sessions.
-  - [x] Frontend: Implement Client-Side Custom PIN Refresh Logic (`AuthContext`).
+  - [x] Frontend: Refactor `AuthContext` for real Supabase sessions & custom PIN refresh (web workaround implemented).
   - [x] Frontend: Integrate `LoginModal` into `App.tsx`.
-  - [x] Frontend: Fixed PIN session refresh conflict by disabling Supabase client auto-refresh.
-
-* [x] **Implement Secure RLS:**
-  - [x] Apply secure RLS policies for Storage buckets (`instrument-icons`, `reward-icons`).
-  - [x] Define `is_admin()` helper function.
-  - [x] Apply secure RLS policies for DB tables (`rewards`, `announcements`, `profiles`, `instruments`, `task_library`, `assigned_tasks`, `student_instruments`, `student_teachers`, `parent_students`, `ticket_transactions`).
-  - [x] Restrict sensitive auth tables (`onetime_pins`, `active_refresh_tokens`, `user_credentials`) to service_role access only (no client policies).
-  - [x] Created `can_student_or_parent_mark_task_complete()` helper function for RLS.
-  - [x] Created `can_student_or_parent_update_profile_limited()` helper function for RLS.
-  - [x] Resolved RLS recursion issues on `assigned_tasks` and `profiles` updates using helper functions.
-* [x] **Implement Edge Functions for Core Auth/User Management:**
-  - [x] `createUser` (handle `auth.admin.createUser`, profile insert, student links).
-  - [x] `generate-onetime-pin`.
-  - [x] `claim-onetime-pin`.
-  - [x] `refresh-pin-session`.
-  - [x] `update-auth-credentials`.
-  - [x] `get-user-auth-details`.
-  - [x] `deleteUser` (incl. protected admin check).
-  - [x] `updateUserWithLinks` (handles profile & link tables, respects Teacher permissions).
-  - [x] `toggleUserStatus` (moved from client API to EF due to RLS recursion).
-* [x] **Implement Edge Functions for Core Workflow Actions:**
-  - [x] `assignTask` (Admin/Teacher assign).
-  - [x] `verifyTask` (Admin/Teacher verify, includes transaction log insert).
-  - [x] `adjustTickets` (Admin manual adjustment, includes transaction log insert).
-  - [x] `redeemReward` (Admin redemption, includes transaction log insert, uses RPC).
-  - [x] `deleteAssignedTask` (Admin/Teacher delete unverified).
-* [x] **Update API Layer (`src/api/`)**:
+- [x] **Implement Secure RLS:**
+  - [x] Apply secure RLS policies for Storage buckets (`instrument-icons`, `reward-icons`, `task-library-attachments`).
+  - [x] Define helper functions (`is_active_admin`, `is_active_admin_or_teacher`).
+  - [x] Apply/Update secure RLS policies for DB tables (most reads via RLS, most writes via EFs).
+  - [x] Restrict sensitive auth tables to service_role access.
+  - [x] Created helper functions for specific RLS checks (`can_...`).
+- [x] **Implement Edge Functions for Core Auth/User Management:**
+  - [x] `createUser`
+  - [x] `generate-onetime-pin`
+  - [x] `claim-onetime-pin`
+  - [x] `refresh-pin-session`
+  - [x] `update-auth-credentials`
+  - [x] `get-user-auth-details`
+  - [x] `deleteUser`
+  - [x] `updateUserWithLinks`
+  - [x] `toggleUserStatus`
+- [x] **Implement Edge Functions for Core Workflow Actions:**
+  - [x] `assignTask` (handles task lib data copy)
+  - [x] `verifyTask`
+  - [x] `adjustTickets`
+  - [x] `redeemReward`
+  - [x] `deleteAssignedTask`
+  - [x] `create-task-library-item`
+  - [x] `update-task-library-item`
+  - [x] `delete-task-library-item`
+- [x] **Update API Layer (`src/api/`)**:
   - [x] Updated relevant API functions to call respective Edge Functions.
-  - [x] Implemented `updateStudentGoal` for direct RLS-based update.
-* [x] **Update UI:**
+  - [x] Implemented `updateStudentGoal` (direct RLS).
+  - [x] Updated `taskLibrary.ts` CUD for EFs.
+- [x] **Update UI:**
   - [x] Connected Modals to working API/Edge Function flows.
   - [x] Added 'Admins' tab and integration.
   - [x] Created and integrated `AdminAdminDetailView`.
   - [x] Enabled delete buttons/logic.
   - [x] Enabled confirm buttons/logic for verification, assign task, adjust tickets, redeem reward.
   - [x] Implemented persistent student goals.
-  - [x] Refactored Admin task view: Replaced modal with in-page `PaginatedTasksList`.
-  - [x] Consolidated styles into `commonSharedStyles.ts`.
-* [ ] **Security Hardening:**
+  - [x] Refactored Admin/Teacher task view to use `PaginatedTasksList`.
+  - [x] Implemented Task Library features (Instruments, Files, URLs, Teacher Private).
+- [ ] **Security Hardening:**
   - [ ] Implement proper salting for `hashToken` function used for refresh tokens (in `claim-onetime-pin` and `refresh-pin-session`).
   - [ ] Consider implementing rolling refresh tokens in `refresh-pin-session`.
   - [ ] Final review and potential tightening of all RLS policies (post-feature completion).
-* [ ] **Debugging & Known Issues:**
-  - [x] **BUG:** Investigate/Monitor Chrome/Expo Web session refresh/logout behavior. _(Workaround: Disabled client auto-refresh. Monitoring needed.)_
+- [ ] **Debugging & Known Issues:**
+  - [x] **BUG:** Investigate/Monitor Chrome/Expo Web session refresh/logout behavior. _(Workaround: Implemented "No Recovery In Listener" in AuthContext. Requires manual page refresh after >1hr inactivity for PIN users on web. Accepted limitation for now)._
   - [ ] **TODO:** Refactor `verifyTask` and potentially `adjustTickets`/`redeemReward` Edge Functions to use atomic PostgreSQL RPC functions instead of sequential DB calls for maximum data integrity.
   - [ ] **TODO:** Refactor `get_student_balance` RPC to potentially use a dedicated balance column on `profiles` (updated by triggers/functions) instead of summing transactions, for performance if history grows large.
   - [ ] **TODO:** Add more specific RLS `WITH CHECK` clauses to `assigned_tasks` update policy (`Student/Parent Update - Mark Complete Via Function`) to prevent modification of other fields besides `is_complete`, `completed_date`, `verification_status`, once core functionality is stable.
-  - [ ] **BUG:** Admin Users Section - Student status filters (`active`/`inactive`/`all`) and search term filter are not working correctly. Data doesn't seem to refilter when buttons are pressed or text is entered. Hook `usePaginatedStudents` needs investigation.
+  - [ ] **BUG:** Admin Users Section - Student status filters (`active`/`inactive`/`all`) and search term filter might still not be working correctly. Hook `usePaginatedStudents` needs re-verification after refactor. _(Re-check this)_.
   - [ ] **BUG/Enhancement:** The `AssignTaskModal` layout (Step 2: Select Task) needs improvement, especially the display of the Task Library list and the Ad-Hoc input fields. Consider better spacing, clearer separation, and potentially making the library list searchable/scrollable independently.
-  - [ ] **TESTING:** Thoroughly test the custom refresh token flow (`claim-onetime-pin` -> storage -> `refresh-pin-session`) across different scenarios (app close/reopen, token expiry, multiple logins) on both web and native platforms.
-  - [ ] **MISSING FEATURE:** Need a way for non-admin users (Student, Parent, Teacher) to update their _own_ profile information (First Name, Last Name, Nickname). Create a new modal (`EditMyProfileModal`?) accessible from their respective views, likely calling the `updateUserWithLinks` Edge Function (which needs to allow self-updates for these fields).
-  - [ ] **MISSING FEATURE:** Need a way for _any_ user who has set up email/password login (not using PIN) to change their email or password. Reuse/adapt the `SetEmailPasswordModal` or create a new `ChangeCredentialsModal` accessible from their views, calling the `update-auth-credentials` Edge Function.
+  - [ ] **TESTING:** Thoroughly test the custom refresh token flow (`claim-onetime-pin` -> storage -> `refresh-pin-session`) on web (manual refresh needed after >1hr) and eventually native.
+  - [ ] **MISSING FEATURE:** Need a way for non-admin users (Student, Parent, Teacher) to update their _own_ profile information (First Name, Last Name, Nickname). Create `EditMyProfileModal`? Call `updateUserWithLinks`?
+  - [ ] **MISSING FEATURE:** Need a way for _any_ user who has set up email/password login (not using PIN) to change their email or password. Reuse/adapt `SetEmailPasswordModal` or create `ChangeCredentialsModal`? Call `update-auth-credentials`?
+  - [ ] **KNOWN LIMITATION (RLS - Names):** Teachers viewing task lists currently see "Assigned by: ID: <admin_id>" for tasks assigned by Admins. Accepted for now. Future fix: Relax RLS or use RPC.
+  - [ ] **KNOWN LIMITATION (RLS - Filtering):** The Student Status filter in `PaginatedTasksList` likely does not work correctly for Teachers due to RLS on `profiles` join. Accepted for now. Future fix: Relax RLS or use RPC.
+  - [ ] **BLOCKER (Native Build/Runtime):** Native builds/runtime via Expo Go are blocked due to Node polyfill errors (`stream`, `events`, `https`, `net`) required by `ws`/`supabase-js`. **Awaiting official fix from Supabase.**
 
 ## Development Phase 4: Features, Refinements & Testing
 
-_(Dependent on resolving/stabilizing Phase 3 issues)_
-
+- **[ ] Feature: Practice Streaks (#2):**
+  - [ ] Decide on tracking method (Button, Timer, Task Completion).
+  - [ ] Implement schema changes if needed (`practice_log` table?).
+  - [ ] Create backend DB function (`calculate_streak`).
+  - [ ] Add API endpoint (`fetchStudentStreak`).
+  - [ ] Add UI display in `StudentView`.
 - [ ] **Address Pending Decisions & Implement Chosen Features:** (Based on Dan Lefler's input from `SPECIFICATION.md` Section 10)
-  - [ ] Task Link URLs?
+  - [ ] Task Link URLs? (_Partially implemented via `reference_url`_).
   - [ ] Avatars?
   - [ ] Mandatory Reward Images?
   - [ ] Auto-Redemption Announcements?
@@ -159,14 +168,13 @@ _(Dependent on resolving/stabilizing Phase 3 issues)_
   - [ ] Parent Reminders?
   - [ ] Finalize Data Deletion Policy details (Cascade vs Set Null for `assigned_tasks`, `ticket_transactions`). _(Need to add FKs with chosen policy)_.
   - [ ] Finalize PIN Login Identifier (Name? Username?) & Parent differentiation logic.
-  - [ ] Offer Email/Password for Students/Parents too? _(Partially addressed by allowing credential setting)_
-
-* [ ] **Refinements & Thorough Testing:**
-  - [ ] Test all user role workflows end-to-end.
-  - [ ] Refine UI/UX (including button styles).
+  - [ ] Offer Email/Password for Students/Parents too? _(Partially addressed by allowing credential setting)_.
+- **[ ] Refinements & Thorough Testing:**
+  - [ ] Test all user role workflows end-to-end, especially Task Library features.
+  - [ ] Refine UI/UX (including button styles, modal layouts).
   - [ ] Add Foreign Key constraints with appropriate ON DELETE actions (CASCADE/SET NULL) for remaining relationships (e.g., `assigned_tasks` FKs, `ticket_transactions` FK). Create new migration(s).
-  - [ ] Add database indexes for common query patterns (e.g., filtering tasks by status/teacher/student). _(Some added, review needed)_.
-  - [ ] Consider adding database-level checks (e.g., check constraints) to ensure role consistency in link tables if not handled sufficiently by app logic/RLS.
+  - [ ] Add database indexes for common query patterns (review needed).
+  - [ ] Consider adding database-level checks (e.g., check constraints) for role consistency in link tables.
   - [ ] Unit/integration tests (Optional).
 
 ## Supporting Features (Post-MVP / Lower Priority)
