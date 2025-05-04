@@ -118,9 +118,23 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
 
   return (
     <ScrollView style={commonSharedStyles.flex1}>
-      <Text style={commonSharedStyles.baseSubTitleText}>Admin Details</Text>
-      <Text style={commonSharedStyles.baseSecondaryText}>Name: {adminDisplayName}</Text>
-      <Text style={commonSharedStyles.baseSecondaryText}>ID: {adminProfile.id}</Text>
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+        <Text
+          style={[
+            commonSharedStyles.baseTitleText,
+            commonSharedStyles.baseMarginTopBottom,
+            commonSharedStyles.bold,
+          ]}
+        >
+          Admin Details
+        </Text>
+      </View>
+      <Text style={commonSharedStyles.baseSecondaryText}>
+        Name: <Text style={commonSharedStyles.bold}>{adminDisplayName}</Text>
+      </Text>
+      <Text style={commonSharedStyles.baseSecondaryText}>
+        ID: <Text style={commonSharedStyles.bold}>{adminProfile.id}</Text>
+      </Text>
       <Text style={commonSharedStyles.baseSecondaryText}>
         Status:{' '}
         <Text
@@ -133,15 +147,23 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
       </Text>
       <Text style={commonSharedStyles.baseSecondaryText}>
         Email:{' '}
-        {adminAuthDetails?.email ??
-          (authDetailsError ? '(Error Fetching)' : '(Not Found/No Email)')}
+        <Text style={commonSharedStyles.bold}>
+          {adminAuthDetails?.email ??
+            (authDetailsError ? '(Error Fetching)' : '(Not Found/No Email)')}
+        </Text>
       </Text>
       {!needsPinLogin && !authDetailsError && adminAuthDetails?.email && (
-        <Text style={commonSharedStyles.baseVeryLightText}>
+        <Text style={commonSharedStyles.baseLightText}>
           (Email/Password login appears to be set up)
         </Text>
       )}
-      <View style={[commonSharedStyles.baseRow]}>
+      <View
+        style={[
+          commonSharedStyles.baseRow,
+          commonSharedStyles.baseGap,
+          commonSharedStyles.baseMarginTopBottom,
+        ]}
+      >
         <Button
           title="Manage Status"
           onPress={handleStatus}
@@ -165,7 +187,7 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
           !needsPinLogin &&
           !authDetailsError &&
           adminAuthDetails?.email && (
-            <Text style={commonSharedStyles.baseVeryLightText}>(PIN login not needed)</Text>
+            <Text style={commonSharedStyles.baseLightText}>(PIN login not needed)</Text>
           )}
       </View>
       <View style={{ height: 30 }} />

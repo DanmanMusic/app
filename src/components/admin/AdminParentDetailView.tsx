@@ -178,9 +178,23 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
   return (
     <>
       <ScrollView style={commonSharedStyles.flex1}>
-        <Text style={commonSharedStyles.baseSubTitleText}>Parent Details</Text>
-        <Text style={commonSharedStyles.baseSecondaryText}>Name: {parentDisplayName}</Text>
-        <Text style={commonSharedStyles.baseSecondaryText}>ID: {parent.id}</Text>
+        <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+          <Text
+            style={[
+              commonSharedStyles.baseTitleText,
+              commonSharedStyles.baseMarginTopBottom,
+              commonSharedStyles.bold,
+            ]}
+          >
+            Parent Details
+          </Text>
+        </View>
+        <Text style={commonSharedStyles.baseSecondaryText}>
+          Name: <Text style={commonSharedStyles.bold}>{parentDisplayName}</Text>
+        </Text>
+        <Text style={commonSharedStyles.baseSecondaryText}>
+          ID: <Text style={commonSharedStyles.bold}>{parent.id}</Text>
+        </Text>
         <Text style={commonSharedStyles.baseSecondaryText}>
           Status:{' '}
           <Text
@@ -191,7 +205,13 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
             {parent.status}
           </Text>
         </Text>
-        <View style={[commonSharedStyles.baseRow]}>
+        <View
+          style={[
+            commonSharedStyles.baseRow,
+            commonSharedStyles.baseGap,
+            commonSharedStyles.baseMarginTopBottom,
+          ]}
+        >
           <Button title="Edit Info" onPress={handleEdit} color={colors.warning} />
           <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
           <Button title="Link Student" onPress={handleLinkStudent} color={colors.info} />
