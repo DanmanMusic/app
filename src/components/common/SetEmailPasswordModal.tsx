@@ -64,7 +64,12 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail || !password || !confirmPassword) {
-      Toast.show({ type: 'error', text1: 'Missing Fields', text2: 'Please fill in all fields.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Missing Fields',
+        text2: 'Please fill in all fields.',
+        position: 'bottom',
+      });
       return;
     }
     if (!trimmedEmail.includes('@')) {

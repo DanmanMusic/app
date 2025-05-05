@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import { TeacherDashboardSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';
-import { PendingVerificationItem } from '../common/PendingVerificationItem';
+import { AssignedTaskDetailItem } from '../common/AssignedTaskDetailItem';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = ({
@@ -123,9 +123,10 @@ export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = (
             renderItem={({ item }) => {
               const studentInfo = allStudentsSimple.find(s => s.id === item.studentId);
               return (
-                <PendingVerificationItem
-                  task={item}
+                <AssignedTaskDetailItem
+                  item={item}
                   studentName={studentInfo?.name || 'Unknown Student'}
+                  showStudentName={true}
                   onInitiateVerification={onInitiateVerificationModal}
                 />
               );

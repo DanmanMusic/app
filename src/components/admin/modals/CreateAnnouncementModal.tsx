@@ -66,11 +66,21 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
     const trimmedMessage = message.trim();
 
     if (!trimmedTitle) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Title cannot be empty.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Title cannot be empty.',
+        position: 'bottom',
+      });
       return;
     }
     if (!trimmedMessage) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Message cannot be empty.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Message cannot be empty.',
+        position: 'bottom',
+      });
       return;
     }
 

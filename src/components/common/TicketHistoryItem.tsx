@@ -27,9 +27,13 @@ export const TicketHistoryItem = ({ item }: { item: TicketTransaction }) => {
   const amountColor = item.amount > 0 ? colors.success : colors.danger;
 
   return (
-    <View style={[commonSharedStyles.baseItem, commonSharedStyles.baseRow]}>
+    <View
+      style={[commonSharedStyles.baseItem, commonSharedStyles.baseRow, commonSharedStyles.baseGap]}
+    >
       <View style={styles.columnAmount}>
-        <Text style={[styles.amountText, { color: amountColor }]}>{amountDisplay}</Text>
+        <Text style={[commonSharedStyles.baseSecondaryText, { color: amountColor }]}>
+          {amountDisplay}
+        </Text>
       </View>
       <View style={styles.columnType}>
         <View>
@@ -63,19 +67,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textPrimary,
   },
-  amountText: {
-    paddingLeft: 4,
-    fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'left',
-  },
   timestampText: {
     fontSize: 12,
     color: colors.textLight,
     textAlign: 'right',
   },
   notesText: {
-    fontSize: 12,
+    fontSize: 14,
     color: colors.textSecondary,
     fontStyle: 'italic',
     paddingLeft: 5,

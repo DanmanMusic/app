@@ -124,7 +124,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     onSuccess: (_, deletedTaskId) => {
       queryClient.invalidateQueries({ queryKey: ['task-library'] });
       handleCloseDeleteTaskLibModal();
-      Toast.show({ type: 'success', text1: 'Success', text2: 'Task library item deleted.' });
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Task library item deleted.',
+        position: 'bottom',
+      });
     },
     onError: (error: Error) => {
       handleCloseDeleteTaskLibModal();
@@ -132,6 +137,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         type: 'error',
         text1: 'Deletion Failed',
         text2: error.message || 'Could not delete task.',
+        position: 'bottom',
       });
     },
   });
@@ -142,7 +148,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
       console.log(`Assigned task ${deletedAssignmentId} removed successfully.`);
       queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
       closeDeleteAssignedTaskConfirmModal();
-      Toast.show({ type: 'success', text1: 'Success', text2: 'Assigned task removed.' });
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Assigned task removed.',
+        position: 'bottom',
+      });
     },
     onError: (error: Error) => {
       closeDeleteAssignedTaskConfirmModal();
@@ -150,6 +161,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         type: 'error',
         text1: 'Removal Failed',
         text2: error.message || 'Could not remove assigned task.',
+        position: 'bottom',
       });
     },
   });
@@ -174,6 +186,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         type: 'error',
         text1: 'Setup Error',
         text2: 'Verification modal handler missing.',
+        position: 'bottom',
       });
     }
   };

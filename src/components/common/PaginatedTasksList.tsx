@@ -150,11 +150,6 @@ export const PaginatedTasksList: React.FC<PaginatedTasksListProps> = ({
           renderItem={({ item }) => {
             const studentNameDisplay = studentNameLookup[item.studentId] || `ID: ${item.studentId}`;
 
-            const assignerNameDisplay = item.assignerName || `ID: ${item.assignedById}`;
-            const verifierNameDisplay =
-              item.verifierName || (item.verifiedById ? `ID: ${item.verifiedById}` : undefined);
-            const studentStatusDisplay = item.studentStatus || 'unknown';
-
             const taskIsNotVerified = !(
               item.verificationStatus === 'verified' ||
               item.verificationStatus === 'partial' ||
@@ -175,9 +170,10 @@ export const PaginatedTasksList: React.FC<PaginatedTasksListProps> = ({
               <AssignedTaskDetailItem
                 item={item}
                 studentName={studentNameDisplay}
+                showStudentName={true}
                 onInitiateVerification={onInitiateVerification}
                 canDelete={canDelete}
-                onDelete={canDelete ? () => onInitiateDelete(item) : undefined}
+                onDelete={canDelete ? onInitiateDelete : undefined}
               />
             );
           }}

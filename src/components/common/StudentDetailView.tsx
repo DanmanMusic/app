@@ -19,12 +19,6 @@ import { fetchStudentBalance } from '../../api/tickets';
 import { fetchUserProfile, fetchTeachers, fetchAuthUser } from '../../api/users';
 import { usePaginatedStudentHistory } from '../../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../../hooks/usePaginatedStudentTasks';
-import {
-  getSupabase,
-  handleOpenUrl,
-  handleViewAttachment,
-  TASK_ATTACHMENT_BUCKET,
-} from '../../lib/supabaseClient';
 import { TicketHistoryItem } from './TicketHistoryItem';
 import PaginationControls from '../admin/PaginationControls';
 import { AssignedTask, Instrument, User } from '../../types/dataTypes';
@@ -33,6 +27,7 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 import { StudentDetailViewProps } from '../../types/componentProps';
 import { useAuth } from '../../contexts/AuthContext';
+import { AssignedTaskDetailItem } from './AssignedTaskDetailItem';
 
 export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
   viewingStudentId,
@@ -254,44 +249,48 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
             Student Details
           </Text>
         </View>
-        <Text style={commonSharedStyles.baseSecondaryText}>
-          Name: <Text style={commonSharedStyles.bold}>{studentDisplayName}</Text>
-        </Text>
-        {balanceLoading ? (
-          <Text style={[commonSharedStyles.baseSecondaryText]}>
-            Balance: <Text style={commonSharedStyles.bold}>Loading...</Text>
-          </Text>
-        ) : balanceError ? (
+        <View style={[commonSharedStyles.baseColumn, commonSharedStyles.baseGap]}>
           <Text style={commonSharedStyles.baseSecondaryText}>
-            Balance: <Text style={commonSharedStyles.errorText}>Error</Text>
+            Name: <Text style={commonSharedStyles.bold}>{studentDisplayName}</Text>
           </Text>
-        ) : (
-          <Text style={[commonSharedStyles.baseSecondaryText]}>
-            Balance:{' '}
-            <Text style={[commonSharedStyles.bold, commonSharedStyles.baseSubTitleText]}>
-              {balance} Tickets
+          {balanceLoading ? (
+            <Text style={[commonSharedStyles.baseSecondaryText]}>
+              Balance: <Text style={commonSharedStyles.bold}>Loading...</Text>
+            </Text>
+          ) : balanceError ? (
+            <Text style={commonSharedStyles.baseSecondaryText}>
+              Balance: <Text style={commonSharedStyles.errorText}>Error</Text>
+            </Text>
+          ) : (
+            <Text style={[commonSharedStyles.baseSecondaryText]}>
+              Balance:{' '}
+              <Text style={[commonSharedStyles.bold, commonSharedStyles.baseSubTitleText]}>
+                {balance} Tickets
+              </Text>
+            </Text>
+          )}
+          <Text style={commonSharedStyles.baseSecondaryText}>
+            Status:{' '}
+            <Text
+              style={
+                isStudentActive
+                  ? commonSharedStyles.activeStatus
+                  : commonSharedStyles.inactiveStatus
+              }
+            >
+              {student.status}
             </Text>
           </Text>
-        )}
-        <Text style={commonSharedStyles.baseSecondaryText}>
-          Status:{' '}
-          <Text
-            style={
-              isStudentActive ? commonSharedStyles.activeStatus : commonSharedStyles.inactiveStatus
-            }
-          >
-            {student.status}
+          <Text style={commonSharedStyles.baseSecondaryText}>
+            Instrument(s): <Text style={commonSharedStyles.bold}>{instrumentNames}</Text>
           </Text>
-        </Text>
-        <Text style={commonSharedStyles.baseSecondaryText}>
-          Instrument(s): <Text style={commonSharedStyles.bold}>{instrumentNames}</Text>
-        </Text>
-        <Text style={commonSharedStyles.baseSecondaryText}>
-          Linked Teachers: <Text style={commonSharedStyles.bold}>{teacherNames}</Text>
-        </Text>
-        <Text style={commonSharedStyles.baseSecondaryText}>
-          ID: <Text style={commonSharedStyles.bold}>{student.id}</Text>
-        </Text>
+          <Text style={commonSharedStyles.baseSecondaryText}>
+            Linked Teachers: <Text style={commonSharedStyles.bold}>{teacherNames}</Text>
+          </Text>
+          <Text style={commonSharedStyles.baseSecondaryText}>
+            ID: <Text style={commonSharedStyles.bold}>{student.id}</Text>
+          </Text>
+        </View>
         <View
           style={[
             commonSharedStyles.baseRow,
@@ -360,67 +359,15 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
                 }
               }
 
-              const taskStatus = item.isComplete ? 'Complete (Pending)' : 'Assigned';
-
               return (
-                <View
-                  style={[
-                    commonSharedStyles.baseItem,
-                    commonSharedStyles.baseRow,
-                    commonSharedStyles.justifySpaceBetween,
-                    commonSharedStyles.baseGap,
-                  ]}
-                >
-                  <View>
-                    <Text style={[commonSharedStyles.itemTitle, { marginBottom: 1 }]}>
-                      {item.taskTitle}
-                    </Text>
-                    <Text style={[commonSharedStyles.baseSubTitleText, { marginBottom: 1 }]}>
-                      Status: {taskStatus}
-                    </Text>
-                    <Text style={[commonSharedStyles.baseSecondaryText, { marginBottom: 1 }]}>
-                      Assigned By: {item.assignerName || 'Unknown'}
-                    </Text>
-                    {item.assignedDate && (
-                      <Text style={[commonSharedStyles.baseSecondaryText, { marginBottom: 1 }]}>
-                        Assigned: {timestampDisplay(item.assignedDate)}
-                      </Text>
-                    )}
-                    {item.completedDate && (
-                      <Text style={[commonSharedStyles.baseSecondaryText, { marginBottom: 1 }]}>
-                        Marked Complete: {timestampDisplay(item.completedDate)}
-                      </Text>
-                    )}
-                    {item.taskLinkUrl && (
-                      <TouchableOpacity onPress={() => handleOpenUrl(item.taskLinkUrl)}>
-                        <Text style={[localStyles.detailText, { marginBottom: 1 }]}>
-                          Reference: <Text style={localStyles.linkText}>{item.taskLinkUrl}</Text>
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                    {item.taskAttachmentPath && (
-                      <TouchableOpacity
-                        onPress={() => handleViewAttachment(item.taskAttachmentPath)}
-                      >
-                        <Text style={[localStyles.detailText, { marginBottom: 1 }]}>
-                          Attachment: <Text style={localStyles.linkText}>View/Download</Text>
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                  <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
-                    {allowVerify && (
-                      <Button title="Verify" onPress={() => handleVerifyTaskClicked(item)} />
-                    )}
-                    {canDelete && (
-                      <Button
-                        title="Remove"
-                        onPress={() => onInitiateDeleteTask(item)}
-                        color={colors.danger}
-                      />
-                    )}
-                  </View>
-                </View>
+                <AssignedTaskDetailItem
+                  item={item}
+                  studentName={' '}
+                  showStudentName={false}
+                  canDelete={canDelete}
+                  onInitiateVerification={handleVerifyTaskClicked}
+                  onDelete={canDelete ? onInitiateDeleteTask : undefined}
+                />
               );
             }}
             scrollEnabled={false}

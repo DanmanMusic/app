@@ -2,6 +2,7 @@ import { Button, Text, TouchableOpacity, View } from 'react-native';
 import { AssignedTask } from '../../types/dataTypes';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { handleOpenUrl, handleViewAttachment } from '../../lib/supabaseClient';
+import { timestampDisplay } from '../../utils/helpers';
 
 export const AssignedTaskItem = ({
   task,
@@ -35,7 +36,7 @@ export const AssignedTaskItem = ({
         {!!task.taskDescription && (
           <Text style={[commonSharedStyles.baseSecondaryText]}>{task.taskDescription}</Text>
         )}
-        <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
+        <Text style={commonSharedStyles.baseSecondaryText}>Status: {taskStatus}</Text>
         {task.taskLinkUrl && (
           <TouchableOpacity onPress={() => handleOpenUrl(task.taskLinkUrl)}>
             <Text style={commonSharedStyles.baseSecondaryText}>
@@ -57,12 +58,12 @@ export const AssignedTaskItem = ({
         )}
         {task.completedDate && (
           <Text style={commonSharedStyles.baseSecondaryText}>
-            Completed: {new Date(task.completedDate).toLocaleDateString()}
+            Completed: {timestampDisplay(task.completedDate)}
           </Text>
         )}
         {task.verifiedDate && task.verificationStatus !== 'pending' && (
           <Text style={commonSharedStyles.baseSecondaryText}>
-            Verified: {new Date(task.verifiedDate).toLocaleDateString()}
+            Verified: {timestampDisplay(task.verifiedDate)}
           </Text>
         )}
         {task.isComplete && task.verificationStatus === 'pending' && (

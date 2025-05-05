@@ -481,30 +481,10 @@ export const commonSharedStyles = StyleSheet.create({
     paddingVertical: 8,
     marginTop: 10,
   },
-  pendingDetail: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    marginBottom: 3,
-  },
-  pendingItem: {
-    backgroundColor: colors.backgroundPrimary,
-    borderColor: colors.borderWarning,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginBottom: 10,
-    padding: 12,
-  },
   pendingNote: {
     color: colors.warning,
-    fontSize: 13,
+    fontSize: 14,
     fontStyle: 'italic',
-    marginTop: 5,
-  },
-  pendingTitle: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
   },
   picker: {
     width: '100%',
@@ -668,11 +648,6 @@ export const commonSharedStyles = StyleSheet.create({
   },
   statusText: {
     fontWeight: 'bold',
-  },
-  taskItemStatus: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    marginBottom: 4,
   },
   taskItemTitle: {
     color: colors.textPrimary,

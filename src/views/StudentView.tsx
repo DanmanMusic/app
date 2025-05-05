@@ -249,7 +249,12 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
 
   const handleGoalSelected = (newGoalId: string | null) => {
     if (!targetStudentId) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Student ID not found.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Student ID not found.',
+        position: 'bottom',
+      });
       return;
     }
     if (updateGoalMutation.isPending) return;

@@ -272,11 +272,21 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         : parseInt(String(adHocBasePoints || '-1'), 10);
     const url = adHocReferenceUrl.trim();
     if (!adHocTitle.trim()) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Custom title required.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Custom title required.',
+        position: 'bottom',
+      });
       return;
     }
     if (isNaN(numericPoints) || numericPoints < 0) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Valid points required.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Valid points required.',
+        position: 'bottom',
+      });
       return;
     }
     if (url && !url.toLowerCase().startsWith('http')) {
@@ -284,6 +294,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         type: 'error',
         text1: 'Validation Error',
         text2: 'URL must start with http/https.',
+        position: 'bottom',
       });
       return;
     }
@@ -296,6 +307,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         type: 'error',
         text1: 'File Error',
         text2: adHocFileError || 'Selected file is invalid or inaccessible.',
+        position: 'bottom',
       });
       return;
     }
@@ -306,7 +318,12 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   };
   const handleConfirm = () => {
     if (!selectedStudentId || !assignerId) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Student or Assigner ID missing.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Student or Assigner ID missing.',
+        position: 'bottom',
+      });
       return;
     }
 
@@ -333,11 +350,17 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           type: 'error',
           text1: 'Validation Error',
           text2: 'Invalid custom task details.',
+          position: 'bottom',
         });
         return;
       }
       if (url && !url.toLowerCase().startsWith('http')) {
-        Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Invalid custom URL.' });
+        Toast.show({
+          type: 'error',
+          text1: 'Validation Error',
+          text2: 'Invalid custom URL.',
+          position: 'bottom',
+        });
         return;
       }
 
@@ -354,6 +377,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             type: 'error',
             text1: 'File Error',
             text2: 'Selected file is missing required information.',
+            position: 'bottom',
           });
           return;
         }
@@ -382,6 +406,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         type: 'error',
         text1: 'Validation Error',
         text2: 'No task selected or defined.',
+        position: 'bottom',
       });
       return;
     }

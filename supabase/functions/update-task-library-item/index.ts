@@ -4,24 +4,17 @@ import { createClient, SupabaseClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
 // Import shared helpers
 import { isActiveAdmin, isActiveTeacher } from '../_shared/authHelpers.ts';
-import { uploadAttachment, deleteAttachment } from '../_shared/storageHelpers.ts';
+import { uploadAttachment, deleteAttachment, FileUploadData } from '../_shared/storageHelpers.ts';
 // Import decode separately if not handled within storageHelpers input type
 // import { decode } from 'https://deno.land/std@0.203.0/encoding/base64.ts';
 
-// Define payload structures
-interface FilePayload {
-  // Matches FileUploadData in storageHelpers
-  base64: string;
-  mimeType: string;
-  fileName: string;
-}
 interface UpdatePayload {
   title?: string;
   description?: string;
   baseTickets?: number;
   referenceUrl?: string | null;
   instrumentIds?: string[];
-  file?: FilePayload; // New file to upload (replaces old)
+  file?: FileUploadData; // New file to upload (replaces old)
   deleteAttachment?: boolean; // Flag to explicitly delete attachment
 }
 interface UpdateRequestBody {

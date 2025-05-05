@@ -41,7 +41,7 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
     mutationFn: adjustTickets,
     onSuccess: data => {
       console.log('[AdjustModal] Ticket adjustment successful:', data);
-      Toast.show({ type: 'success', text1: 'Success!', text2: data.message });
+      Toast.show({ type: 'success', text1: 'Success!', text2: data.message, position: 'bottom' });
 
       queryClient.invalidateQueries({ queryKey: ['balance', studentId] });
       queryClient.invalidateQueries({ queryKey: ['ticket-history', { studentId: studentId }] });
@@ -82,6 +82,7 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
         type: 'error',
         text1: 'Validation Error',
         text2: 'Please enter a valid positive amount.',
+        position: 'bottom',
       });
       return;
     }
@@ -90,6 +91,7 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
         type: 'error',
         text1: 'Validation Error',
         text2: 'Please enter a reason (notes).',
+        position: 'bottom',
       });
       return;
     }
@@ -102,6 +104,7 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
         type: 'error',
         text1: 'Insufficient Balance',
         text2: `${studentName} only has ${currentBalance} tickets.`,
+        position: 'bottom',
       });
       return;
     }

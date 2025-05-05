@@ -10,7 +10,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { User } from '../../types/dataTypes';
 import { TaskVerificationModalProps } from '../../types/componentProps';
 import { colors } from '../../styles/colors';
-import { getUserDisplayName } from '../../utils/helpers';
+import { getUserDisplayName, timestampDisplay } from '../../utils/helpers';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
@@ -116,6 +116,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
         type: 'error',
         text1: 'Error',
         text2: 'Missing required data for verification.',
+        position: 'bottom',
       });
       return;
     }
@@ -125,6 +126,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
         type: 'error',
         text1: 'Validation Error',
         text2: 'Points must be 0 for Incomplete status.',
+        position: 'bottom',
       });
       return;
     }
@@ -134,6 +136,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
           type: 'error',
           text1: 'Validation Error',
           text2: 'Points must be a non-negative whole number.',
+          position: 'bottom',
         });
         return;
       }
@@ -143,6 +146,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
         type: 'error',
         text1: 'Validation Error',
         text2: 'Points must be a non-negative whole number.',
+        position: 'bottom',
       });
       return;
     }
@@ -171,9 +175,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
         ? getUserDisplayName(student)
         : 'Unknown Student';
   const taskTitle = task.taskTitle;
-  const completedDateTime = task.completedDate
-    ? new Date(task.completedDate).toLocaleString()
-    : 'N/A';
+  const completedDateTime = task.completedDate ? timestampDisplay(task.completedDate) : 'N/A';
   const basePointsDisplay = baseTickets;
 
   if (currentStep === 1) {

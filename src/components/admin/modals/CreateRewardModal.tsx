@@ -106,7 +106,12 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
     const numericCost = typeof cost === 'number' ? cost : parseInt(String(cost || '-1'), 10);
 
     if (!trimmedName) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Reward Name is required.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Reward Name is required.',
+        position: 'bottom',
+      });
       return;
     }
     if (isNaN(numericCost) || numericCost < 0) {
@@ -114,6 +119,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
         type: 'error',
         text1: 'Validation Error',
         text2: 'Please enter a valid, non-negative Ticket Cost.',
+        position: 'bottom',
       });
       return;
     }

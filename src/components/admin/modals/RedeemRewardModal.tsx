@@ -63,7 +63,12 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
       console.log(
         `[RedeemRewardModal] Redemption successful for student ${variables.studentId}, reward ${variables.rewardId}. New Balance: ${data.newBalance}`
       );
-      Toast.show({ type: 'success', text1: 'Redemption Successful!', text2: data.message });
+      Toast.show({
+        type: 'success',
+        text1: 'Redemption Successful!',
+        text2: data.message,
+        position: 'bottom',
+      });
 
       queryClient.invalidateQueries({ queryKey: ['balance', variables.studentId] });
       queryClient.invalidateQueries({
@@ -114,6 +119,7 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
         type: 'error',
         text1: 'Error',
         text2: 'Cannot determine affordability due to balance error.',
+        position: 'bottom',
       });
       setSelectedRewardId(null);
     }
@@ -121,11 +127,21 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
 
   const handleConfirmRedemption = () => {
     if (!selectedRewardId) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Please select a reward to redeem.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Please select a reward to redeem.',
+        position: 'bottom',
+      });
       return;
     }
     if (balanceLoading || redeemMutation.isPending) {
-      Toast.show({ type: 'info', text1: 'Please wait', text2: 'Processing...' });
+      Toast.show({
+        type: 'info',
+        text1: 'Please wait',
+        text2: 'Processing...',
+        position: 'bottom',
+      });
       return;
     }
     if (balanceError) {
@@ -133,13 +149,19 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
         type: 'error',
         text1: 'Error',
         text2: 'Could not verify balance before redemption.',
+        position: 'bottom',
       });
       return;
     }
 
     const selectedReward = rewardsCatalog.find(r => r.id === selectedRewardId);
     if (!selectedReward) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Selected reward data not found.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Selected reward data not found.',
+        position: 'bottom',
+      });
       return;
     }
 
@@ -148,6 +170,7 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
         type: 'error',
         text1: 'Insufficient Tickets',
         text2: `Cannot redeem ${selectedReward.name}. Balance might have changed.`,
+        position: 'bottom',
       });
       setSelectedRewardId(null);
       return;

@@ -162,6 +162,7 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
         type: 'info',
         text1: 'No Changes',
         text2: 'No profile information was modified.',
+        position: 'bottom',
       });
       onClose();
       return;
@@ -219,6 +220,7 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
         type: 'info',
         text1: 'No Changes',
         text2: 'No login information was modified.',
+        position: 'bottom',
       });
       onClose();
       return;

@@ -28,7 +28,12 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
       console.log(
         `[DeactivateOrDeleteUserModal] User ${userId} deleted successfully via API/Edge Function.`
       );
-      Toast.show({ type: 'success', text1: 'Success', text2: 'User deleted successfully.' });
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'User deleted successfully.',
+        position: 'bottom',
+      });
 
       const userRole = user?.role;
       if (userRole === 'student') queryClient.invalidateQueries({ queryKey: ['students'] });
@@ -65,7 +70,12 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
       console.log(
         `[DeactivateOrDeleteUserModal] User ${updatedUser.id} status toggled to ${updatedUser.status}.`
       );
-      Toast.show({ type: 'success', text1: 'Success', text2: 'User status updated successfully.' });
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'User status updated successfully.',
+        position: 'bottom',
+      });
 
       const userRole = updatedUser.role;
       if (userRole === 'student') queryClient.invalidateQueries({ queryKey: ['students'] });

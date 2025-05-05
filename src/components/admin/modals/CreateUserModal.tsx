@@ -83,7 +83,6 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
       Toast.show({
         type: 'error',
         text1: 'Creation Failed',
-
         text2: error.message || 'Could not create user.',
         position: 'bottom',
         visibilityTime: 5000,
@@ -123,6 +122,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
         type: 'error',
         text1: 'Validation Error',
         text2: 'First Name, Last Name, and Role are required.',
+        position: 'bottom',
       });
       return;
     }

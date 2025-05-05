@@ -113,6 +113,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
         type: 'error',
         text1: 'Validation Error',
         text2: 'Task Title cannot be empty.',
+        position: 'bottom',
       });
       return;
     }
@@ -121,6 +122,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
         type: 'error',
         text1: 'Validation Error',
         text2: 'Base Tickets must be a whole number (0 or greater).',
+        position: 'bottom',
       });
       return;
     }
@@ -129,6 +131,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
         type: 'error',
         text1: 'Validation Error',
         text2: 'Reference URL must start with http or https.',
+        position: 'bottom',
       });
       return;
     }
@@ -146,6 +149,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
           type: 'error',
           text1: 'File Error',
           text2: 'Selected file is missing required information (type or name).',
+          position: 'bottom',
         });
         return;
       }

@@ -146,6 +146,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         type: 'info',
         text1: 'Permission Denied',
         text2: 'Only Admins can change teacher links.',
+        position: 'bottom',
       });
       return;
     }
@@ -156,7 +157,12 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
   const handleSaveChanges = () => {
     if (!userToEdit) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'User data not loaded.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'User data not loaded.',
+        position: 'bottom',
+      });
       return;
     }
     if (profileUpdateMutation.isPending) return;
@@ -170,6 +176,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         type: 'error',
         text1: 'Validation Error',
         text2: 'First and Last Name cannot be empty.',
+        position: 'bottom',
       });
       return;
     }
@@ -212,7 +219,12 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
     if (!hasChanges) {
       console.log('[EditUserModal] No relevant changes detected or authorized to send.');
-      Toast.show({ type: 'info', text1: 'No Changes', text2: 'No information was modified.' });
+      Toast.show({
+        type: 'info',
+        text1: 'No Changes',
+        text2: 'No information was modified.',
+        position: 'bottom',
+      });
       onClose();
       return;
     }

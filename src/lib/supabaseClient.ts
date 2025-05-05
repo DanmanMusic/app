@@ -43,6 +43,7 @@ export const handleViewAttachment = async (path: string | null | undefined) => {
       type: 'error',
       text1: 'Error',
       text2: `Could not get download link: ${error.message}`,
+      position: 'bottom',
     });
   }
 };

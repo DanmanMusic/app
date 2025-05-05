@@ -68,7 +68,12 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
   const linkMutation = useMutation({
     mutationFn: (studentIdToLink: string) => linkStudentToParent(parentId, studentIdToLink),
     onSuccess: (_, studentIdLinked) => {
-      Toast.show({ type: 'success', text1: 'Success', text2: `Student linked successfully.` });
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: `Student linked successfully.`,
+        position: 'bottom',
+      });
 
       queryClient.invalidateQueries({ queryKey: ['userProfile', parentId] });
 
@@ -106,6 +111,7 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
         type: 'error',
         text1: 'No Student Selected',
         text2: 'Please select a student to link.',
+        position: 'bottom',
       });
       return;
     }
