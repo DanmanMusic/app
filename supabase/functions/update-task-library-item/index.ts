@@ -262,7 +262,6 @@ Deno.serve(async (req: Request) => {
     // 8. Sync Instrument Links (if provided) - Using local helper
     const syncErrors: string[] = [];
     if (updates.instrumentIds !== undefined && Array.isArray(updates.instrumentIds)) {
-      // Authorization already confirmed above (isAdmin or isOwnerTeacher)
       const { errors } = await syncInstrumentLinks(supabaseAdmin, taskId, updates.instrumentIds);
       syncErrors.push(...errors);
       if (errors.length > 0)

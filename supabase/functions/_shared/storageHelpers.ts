@@ -4,7 +4,7 @@ import { decode } from 'https://deno.land/std@0.203.0/encoding/base64.ts';
 
 const TASK_ATTACHMENT_BUCKET = 'task-library-attachments';
 
-interface FileUploadData {
+export interface FileUploadData {
   base64: string;
   mimeType: string;
   fileName: string;

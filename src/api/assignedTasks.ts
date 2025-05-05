@@ -222,45 +222,24 @@ export const createAssignedTask = async (
   if (file) {
     let finalMimeType = providedMimeType;
     let finalFileName = providedFileName;
-    if (!finalMimeType && file instanceof File) finalMimeType = file.type;
-    else if (!finalMimeType && typeof file === 'object' && 'mimeType' in file)
-      finalMimeType = file.mimeType;
-    else if (!finalMimeType && typeof file === 'object' && 'type' in file)
-      finalMimeType = file.type;
-    if (!finalFileName && file instanceof File) finalFileName = file.name;
-    else if (!finalFileName && typeof file === 'object' && 'name' in file)
-      finalFileName = file.name;
-    if (!finalFileName && finalMimeType) {
-      const extension = finalMimeType.split('/')[1] || 'bin';
-      finalFileName = `attachment_${Date.now()}.${extension}`;
-      console.warn(
-        `[createAssignedTask] Could not determine filename, generated: ${finalFileName}`
-      );
-    } else if (!finalFileName && !finalMimeType) {
-      finalFileName = `attachment_${Date.now()}.bin`;
-      console.error(
-        '[createAssignedTask] Could not determine filename or mimeType. Falling back to .bin'
-      );
-    }
 
-    if (finalMimeType && finalFileName) {
-      console.log(
-        `[createAssignedTask] Processing file: Name=${finalFileName}, Type=${finalMimeType}`
-      );
+    if (file && !finalMimeType && file instanceof File) finalMimeType = file.type;
+    else if (file && !finalMimeType && typeof file === 'object' && 'mimeType' in file)
+      finalMimeType = file.mimeType;
+    else if (file && !finalMimeType && typeof file === 'object' && 'type' in file)
+      finalMimeType = file.type;
+    if (file && !finalFileName && file instanceof File) finalFileName = file.name;
+    else if (file && !finalFileName && typeof file === 'object' && 'name' in file)
+      finalFileName = file.name;
+    if (file && !finalFileName) finalFileName = `upload.${finalMimeType?.split('/')[1] || 'bin'}`;
+
+    if (file && finalMimeType && finalFileName) {
       try {
-        const base64 = await fileToBase64(file); // Use the helper
+        const base64 = await fileToBase64(file);
         payload.file = { base64, mimeType: finalMimeType, fileName: finalFileName };
-        payload.taskAttachmentPath = undefined; // Ensure library path isn't sent
-        console.log(`[createAssignedTask] Base64 conversion successful. Adding to payload.`);
       } catch (error: any) {
-        console.error('[createAssignedTask] Error converting file to base64:', error);
-        throw new Error(`Failed to process file for upload: ${error.message}`);
+        throw new Error(`Failed to process file: ${error.message}`);
       }
-    } else {
-      console.warn(
-        '[createAssignedTask] File provided but could not determine mimeType or fileName reliably. Skipping attachment.'
-      );
-      payload.taskAttachmentPath = restAssignmentData.taskAttachmentPath || null; // Use library path if available
     }
   } else if (restAssignmentData.taskAttachmentPath) {
     payload.taskAttachmentPath = restAssignmentData.taskAttachmentPath;
@@ -271,11 +250,6 @@ export const createAssignedTask = async (
   } else {
     payload.taskAttachmentPath = null; // No file, no library path
   }
-
-  console.log('[createAssignedTask] Calling assignTask Edge Function with payload:', {
-    ...payload,
-    file: payload.file ? { ...payload.file, base64: '...' } : undefined,
-  });
 
   const { data, error } = await client.functions.invoke('assignTask', {
     body: payload,

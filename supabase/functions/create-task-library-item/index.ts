@@ -4,14 +4,7 @@ import { createClient, SupabaseClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
 // Import shared helpers
 import { isActiveAdminOrTeacher } from '../_shared/authHelpers.ts';
-import { uploadAttachment, deleteAttachment } from '../_shared/storageHelpers.ts';
-
-// Define expected structure for file data in the payload
-interface FilePayload {
-  base64: string;
-  mimeType: string;
-  fileName: string;
-}
+import { uploadAttachment, deleteAttachment, FileUploadData } from '../_shared/storageHelpers.ts';
 
 // Define expected structure for the main payload
 interface CreateTaskPayload {
@@ -20,7 +13,7 @@ interface CreateTaskPayload {
   baseTickets: number;
   referenceUrl?: string;
   instrumentIds?: string[];
-  file?: FilePayload;
+  file?: FileUploadData;
 }
 
 // Helper: Sync Link Table (Keep local for creation)
@@ -128,12 +121,6 @@ Deno.serve(async (req: Request) => {
     let payload: CreateTaskPayload;
     try {
       payload = await req.json();
-      console.log('Parsed payload:', {
-        ...payload,
-        file: payload.file
-          ? { name: payload.file.fileName, mimeType: payload.file.mimeType, base64: '...' }
-          : undefined,
-      });
     } catch (e) {
       console.error('Payload parsing error:', e);
       return new Response(JSON.stringify({ error: 'Invalid JSON payload' }), {

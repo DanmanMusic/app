@@ -4,15 +4,7 @@ import { createClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
 // Import shared helpers
 import { isActiveAdmin, isTeacherLinked } from '../_shared/authHelpers.ts';
-import { uploadAttachment, deleteAttachment } from '../_shared/storageHelpers.ts';
-
-interface FilePayloadInput {
-  uri?: string;
-  base64: string;
-  mimeType: string;
-  name: string;
-  size?: number;
-}
+import { uploadAttachment, deleteAttachment, FileUploadData } from '../_shared/storageHelpers.ts';
 
 interface AssignTaskPayload {
   studentId: string;
@@ -21,7 +13,7 @@ interface AssignTaskPayload {
   taskBasePoints: number;
   taskLinkUrl?: string | null;
   taskAttachmentPath?: string | null;
-  file?: FilePayloadInput;
+  file?: FileUploadData;
 }
 
 Deno.serve(async (req: Request) => {
@@ -76,7 +68,7 @@ Deno.serve(async (req: Request) => {
       console.log('Received payload:', {
         ...payload,
         file: payload.file
-          ? { name: payload.file.name, mimeType: payload.file.mimeType, base64: '...' }
+          ? { name: payload.file.fileName, mimeType: payload.file.mimeType, base64: '...' }
           : undefined,
       }); // Avoid logging base64
     } catch (jsonError) {
@@ -99,7 +91,10 @@ Deno.serve(async (req: Request) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    if (payload.file && (!payload.file.base64 || !payload.file.name || !payload.file.mimeType)) {
+    if (
+      payload.file &&
+      (!payload.file.base64 || !payload.file.fileName || !payload.file.mimeType)
+    ) {
       console.warn(
         'Received file object is missing required properties (base64, name, mimeType).',
         payload.file
@@ -146,11 +141,7 @@ Deno.serve(async (req: Request) => {
       console.log('Ad-hoc file provided, attempting upload via shared helper...');
       uploadedFilePath = await uploadAttachment(
         supabaseAdminClient,
-        {
-          base64: payload.file.base64,
-          mimeType: payload.file.mimeType,
-          fileName: payload.file.name,
-        },
+        payload.file,
         assignerId // Pass assigner ID for folder structure
       );
       if (!uploadedFilePath) {
