@@ -1,8 +1,9 @@
 import { Button, Image, Text, View } from 'react-native';
+
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { getInstrumentIconSource } from '../../utils/helpers';
 import { AdminInstrumentItemProps } from '../../types/componentProps';
+import { getInstrumentIconSource } from '../../utils/helpers';
 
 export const AdminInstrumentItem: React.FC<AdminInstrumentItemProps> = ({
   item,

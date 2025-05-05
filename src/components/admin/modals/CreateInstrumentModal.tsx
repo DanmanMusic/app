@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -11,12 +11,15 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
+import Toast from 'react-native-toast-message';
+
 import { createInstrument } from '../../../api/instruments';
 import { colors } from '../../../styles/colors';
-import { CreateInstrumentModalProps } from '../../../types/componentProps';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
-import Toast from 'react-native-toast-message';
+import { CreateInstrumentModalProps } from '../../../types/componentProps';
 
 const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');

@@ -1,8 +1,9 @@
 import { Button, Text, View } from 'react-native';
-import { Instrument, SimplifiedStudent, UserRole } from '../../types/dataTypes';
-import { getInstrumentNames } from '../../utils/helpers';
+
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { Instrument, SimplifiedStudent, UserRole } from '../../types/dataTypes';
+import { getInstrumentNames } from '../../utils/helpers';
 
 export const AdminStudentItem = ({
   student,

@@ -1,6 +1,6 @@
 // src/components/common/StudentDetailView.tsx
 import React, { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+
 import {
   View,
   Text,
@@ -8,26 +8,26 @@ import {
   Button,
   FlatList,
   ActivityIndicator,
-  Linking,
-  TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+
+import { useQuery } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 
+import { AssignedTaskDetailItem } from './AssignedTaskDetailItem';
+import { TicketHistoryItem } from './TicketHistoryItem';
 import { fetchInstruments } from '../../api/instruments';
 import { fetchStudentBalance } from '../../api/tickets';
 import { fetchUserProfile, fetchTeachers, fetchAuthUser } from '../../api/users';
+import { useAuth } from '../../contexts/AuthContext';
 import { usePaginatedStudentHistory } from '../../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../../hooks/usePaginatedStudentTasks';
-import { TicketHistoryItem } from './TicketHistoryItem';
-import PaginationControls from '../admin/PaginationControls';
-import { AssignedTask, Instrument, User } from '../../types/dataTypes';
-import { getInstrumentNames, getUserDisplayName, timestampDisplay } from '../../utils/helpers';
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { StudentDetailViewProps } from '../../types/componentProps';
-import { useAuth } from '../../contexts/AuthContext';
-import { AssignedTaskDetailItem } from './AssignedTaskDetailItem';
+import { AssignedTask, Instrument, User } from '../../types/dataTypes';
+import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
+import PaginationControls from '../admin/PaginationControls';
 
 export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
   viewingStudentId,
@@ -422,16 +422,3 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
     </>
   );
 };
-
-const localStyles = StyleSheet.create({
-  detailText: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 3,
-  },
-  linkText: {
-    color: colors.primary,
-    textDecorationLine: 'underline',
-    fontWeight: '600',
-  },
-});

@@ -1,16 +1,16 @@
 // src/components/common/EditUserModal.tsx
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 
-import { updateUser, fetchTeachers, fetchUserProfile } from '../../api/users';
 import { fetchInstruments } from '../../api/instruments';
+import { updateUser, fetchTeachers, fetchUserProfile } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
-
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-
 import { EditUserModalProps } from '../../types/componentProps';
 import { User, Instrument } from '../../types/dataTypes';
 import { getUserDisplayName } from '../../utils/helpers';

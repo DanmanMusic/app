@@ -1,15 +1,15 @@
 import React, { useMemo } from 'react';
+
 import { View, Text, Button, ActivityIndicator, ScrollView, FlatList } from 'react-native';
+
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchStudents, fetchUserProfile } from '../../api/users';
-
-import { User, SimplifiedStudent } from '../../types/dataTypes';
-
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
-import { getUserDisplayName } from '../../utils/helpers';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminTeacherDetailViewProps } from '../../types/componentProps';
+import { User, SimplifiedStudent } from '../../types/dataTypes';
+import { getUserDisplayName } from '../../utils/helpers';
 
 export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
   viewingUserId,

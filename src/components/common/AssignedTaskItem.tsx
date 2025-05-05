@@ -1,9 +1,10 @@
 import { Button, Text, TouchableOpacity, View } from 'react-native';
-import { AssignedTask } from '../../types/dataTypes';
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
+
 import { handleOpenUrl, handleViewAttachment } from '../../lib/supabaseClient';
-import { timestampDisplay } from '../../utils/helpers';
 import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { AssignedTask } from '../../types/dataTypes';
+import { timestampDisplay } from '../../utils/helpers';
 
 export const AssignedTaskItem = ({
   task,

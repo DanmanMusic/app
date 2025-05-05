@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -12,14 +12,17 @@ import {
   Alert,
   ImageURISource,
 } from 'react-native';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
-import { updateInstrument } from '../../../api/instruments';
-import { Instrument } from '../../../types/dataTypes';
-import { colors } from '../../../styles/colors';
-import { EditInstrumentModalProps } from '../../../types/componentProps';
-import { getInstrumentIconSource } from '../../../utils/helpers';
-import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
+
+import { updateInstrument } from '../../../api/instruments';
+import { colors } from '../../../styles/colors';
+import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import { EditInstrumentModalProps } from '../../../types/componentProps';
+import { Instrument } from '../../../types/dataTypes';
+import { getInstrumentIconSource } from '../../../utils/helpers';
 
 const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
   visible,

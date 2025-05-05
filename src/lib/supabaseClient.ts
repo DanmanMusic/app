@@ -1,6 +1,7 @@
 // src/lib/supabaseClient.ts
-import { createClient, SupabaseClientOptions } from '@supabase/supabase-js';
 import { Linking, Platform } from 'react-native';
+
+import { createClient, SupabaseClientOptions } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import Toast from 'react-native-toast-message';
 

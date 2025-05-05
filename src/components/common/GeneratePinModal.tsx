@@ -1,12 +1,15 @@
 // src/components/common/GeneratePinModal.tsx
 import React, { useState, useEffect } from 'react';
+
 import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
+
 import Toast from 'react-native-toast-message';
+
 import { generatePinForUser } from '../../api/users';
-import { User, UserRole } from '../../types/dataTypes';
-import { capitalizeFirstLetter, getUserDisplayName } from '../../utils/helpers';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { User, UserRole } from '../../types/dataTypes';
+import { capitalizeFirstLetter, getUserDisplayName } from '../../utils/helpers';
 
 interface GeneratePinModalProps {
   visible: boolean;

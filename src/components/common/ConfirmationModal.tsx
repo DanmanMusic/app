@@ -1,8 +1,10 @@
 import React from 'react';
+
 import { Modal, View, Text, Button } from 'react-native';
+
 import { colors } from '../../styles/colors';
-import { ConfirmationModalProps } from '../../types/componentProps';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { ConfirmationModalProps } from '../../types/componentProps';
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   visible,

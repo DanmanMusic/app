@@ -1,6 +1,7 @@
 import { Text, View } from 'react-native';
-import { Announcement } from '../../types/dataTypes';
+
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { Announcement } from '../../types/dataTypes';
 import { timestampDisplay } from '../../utils/helpers';
 
 export const AnnouncementListItem = ({ item }: { item: Announcement }) => (

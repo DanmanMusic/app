@@ -1,6 +1,6 @@
 // src/components/common/AssignTaskModal.tsx
 import React, { useState, useMemo, useEffect } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -13,14 +13,19 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
-import Toast from 'react-native-toast-message';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
+import Toast from 'react-native-toast-message';
 
 import { createAssignedTask } from '../../api/assignedTasks';
+import { fetchInstruments } from '../../api/instruments';
 import { fetchTaskLibrary } from '../../api/taskLibrary';
 import { fetchStudents, fetchUserProfile } from '../../api/users';
-import { fetchInstruments } from '../../api/instruments';
 import { useAuth } from '../../contexts/AuthContext';
+import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { AssignTaskModalProps } from '../../types/componentProps';
 import {
   AssignedTask,
   TaskLibraryItem,
@@ -28,9 +33,6 @@ import {
   User,
   Instrument,
 } from '../../types/dataTypes';
-import { AssignTaskModalProps } from '../../types/componentProps';
-import { colors } from '../../styles/colors';
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
 
 interface NativeFileObject {

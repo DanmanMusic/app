@@ -1,9 +1,10 @@
 // supabase/functions/createUser/index.ts
 
 import { createClient, SupabaseClient } from 'supabase-js';
+
+import { isActiveAdmin } from '../_shared/authHelpers.ts'; // Use isActiveAdmin
 import { corsHeaders } from '../_shared/cors.ts';
 // Import shared helper
-import { isActiveAdmin } from '../_shared/authHelpers.ts'; // Use isActiveAdmin
 
 // Define the expected request body structure
 interface CreateUserPayload {

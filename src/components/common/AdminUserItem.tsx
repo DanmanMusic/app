@@ -1,9 +1,9 @@
 import { Button, Text, View } from 'react-native';
 
-import { User, UserRole } from '../../types/dataTypes';
-import { getUserDisplayName } from '../../utils/helpers';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { User, UserRole } from '../../types/dataTypes';
+import { getUserDisplayName } from '../../utils/helpers';
 
 export const AdminUserItem = ({
   user,

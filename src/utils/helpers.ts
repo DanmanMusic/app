@@ -1,7 +1,9 @@
 import { ImageSourcePropType, Platform } from 'react-native';
+
+import * as FileSystem from 'expo-file-system';
+
 import { getSupabase } from '../lib/supabaseClient';
 import { Instrument, User } from '../types/dataTypes';
-import * as FileSystem from 'expo-file-system';
 
 export interface NativeFileObject {
   uri: string;

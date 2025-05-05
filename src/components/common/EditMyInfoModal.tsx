@@ -1,6 +1,6 @@
 // src/components/common/EditMyInfoModal.tsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -11,14 +11,15 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 
 import { updateUser, updateAuthCredentials } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
-import { User } from '../../types/dataTypes';
-
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { User } from '../../types/dataTypes';
 import { getUserDisplayName } from '../../utils/helpers';
 
 interface EditMyInfoModalProps {

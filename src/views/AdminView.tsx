@@ -1,57 +1,51 @@
 // src/views/AdminView.tsx
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { View, Text, ScrollView, Button, ActivityIndicator } from 'react-native';
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
-import { deleteAssignedTask } from '../api/assignedTasks';
+import {
+  deleteAssignedTask,
+  TaskAssignmentFilterStatusAPI,
+  StudentTaskFilterStatusAPI,
+} from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
 import { deleteTaskLibraryItem } from '../api/taskLibrary';
 import { fetchUserProfile } from '../api/users';
-
+import { AdminAdminDetailView } from '../components/admin/AdminAdminDetailView';
 import { AdminAnnouncementsSection } from '../components/admin/AdminAnnouncementsSection';
 import { AdminDashboardSection } from '../components/admin/AdminDashboardSection';
 import { AdminHistorySection } from '../components/admin/AdminHistorySection';
 import { AdminInstrumentsSection } from '../components/admin/AdminInstrumentsSection';
+import { AdminParentDetailView } from '../components/admin/AdminParentDetailView';
 import { AdminRewardsSection } from '../components/admin/AdminRewardsSection';
 import { AdminTasksSection } from '../components/admin/AdminTasksSection';
-import { AdminUsersSection } from '../components/admin/AdminUsersSection';
-import { StudentDetailView } from '../components/common/StudentDetailView';
 import { AdminTeacherDetailView } from '../components/admin/AdminTeacherDetailView';
-import { AdminParentDetailView } from '../components/admin/AdminParentDetailView';
-import { AdminAdminDetailView } from '../components/admin/AdminAdminDetailView';
-import { PaginatedTasksList } from '../components/common/PaginatedTasksList';
-import CreateUserModal from '../components/admin/modals/CreateUserModal';
+import { AdminUsersSection } from '../components/admin/AdminUsersSection';
 import CreateTaskLibraryModal from '../components/admin/modals/CreateTaskLibraryModal';
+import CreateUserModal from '../components/admin/modals/CreateUserModal';
 import EditTaskLibraryModal from '../components/admin/modals/EditTaskLibraryModal';
 import ManualTicketAdjustmentModal from '../components/admin/modals/ManualTicketAdjustmentModal';
 import RedeemRewardModal from '../components/admin/modals/RedeemRewardModal';
 import AssignTaskModal from '../components/common/AssignTaskModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
-import EditUserModal from '../components/common/EditUserModal';
 import DeactivateOrDeleteUserModal from '../components/common/DeactivateOrDeleteUserModal';
+import EditMyInfoModal from '../components/common/EditMyInfoModal';
+import EditUserModal from '../components/common/EditUserModal';
 import GeneratePinModal from '../components/common/GeneratePinModal';
+import { PaginatedTasksList } from '../components/common/PaginatedTasksList';
 import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
 import { SharedHeader } from '../components/common/SharedHeader';
-
+import { StudentDetailView } from '../components/common/StudentDetailView';
 import { useAuth } from '../contexts/AuthContext';
-
-import {
-  AssignedTask,
-  Instrument,
-  TaskLibraryItem,
-  User,
-  UserRole,
-  UserStatus,
-} from '../types/dataTypes';
-import { TaskAssignmentFilterStatusAPI, StudentTaskFilterStatusAPI } from '../api/assignedTasks';
-import { AdminSection, AdminViewProps, UserTab } from '../types/componentProps';
-
-import { getUserDisplayName } from '../utils/helpers';
-import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
-import EditMyInfoModal from '../components/common/EditMyInfoModal';
+import { commonSharedStyles } from '../styles/commonSharedStyles';
+import { AdminSection, AdminViewProps, UserTab } from '../types/componentProps';
+import { AssignedTask, Instrument, TaskLibraryItem, User, UserRole } from '../types/dataTypes';
+import { getUserDisplayName } from '../utils/helpers';
 
 export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId: adminUserId } = useAuth();

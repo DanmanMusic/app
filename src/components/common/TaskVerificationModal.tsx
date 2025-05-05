@@ -1,17 +1,21 @@
 // src/components/common/TaskVerificationModal.tsx
 import React, { useState, useEffect } from 'react';
-import Slider from '@react-native-community/slider';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
+
+import Slider from '@react-native-community/slider';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
+
 import { updateAssignedTask } from '../../api/assignedTasks';
 import { fetchUserProfile } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
-import { User } from '../../types/dataTypes';
-import { TaskVerificationModalProps } from '../../types/componentProps';
 import { colors } from '../../styles/colors';
-import { getUserDisplayName, timestampDisplay } from '../../utils/helpers';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { TaskVerificationModalProps } from '../../types/componentProps';
+import { User } from '../../types/dataTypes';
+import { getUserDisplayName, timestampDisplay } from '../../utils/helpers';
 
 export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   visible,

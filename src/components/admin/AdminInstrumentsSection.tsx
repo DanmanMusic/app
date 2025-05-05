@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Toast from 'react-native-toast-message';
+
 import { fetchInstruments, deleteInstrument } from '../../api/instruments';
-import { Instrument } from '../../types/dataTypes';
 import { colors } from '../../styles/colors';
+import { Instrument } from '../../types/dataTypes';
 import ConfirmationModal from '../common/ConfirmationModal';
 import CreateInstrumentModal from './modals/CreateInstrumentModal';
 import EditInstrumentModal from './modals/EditInstrumentModal';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminInstrumentItem } from '../common/AdminInstrumentItem';
-import Toast from 'react-native-toast-message';
 
 export const AdminInstrumentsSection = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);

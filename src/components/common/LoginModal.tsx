@@ -1,5 +1,6 @@
 // src/components/common/LoginModal.tsx
 import React, { useState, useEffect } from 'react';
+
 import {
   Modal,
   View,
@@ -10,12 +11,12 @@ import {
   TouchableOpacity,
   Keyboard,
 } from 'react-native';
+
 import Toast from 'react-native-toast-message';
 
-import { getSupabase } from '../../lib/supabaseClient';
 import { claimPin } from '../../api/auth';
 import { storeItem, removeItem, CUSTOM_REFRESH_TOKEN_KEY } from '../../lib/storageHelper';
-
+import { getSupabase } from '../../lib/supabaseClient';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 

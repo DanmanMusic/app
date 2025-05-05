@@ -1,9 +1,10 @@
 // supabase/functions/update-task-library-item/index.ts
 
 import { createClient, SupabaseClient } from 'supabase-js';
+
+import { isActiveAdmin, isActiveTeacher } from '../_shared/authHelpers.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 // Import shared helpers
-import { isActiveAdmin, isActiveTeacher } from '../_shared/authHelpers.ts';
 import { uploadAttachment, deleteAttachment, FileUploadData } from '../_shared/storageHelpers.ts';
 // Import decode separately if not handled within storageHelpers input type
 // import { decode } from 'https://deno.land/std@0.203.0/encoding/base64.ts';

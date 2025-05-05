@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 
-import { createUser, fetchTeachers } from '../../../api/users';
-import { fetchInstruments } from '../../../api/instruments';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import Toast from 'react-native-toast-message';
 
+import { fetchInstruments } from '../../../api/instruments';
+import { createUser, fetchTeachers } from '../../../api/users';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
-
 import { UserRole, User, Instrument } from '../../../types/dataTypes';
 import { capitalizeFirstLetter, getUserDisplayName } from '../../../utils/helpers';
-import Toast from 'react-native-toast-message';
 
 const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'student', 'parent'];
 

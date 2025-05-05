@@ -1,10 +1,13 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+
 import { View, Text, Button, ActivityIndicator } from 'react-native';
+
+import { useQuery } from '@tanstack/react-query';
+
 import { fetchUserCounts, fetchPendingTaskCount, UserCounts, TaskStats } from '../../api/stats';
 import { colors } from '../../styles/colors';
-import { AdminDashboardSectionProps, UserTab } from '../../types/componentProps';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { AdminDashboardSectionProps, UserTab } from '../../types/componentProps';
 
 export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
   onViewVerifications,

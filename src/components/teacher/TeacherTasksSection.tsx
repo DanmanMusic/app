@@ -1,13 +1,16 @@
 // src/components/teacher/TeacherTasksSection.tsx
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+
 import { View, Text, FlatList, Button, ActivityIndicator } from 'react-native';
+
+import { useQuery } from '@tanstack/react-query';
+
 import { fetchTaskLibrary } from '../../api/taskLibrary';
-import { TaskLibraryItem } from '../../types/dataTypes';
-import { TaskLibraryItemTeacher } from '../common/TaskLibraryItemTeacher';
-import { TeacherTasksSectionProps } from '../../types/componentProps';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { TeacherTasksSectionProps } from '../../types/componentProps';
+import { TaskLibraryItem } from '../../types/dataTypes';
+import { TaskLibraryItemTeacher } from '../common/TaskLibraryItemTeacher';
 
 export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
   onInitiateAssignTaskGeneral,

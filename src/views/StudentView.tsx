@@ -1,9 +1,12 @@
 // src/views/StudentView.tsx
 import React, { useState, useMemo } from 'react';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+
 import { View, Text, ScrollView, FlatList, Button, Image, ActivityIndicator } from 'react-native';
+
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
+
 import { fetchAnnouncements } from '../api/announcements';
 import { updateAssignedTask } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
@@ -11,22 +14,22 @@ import { fetchRewards } from '../api/rewards';
 import { fetchStudentBalance } from '../api/tickets';
 import { fetchTeachers, fetchUserProfile, updateStudentGoal } from '../api/users';
 import PaginationControls from '../components/admin/PaginationControls';
-import SetGoalModal from '../components/student/modals/SetGoalModal';
-import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
-import { TicketHistoryItem } from '../components/common/TicketHistoryItem';
-import { RewardItemStudent } from '../components/common/RewardItemStudent';
-import { AssignedTaskItem } from '../components/common/AssignedTaskItem';
 import { AnnouncementListItem } from '../components/common/AnnouncementListItem';
+import { AssignedTaskItem } from '../components/common/AssignedTaskItem';
+import EditMyInfoModal from '../components/common/EditMyInfoModal';
+import { RewardItemStudent } from '../components/common/RewardItemStudent';
+import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
 import { SharedHeader } from '../components/common/SharedHeader';
+import { TicketHistoryItem } from '../components/common/TicketHistoryItem';
+import SetGoalModal from '../components/student/modals/SetGoalModal';
 import { useAuth } from '../contexts/AuthContext';
 import { usePaginatedStudentHistory } from '../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../hooks/usePaginatedStudentTasks';
-import { Announcement, Instrument, RewardItem, User } from '../types/dataTypes';
-import { StudentViewProps } from '../types/componentProps';
-import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
+import { commonSharedStyles } from '../styles/commonSharedStyles';
+import { StudentViewProps } from '../types/componentProps';
+import { Announcement, Instrument, RewardItem, User } from '../types/dataTypes';
 import { getInstrumentNames, getUserDisplayName } from '../utils/helpers';
-import EditMyInfoModal from '../components/common/EditMyInfoModal';
 
 type StudentTab = 'dashboard' | 'tasks' | 'rewards' | 'announcements';
 

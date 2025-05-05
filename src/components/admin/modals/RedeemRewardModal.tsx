@@ -1,6 +1,6 @@
 // src/components/admin/modals/RedeemRewardModal.tsx
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -11,16 +11,16 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 
 import { fetchRewards } from '../../../api/rewards';
 import { fetchStudentBalance, redeemReward } from '../../../api/tickets';
-
-import { RewardItem } from '../../../types/dataTypes';
-import { RedeemRewardModalProps } from '../../../types/componentProps';
-
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import { RedeemRewardModalProps } from '../../../types/componentProps';
+import { RewardItem } from '../../../types/dataTypes';
 
 export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
   visible,

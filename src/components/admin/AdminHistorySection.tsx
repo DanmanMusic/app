@@ -1,9 +1,10 @@
 import React from 'react';
+
 import { View, Text, FlatList, ActivityIndicator } from 'react-native';
-import { usePaginatedTicketHistory } from '../../hooks/usePaginatedTicketHistory';
-import { colors } from '../../styles/colors';
 
 import PaginationControls from './PaginationControls';
+import { usePaginatedTicketHistory } from '../../hooks/usePaginatedTicketHistory';
+import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { TicketHistoryItem } from '../common/TicketHistoryItem';
 

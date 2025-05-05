@@ -1,13 +1,14 @@
 {
   "name": "danmans",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.ts",
   "scripts": {
     "start": "expo start  --tunnel",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web -c",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --quiet --fix",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "format": "prettier --write ."
   },
   "dependencies": {

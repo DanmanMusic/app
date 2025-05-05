@@ -9,14 +9,16 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import { Session, User as SupabaseAuthUser } from '@supabase/supabase-js';
+
 import { Platform } from 'react-native';
+
+import { Session, User as SupabaseAuthUser } from '@supabase/supabase-js';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getSupabase } from '../lib/supabaseClient';
-import { fetchUserProfile } from '../api/users';
 import { refreshPinSession } from '../api/auth';
+import { fetchUserProfile } from '../api/users';
 import { getItem, removeItem, CUSTOM_REFRESH_TOKEN_KEY } from '../lib/storageHelper';
+import { getSupabase } from '../lib/supabaseClient';
 import { User, UserRole } from '../types/dataTypes';
 
 interface AuthContextType {

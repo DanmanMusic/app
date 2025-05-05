@@ -1,21 +1,23 @@
 // src/components/common/TaskLibraryItemTeacher.tsx
 import React from 'react';
+
 import { Text, View, Linking, StyleSheet, TouchableOpacity, Button } from 'react-native';
+
 import { useQuery } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 
-import { TaskLibraryItem, Instrument } from '../../types/dataTypes';
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { colors } from '../../styles/colors';
 import { fetchInstruments } from '../../api/instruments';
-import { getInstrumentNames } from '../../utils/helpers';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   getSupabase,
   handleOpenUrl,
   handleViewAttachment,
   TASK_ATTACHMENT_BUCKET,
 } from '../../lib/supabaseClient';
-import { useAuth } from '../../contexts/AuthContext';
+import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { TaskLibraryItem, Instrument } from '../../types/dataTypes';
+import { getInstrumentNames } from '../../utils/helpers';
 
 interface TaskLibraryItemTeacherProps {
   item: TaskLibraryItem;

@@ -1,18 +1,19 @@
 // src/components/admin/modals/EditTaskLibraryModal.tsx
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
-import Toast from 'react-native-toast-message';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
+import Toast from 'react-native-toast-message';
 
-import { updateTaskLibraryItem } from '../../../api/taskLibrary';
 import { fetchInstruments } from '../../../api/instruments';
-
-import { Instrument, TaskLibraryItem } from '../../../types/dataTypes';
-import { colors } from '../../../styles/colors';
-import { EditTaskLibraryModalProps } from '../../../types/componentProps';
-import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import { updateTaskLibraryItem } from '../../../api/taskLibrary';
 import { handleViewAttachment } from '../../../lib/supabaseClient';
+import { colors } from '../../../styles/colors';
+import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import { EditTaskLibraryModalProps } from '../../../types/componentProps';
+import { Instrument, TaskLibraryItem } from '../../../types/dataTypes';
 
 const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
   visible,

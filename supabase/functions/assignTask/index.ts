@@ -1,9 +1,10 @@
 // supabase/functions/assignTask/index.ts
 
 import { createClient } from 'supabase-js';
+
+import { isActiveAdmin, isTeacherLinked } from '../_shared/authHelpers.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 // Import shared helpers
-import { isActiveAdmin, isTeacherLinked } from '../_shared/authHelpers.ts';
 import { uploadAttachment, deleteAttachment, FileUploadData } from '../_shared/storageHelpers.ts';
 
 interface AssignTaskPayload {

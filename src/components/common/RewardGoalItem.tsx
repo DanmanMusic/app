@@ -1,6 +1,7 @@
 import { Image, Text, TouchableOpacity, View } from 'react-native';
-import { RewardItem } from '../../types/dataTypes';
+
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { RewardItem } from '../../types/dataTypes';
 
 export const RewardGoalItem = ({
   item,

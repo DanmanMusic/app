@@ -1,16 +1,18 @@
 // src/components/common/AdminTaskLibraryItem.tsx
 
 import React from 'react';
+
 import { Button, Text, View, StyleSheet, TouchableOpacity } from 'react-native';
+
 import { useQuery } from '@tanstack/react-query';
 
-import { colors } from '../../styles/colors';
-import { AdminTaskLibraryItemProps } from '../../types/componentProps';
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { fetchInstruments } from '../../api/instruments';
-import { getInstrumentNames } from '../../utils/helpers';
 import { getSupabase, handleOpenUrl, handleViewAttachment } from '../../lib/supabaseClient';
+import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { AdminTaskLibraryItemProps } from '../../types/componentProps';
 import { Instrument } from '../../types/dataTypes';
+import { getInstrumentNames } from '../../utils/helpers';
 
 export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
   item,

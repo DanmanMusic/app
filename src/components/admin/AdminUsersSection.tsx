@@ -1,18 +1,20 @@
 // src/components/admin/AdminUsersSection.tsx
 import React from 'react';
+
 import { View, Text, Button, FlatList, TextInput, ActivityIndicator } from 'react-native';
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { colors } from '../../styles/colors';
-import { AdminUsersSectionProps } from '../../types/componentProps';
-import { SimplifiedStudent, User, UserStatus } from '../../types/dataTypes';
-import { AdminUserItem } from '../common/AdminUserItem';
-import { AdminStudentItem } from '../common/AdminStudentItem';
+
 import PaginationControls from './PaginationControls';
+import { usePaginatedAdmins } from '../../hooks/usePaginatedAdmins';
+import { usePaginatedParents } from '../../hooks/usePaginatedParents';
 import { usePaginatedStudents } from '../../hooks/usePaginatedStudents';
 import { usePaginatedTeachers } from '../../hooks/usePaginatedTeachers';
-import { usePaginatedParents } from '../../hooks/usePaginatedParents';
-import { usePaginatedAdmins } from '../../hooks/usePaginatedAdmins';
+import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { AdminUsersSectionProps } from '../../types/componentProps';
+import { SimplifiedStudent, User, UserStatus } from '../../types/dataTypes';
 import { capitalizeFirstLetter } from '../../utils/helpers';
+import { AdminStudentItem } from '../common/AdminStudentItem';
+import { AdminUserItem } from '../common/AdminUserItem';
 
 export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   activeTab,

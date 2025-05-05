@@ -3,20 +3,18 @@ import React, { useMemo } from 'react';
 
 import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 
-import { AssignedTask, User } from '../../types/dataTypes';
-import { TaskAssignmentFilterStatusAPI, StudentTaskFilterStatusAPI } from '../../api/assignedTasks';
-
-import { usePaginatedAssignedTasks } from '../../hooks/usePaginatedAssignedTasks';
-import { useAuth } from '../../contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 
 import { AssignedTaskDetailItem } from './AssignedTaskDetailItem';
-import PaginationControls from '../admin/PaginationControls';
-
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { colors } from '../../styles/colors';
-import { useQuery } from '@tanstack/react-query';
+import { TaskAssignmentFilterStatusAPI, StudentTaskFilterStatusAPI } from '../../api/assignedTasks';
 import { fetchStudents, fetchUserProfile } from '../../api/users';
+import { useAuth } from '../../contexts/AuthContext';
+import { usePaginatedAssignedTasks } from '../../hooks/usePaginatedAssignedTasks';
+import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { AssignedTask, User } from '../../types/dataTypes';
 import { getUserDisplayName } from '../../utils/helpers';
+import PaginationControls from '../admin/PaginationControls';
 
 interface PaginatedTasksListProps {
   viewingRole: 'admin' | 'teacher';

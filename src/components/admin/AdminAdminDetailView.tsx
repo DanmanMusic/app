@@ -1,13 +1,16 @@
 import React, { useMemo } from 'react';
+
 import { View, Text, Button, ActivityIndicator, ScrollView } from 'react-native';
+
 import { useQuery } from '@tanstack/react-query';
+
 import { fetchUserProfile, fetchAuthUser } from '../../api/users';
-import { User } from '../../types/dataTypes';
-import { AdminAdminDetailViewProps } from '../../types/componentProps';
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { colors } from '../../styles/colors';
-import { getUserDisplayName } from '../../utils/helpers';
 import { useAuth } from '../../contexts/AuthContext';
+import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { AdminAdminDetailViewProps } from '../../types/componentProps';
+import { User } from '../../types/dataTypes';
+import { getUserDisplayName } from '../../utils/helpers';
 
 export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
   viewingUserId,

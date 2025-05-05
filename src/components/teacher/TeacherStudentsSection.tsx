@@ -1,13 +1,16 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+
 import { View, Text, FlatList, ActivityIndicator } from 'react-native';
+
+import { useQuery } from '@tanstack/react-query';
+
 import { fetchStudents } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { TeacherStudentsSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';
 import { StudentListItem } from '../common/StudentListItem';
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
   instruments,

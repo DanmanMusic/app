@@ -1,6 +1,6 @@
 // Example: supabase/functions/_shared/storageHelpers.ts
-import { SupabaseClient } from 'supabase-js';
 import { decode } from 'https://deno.land/std@0.203.0/encoding/base64.ts';
+import { SupabaseClient } from 'supabase-js';
 
 const TASK_ATTACHMENT_BUCKET = 'task-library-attachments';
 

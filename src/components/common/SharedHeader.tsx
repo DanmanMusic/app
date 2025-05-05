@@ -1,9 +1,11 @@
 // src/components/common/SharedHeader.tsx
 import React, { useState, useMemo } from 'react';
+
 import { View, Text, Button } from 'react-native';
+
+import ConfirmationModal from './ConfirmationModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
-import ConfirmationModal from './ConfirmationModal';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { capitalizeFirstLetter } from '../../utils/helpers';
 

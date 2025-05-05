@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 
-import { fetchRewards, deleteReward } from '../../api/rewards';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Toast from 'react-native-toast-message';
 
-import { RewardItem } from '../../types/dataTypes';
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { colors } from '../../styles/colors';
-
-import ConfirmationModal from '../common/ConfirmationModal';
 import CreateRewardModal from './modals/CreateRewardModal';
 import EditRewardModal from './modals/EditRewardModal';
+import { fetchRewards, deleteReward } from '../../api/rewards';
+import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { RewardItem } from '../../types/dataTypes';
 import { AdminRewardItem } from '../common/AdminRewardItem';
-import Toast from 'react-native-toast-message';
+import ConfirmationModal from '../common/ConfirmationModal';
 
 export const AdminRewardsSection = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);

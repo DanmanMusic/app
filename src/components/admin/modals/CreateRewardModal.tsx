@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -12,12 +12,15 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
+import Toast from 'react-native-toast-message';
+
 import { createReward } from '../../../api/rewards';
 import { colors } from '../../../styles/colors';
-import { CreateRewardModalProps } from '../../../types/componentProps';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
-import Toast from 'react-native-toast-message';
+import { CreateRewardModalProps } from '../../../types/componentProps';
 
 const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');

@@ -1,7 +1,8 @@
 import { Button, Image, Text, View } from 'react-native';
-import { RewardItem } from '../../types/dataTypes';
+
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { RewardItem } from '../../types/dataTypes';
 
 export const AdminRewardItem = ({
   item,

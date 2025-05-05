@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+
 import { View, Text, FlatList, Button, ActivityIndicator } from 'react-native';
+
+import { useQuery } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { fetchAnnouncements } from '../api/announcements';
 import { fetchRewards } from '../api/rewards';
-
-import { Announcement, RewardItem } from '../types/dataTypes';
-
-import { colors } from '../styles/colors';
-import { commonSharedStyles } from '../styles/commonSharedStyles';
-
 import { AnnouncementListItem } from '../components/common/AnnouncementListItem';
 import { RewardItemPublic } from '../components/common/RewardItemPublic';
+import { colors } from '../styles/colors';
+import { commonSharedStyles } from '../styles/commonSharedStyles';
+import { Announcement, RewardItem } from '../types/dataTypes';
 
 type PublicTab = 'welcome' | 'rewards' | 'announcements';
 

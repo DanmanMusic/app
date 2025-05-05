@@ -1,16 +1,15 @@
 // src/components/student/modals/SetGoalModal.tsx
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+
 import { Modal, View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 
+import { useQuery } from '@tanstack/react-query';
+
 import { fetchRewards } from '../../../api/rewards';
-
-import { RewardItem } from '../../../types/dataTypes';
-import { SetGoalModalProps } from '../../../types/componentProps';
-
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
-
+import { SetGoalModalProps } from '../../../types/componentProps';
+import { RewardItem } from '../../../types/dataTypes';
 import { RewardGoalItem } from '../../common/RewardGoalItem';
 
 export const SetGoalModal: React.FC<SetGoalModalProps> = ({

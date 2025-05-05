@@ -1,9 +1,10 @@
 // supabase/functions/delete-task-library-item/index.ts
 
 import { createClient, SupabaseClient } from 'supabase-js';
+
+import { isActiveAdmin, isActiveTeacher } from '../_shared/authHelpers.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 // Import shared helpers
-import { isActiveAdmin, isActiveTeacher } from '../_shared/authHelpers.ts';
 import { deleteAttachment } from '../_shared/storageHelpers.ts';
 
 interface DeleteTaskPayload {

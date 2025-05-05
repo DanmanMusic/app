@@ -1,9 +1,10 @@
 // supabase/functions/refresh-pin-session/index.ts
 
+import { create, getNumericDate, Header } from 'djwt';
 import { createClient } from 'supabase-js';
+
 import { corsHeaders } from '../_shared/cors.ts';
 // Import JWT library functions
-import { create, getNumericDate, Header } from 'djwt';
 
 // Define expected request body
 interface RefreshTokenPayload {

@@ -1,9 +1,10 @@
 // supabase/functions/claim-onetime-pin/index.ts
 
+import { create, getNumericDate, Header } from 'djwt'; // Added this import
 import { createClient } from 'supabase-js';
+
 import { corsHeaders } from '../_shared/cors.ts';
 // *** Import JWT library functions ***
-import { create, getNumericDate, Header } from 'djwt'; // Added this import
 
 // Define expected request body
 interface ClaimPinPayload {

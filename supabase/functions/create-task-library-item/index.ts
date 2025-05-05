@@ -1,9 +1,10 @@
 // supabase/functions/create-task-library-item/index.ts
 
 import { createClient, SupabaseClient } from 'supabase-js';
+
+import { isActiveAdminOrTeacher } from '../_shared/authHelpers.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 // Import shared helpers
-import { isActiveAdminOrTeacher } from '../_shared/authHelpers.ts';
 import { uploadAttachment, deleteAttachment, FileUploadData } from '../_shared/storageHelpers.ts';
 
 // Define expected structure for the main payload

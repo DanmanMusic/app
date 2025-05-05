@@ -1,21 +1,25 @@
 // App.tsx
 import React, { useState } from 'react';
+
 import { StyleSheet, Text, View, Button, ActivityIndicator, ImageBackground } from 'react-native';
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
+
+import LoginModal from './src/components/common/LoginModal';
 import TaskVerificationModal from './src/components/common/TaskVerificationModal';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import { colors } from './src/styles/colors';
+import { commonSharedStyles } from './src/styles/commonSharedStyles';
+import { AssignedTask } from './src/types/dataTypes';
 import { AdminView } from './src/views/AdminView';
 import { ParentView } from './src/views/ParentView';
 import { PublicView } from './src/views/PublicView';
 import { StudentView } from './src/views/StudentView';
 import { TeacherView } from './src/views/TeacherView';
-import LoginModal from './src/components/common/LoginModal';
-import { AssignedTask } from './src/types/dataTypes';
-import { colors } from './src/styles/colors';
-import { commonSharedStyles } from './src/styles/commonSharedStyles';
+
 const lightWoodBackground = require('./assets/backgrounds/light_wood.png'); // Adjust path if needed
 
 const queryClient = new QueryClient();

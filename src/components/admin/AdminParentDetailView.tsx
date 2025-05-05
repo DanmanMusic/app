@@ -1,17 +1,17 @@
 import React, { useMemo, useState } from 'react';
+
 import { View, Text, Button, ActivityIndicator, FlatList, ScrollView } from 'react-native';
+
 import { useQuery, useQueries, useQueryClient, useMutation } from '@tanstack/react-query';
-
-import { fetchAuthUser, fetchUserProfile, unlinkStudentFromParent } from '../../api/users';
-
-import { User } from '../../types/dataTypes';
-import { AdminParentDetailViewProps } from '../../types/componentProps';
-
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { colors } from '../../styles/colors';
-import { getUserDisplayName } from '../../utils/helpers';
-import LinkStudentToParentModal from './modals/LinkStudentToParentModal';
 import Toast from 'react-native-toast-message';
+
+import LinkStudentToParentModal from './modals/LinkStudentToParentModal';
+import { fetchAuthUser, fetchUserProfile, unlinkStudentFromParent } from '../../api/users';
+import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { AdminParentDetailViewProps } from '../../types/componentProps';
+import { User } from '../../types/dataTypes';
+import { getUserDisplayName } from '../../utils/helpers';
 import ConfirmationModal from '../common/ConfirmationModal';
 
 export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({

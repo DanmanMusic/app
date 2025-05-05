@@ -1,17 +1,17 @@
 // src/components/common/DeactivateOrDeleteUserModal.tsx
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 
+import ConfirmationModal from './ConfirmationModal';
 import { deleteUser, toggleUserStatus } from '../../api/users';
-
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-
-import { getUserDisplayName } from '../../utils/helpers';
 import { DeactivateOrDeleteUserModalProps } from '../../types/componentProps';
-import ConfirmationModal from './ConfirmationModal';
+import { getUserDisplayName } from '../../utils/helpers';
 
 export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = ({
   visible,

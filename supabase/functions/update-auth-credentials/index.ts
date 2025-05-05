@@ -1,6 +1,7 @@
 // supabase/functions/update-auth-credentials/index.ts
 
 import { createClient, SupabaseClient } from 'supabase-js';
+
 import { corsHeaders } from '../_shared/cors.ts';
 
 // Define expected request body structure

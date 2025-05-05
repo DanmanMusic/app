@@ -1,9 +1,10 @@
 // supabase/functions/deleteAssignedTask/index.ts
 
 import { createClient, SupabaseClient } from 'supabase-js';
+
+import { isActiveAdmin, isActiveTeacher } from '../_shared/authHelpers.ts'; // Use Active checks
 import { corsHeaders } from '../_shared/cors.ts';
 // Import shared helpers
-import { isActiveAdmin, isActiveTeacher } from '../_shared/authHelpers.ts'; // Use Active checks
 import { deleteAttachment } from '../_shared/storageHelpers.ts';
 
 const TASK_ATTACHMENT_BUCKET = 'task-library-attachments'; // Define bucket name

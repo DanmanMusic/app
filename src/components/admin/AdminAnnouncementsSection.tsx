@@ -1,20 +1,19 @@
 // src/components/admin/AdminAnnouncementsSection.tsx
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 
-import { fetchAnnouncements, deleteAnnouncement } from '../../api/announcements';
-
-import { Announcement } from '../../types/dataTypes';
-
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { colors } from '../../styles/colors';
-
-import ConfirmationModal from '../common/ConfirmationModal';
 import CreateAnnouncementModal from './modals/CreateAnnouncementModal';
 import EditAnnouncementModal from './modals/EditAnnouncementModal';
+import { fetchAnnouncements, deleteAnnouncement } from '../../api/announcements';
+import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { Announcement } from '../../types/dataTypes';
 import { AnnouncementListItem } from '../common/AnnouncementListItem';
+import ConfirmationModal from '../common/ConfirmationModal';
 
 export const AdminAnnouncementsSection = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);

@@ -1,9 +1,10 @@
 // supabase/functions/updateUserWithLinks/index.ts
 
 import { createClient, SupabaseClient } from 'supabase-js';
+
+import { isActiveAdmin, isTeacherLinked } from '../_shared/authHelpers.ts'; // Use shared helpers
 import { corsHeaders } from '../_shared/cors.ts';
 // Import shared helpers
-import { isActiveAdmin, isTeacherLinked } from '../_shared/authHelpers.ts'; // Use shared helpers
 
 // Define expected User fields for update (Partial)
 interface UserUpdatePayload {

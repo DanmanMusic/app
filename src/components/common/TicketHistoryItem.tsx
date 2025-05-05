@@ -1,9 +1,11 @@
 // src/components/common/TicketHistoryItem.tsx
 import React from 'react';
+
 import { Text, View, StyleSheet } from 'react-native';
-import { TicketTransaction } from '../../types/dataTypes';
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
+
 import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { TicketTransaction } from '../../types/dataTypes';
 import { capitalizeFirstLetter, timestampDisplay } from '../../utils/helpers';
 
 const formatTransactionType = (type: TicketTransaction['type']): string => {

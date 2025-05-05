@@ -1,9 +1,10 @@
 // supabase/functions/verifyTask/index.ts
 
 import { createClient, SupabaseClient } from 'supabase-js';
+
+import { isActiveAdmin, isTeacherLinked, isActiveTeacher } from '../_shared/authHelpers.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 // Import shared helpers
-import { isActiveAdmin, isTeacherLinked, isActiveTeacher } from '../_shared/authHelpers.ts';
 
 // Define ENUM type values expected from client
 type VerificationStatusInput = 'verified' | 'partial' | 'incomplete';

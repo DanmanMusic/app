@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -12,13 +12,16 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
-import { updateReward } from '../../../api/rewards';
-import { RewardItem } from '../../../types/dataTypes';
-import { colors } from '../../../styles/colors';
-import { EditRewardModalProps } from '../../../types/componentProps';
-import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import Toast from 'react-native-toast-message';
+
+import { updateReward } from '../../../api/rewards';
+import { colors } from '../../../styles/colors';
+import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import { EditRewardModalProps } from '../../../types/componentProps';
+import { RewardItem } from '../../../types/dataTypes';
 
 const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit, onClose }) => {
   const [name, setName] = useState('');

@@ -1,8 +1,9 @@
 import { Button, Text, View } from 'react-native';
-import { ParentStudentListItemProps } from '../../types/componentProps';
-import { getUserDisplayName } from '../../utils/helpers';
+
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { ParentStudentListItemProps } from '../../types/componentProps';
+import { getUserDisplayName } from '../../utils/helpers';
 
 export const ParentStudentListItem: React.FC<ParentStudentListItemProps> = ({
   student,

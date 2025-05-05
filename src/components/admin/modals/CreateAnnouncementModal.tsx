@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { Modal, View, Text, Button, TextInput, ActivityIndicator } from 'react-native';
+
 import { Picker } from '@react-native-picker/picker';
 
-import { createAnnouncement } from '../../../api/announcements';
-
-import { Announcement, AnnouncementType } from '../../../types/dataTypes';
-import { colors } from '../../../styles/colors';
-import { CreateAnnouncementModalProps } from '../../../types/componentProps';
-
-import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
+
+import { createAnnouncement } from '../../../api/announcements';
+import { colors } from '../../../styles/colors';
+import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import { CreateAnnouncementModalProps } from '../../../types/componentProps';
+import { Announcement, AnnouncementType } from '../../../types/dataTypes';
 
 const ANNOUNCEMENT_TYPES: AnnouncementType[] = [
   'announcement',

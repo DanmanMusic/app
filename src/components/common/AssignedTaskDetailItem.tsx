@@ -1,10 +1,12 @@
 // src/components/common/AssignedTaskDetailItem.tsx
 import React from 'react';
+
 import { View, Text, Button, TouchableOpacity } from 'react-native';
-import { AssignedTask } from '../../types/dataTypes';
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { colors } from '../../styles/colors';
+
 import { handleOpenUrl, handleViewAttachment } from '../../lib/supabaseClient';
+import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { AssignedTask } from '../../types/dataTypes';
 import { timestampDisplay } from '../../utils/helpers';
 
 interface AssignedTaskDetailItemProps {

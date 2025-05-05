@@ -1,9 +1,10 @@
 // supabase/functions/get-user-auth-details/index.ts
 
 import { createClient, SupabaseClient } from 'supabase-js';
+
+import { isActiveAdmin, isTeacherLinked } from '../_shared/authHelpers.ts'; // Use isActiveAdmin
 import { corsHeaders } from '../_shared/cors.ts';
 // Import shared helper
-import { isActiveAdmin, isTeacherLinked } from '../_shared/authHelpers.ts'; // Use isActiveAdmin
 
 // Define expected request body structure
 interface GetAuthDetailsPayload {

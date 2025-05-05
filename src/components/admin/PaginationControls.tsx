@@ -1,8 +1,10 @@
 import React from 'react';
+
 import { View, Text, Button } from 'react-native';
+
 import { colors } from '../../styles/colors';
-import { PaginationControlsProps } from '../../types/componentProps';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { PaginationControlsProps } from '../../types/componentProps';
 
 const PaginationControls: React.FC<PaginationControlsProps> = ({
   currentPage,

@@ -1,6 +1,6 @@
 // src/components/admin/modals/LinkStudentToParentModal.tsx
 import React, { useState, useMemo, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import {
   Modal,
   View,
@@ -11,13 +11,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 
-import { fetchStudents } from '../../../api/users';
-import { linkStudentToParent } from '../../../api/users';
-import { SimplifiedStudent, User } from '../../../types/dataTypes';
+import { fetchStudents, linkStudentToParent } from '../../../api/users';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import { SimplifiedStudent, User } from '../../../types/dataTypes';
 
 interface LinkStudentToParentModalProps {
   visible: boolean;

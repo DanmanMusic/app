@@ -1,14 +1,17 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+
 import { View, Text, FlatList, ActivityIndicator, Button } from 'react-native';
+
+import { useQuery } from '@tanstack/react-query';
+
 import { fetchAssignedTasks } from '../../api/assignedTasks';
 import { fetchStudents } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
+import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { TeacherDashboardSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';
 import { AssignedTaskDetailItem } from '../common/AssignedTaskDetailItem';
-import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
 export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = ({
   onInitiateVerificationModal,
