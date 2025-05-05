@@ -3,7 +3,7 @@
 import { createClient, SupabaseClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
 // Import shared helper
-import { isActiveAdmin } from '../_shared/authHelpers.ts'; // Use isActiveAdmin
+import { isActiveAdmin, isTeacherLinked } from '../_shared/authHelpers.ts'; // Use isActiveAdmin
 
 // Define expected request body structure
 interface GetAuthDetailsPayload {
@@ -66,18 +66,7 @@ Deno.serve(async (req: Request) => {
     }
     console.log('Caller User ID:', callerUser.id);
 
-    // 4. Authorize Caller (Must be Active Admin) - Using imported helper
-    const callerIsActiveAdmin = await isActiveAdmin(supabaseAdminClient, callerUser.id); // Use shared helper
-    if (!callerIsActiveAdmin) {
-      console.warn(`User ${callerUser.id} attempted getAuthDetails without active admin role.`);
-      return new Response(
-        JSON.stringify({ error: 'Permission denied: Active Admin role required.' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    console.log(`Admin action authorized for active admin ${callerUser.id}.`);
-
-    // 5. Parse Request Body
+    // 4. Parse Request Body
     let payload: GetAuthDetailsPayload;
     try {
       payload = await req.json();
@@ -88,6 +77,36 @@ Deno.serve(async (req: Request) => {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // 5. Authorize Caller (Must be Active Admin) - Using imported helper
+    const callerIsActiveAdmin = await isActiveAdmin(supabaseAdminClient, callerUser.id); // Use shared helper
+    let callerIsLinkedTeacher = false;
+    if (!callerIsActiveAdmin) {
+      const { data: callerProfile } = await supabaseAdminClient
+        .from('profiles')
+        .select('role')
+        .eq('id', callerUser.id)
+        .single();
+      if (callerProfile?.role === 'teacher') {
+        callerIsLinkedTeacher = await isTeacherLinked(
+          supabaseAdminClient,
+          callerUser.id,
+          payload.targetUserId
+        );
+      }
+    }
+
+    if (!callerIsActiveAdmin && !callerIsLinkedTeacher) {
+      console.warn(
+        `Authorization failed: User ${callerUser.id} attempted getAuthDetails not Admin or linked Teacher for student ${payload.targetUserId}.`
+      );
+      return new Response(
+        JSON.stringify({
+          error: 'Permission denied: Active Admin or linked Teacher role required.',
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // 6. Validate Payload - *** RESTORED ***

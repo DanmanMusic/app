@@ -554,13 +554,6 @@ export const toggleUserStatus = async (userId: string): Promise<User> => {
   return updatedUser;
 };
 
-/**
- * Calls the Edge Function to generate a short-lived, one-time login PIN for a user.
- * Requires the caller (Admin/Teacher) to be authenticated.
- * @param targetUserId The ID of the user (Student/Teacher) for whom the PIN is generated.
- * @param targetRole The role ('student' or 'parent') the user will assume upon claiming the PIN.
- * @returns The generated plain-text PIN.
- */
 export const generatePinForUser = async (
   targetUserId: string,
   targetRole: UserRole
@@ -611,12 +604,6 @@ export const generatePinForUser = async (
   return data.pin;
 };
 
-/**
- * Calls the Edge Function to update the authenticated user's email or password.
- * Requires the user to be currently authenticated (JWT must be sent).
- * @param updates An object containing the new email and/or password.
- * @returns A confirmation message on success.
- */
 export const updateAuthCredentials = async (
   updates: UpdateAuthPayload
 ): Promise<UpdateAuthResponse> => {
@@ -654,8 +641,6 @@ export const updateAuthCredentials = async (
 
     throw new Error(`Credential update failed: ${detailedError}`);
   }
-
-  console.log('[API] update-auth-credentials Edge Function returned successfully:', data);
 
   if (!data || typeof data !== 'object' || typeof data.message !== 'string') {
     console.error('[API] update-auth-credentials function returned unexpected data:', data);
@@ -706,8 +691,6 @@ export const fetchAuthUser = async (userId: string): Promise<{ email: string | n
 
       throw new Error(`Failed to fetch auth details: ${detailedError}`);
     }
-
-    console.log('[fetchAuthUser API] Edge Function returned:', data);
 
     if (!data || typeof data !== 'object' || typeof data.email === 'undefined') {
       console.error('[fetchAuthUser API] Edge Function returned unexpected data structure:', data);
@@ -760,10 +743,6 @@ export const linkStudentToParent = async (parentId: string, studentId: string): 
   console.log(`[API linkStudentToParent] Link created successfully.`);
 };
 
-/**
- * Unlinks a student profile from a parent profile.
- * Assumes the caller is an authorized Admin (checked by RLS).
- */
 export const unlinkStudentFromParent = async (
   parentId: string,
   studentId: string
