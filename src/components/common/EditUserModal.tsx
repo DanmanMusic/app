@@ -86,7 +86,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       if (updatedUser.role === 'teacher') queryClient.invalidateQueries({ queryKey: ['teachers'] });
       if (updatedUser.role === 'parent') queryClient.invalidateQueries({ queryKey: ['parents'] });
       if (updatedUser.role === 'admin') queryClient.invalidateQueries({ queryKey: ['admins'] });
-      queryClient.invalidateQueries({ queryKey: ['activeProfilesForDevSelector'] });
 
       Toast.show({ type: 'success', text1: 'User Updated', position: 'bottom' });
       onClose();

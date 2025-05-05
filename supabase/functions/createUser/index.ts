@@ -1,9 +1,11 @@
 // supabase/functions/createUser/index.ts
 
 import { createClient, SupabaseClient } from 'supabase-js';
-import { corsHeaders } from '../_shared/cors.ts'; // Assuming this exists and is correct
+import { corsHeaders } from '../_shared/cors.ts';
+// Import shared helper
+import { isActiveAdmin } from '../_shared/authHelpers.ts'; // Use isActiveAdmin
 
-// Define the expected request body structure (NO initialPin)
+// Define the expected request body structure
 interface CreateUserPayload {
   role: 'admin' | 'teacher' | 'student' | 'parent';
   firstName: string;
@@ -14,42 +16,15 @@ interface CreateUserPayload {
   linkedTeacherIds?: string[];
 }
 
-// Helper function to check if the caller is an Admin
-async function isAdmin(supabaseClient: SupabaseClient, userId: string): Promise<boolean> {
-  console.log('isAdmin Check: Checking profile for user ID:', userId);
-  try {
-    const { data, error, status } = await supabaseClient
-      .from('profiles')
-      .select('role', { count: 'exact' })
-      .eq('id', userId)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        console.warn(`isAdmin Check: Profile not found for user ${userId}`);
-      } else {
-        console.error('isAdmin Check Error:', error.message, `(Status: ${status})`);
-      }
-      return false;
-    }
-    console.log(`isAdmin Check: Found profile role: ${data?.role} for user ${userId}`);
-    return data?.role === 'admin';
-  } catch (err) {
-    console.error('isAdmin Check Exception:', err);
-    return false;
-  }
-}
-
-// PIN Hashing function is no longer needed here
-// async function hashPin(pin: string): Promise<string> { /* ... */ }
-
 // Main Function Handler
 Deno.serve(async (req: Request) => {
-  // 1. Handle Preflight CORS request
-  if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS request');
-    return new Response('ok', { headers: corsHeaders });
-  }
+  // 1. Handle Preflight CORS request & Method Check
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST')
+    return new Response(JSON.stringify({ error: `Method ${req.method} Not Allowed` }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 
   console.log(`Received ${req.method} request for createUser`);
 
@@ -59,15 +34,17 @@ Deno.serve(async (req: Request) => {
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     if (!supabaseUrl || !serviceRoleKey) {
       console.error('Missing Supabase environment variables.');
-      throw new Error('Server configuration error.');
+      return new Response(JSON.stringify({ error: 'Server configuration error.' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     const supabaseAdminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
       global: { fetch: fetch },
     });
-    console.log('Supabase Admin Client initialized.');
 
-    // 3. Verify Caller is Authenticated and Admin
+    // 3. Verify Caller is Authenticated
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       console.warn('Missing or invalid Authorization header.');
@@ -92,17 +69,19 @@ Deno.serve(async (req: Request) => {
       });
     }
     console.log('Caller User ID:', user.id);
-    const callerIsAdmin = await isAdmin(supabaseAdminClient, user.id);
-    if (!callerIsAdmin) {
-      console.warn(`User ${user.id} attempted admin action without admin role.`);
-      return new Response(JSON.stringify({ error: 'Permission denied: Admin role required.' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    console.log(`Admin action authorized for user ${user.id}.`);
 
-    // 4. Parse Request Body
+    // 4. Authorize Caller (Must be Active Admin) - Using imported helper
+    const callerIsActiveAdmin = await isActiveAdmin(supabaseAdminClient, user.id); // Use shared helper
+    if (!callerIsActiveAdmin) {
+      console.warn(`User ${user.id} attempted admin action without active admin role.`);
+      return new Response(
+        JSON.stringify({ error: 'Permission denied: Active Admin role required.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    console.log(`Admin action authorized for active admin ${user.id}.`);
+
+    // 5. Parse Request Body
     let payload: CreateUserPayload;
     try {
       payload = await req.json();
@@ -115,7 +94,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // 5. Basic Payload Validation (No PIN check)
+    // 6. Basic Payload Validation - *** RESTORED ***
     if (!payload.role || !payload.firstName || !payload.lastName) {
       console.warn('Payload validation failed: Missing required fields.');
       return new Response(
@@ -123,24 +102,31 @@ Deno.serve(async (req: Request) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    // Add more validation if needed (e.g., role value check)
+    // Add role value check
+    if (!['admin', 'teacher', 'student', 'parent'].includes(payload.role)) {
+      console.warn(`Payload validation failed: Invalid role '${payload.role}'.`);
+      return new Response(JSON.stringify({ error: 'Invalid role provided.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    // *** END RESTORED VALIDATION ***
 
-    // 6. Create Auth User
-    // Use a placeholder email, as PIN users don't provide one initially
-    const userEmail = `${crypto.randomUUID()}@placeholder.app`;
+    // 7. Create Auth User
+    const userEmail = `${crypto.randomUUID()}@placeholder.app`; // Placeholder email
     console.log(
       `Attempting to create auth user with email ${userEmail} and role metadata: ${payload.role}`
     );
     const { data: authUserData, error: authError } =
       await supabaseAdminClient.auth.admin.createUser({
         email: userEmail,
-        // password: payload.password, // Add logic if collecting PW for Admin/Teacher
+        // No password needed for PIN flow initially
         user_metadata: {
-          role: payload.role,
+          role: payload.role, // Store intended role in metadata
           full_name: `${payload.firstName} ${payload.lastName}`,
         },
-        email_confirm: true,
-        phone_confirm: true,
+        email_confirm: true, // Auto-confirm placeholder email
+        phone_confirm: true, // Auto-confirm phone if ever used
       });
 
     if (authError) {
@@ -153,21 +139,20 @@ Deno.serve(async (req: Request) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
     const newUserId = authUserData.user.id;
     console.log('Auth user created successfully:', newUserId);
 
     // --- Database Operations (Profile & Links) ---
     let profileDataResult: any = null;
     try {
-      // 7. Create Profile Entry
+      // 8. Create Profile Entry
       const profileData = {
         id: newUserId,
         role: payload.role,
         first_name: payload.firstName,
         last_name: payload.lastName,
-        nickname: payload.nickname, // Will be null if not provided
-        status: 'active',
+        nickname: payload.nickname || null, // Use null if empty/undefined
+        status: 'active', // Default to active
       };
       console.log(`Inserting profile for ${newUserId}:`, profileData);
       const { data: insertedProfile, error: profileError } = await supabaseAdminClient
@@ -175,15 +160,12 @@ Deno.serve(async (req: Request) => {
         .insert(profileData)
         .select()
         .single();
-
-      if (profileError) throw profileError;
+      if (profileError) throw profileError; // Throw to trigger cleanup
       profileDataResult = insertedProfile;
       console.log(`Profile created for ${newUserId}.`);
 
-      // 8. Handle Student Specifics (Links ONLY)
+      // 9. Handle Student Specifics (Links ONLY)
       if (payload.role === 'student') {
-        // --- PIN Handling REMOVED ---
-
         // Add Instrument Links
         if (payload.instrumentIds && payload.instrumentIds.length > 0) {
           const instrumentLinks = payload.instrumentIds.map(instId => ({
@@ -194,12 +176,10 @@ Deno.serve(async (req: Request) => {
           const { error: instrumentLinkError } = await supabaseAdminClient
             .from('student_instruments')
             .insert(instrumentLinks);
-          // Log error but don't necessarily fail the whole process for optional links
           if (instrumentLinkError)
-            console.error('Instrument Link Error:', instrumentLinkError.message);
+            console.error('Instrument Link Error:', instrumentLinkError.message); // Log but don't fail
           else console.log(`Instrument links created for student ${newUserId}.`);
         }
-
         // Add Teacher Links
         if (payload.linkedTeacherIds && payload.linkedTeacherIds.length > 0) {
           const teacherLinks = payload.linkedTeacherIds.map(teachId => ({
@@ -210,14 +190,13 @@ Deno.serve(async (req: Request) => {
           const { error: teacherLinkError } = await supabaseAdminClient
             .from('student_teachers')
             .insert(teacherLinks);
-          if (teacherLinkError) console.error('Teacher Link Error:', teacherLinkError.message);
+          if (teacherLinkError)
+            console.error('Teacher Link Error:', teacherLinkError.message); // Log but don't fail
           else console.log(`Teacher links created for student ${newUserId}.`);
         }
       }
 
-      // --- If all critical operations succeed ---
-
-      // 9. Map result to expected client format
+      // 10. Map result to expected client format
       const createdUserResponse = {
         id: profileDataResult.id,
         role: profileDataResult.role,
@@ -225,43 +204,34 @@ Deno.serve(async (req: Request) => {
         lastName: profileDataResult.last_name,
         nickname: profileDataResult.nickname ?? undefined,
         status: profileDataResult.status,
-        // Conditionally include empty arrays for student links if not provided in payload
         ...(payload.role === 'student' && {
           instrumentIds: payload.instrumentIds || [],
           linkedTeacherIds: payload.linkedTeacherIds || [],
         }),
-        // Add linkedStudentIds if creating a parent (though parent creation might be separate flow)
       };
 
       console.log('User creation process completed successfully.');
       return new Response(JSON.stringify(createdUserResponse), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 201, // Created
-      });
+        status: 201,
+      }); // Created
     } catch (dbError) {
       // --- Cleanup on DB Error ---
       console.error('Error during DB inserts after Auth User creation:', dbError.message);
       console.warn(`Attempting to delete orphaned auth user: ${newUserId}`);
       const { error: deleteError } = await supabaseAdminClient.auth.admin.deleteUser(newUserId);
-      if (deleteError) {
+      if (deleteError)
         console.error(
           `CRITICAL: Failed to delete orphaned auth user ${newUserId}:`,
           deleteError.message
         );
-      } else {
-        console.log(`Successfully deleted orphaned auth user ${newUserId}.`);
-      }
-
+      else console.log(`Successfully deleted orphaned auth user ${newUserId}.`);
       return new Response(
         JSON.stringify({ error: `Failed to complete user creation: ${dbError.message}` }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
   } catch (error) {
-    // Catch errors from initial setup/auth/validation
     console.error('Unhandled Create User Function Error:', error);
     const statusCode = error.message.includes('required')
       ? 403
@@ -270,12 +240,9 @@ Deno.serve(async (req: Request) => {
         : 500;
     return new Response(
       JSON.stringify({ error: error.message || 'An unexpected error occurred.' }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: statusCode,
-      }
+      { status: statusCode, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
 
-console.log('CreateUser function initialized (v2 - no PIN).'); // Added version marker
+console.log('CreateUser function initialized (v3 - uses shared helpers).');

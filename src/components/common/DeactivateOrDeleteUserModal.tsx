@@ -36,7 +36,6 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
       if (userRole === 'parent') queryClient.invalidateQueries({ queryKey: ['parents'] });
       if (userRole === 'admin') queryClient.invalidateQueries({ queryKey: ['admins'] });
       queryClient.invalidateQueries({ queryKey: ['userProfile', userId] });
-      queryClient.invalidateQueries({ queryKey: ['activeProfilesForDevSelector'] });
       queryClient.invalidateQueries({ queryKey: ['userCounts'] });
 
       setIsConfirmDeleteVisible(false);
@@ -74,7 +73,6 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
       if (userRole === 'parent') queryClient.invalidateQueries({ queryKey: ['parents'] });
       if (userRole === 'admin') queryClient.invalidateQueries({ queryKey: ['admins'] });
       queryClient.invalidateQueries({ queryKey: ['userProfile', updatedUser.id] });
-      queryClient.invalidateQueries({ queryKey: ['activeProfilesForDevSelector'] });
       queryClient.invalidateQueries({ queryKey: ['userCounts'] });
 
       onClose();

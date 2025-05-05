@@ -1,135 +1,30 @@
 // supabase/functions/assignTask/index.ts
 
-import { createClient, SupabaseClient } from 'supabase-js';
+import { createClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
-import { decode } from 'https://deno.land/std@0.203.0/encoding/base64.ts';
+// Import shared helpers
+import { isActiveAdmin, isTeacherLinked } from '../_shared/authHelpers.ts';
+import { uploadAttachment, deleteAttachment } from '../_shared/storageHelpers.ts';
 
-const TASK_ATTACHMENT_BUCKET = 'task-library-attachments';
-
-// Define expected structure for file data in the payload
-// Matches the NativeFileObject structure from the frontend API call
 interface FilePayloadInput {
-  uri: string; // We expect the client to send the URI for native, or handle blob/File for web
-  base64?: string; // Client might pre-convert, especially web
-  mimeType?: string;
-  name?: string;
+  uri?: string;
+  base64: string;
+  mimeType: string;
+  name: string;
   size?: number;
 }
 
-// Define expected structure for the main payload
 interface AssignTaskPayload {
   studentId: string;
   taskTitle: string;
   taskDescription: string;
   taskBasePoints: number;
   taskLinkUrl?: string | null;
-  taskAttachmentPath?: string | null; // Path copied from library (if applicable)
-  file?: FilePayloadInput; // Optional NEW file upload details for ad-hoc
+  taskAttachmentPath?: string | null;
+  file?: FilePayloadInput;
 }
 
-// --- Helper functions (isAdmin, isTeacherLinked) remain the same ---
-async function isAdmin(supabaseClient: SupabaseClient, callerUserId: string): Promise<boolean> {
-  const { data, error } = await supabaseClient
-    .from('profiles')
-    .select('role')
-    .eq('id', callerUserId)
-    .single();
-  if (error) {
-    console.error(`isAdmin check failed for ${callerUserId}:`, error.message);
-    return false;
-  }
-  return data?.role === 'admin';
-}
-async function isTeacherLinked(
-  supabaseClient: SupabaseClient,
-  teacherId: string,
-  studentId: string
-): Promise<boolean> {
-  const { data, error, count } = await supabaseClient
-    .from('student_teachers')
-    .select('*', { count: 'exact', head: true })
-    .eq('teacher_id', teacherId)
-    .eq('student_id', studentId);
-  if (error) {
-    console.error(`isTeacherLinked check failed for T:${teacherId} S:${studentId}:`, error.message);
-    return false;
-  }
-  return (count ?? 0) > 0;
-}
-
-// --- Include File Upload/Delete Helpers ---
-// Helper: Upload file to storage
-async function uploadAttachment(
-  supabase: SupabaseClient,
-  file: FilePayloadInput, // Use the input type
-  userId: string // ID of the assigner
-): Promise<string | null> {
-  try {
-    // We need the actual file data (base64 decoded)
-    // The client should ideally send base64, or we need more complex handling here
-    // For now, assume client sends base64 in the 'base64' field if needed,
-    // OR we might need a different approach if only URI is sent from native.
-    // Let's assume base64 is provided for simplicity in this example.
-    // A more robust solution might involve fetching the URI content if only URI is provided.
-
-    // **Revised Assumption:** Let's assume the *client* API function (`createAssignedTask`)
-    // already converted the file to base64 and put it in `payload.file.base64`.
-    // If not, this EF needs more logic.
-
-    if (!file.base64) {
-      // If base64 isn't directly provided, we might need to fetch URI content here (complex for EF)
-      // Or adjust the client API to always provide base64.
-      // For now, let's throw an error if base64 is missing but file object exists.
-      console.error("File object provided to assignTask EF, but missing 'base64' data.");
-      throw new Error('Internal error: Missing file data for upload.');
-    }
-
-    const fileExt = file.name?.split('.').pop()?.toLowerCase() || 'bin';
-    const safeBaseName =
-      file.name?.replace(/[^a-zA-Z0-9_.-]/g, '_').replace(`.${fileExt}`, '') || 'attachment';
-    const filePath = `public/${userId}/${Date.now()}_${safeBaseName}.${fileExt}`;
-    const mimeType = file.mimeType || 'application/octet-stream';
-
-    console.log(`Attempting upload to Storage: ${filePath} (MIME: ${mimeType})`);
-
-    const fileData = decode(file.base64); // Decode base64
-
-    const { data, error: uploadError } = await supabase.storage
-      .from(TASK_ATTACHMENT_BUCKET)
-      .upload(filePath, fileData, {
-        contentType: mimeType,
-        upsert: false,
-      });
-
-    if (uploadError) {
-      throw new Error(`Storage upload error: ${uploadError.message}`);
-    }
-    console.log(`File uploaded successfully to Storage: ${data?.path}`);
-    return data?.path ?? null;
-  } catch (error) {
-    console.error('uploadAttachment error:', error.message);
-    return null; // Indicate failure
-  }
-}
-
-// Helper: Delete file from storage (for cleanup on error)
-async function deleteAttachment(supabase: SupabaseClient, path: string | null): Promise<boolean> {
-  if (!path) return true;
-  console.warn(`Attempting cleanup: Deleting attachment from Storage: ${path}`);
-  try {
-    const { error } = await supabase.storage.from(TASK_ATTACHMENT_BUCKET).remove([path]);
-    if (error) throw error;
-    console.log(`Cleanup successful: Deleted attachment ${path}`);
-    return true;
-  } catch (error) {
-    console.error(`Cleanup failed: Could not delete attachment ${path}:`, error.message);
-    return false;
-  }
-}
-
-// Main Edge Function Handler
 Deno.serve(async (req: Request) => {
-  // 1. Handle Preflight CORS & Method Check
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST')
     return new Response(JSON.stringify({ error: `Method ${req.method} Not Allowed` }), {
@@ -139,11 +34,14 @@ Deno.serve(async (req: Request) => {
 
   console.log(`Received ${req.method} request for assignTask`);
 
-  // 2. Initialize Supabase Admin Client
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!supabaseUrl || !serviceRoleKey) {
-    /* ... server config error ... */
+    console.error('Missing Supabase environment variables.');
+    return new Response(JSON.stringify({ error: 'Server configuration error.' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
   const supabaseAdminClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -151,10 +49,12 @@ Deno.serve(async (req: Request) => {
   });
 
   try {
-    // 3. Verify Caller Authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      /* ... auth error ... */
+      return new Response(JSON.stringify({ error: 'Authentication required.' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     const token = authHeader.replace('Bearer ', '');
     const {
@@ -162,21 +62,30 @@ Deno.serve(async (req: Request) => {
       error: userError,
     } = await supabaseAdminClient.auth.getUser(token);
     if (userError || !callerUser) {
-      /* ... auth error ... */
+      return new Response(JSON.stringify({ error: 'Invalid or expired token.' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     const assignerId = callerUser.id;
     console.log('Caller User ID (Assigner):', assignerId);
 
-    // 4. Parse Request Body
     let payload: AssignTaskPayload;
     try {
       payload = await req.json();
-      console.log('Received payload:', payload);
+      console.log('Received payload:', {
+        ...payload,
+        file: payload.file
+          ? { name: payload.file.name, mimeType: payload.file.mimeType, base64: '...' }
+          : undefined,
+      }); // Avoid logging base64
     } catch (jsonError) {
-      /* ... body error ... */
+      return new Response(JSON.stringify({ error: 'Invalid request body.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // 5. Validate Payload (Basic)
     if (
       !payload.studentId ||
       !payload.taskTitle ||
@@ -190,19 +99,18 @@ Deno.serve(async (req: Request) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    // Add validation for file object if present
-    if (payload.file && (!payload.file.uri || !payload.file.name || !payload.file.mimeType)) {
+    if (payload.file && (!payload.file.base64 || !payload.file.name || !payload.file.mimeType)) {
       console.warn(
-        'Received file object is missing required properties (uri, name, mimeType).',
+        'Received file object is missing required properties (base64, name, mimeType).',
         payload.file
       );
-      // Depending on strictness, you might reject here or let uploadAttachment handle it
-      // Let's assume uploadAttachment needs base64, which client API should prepare.
-      // If base64 isn't prepared by client, uploadAttachment will fail later.
+      return new Response(JSON.stringify({ error: 'Incomplete file data provided.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // 6. Authorize Caller (Admin or Linked Teacher)
-    const userIsAdmin = await isAdmin(supabaseAdminClient, assignerId);
+    const userIsAdmin = await isActiveAdmin(supabaseAdminClient, assignerId);
     let userIsLinkedTeacher = false;
     if (!userIsAdmin) {
       const { data: callerProfile } = await supabaseAdminClient
@@ -219,30 +127,39 @@ Deno.serve(async (req: Request) => {
       }
     }
     if (!userIsAdmin && !userIsLinkedTeacher) {
-      /* ... authz error ... */
+      console.warn(
+        `Authorization failed: User ${assignerId} is not Admin or linked Teacher for student ${payload.studentId}.`
+      );
+      return new Response(
+        JSON.stringify({ error: 'Permission denied: User cannot assign tasks to this student.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
     console.log(
       `Authorization success: User ${assignerId} is ${userIsAdmin ? 'Admin' : 'Linked Teacher'}.`
     );
 
-    // 7. Handle Attachment Upload (if new file provided)
-    let finalAttachmentPath: string | null = payload.taskAttachmentPath || null; // Start with path from library, if any
-    let uploadedFilePath: string | null = null; // Track newly uploaded path for potential cleanup
+    let finalAttachmentPath: string | null = payload.taskAttachmentPath || null;
+    let uploadedFilePath: string | null = null;
 
     if (payload.file) {
-      console.log('Ad-hoc file provided in payload, attempting upload...');
-      // **Crucially, ensure payload.file contains base64 data here**
-      // This might require modification in the client-side `createAssignedTask` function
-      // to read the file URI and convert it to base64 before sending.
-      uploadedFilePath = await uploadAttachment(supabaseAdminClient, payload.file, assignerId);
+      console.log('Ad-hoc file provided, attempting upload via shared helper...');
+      uploadedFilePath = await uploadAttachment(
+        supabaseAdminClient,
+        {
+          base64: payload.file.base64,
+          mimeType: payload.file.mimeType,
+          fileName: payload.file.name,
+        },
+        assignerId // Pass assigner ID for folder structure
+      );
       if (!uploadedFilePath) {
-        // Upload helper already logged error
         return new Response(JSON.stringify({ error: 'File upload to storage failed' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      finalAttachmentPath = uploadedFilePath; // Prioritize the newly uploaded file path
+      finalAttachmentPath = uploadedFilePath;
       console.log('Ad-hoc file upload successful, path:', finalAttachmentPath);
     } else {
       console.log(
@@ -256,10 +173,10 @@ Deno.serve(async (req: Request) => {
       student_id: payload.studentId,
       assigned_by_id: assignerId,
       task_title: payload.taskTitle.trim(),
-      task_description: payload.taskDescription?.trim() || '', // Ensure description is not null
+      task_description: payload.taskDescription?.trim() || '', // Default to empty string if null/undefined
       task_base_points: payload.taskBasePoints,
       task_link_url: payload.taskLinkUrl || null,
-      task_attachment_path: finalAttachmentPath, // Use the determined path
+      task_attachment_path: finalAttachmentPath,
     };
 
     console.log('Attempting to insert assigned task:', taskToInsert);
@@ -272,7 +189,7 @@ Deno.serve(async (req: Request) => {
 
     if (insertError) {
       console.error('Error inserting assigned task:', insertError);
-      // *** Attempt to clean up newly uploaded file if DB insert failed ***
+      // Attempt cleanup if upload happened before DB error - Using imported helper
       if (uploadedFilePath) {
         console.warn(`DB insert failed, attempting cleanup of uploaded file: ${uploadedFilePath}`);
         await deleteAttachment(supabaseAdminClient, uploadedFilePath);
@@ -300,8 +217,8 @@ Deno.serve(async (req: Request) => {
       verifiedById: createdTask.verified_by_id ?? undefined,
       verifiedDate: createdTask.verified_date ?? undefined,
       actualPointsAwarded: createdTask.actual_points_awarded ?? undefined,
-      taskLinkUrl: createdTask.task_link_url ?? null, // Use null if missing
-      taskAttachmentPath: createdTask.task_attachment_path ?? null, // Use null if missing
+      taskLinkUrl: createdTask.task_link_url ?? null,
+      taskAttachmentPath: createdTask.task_attachment_path ?? null,
     };
 
     return new Response(JSON.stringify(responseTask), {
@@ -317,4 +234,4 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-console.log('assignTask function initialized (v2 - with ad-hoc attachment upload).');
+console.log('assignTask function initialized (v3 - uses shared helpers).');

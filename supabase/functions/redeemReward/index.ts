@@ -2,6 +2,8 @@
 
 import { createClient, SupabaseClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
+// Import shared helper
+import { isActiveAdmin } from '../_shared/authHelpers.ts'; // Use isActiveAdmin
 
 interface RedeemRewardPayload {
   studentId: string;
@@ -9,20 +11,7 @@ interface RedeemRewardPayload {
   // redeemerId is determined from the caller's token
 }
 
-// Helper function to check if the caller is an Admin
-async function isAdmin(supabaseClient: SupabaseClient, callerUserId: string): Promise<boolean> {
-  const { data, error } = await supabaseClient
-    .from('profiles')
-    .select('role')
-    .eq('id', callerUserId)
-    .single();
-  if (error) {
-    console.error(`isAdmin check failed for ${callerUserId}:`, error.message);
-    return false;
-  }
-  return data?.role === 'admin';
-}
-
+// Main Function Handler
 Deno.serve(async (req: Request) => {
   // 1. Handle Preflight CORS & Method Check (POST)
   if (req.method === 'OPTIONS') {
@@ -31,7 +20,7 @@ Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: `Method ${req.method} Not Allowed` }), {
       status: 405,
-      headers: corsHeaders,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }, // Ensure Content-Type
     });
   }
 
@@ -41,7 +30,11 @@ Deno.serve(async (req: Request) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!supabaseUrl || !serviceRoleKey) {
-    /* ... server config error ... */
+    console.error('Missing Supabase environment variables.');
+    return new Response(JSON.stringify({ error: 'Server configuration error.' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
   const supabaseAdminClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -52,7 +45,11 @@ Deno.serve(async (req: Request) => {
     // 3. Verify Caller Authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      /* ... auth error ... */
+      console.warn('Missing or invalid Authorization header.');
+      return new Response(JSON.stringify({ error: 'Authentication required.' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     const token = authHeader.replace('Bearer ', '');
     const {
@@ -60,57 +57,61 @@ Deno.serve(async (req: Request) => {
       error: userError,
     } = await supabaseAdminClient.auth.getUser(token);
     if (userError || !callerUser) {
-      /* ... auth error ... */
+      console.error('Auth token validation error:', userError?.message || 'User not found');
+      return new Response(JSON.stringify({ error: 'Invalid or expired token.' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
-    const redeemerId = callerUser.id; // The user performing the redemption
+    const redeemerId = callerUser.id;
     console.log('Caller User ID (Redeemer):', redeemerId);
 
     // 4. Parse Request Body
     let payload: RedeemRewardPayload;
     try {
       payload = await req.json();
+      console.log('Received payload:', payload);
     } catch (jsonError) {
-      /* ... body error ... */
+      console.error('Failed to parse request body:', jsonError);
+      return new Response(JSON.stringify({ error: 'Invalid request body.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
-    console.log('Received payload:', payload);
 
     // 5. Validate Payload
     if (!payload.studentId || !payload.rewardId) {
+      console.warn('Payload validation failed: Missing studentId or rewardId.');
       return new Response(
         JSON.stringify({ error: 'Missing required fields: studentId, rewardId.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // 6. Authorize Caller (Only Admins can redeem for now)
-    const userIsAdmin = await isAdmin(supabaseAdminClient, redeemerId);
-    if (!userIsAdmin) {
-      console.warn(`Authorization failed: User ${redeemerId} is not Admin.`);
+    // 6. Authorize Caller (Only Active Admins can redeem) - Using imported helper
+    const userIsActiveAdmin = await isActiveAdmin(supabaseAdminClient, redeemerId); // Use shared helper
+    if (!userIsActiveAdmin) {
+      console.warn(`Authorization failed: User ${redeemerId} is not an Active Admin.`);
       return new Response(
         JSON.stringify({
-          error: 'Permission denied: Only Admins can perform redemption currently.',
+          error: 'Permission denied: Only Active Admins can perform redemption.',
         }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    console.log(`Authorization success: Admin ${redeemerId} performing redemption.`);
+    console.log(`Authorization success: Active Admin ${redeemerId} performing redemption.`);
 
     // 7. Call the Database RPC Function
     console.log(
       `Calling RPC redeem_reward_for_student for Student: ${payload.studentId}, Reward: ${payload.rewardId}, Redeemer: ${redeemerId}`
     );
-
     const { data: rpcResult, error: rpcError } = await supabaseAdminClient
-      .rpc(
-        'redeem_reward_for_student',
-        {
-          p_redeemer_id: redeemerId,
-          p_student_id: payload.studentId,
-          p_reward_id: payload.rewardId,
-        }
-        // Ensure the result is treated as a single object if the function returns one row
-      )
-      .maybeSingle(); // Use maybeSingle() if your RPC returns a single row result or potentially null/error
+      .rpc('redeem_reward_for_student', {
+        p_redeemer_id: redeemerId,
+        p_student_id: payload.studentId,
+        p_reward_id: payload.rewardId,
+      })
+      .maybeSingle(); // Use maybeSingle as RPC returns a single row result
 
     if (rpcError) {
       console.error('Error calling redeem_reward_for_student RPC:', rpcError);
@@ -122,7 +123,7 @@ Deno.serve(async (req: Request) => {
 
     // The RPC function returns an object { success: boolean, message: text, new_balance: integer }
     if (!rpcResult) {
-      // This case might happen if maybeSingle() finds no row, which shouldn't occur for this RPC returning a table.
+      // This case might happen if maybeSingle() finds no row, which shouldn't occur for this RPC.
       console.error('Redemption RPC returned unexpected null result.');
       return new Response(JSON.stringify({ error: 'Redemption process failed unexpectedly.' }), {
         status: 500,
@@ -134,6 +135,8 @@ Deno.serve(async (req: Request) => {
 
     // 8. Check RPC result and respond to client
     if (rpcResult.success) {
+      // Success Case
+      console.log(`Redemption successful: ${rpcResult.message}`);
       return new Response(
         JSON.stringify({ message: rpcResult.message, newBalance: rpcResult.new_balance }),
         {
@@ -142,10 +145,10 @@ Deno.serve(async (req: Request) => {
         }
       );
     } else {
-      // Redemption failed (e.g., insufficient funds, reward not found)
-      // Use a 400 Bad Request or 422 Unprocessable Entity status code
+      // Failure Case (e.g., insufficient funds, handled by RPC)
+      console.warn(`Redemption failed: ${rpcResult.message}`);
       return new Response(JSON.stringify({ error: rpcResult.message || 'Redemption failed.' }), {
-        status: 400, // Bad Request (e.g., insufficient funds is a client-side preventable error)
+        status: 400, // Bad Request (client could have checked balance)
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -161,4 +164,4 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-console.log('redeemReward function initialized.');
+console.log('redeemReward function initialized (v2 - uses shared helpers).');

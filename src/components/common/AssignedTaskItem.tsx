@@ -30,12 +30,10 @@ export const AssignedTaskItem = ({
         commonSharedStyles.justifySpaceBetween,
       ]}
     >
-      <View>
+      <View style={[commonSharedStyles.baseColumn, commonSharedStyles.baseGap]}>
         <Text style={commonSharedStyles.itemTitle}>{task.taskTitle}</Text>
         {!!task.taskDescription && (
-          <Text style={[commonSharedStyles.baseSecondaryText, { marginBottom: 5 }]}>
-            {task.taskDescription}
-          </Text>
+          <Text style={[commonSharedStyles.baseSecondaryText]}>{task.taskDescription}</Text>
         )}
         <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
         {task.taskLinkUrl && (

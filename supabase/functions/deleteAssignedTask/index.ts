@@ -2,39 +2,14 @@
 
 import { createClient, SupabaseClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
+// Import shared helpers
+import { isActiveAdmin, isActiveTeacher } from '../_shared/authHelpers.ts'; // Use Active checks
+import { deleteAttachment } from '../_shared/storageHelpers.ts';
 
-const TASK_ATTACHMENT_BUCKET = 'task-library-attachments';
+const TASK_ATTACHMENT_BUCKET = 'task-library-attachments'; // Define bucket name
 
 interface DeleteTaskPayload {
   assignmentId: string; // The ID of the assigned_tasks record to delete
-}
-
-// --- Helper functions (isAdmin, deleteAttachment) ---
-async function isAdmin(supabaseClient: SupabaseClient, callerUserId: string): Promise<boolean> {
-  const { data, error } = await supabaseClient
-    .from('profiles')
-    .select('role')
-    .eq('id', callerUserId)
-    .single();
-  if (error) {
-    console.error(`isAdmin check failed for ${callerUserId}:`, error.message);
-    return false;
-  }
-  return data?.role === 'admin';
-}
-
-async function deleteAttachment(supabase: SupabaseClient, path: string | null): Promise<boolean> {
-  if (!path) return true;
-  console.log(`[deleteAssignedTask EF] Attempting to delete attachment from Storage: ${path}`);
-  try {
-    const { error } = await supabase.storage.from(TASK_ATTACHMENT_BUCKET).remove([path]);
-    if (error) throw error;
-    console.log(`[deleteAssignedTask EF] Successfully deleted attachment ${path}`);
-    return true;
-  } catch (error) {
-    console.error(`[deleteAssignedTask EF] Failed to delete attachment ${path}:`, error.message);
-    return false;
-  }
 }
 
 // Helper function to get task details needed for auth and cleanup
@@ -45,28 +20,34 @@ async function getTaskDetailsForDelete(
   assigned_by_id: string;
   verification_status: string | null;
   task_attachment_path: string | null;
+  student_id: string;
 } | null> {
   const { data, error } = await supabaseClient
     .from('assigned_tasks')
-    .select('assigned_by_id, verification_status, task_attachment_path') // Fetch path too
+    .select('assigned_by_id, verification_status, task_attachment_path, student_id')
     .eq('id', assignmentId)
     .single();
 
   if (error) {
-    console.error(`Failed to fetch task details for delete ${assignmentId}:`, error.message);
+    if (error.code === 'PGRST116') {
+      console.warn(`[getTaskDetailsForDelete] Task ${assignmentId} not found.`);
+    } else {
+      console.error(`[getTaskDetailsForDelete] Failed for ${assignmentId}:`, error.message);
+    }
     return null;
   }
   return data;
 }
 
+// Main Function Handler
 Deno.serve(async (req: Request) => {
   // 1. Handle Preflight CORS & Method Check
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST')
     return new Response(JSON.stringify({ error: `Method ${req.method} Not Allowed` }), {
       status: 405,
-      headers: corsHeaders,
-    });
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    }); // Added Content-Type
 
   console.log(`Received ${req.method} request for deleteAssignedTask`);
 
@@ -74,7 +55,11 @@ Deno.serve(async (req: Request) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!supabaseUrl || !serviceRoleKey) {
-    /* ... server config error ... */
+    console.error('Missing Supabase environment variables.');
+    return new Response(JSON.stringify({ error: 'Server configuration error.' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
   const supabaseAdminClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -85,7 +70,11 @@ Deno.serve(async (req: Request) => {
     // 3. Verify Caller Authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      /* ... auth error ... */
+      console.warn('Missing or invalid Authorization header.');
+      return new Response(JSON.stringify({ error: 'Authentication required.' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     const token = authHeader.replace('Bearer ', '');
     const {
@@ -93,7 +82,11 @@ Deno.serve(async (req: Request) => {
       error: userError,
     } = await supabaseAdminClient.auth.getUser(token);
     if (userError || !callerUser) {
-      /* ... auth error ... */
+      console.error('Auth token validation error:', userError?.message || 'User not found');
+      return new Response(JSON.stringify({ error: 'Invalid or expired token.' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     const callerId = callerUser.id;
     console.log('Caller User ID:', callerId);
@@ -102,54 +95,74 @@ Deno.serve(async (req: Request) => {
     let payload: DeleteTaskPayload;
     try {
       payload = await req.json();
+      console.log('Received payload:', payload);
     } catch (jsonError) {
-      /* ... body error ... */
+      console.error('Failed to parse request body:', jsonError);
+      return new Response(JSON.stringify({ error: 'Invalid request body.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
-    console.log('Received payload:', payload);
 
-    // 5. Validate Payload
+    // 5. Validate Payload - *** RESTORED ***
     if (!payload.assignmentId || typeof payload.assignmentId !== 'string') {
-      /* ... validation error ... */
+      console.warn('Payload validation failed: Missing or invalid assignmentId.');
+      return new Response(JSON.stringify({ error: 'Missing or invalid assignmentId.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
+    // *** END RESTORED VALIDATION ***
     const assignmentIdToDelete = payload.assignmentId;
 
     // 6. Fetch Task Details for Authorization and Cleanup
     const taskDetails = await getTaskDetailsForDelete(supabaseAdminClient, assignmentIdToDelete);
     if (!taskDetails) {
-      // Task might already be deleted, which is okay for a delete operation.
-      console.warn(`Task ${assignmentIdToDelete} not found. Assuming already deleted.`);
+      console.warn(
+        `Task ${assignmentIdToDelete} not found during delete attempt. Assuming already deleted.`
+      );
       return new Response(
         JSON.stringify({ message: `Task ${assignmentIdToDelete} not found or already deleted.` }),
-        {
-          status: 200, // OK, desired state achieved
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    const attachmentPathToCheck = taskDetails.task_attachment_path; // Store path before delete
+    const attachmentPathToCheck = taskDetails.task_attachment_path;
 
-    // 7. Authorize Caller
-    const userIsAdmin = await isAdmin(supabaseAdminClient, callerId);
-    let canDelete = userIsAdmin;
-    if (!userIsAdmin) {
-      if (taskDetails.assigned_by_id === callerId) {
-        if (
-          taskDetails.verification_status === null ||
-          taskDetails.verification_status === 'pending'
-        ) {
-          const { data: callerProfile } = await supabaseAdminClient
-            .from('profiles')
-            .select('role')
-            .eq('id', callerId)
-            .single();
-          if (callerProfile?.role === 'teacher') {
-            canDelete = true;
-          }
+    // 7. Authorize Caller - Using imported helpers
+    const userIsActiveAdmin = await isActiveAdmin(supabaseAdminClient, callerId); // Use shared helper
+    let canDelete = userIsActiveAdmin;
+
+    if (!userIsActiveAdmin) {
+      if (
+        taskDetails.assigned_by_id === callerId &&
+        (taskDetails.verification_status === null || taskDetails.verification_status === 'pending')
+      ) {
+        const callerIsActiveTeacher = await isActiveTeacher(supabaseAdminClient, callerId); // Use shared helper
+        if (callerIsActiveTeacher) {
+          console.log(
+            `Authorizing delete for active Teacher ${callerId} on unverified task ${assignmentIdToDelete} they assigned.`
+          );
+          canDelete = true;
+        } else {
+          console.warn(
+            `User ${callerId} assigned task ${assignmentIdToDelete} but is not an active teacher.`
+          );
         }
+      } else {
+        console.warn(
+          `Teacher ${callerId} cannot delete task ${assignmentIdToDelete}. Ownership/Status mismatch. Assigned by: ${taskDetails.assigned_by_id}, Status: ${taskDetails.verification_status}`
+        );
       }
     }
+
     if (!canDelete) {
-      /* ... authz error ... */
+      console.warn(
+        `Authorization failed for user ${callerId} attempting to delete task ${assignmentIdToDelete}.`
+      );
+      return new Response(
+        JSON.stringify({ error: 'Permission denied: User cannot delete this assigned task.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
     console.log(
       `Authorization success for user ${callerId} to delete task ${assignmentIdToDelete}.`
@@ -173,44 +186,36 @@ Deno.serve(async (req: Request) => {
       console.warn(
         `DB delete affected 0 rows for task ${assignmentIdToDelete} (was likely already gone).`
       );
-      // Continue to potential cleanup check
     } else {
       console.log(`Task ${assignmentIdToDelete} deleted successfully from DB.`);
     }
 
-    // 9. Conditional Attachment Cleanup (AFTER successful DB delete)
+    // 9. Conditional Attachment Cleanup (AFTER successful DB delete) - Using imported helper
     if (attachmentPathToCheck) {
       console.log(`Checking references for attachment path: ${attachmentPathToCheck}`);
-
-      // Check Task Library references
       const { count: libraryCount, error: libraryCountError } = await supabaseAdminClient
         .from('task_library')
         .select('*', { count: 'exact', head: true })
         .eq('attachment_path', attachmentPathToCheck);
-
-      // Check *other* Assigned Task references
       const { count: assignedCount, error: assignedCountError } = await supabaseAdminClient
         .from('assigned_tasks')
         .select('*', { count: 'exact', head: true })
         .eq('task_attachment_path', attachmentPathToCheck);
-      // No need to exclude the deleted ID here, as it's already gone from the table
 
       if (libraryCountError || assignedCountError) {
         console.error(
           `Error checking references for ${attachmentPathToCheck}: LibraryErr=${libraryCountError?.message}, AssignedErr=${assignedCountError?.message}`
         );
-        // Don't delete if checks fail
       } else {
         const totalReferences = (libraryCount ?? 0) + (assignedCount ?? 0);
         console.log(
           `Found ${libraryCount} library references and ${assignedCount} assigned task references for ${attachmentPathToCheck}. Total: ${totalReferences}`
         );
-
         if (totalReferences === 0) {
           console.log(
             `No remaining references found. Proceeding to delete attachment from storage: ${attachmentPathToCheck}`
           );
-          await deleteAttachment(supabaseAdminClient, attachmentPathToCheck); // Log errors inside helper
+          await deleteAttachment(supabaseAdminClient, attachmentPathToCheck); // Use shared helper
         } else {
           console.log(
             `Attachment ${attachmentPathToCheck} still referenced (${totalReferences} times). Keeping file in Storage.`
@@ -240,4 +245,4 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-console.log('deleteAssignedTask function initialized (v2 - with attachment cleanup).');
+console.log('deleteAssignedTask function initialized (v3 - uses shared helpers).');

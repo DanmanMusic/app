@@ -2,6 +2,8 @@
 
 import { createClient, SupabaseClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
+// Import shared helper
+import { isActiveAdmin } from '../_shared/authHelpers.ts'; // Use isActiveAdmin
 
 interface AdjustTicketsPayload {
   studentId: string;
@@ -10,31 +12,15 @@ interface AdjustTicketsPayload {
   // adjusterId (adminId) comes from the caller's token
 }
 
-// Helper function to check if the caller is an Admin
-async function isAdmin(supabaseClient: SupabaseClient, callerUserId: string): Promise<boolean> {
-  const { data, error } = await supabaseClient
-    .from('profiles')
-    .select('role')
-    .eq('id', callerUserId)
-    .single();
-  if (error) {
-    console.error(`isAdmin check failed for ${callerUserId}:`, error.message);
-    return false;
-  }
-  return data?.role === 'admin';
-}
-
+// Main Function Handler
 Deno.serve(async (req: Request) => {
   // 1. Handle Preflight CORS & Method Check (POST)
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-  if (req.method !== 'POST') {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST')
     return new Response(JSON.stringify({ error: `Method ${req.method} Not Allowed` }), {
       status: 405,
-      headers: corsHeaders,
-    });
-  }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    }); // Added Content-Type
 
   console.log(`Received ${req.method} request for adjustTickets`);
 
@@ -42,7 +28,11 @@ Deno.serve(async (req: Request) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!supabaseUrl || !serviceRoleKey) {
-    /* ... server config error ... */
+    console.error('Missing Supabase environment variables.');
+    return new Response(JSON.stringify({ error: 'Server configuration error.' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
   const supabaseAdminClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -53,7 +43,11 @@ Deno.serve(async (req: Request) => {
     // 3. Verify Caller Authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      /* ... auth error ... */
+      console.warn('Missing or invalid Authorization header.');
+      return new Response(JSON.stringify({ error: 'Authentication required.' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     const token = authHeader.replace('Bearer ', '');
     const {
@@ -61,19 +55,27 @@ Deno.serve(async (req: Request) => {
       error: userError,
     } = await supabaseAdminClient.auth.getUser(token);
     if (userError || !callerUser) {
-      /* ... auth error ... */
+      console.error('Auth token validation error:', userError?.message || 'User not found');
+      return new Response(JSON.stringify({ error: 'Invalid or expired token.' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
-    const adjusterId = callerUser.id; // The Admin making the adjustment
+    const adjusterId = callerUser.id;
     console.log('Caller User ID (Adjuster):', adjusterId);
 
     // 4. Parse Request Body
     let payload: AdjustTicketsPayload;
     try {
       payload = await req.json();
+      console.log('Received payload:', payload);
     } catch (jsonError) {
-      /* ... body error ... */
+      console.error('Failed to parse request body:', jsonError);
+      return new Response(JSON.stringify({ error: 'Invalid request body.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
-    console.log('Received payload:', payload);
 
     // 5. Validate Payload
     if (
@@ -81,11 +83,12 @@ Deno.serve(async (req: Request) => {
       payload.amount == null ||
       typeof payload.amount !== 'number' ||
       !Number.isInteger(payload.amount) ||
-      payload.amount === 0 || // Amount cannot be zero
+      payload.amount === 0 ||
       !payload.notes ||
       typeof payload.notes !== 'string' ||
       payload.notes.trim().length === 0
     ) {
+      console.warn('Payload validation failed:', payload);
       return new Response(
         JSON.stringify({
           error:
@@ -99,18 +102,18 @@ Deno.serve(async (req: Request) => {
     const notes = payload.notes.trim();
     const transactionType = amountToAdjust > 0 ? 'manual_add' : 'manual_subtract';
 
-    // 6. Authorize Caller (MUST be Admin)
-    const userIsAdmin = await isAdmin(supabaseAdminClient, adjusterId);
-    if (!userIsAdmin) {
-      console.warn(`Authorization failed: User ${adjusterId} is not Admin.`);
+    // 6. Authorize Caller (MUST be Active Admin) - Using imported helper
+    const userIsActiveAdmin = await isActiveAdmin(supabaseAdminClient, adjusterId); // Use shared helper
+    if (!userIsActiveAdmin) {
+      console.warn(`Authorization failed: User ${adjusterId} is not an Active Admin.`);
       return new Response(
         JSON.stringify({
-          error: 'Permission denied: Only Admins can perform manual ticket adjustments.',
+          error: 'Permission denied: Only Active Admins can perform manual ticket adjustments.',
         }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    console.log(`Authorization success: Admin ${adjusterId} performing adjustment.`);
+    console.log(`Authorization success: Active Admin ${adjusterId} performing adjustment.`);
 
     // 7. Check Balance if Subtracting (using RPC)
     if (amountToAdjust < 0) {
@@ -119,7 +122,6 @@ Deno.serve(async (req: Request) => {
         'get_student_balance',
         { p_student_id: studentId }
       );
-
       if (balanceError) {
         console.error(`Error fetching balance for student ${studentId}:`, balanceError);
         return new Response(
@@ -127,11 +129,8 @@ Deno.serve(async (req: Request) => {
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-
-      const currentBalance = typeof balanceData === 'number' ? balanceData : 0; // get_student_balance returns integer
+      const currentBalance = typeof balanceData === 'number' ? balanceData : 0;
       console.log(`Current balance for student ${studentId}: ${currentBalance}`);
-
-      // Check if balance is sufficient (amountToAdjust is negative)
       if (currentBalance + amountToAdjust < 0) {
         console.warn(
           `Insufficient balance for subtraction. Current: ${currentBalance}, Amount: ${amountToAdjust}`
@@ -149,19 +148,18 @@ Deno.serve(async (req: Request) => {
     const transactionData = {
       student_id: studentId,
       amount: amountToAdjust,
-      type: transactionType as 'manual_add' | 'manual_subtract', // Cast type
-      source_id: adjusterId, // Record which admin made the adjustment
+      type: transactionType as 'manual_add' | 'manual_subtract',
+      source_id: adjusterId,
       notes: notes,
     };
-
     console.log('Attempting to insert ticket transaction:', transactionData);
-
     const { data: insertedTransaction, error: insertError } = await supabaseAdminClient
       .from('ticket_transactions')
       .insert(transactionData)
-      .select() // Select the inserted row
+      .select()
       .single();
 
+    // *** Restored Insert Error Handling ***
     if (insertError) {
       console.error('Error inserting ticket transaction:', insertError);
       return new Response(
@@ -169,11 +167,11 @@ Deno.serve(async (req: Request) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    // *** End Restored Handling ***
 
     console.log('Ticket transaction logged successfully:', insertedTransaction);
 
     // 9. Fetch the *new* balance after the transaction
-    //    (This confirms the transaction was processed by the sum)
     let newBalance = 0;
     try {
       const { data: newBalanceData, error: newBalanceError } = await supabaseAdminClient.rpc(
@@ -185,15 +183,15 @@ Deno.serve(async (req: Request) => {
       console.log(`New balance confirmed for student ${studentId}: ${newBalance}`);
     } catch (e) {
       console.error('Failed to fetch new balance after adjustment:', e);
-      // Don't fail the whole request, but log that confirmation failed
+      // Log error but don't fail the request
     }
 
     // 10. Return Success Response
     return new Response(
       JSON.stringify({
         message: `Tickets adjusted successfully by ${amountToAdjust}.`,
-        transaction: insertedTransaction, // Optionally return the created transaction
-        newBalance: newBalance, // Return the calculated new balance
+        transaction: insertedTransaction,
+        newBalance: newBalance,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -204,12 +202,9 @@ Deno.serve(async (req: Request) => {
     console.error('Unhandled Adjust Tickets Function Error:', error);
     return new Response(
       JSON.stringify({ error: error.message || 'An unexpected error occurred.' }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
 
-console.log('adjustTickets function initialized.');
+console.log('adjustTickets function initialized (v2 - uses shared helpers).');

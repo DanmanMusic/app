@@ -69,7 +69,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
       if (userRole === 'admin') queryClient.invalidateQueries({ queryKey: ['admins'] });
       if (userRole === 'parent') queryClient.invalidateQueries({ queryKey: ['parents'] });
 
-      queryClient.invalidateQueries({ queryKey: ['activeProfilesForDevSelector'] });
+      queryClient.invalidateQueries({ queryKey: ['userCounts'] });
       onClose();
       Toast.show({
         type: 'success',

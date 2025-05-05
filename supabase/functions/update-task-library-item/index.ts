@@ -2,12 +2,15 @@
 
 import { createClient, SupabaseClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
-import { decode } from 'https://deno.land/std@0.203.0/encoding/base64.ts';
+// Import shared helpers
+import { isActiveAdmin, isActiveTeacher } from '../_shared/authHelpers.ts';
+import { uploadAttachment, deleteAttachment } from '../_shared/storageHelpers.ts';
+// Import decode separately if not handled within storageHelpers input type
+// import { decode } from 'https://deno.land/std@0.203.0/encoding/base64.ts';
 
-const TASK_ATTACHMENT_BUCKET = 'task-library-attachments';
-
-// Define payload structures (interfaces remain the same)
+// Define payload structures
 interface FilePayload {
+  // Matches FileUploadData in storageHelpers
   base64: string;
   mimeType: string;
   fileName: string;
@@ -18,87 +21,33 @@ interface UpdatePayload {
   baseTickets?: number;
   referenceUrl?: string | null;
   instrumentIds?: string[];
-  file?: FilePayload;
-  deleteAttachment?: boolean;
+  file?: FilePayload; // New file to upload (replaces old)
+  deleteAttachment?: boolean; // Flag to explicitly delete attachment
 }
 interface UpdateRequestBody {
-  taskId: string;
+  taskId: string; // ID of the task to update
   updates: UpdatePayload;
 }
 
-// Helper functions (isActiveAdmin, isActiveTeacher, uploadAttachment, deleteAttachment, syncInstrumentLinks) remain the same
-async function isActiveAdmin(supabase: SupabaseClient, userId: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('role, status')
-      .eq('id', userId)
-      .single();
-    if (error) throw error;
-    return data?.role === 'admin' && data?.status === 'active';
-  } catch (err) {
-    return false;
-  }
-}
-async function isActiveTeacher(supabase: SupabaseClient, userId: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('role, status')
-      .eq('id', userId)
-      .single();
-    if (error) throw error;
-    return data?.role === 'teacher' && data?.status === 'active';
-  } catch (err) {
-    return false;
-  }
-}
-async function uploadAttachment(
-  supabase: SupabaseClient,
-  file: FilePayload,
-  userId: string
-): Promise<string | null> {
-  try {
-    const fileExt = file.fileName.split('.').pop() || 'bin';
-    const filePath = `public/${userId}/${Date.now()}_${Math.random().toString(16).substring(2)}.${fileExt}`;
-    const { data, error: uploadError } = await supabase.storage
-      .from(TASK_ATTACHMENT_BUCKET)
-      .upload(filePath, decode(file.base64), { contentType: file.mimeType, upsert: false });
-    if (uploadError) throw new Error(`Storage upload error: ${uploadError.message}`);
-    return data?.path ?? null;
-  } catch (error) {
-    console.error('uploadAttachment error:', error.message);
-    return null;
-  }
-}
-async function deleteAttachment(supabase: SupabaseClient, path: string | null): Promise<boolean> {
-  if (!path) return true;
-  console.log(`Attempting to delete attachment from Storage: ${path}`);
-  try {
-    const { error } = await supabase.storage.from(TASK_ATTACHMENT_BUCKET).remove([path]);
-    if (error) throw error;
-    console.log(`Successfully deleted attachment ${path}`);
-    return true;
-  } catch (error) {
-    console.error(`Failed to delete attachment ${path}:`, error.message);
-    return false;
-  }
-}
+// Helper: Sync Link Table (Keep local for now)
 async function syncInstrumentLinks(
   supabase: SupabaseClient,
   taskId: string,
   newInstrumentIds: string[]
 ): Promise<{ errors: string[] }> {
   const errors: string[] = [];
+  console.log(`[updateTaskLibItem] Syncing instruments for task ${taskId}`);
   try {
     const { data: currentLinksData, error: fetchError } = await supabase
       .from('task_library_instruments')
       .select('instrument_id')
       .eq('task_library_id', taskId);
     if (fetchError) throw new Error(`Failed fetching current instruments: ${fetchError.message}`);
+
     const currentLinkIds = currentLinksData?.map(link => link.instrument_id) || [];
     const idsToDelete = currentLinkIds.filter(id => !newInstrumentIds.includes(id));
     const idsToInsert = newInstrumentIds.filter(id => !currentLinkIds.includes(id));
+
     if (idsToDelete.length > 0) {
       const { error: deleteError } = await supabase
         .from('task_library_instruments')
@@ -120,9 +69,11 @@ async function syncInstrumentLinks(
   } catch (syncError) {
     errors.push(`Unexpected error syncing instruments: ${syncError.message}`);
   }
+  console.log(`[updateTaskLibItem] Instrument sync completed. Errors: ${errors.length}`);
   return { errors };
 }
 
+// Main Function Handler
 Deno.serve(async (req: Request) => {
   // CORS and Method Checks...
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -180,28 +131,46 @@ Deno.serve(async (req: Request) => {
         status: 400,
         headers: { ...corsHeaders },
       });
+    // Validate file structure if present
+    if (
+      updates.file &&
+      (!updates.file.base64 || !updates.file.fileName || !updates.file.mimeType)
+    ) {
+      return new Response(
+        JSON.stringify({
+          error: 'Incomplete file data provided (requires base64, fileName, mimeType)',
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // 3. Fetch Task & Authorize
+    // 3. Fetch Task & Authorize - Using imported helpers
     const { data: currentTask, error: fetchError } = await supabaseAdmin
       .from('task_library')
-      .select('id, created_by_id, attachment_path') // Ensure path is fetched
+      .select('id, created_by_id, attachment_path')
       .eq('id', taskId)
       .single();
+
     if (fetchError || !currentTask)
       return new Response(JSON.stringify({ error: 'Task not found' }), {
         status: 404,
         headers: { ...corsHeaders },
       });
-    const oldAttachmentPath = currentTask.attachment_path; // Store old path
+    const oldAttachmentPath = currentTask.attachment_path;
 
-    const isAdminCaller = await isActiveAdmin(supabaseAdmin, callerId);
+    const isAdminCaller = await isActiveAdmin(supabaseAdmin, callerId); // Use shared helper
     const isOwnerTeacher =
-      currentTask.created_by_id === callerId && (await isActiveTeacher(supabaseAdmin, callerId));
-    if (!isAdminCaller && !isOwnerTeacher)
-      return new Response(JSON.stringify({ error: 'Permission denied' }), {
+      currentTask.created_by_id === callerId && (await isActiveTeacher(supabaseAdmin, callerId)); // Use shared helper
+
+    if (!isAdminCaller && !isOwnerTeacher) {
+      return new Response(JSON.stringify({ error: 'Permission denied to update this task' }), {
         status: 403,
         headers: { ...corsHeaders },
       });
+    }
+    console.log(
+      `Update authorized for task ${taskId} by user ${callerId} (Admin: ${isAdminCaller}, Owner: ${isOwnerTeacher})`
+    );
 
     // 4. Prepare DB Update Object
     const dbUpdates: Record<string, any> = {};
@@ -227,65 +196,48 @@ Deno.serve(async (req: Request) => {
       hasDbChanges = true;
     }
 
-    // 5. Handle Attachments
+    // 5. Handle Attachments - Using imported helpers
     let newAttachmentPath: string | null = null;
-    let shouldDeleteOldFile = false; // Flag to trigger ref check and potential delete
+    let shouldDeleteOldFile = false;
 
     if (updates.file) {
-      if (!updates.file.base64 || !updates.file.mimeType || !updates.file.fileName) {
-        return new Response(JSON.stringify({ error: 'Incomplete file data in payload' }), {
-          status: 400,
-          headers: { ...corsHeaders },
-        });
-      }
-      console.log('New file provided. Uploading...');
-      shouldDeleteOldFile = true; // Mark old file for potential deletion
-      newAttachmentPath = await uploadAttachment(supabaseAdmin, updates.file, callerId);
-      if (!newAttachmentPath) {
+      shouldDeleteOldFile = true;
+      newAttachmentPath = await uploadAttachment(supabaseAdmin, updates.file, callerId); // Use shared helper
+      if (!newAttachmentPath)
         return new Response(JSON.stringify({ error: 'New file upload failed' }), {
           status: 500,
           headers: { ...corsHeaders },
         });
-      }
-      dbUpdates.attachment_path = newAttachmentPath; // Update DB path to new file
+      dbUpdates.attachment_path = newAttachmentPath;
       hasDbChanges = true;
     } else if (updates.deleteAttachment === true) {
-      console.log('Explicit request to remove attachment.');
-      shouldDeleteOldFile = true; // Mark old file for potential deletion
-      dbUpdates.attachment_path = null; // Set path to null in DB
+      shouldDeleteOldFile = true;
+      dbUpdates.attachment_path = null;
       hasDbChanges = true;
     }
 
     // 6. Perform DB Update (if changes exist)
     let dbUpdateErrorOccurred = false;
     if (hasDbChanges) {
-      console.log(`Attempting DB update for task ${taskId}:`, dbUpdates);
       const { error: updateDbError } = await supabaseAdmin
         .from('task_library')
         .update(dbUpdates)
         .eq('id', taskId);
-
       if (updateDbError) {
-        dbUpdateErrorOccurred = true; // Mark that DB update failed
+        dbUpdateErrorOccurred = true;
         console.error(`DB Update Error for task ${taskId}:`, updateDbError);
-        // If DB failed but we uploaded a *new* file, try to clean it up
-        if (newAttachmentPath) {
-          console.warn(
-            `DB update failed, attempting cleanup of newly uploaded file: ${newAttachmentPath}`
-          );
-          await deleteAttachment(supabaseAdmin, newAttachmentPath);
-        }
+        if (newAttachmentPath) await deleteAttachment(supabaseAdmin, newAttachmentPath); // Use shared helper for cleanup
         return new Response(
           JSON.stringify({ error: `DB update failed: ${updateDbError.message}` }),
           { status: 500, headers: { ...corsHeaders } }
         );
       }
-      console.log(`Task library item ${taskId} updated successfully in DB.`);
+      console.log(`Task library item ${taskId} updated in DB.`);
     } else {
       console.log(`No direct DB changes detected for task ${taskId}.`);
     }
 
-    // 7. Conditional Old Attachment Deletion (AFTER DB update succeeds)
+    // 7. Conditional Old Attachment Deletion (AFTER DB update succeeds) - Using imported helper
     let oldAttachmentDeleted = false;
     if (shouldDeleteOldFile && oldAttachmentPath && !dbUpdateErrorOccurred) {
       console.log(`Checking references before deleting old attachment: ${oldAttachmentPath}`);
@@ -293,15 +245,13 @@ Deno.serve(async (req: Request) => {
         .from('assigned_tasks')
         .select('*', { count: 'exact', head: true })
         .eq('task_attachment_path', oldAttachmentPath);
-
       if (countError) {
         console.error(`Error checking references for ${oldAttachmentPath}:`, countError.message);
-        // Don't delete if we can't be sure it's safe
       } else if (count === 0) {
         console.log(
           `No references found for ${oldAttachmentPath}. Proceeding with Storage deletion.`
         );
-        oldAttachmentDeleted = await deleteAttachment(supabaseAdmin, oldAttachmentPath);
+        oldAttachmentDeleted = await deleteAttachment(supabaseAdmin, oldAttachmentPath); // Use shared helper
       } else {
         console.log(
           `${count} references found for ${oldAttachmentPath}. Old attachment kept in Storage.`
@@ -309,10 +259,10 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // 8. Sync Instrument Links (if provided and authorized)
+    // 8. Sync Instrument Links (if provided) - Using local helper
     const syncErrors: string[] = [];
     if (updates.instrumentIds !== undefined && Array.isArray(updates.instrumentIds)) {
-      // Authorization check is already done implicitly (only admin/owner can reach here)
+      // Authorization already confirmed above (isAdmin or isOwnerTeacher)
       const { errors } = await syncInstrumentLinks(supabaseAdmin, taskId, updates.instrumentIds);
       syncErrors.push(...errors);
       if (errors.length > 0)
@@ -334,3 +284,5 @@ Deno.serve(async (req: Request) => {
     });
   }
 });
+
+console.log('update-task-library-item function initialized (v2 - uses shared helpers).');

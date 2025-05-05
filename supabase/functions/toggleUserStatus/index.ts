@@ -2,36 +2,15 @@
 
 import { createClient, SupabaseClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
+// Import shared helper
+import { isActiveAdmin } from '../_shared/authHelpers.ts'; // Use isActiveAdmin
 
 // Define expected request body structure
 interface ToggleUserStatusPayload {
   userIdToToggle: string; // The ID of the user whose status is being toggled
 }
 
-// Helper function to check if the caller is an Admin
-async function isAdmin(supabaseClient: SupabaseClient, callerUserId: string): Promise<boolean> {
-  console.log('[toggleUserStatus] isAdmin Check: Checking profile for caller ID:', callerUserId);
-  try {
-    const { data, error } = await supabaseClient
-      .from('profiles')
-      .select('role')
-      .eq('id', callerUserId)
-      .single();
-    if (error) {
-      console.error(`[toggleUserStatus] isAdmin check failed for ${callerUserId}:`, error.message);
-      return false; // Default to false if profile check fails
-    }
-    const role = data?.role;
-    console.log(`[toggleUserStatus] isAdmin Check: Found role: ${role} for caller ${callerUserId}`);
-    return role === 'admin';
-  } catch (err) {
-    console.error('[toggleUserStatus] isAdmin Check Exception:', err.message);
-    return false;
-  }
-}
-
 // --- Get Protected IDs (Optional but recommended) ---
-// Ensure PROTECTED_ADMIN_IDS environment variable is set in your Supabase project
 const PROTECTED_IDS_STRING = Deno.env.get('PROTECTED_ADMIN_IDS') || '';
 const PROTECTED_ADMIN_IDS = PROTECTED_IDS_STRING.split(',')
   .map(id => id.trim())
@@ -40,18 +19,13 @@ console.log('[toggleUserStatus] Initialized. Protected Admin IDs:', PROTECTED_AD
 
 // Main Function Handler
 Deno.serve(async (req: Request) => {
-  // 1. Handle Preflight CORS request
-  if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS request');
-    return new Response('ok', { headers: corsHeaders });
-  }
-  // Allow only POST (common for actions modifying state)
-  if (req.method !== 'POST') {
+  // 1. Handle Preflight CORS request & Method Check
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST')
     return new Response(JSON.stringify({ error: `Method ${req.method} Not Allowed` }), {
       status: 405,
-      headers: corsHeaders,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  }
 
   console.log(`Received ${req.method} request for toggleUserStatus`);
 
@@ -69,12 +43,12 @@ Deno.serve(async (req: Request) => {
     auth: { autoRefreshToken: false, persistSession: false },
     global: { fetch: fetch },
   });
-  console.log('Supabase Admin Client initialized.');
 
   try {
     // 3. Verify Caller Authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.warn('Missing or invalid Authorization header.');
       return new Response(JSON.stringify({ error: 'Authentication required.' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -86,6 +60,7 @@ Deno.serve(async (req: Request) => {
       error: userError,
     } = await supabaseAdminClient.auth.getUser(token);
     if (userError || !callerUser) {
+      console.error('Auth token validation error:', userError?.message || 'User not found');
       return new Response(JSON.stringify({ error: 'Invalid or expired token.' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -94,16 +69,16 @@ Deno.serve(async (req: Request) => {
     const callerId = callerUser.id;
     console.log('Caller User ID:', callerId);
 
-    // 4. Authorize Caller (Must be Admin)
-    const callerIsAdmin = await isAdmin(supabaseAdminClient, callerId);
-    if (!callerIsAdmin) {
-      console.warn(`User ${callerId} attempted status toggle without admin role.`);
-      return new Response(JSON.stringify({ error: 'Permission denied: Admin role required.' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // 4. Authorize Caller (Must be Active Admin) - Using imported helper
+    const callerIsActiveAdmin = await isActiveAdmin(supabaseAdminClient, callerId); // Use shared helper
+    if (!callerIsActiveAdmin) {
+      console.warn(`User ${callerId} attempted status toggle without active admin role.`);
+      return new Response(
+        JSON.stringify({ error: 'Permission denied: Active Admin role required.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-    console.log(`Admin action authorized for user ${callerId}.`);
+    console.log(`Admin action authorized for active admin ${callerId}.`);
 
     // 5. Parse Request Body
     let payload: ToggleUserStatusPayload;
@@ -111,20 +86,23 @@ Deno.serve(async (req: Request) => {
       payload = await req.json();
       console.log('Received payload:', payload);
     } catch (jsonError) {
+      console.error('Failed to parse request body:', jsonError);
       return new Response(JSON.stringify({ error: 'Invalid request body: Must be JSON.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // 6. Validate Payload
+    // 6. Validate Payload - *** RESTORED ***
     if (!payload.userIdToToggle || typeof payload.userIdToToggle !== 'string') {
+      console.warn('Payload validation failed: Missing or invalid userIdToToggle.');
       return new Response(JSON.stringify({ error: 'Missing or invalid userIdToToggle.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
     const userIdToToggle = payload.userIdToToggle;
+    // *** END RESTORED VALIDATION ***
 
     // 7. Additional Checks (Prevent self-toggle, protected admins)
     if (callerId === userIdToToggle) {
@@ -154,8 +132,13 @@ Deno.serve(async (req: Request) => {
 
     if (fetchError || !currentProfile) {
       console.error(`Could not fetch profile for ${userIdToToggle}:`, fetchError?.message);
-      return new Response(JSON.stringify({ error: 'Target user not found.' }), {
-        status: 404,
+      const status = fetchError?.code === 'PGRST116' ? 404 : 500;
+      const message =
+        fetchError?.code === 'PGRST116'
+          ? 'Target user not found.'
+          : 'Failed to fetch user profile.';
+      return new Response(JSON.stringify({ error: message }), {
+        status: status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -170,7 +153,7 @@ Deno.serve(async (req: Request) => {
       .from('profiles')
       .update({ status: newStatus })
       .eq('id', userIdToToggle)
-      .select('id, status') // Select the fields needed for the response
+      .select('id, status')
       .single();
 
     if (updateError) {
@@ -183,13 +166,12 @@ Deno.serve(async (req: Request) => {
 
     console.log(`Status for user ${userIdToToggle} updated successfully to ${newStatus}.`);
 
-    // 11. Return Success Response (containing the updated status)
+    // 11. Return Success Response
     return new Response(JSON.stringify(updatedProfileData), {
       status: 200, // OK
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    // Catch errors from initial setup/auth/validation etc.
     console.error('Unhandled Toggle User Status Function Error:', error);
     const statusCode = error.message.includes('required')
       ? 403
@@ -198,12 +180,9 @@ Deno.serve(async (req: Request) => {
         : 500;
     return new Response(
       JSON.stringify({ error: error.message || 'An unexpected error occurred.' }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: statusCode,
-      }
+      { status: statusCode, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
 
-console.log('toggleUserStatus function initialized.');
+console.log('toggleUserStatus function initialized (v2 - uses shared helpers).');

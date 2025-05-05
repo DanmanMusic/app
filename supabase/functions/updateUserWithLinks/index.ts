@@ -2,6 +2,8 @@
 
 import { createClient, SupabaseClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
+// Import shared helpers
+import { isActiveAdmin, isTeacherLinked } from '../_shared/authHelpers.ts'; // Use shared helpers
 
 // Define expected User fields for update (Partial)
 interface UserUpdatePayload {
@@ -18,64 +20,7 @@ interface UpdateUserRequestBody {
   updates: UserUpdatePayload;
 }
 
-// Helper function to check if the caller is an Admin
-async function isAdmin(supabaseClient: SupabaseClient, callerUserId: string): Promise<boolean> {
-  console.log('[updateUserWL] isAdmin Check: Checking profile for caller ID:', callerUserId);
-  try {
-    const { data, error } = await supabaseClient
-      .from('profiles')
-      .select('role')
-      .eq('id', callerUserId)
-      .single();
-    if (error) {
-      console.error(`[updateUserWL] isAdmin Check failed for ${callerUserId}:`, error.message);
-      return false; // Treat error as not admin
-    }
-    const role = data?.role;
-    console.log(`[updateUserWL] isAdmin Check: Found role: ${role} for caller ${callerUserId}`);
-    return role === 'admin';
-  } catch (err) {
-    console.error('[updateUserWL] isAdmin Check Exception:', err.message);
-    return false;
-  }
-}
-
-// Helper function to check if caller is a Teacher linked to the student
-async function isTeacherLinked(
-  supabaseClient: SupabaseClient,
-  teacherId: string,
-  studentId: string
-): Promise<boolean> {
-  // Avoid check if IDs are the same (teacher can't be linked to themselves as student)
-  if (teacherId === studentId) return false;
-  try {
-    const { count, error } = await supabaseClient
-      .from('student_teachers')
-      .select('*', { count: 'exact', head: true })
-      .eq('teacher_id', teacherId)
-      .eq('student_id', studentId);
-
-    if (error) {
-      console.error(
-        `[updateUserWL] isTeacherLinked check failed for T:${teacherId} S:${studentId}:`,
-        error.message
-      );
-      return false;
-    }
-    console.log(
-      `[updateUserWL] isTeacherLinked check: T:${teacherId} S:${studentId} - Count: ${count}`
-    );
-    return (count ?? 0) > 0;
-  } catch (err) {
-    console.error(
-      `[updateUserWL] isTeacherLinked check Exception for T:${teacherId} S:${studentId}:`,
-      err.message
-    );
-    return false;
-  }
-}
-
-// Helper function to sync link table entries
+// Helper function to sync link table entries (Keep local as it handles multiple link types)
 async function syncLinkTable(
   supabaseClient: SupabaseClient,
   tableName: 'student_instruments' | 'student_teachers',
@@ -84,9 +29,8 @@ async function syncLinkTable(
   linkColumnName: 'instrument_id' | 'teacher_id'
 ): Promise<{ errors: string[] }> {
   const errors: string[] = [];
-  console.log(`[syncLinkTable] Syncing ${tableName} for student ${studentId}`);
+  console.log(`[syncLinkTable in updateUserWL] Syncing ${tableName} for student ${studentId}`);
   try {
-    // Fetch current links
     const { data: currentLinksData, error: fetchError } = await supabaseClient
       .from(tableName)
       .select(linkColumnName)
@@ -98,20 +42,13 @@ async function syncLinkTable(
         fetchError.message
       );
       errors.push(`Failed to fetch current ${linkColumnName} links.`);
-      return { errors }; // Exit early if fetch fails
+      return { errors };
     }
 
     const currentLinkIds = currentLinksData?.map(link => link[linkColumnName]) || [];
-    console.log(`[syncLinkTable] Current ${linkColumnName} IDs:`, currentLinkIds);
-    console.log(`[syncLinkTable] New ${linkColumnName} IDs:`, newLinkIds);
-
-    // Determine IDs to delete and insert
     const idsToDelete = currentLinkIds.filter(id => !newLinkIds.includes(id));
     const idsToInsert = newLinkIds.filter(id => !currentLinkIds.includes(id));
-    console.log(`[syncLinkTable] ${linkColumnName} IDs to delete:`, idsToDelete);
-    console.log(`[syncLinkTable] ${linkColumnName} IDs to insert:`, idsToInsert);
 
-    // Perform Deletions
     if (idsToDelete.length > 0) {
       console.log(`[syncLinkTable] Deleting ${idsToDelete.length} links from ${tableName}...`);
       const { error: deleteError } = await supabaseClient
@@ -119,16 +56,11 @@ async function syncLinkTable(
         .delete()
         .eq('student_id', studentId)
         .in(linkColumnName, idsToDelete);
-      if (deleteError) {
-        console.error(`[syncLinkTable] Error deleting from ${tableName}:`, deleteError.message);
-        errors.push(`Failed to delete old ${linkColumnName} links.`);
-        // Consider stopping? Or continue with inserts? Continuing for now.
-      } else {
+      if (deleteError) errors.push(`Failed to delete old ${linkColumnName} links.`);
+      else
         console.log(`[syncLinkTable] Deleted ${idsToDelete.length} old links from ${tableName}.`);
-      }
     }
 
-    // Perform Insertions
     if (idsToInsert.length > 0) {
       console.log(`[syncLinkTable] Inserting ${idsToInsert.length} links into ${tableName}...`);
       const rowsToInsert = idsToInsert.map(linkId => ({
@@ -136,12 +68,10 @@ async function syncLinkTable(
         [linkColumnName]: linkId,
       }));
       const { error: insertError } = await supabaseClient.from(tableName).insert(rowsToInsert);
-      if (insertError) {
-        console.error(`[syncLinkTable] Error inserting into ${tableName}:`, insertError.message);
+      if (insertError)
         errors.push(`Failed to insert new ${linkColumnName} links (check if IDs exist).`);
-      } else {
+      else
         console.log(`[syncLinkTable] Inserted ${idsToInsert.length} new links into ${tableName}.`);
-      }
     }
   } catch (syncError) {
     console.error(`[syncLinkTable] Unexpected error during sync for ${tableName}:`, syncError);
@@ -154,18 +84,15 @@ async function syncLinkTable(
 // Main Function Handler
 Deno.serve(async (req: Request) => {
   // 1. Handle Preflight CORS request & Method Check
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-  if (!['POST', 'PATCH', 'PUT'].includes(req.method)) {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (!['POST', 'PATCH', 'PUT'].includes(req.method))
     return new Response(JSON.stringify({ error: `Method ${req.method} Not Allowed` }), {
       status: 405,
-      headers: { ...corsHeaders },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  }
   console.log(`Received ${req.method} request for updateUserWithLinks`);
 
-  // 2. Initialize Supabase Admin Client
+  // 2. Initialize Supabase Admin Client - *** RESTORED ERROR HANDLING ***
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!supabaseUrl || !serviceRoleKey) {
@@ -175,16 +102,17 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
+  // *** END RESTORED ERROR HANDLING ***
   const supabaseAdminClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
     global: { fetch: fetch },
   });
-  console.log('Supabase Admin Client initialized.');
 
   try {
-    // 3. Verify Caller Authentication
+    // 3. Verify Caller Authentication - *** RESTORED ERROR HANDLING ***
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.warn('Missing or invalid Authorization header.');
       return new Response(JSON.stringify({ error: 'Authentication required.' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -196,48 +124,54 @@ Deno.serve(async (req: Request) => {
       error: userError,
     } = await supabaseAdminClient.auth.getUser(token);
     if (userError || !callerUser) {
+      console.error('Auth token validation error:', userError?.message || 'User not found');
       return new Response(JSON.stringify({ error: 'Invalid or expired token.' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    // *** END RESTORED ERROR HANDLING ***
     const callerId = callerUser.id;
     console.log('Caller User ID:', callerId);
 
-    // 4. Parse Request Body
+    // 4. Parse Request Body - *** RESTORED ERROR HANDLING ***
     let requestBody: UpdateUserRequestBody;
     try {
       requestBody = await req.json();
     } catch (jsonError) {
+      console.error('Failed to parse request body:', jsonError);
       return new Response(JSON.stringify({ error: 'Invalid request body: Must be JSON.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    // *** END RESTORED ERROR HANDLING ***
     console.log('Received payload:', requestBody);
 
-    // 5. Validate Payload
+    // 5. Validate Payload - *** RESTORED ERROR HANDLING ***
     if (
       !requestBody.userIdToUpdate ||
       !requestBody.updates ||
       typeof requestBody.updates !== 'object'
     ) {
+      console.warn('Payload validation failed: Missing userIdToUpdate or updates object.');
       return new Response(
         JSON.stringify({ error: 'Missing required fields: userIdToUpdate, updates.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    // *** END RESTORED ERROR HANDLING ***
     const userIdToUpdate = requestBody.userIdToUpdate;
     const updates = requestBody.updates;
 
-    // --- 6. Refined Authorization Logic ---
+    // --- 6. Refined Authorization Logic - Using imported helpers ---
     let canUpdateProfile = false;
     let canUpdateInstruments = false;
     let canUpdateTeachers = false;
     let callerRole: string | null = null;
     let targetRole: string | null = null;
 
-    // Fetch caller's profile role
+    // Fetch caller's profile role - *** RESTORED ERROR HANDLING ***
     const { data: callerProfileData, error: callerProfileError } = await supabaseAdminClient
       .from('profiles')
       .select('role')
@@ -245,90 +179,100 @@ Deno.serve(async (req: Request) => {
       .single();
     if (callerProfileError || !callerProfileData) {
       console.error(`Failed to fetch caller profile ${callerId}:`, callerProfileError?.message);
-      // If caller profile cannot be fetched, deny authorization
+      // Deny authorization if caller profile cannot be fetched
+      return new Response(JSON.stringify({ error: 'Could not verify caller permissions.' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     } else {
       callerRole = callerProfileData.role;
     }
+    // *** END RESTORED ERROR HANDLING ***
 
-    // Fetch target user's profile role
+    // Fetch target user's profile role - *** RESTORED ERROR HANDLING ***
     const { data: targetProfileData, error: targetProfileError } = await supabaseAdminClient
       .from('profiles')
       .select('role')
       .eq('id', userIdToUpdate)
       .single();
     if (targetProfileError || !targetProfileData) {
-      // If target doesn't exist, return 404 earlier
-      console.warn(`Target user ${userIdToUpdate} not found.`);
-      return new Response(JSON.stringify({ error: 'Target user not found.' }), {
-        status: 404,
+      const status = targetProfileError?.code === 'PGRST116' ? 404 : 500;
+      const message =
+        targetProfileError?.code === 'PGRST116'
+          ? 'Target user not found.'
+          : 'Failed to fetch target user profile.';
+      console.warn(`Target user ${userIdToUpdate} not found or fetch error.`);
+      return new Response(JSON.stringify({ error: message }), {
+        status: status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    } else {
+      targetRole = targetProfileData.role;
     }
-    targetRole = targetProfileData.role;
+    // *** END RESTORED ERROR HANDLING ***
 
     console.log(
       `[updateUserWL] Caller: ${callerId} (Role: ${callerRole}), Target: ${userIdToUpdate} (Role: ${targetRole})`
     );
 
-    // --- Determine Permissions ---
+    // --- Determine Permissions (Logic remains the same) ---
     if (callerRole) {
-      // Proceed only if caller role was fetched
-      // Can update basic profile info?
       if (callerId === userIdToUpdate) {
-        canUpdateProfile = true; // User updates own profile
-        console.log(`[updateUserWL] Auth: User updating own profile.`);
+        canUpdateProfile = true;
       } else if (callerRole === 'admin') {
-        canUpdateProfile = true; // Admin updates other profile
-        console.log(`[updateUserWL] Auth: Admin updating other user's profile.`);
+        canUpdateProfile = true;
       } else if (callerRole === 'teacher' && targetRole === 'student') {
-        const teacherIsLinked = await isTeacherLinked(
+        const teacherIsLinkedCheck = await isTeacherLinked(
           supabaseAdminClient,
           callerId,
           userIdToUpdate
         );
-        if (teacherIsLinked) {
-          canUpdateProfile = true; // Linked Teacher updates student profile
-          console.log(`[updateUserWL] Auth: Linked Teacher updating student profile.`);
+        if (teacherIsLinkedCheck) {
+          canUpdateProfile = true;
         }
       }
-      // Add parent logic here if needed:
-      // else if (callerRole === 'parent' && targetRole === 'student') { /* Check parent link */ }
 
-      // Can update instrument links? (Target must be student)
       if (targetRole === 'student') {
         if (callerRole === 'admin') {
           canUpdateInstruments = true;
-          console.log(`[updateUserWL] Auth: Admin updating student instruments.`);
         } else if (callerRole === 'teacher') {
-          const teacherIsLinked = await isTeacherLinked(
+          const teacherIsLinkedCheck = await isTeacherLinked(
             supabaseAdminClient,
             callerId,
             userIdToUpdate
           );
-          if (teacherIsLinked) {
+          if (teacherIsLinkedCheck) {
             canUpdateInstruments = true;
-            console.log(`[updateUserWL] Auth: Linked Teacher updating student instruments.`);
           }
         }
       }
 
-      // Can update teacher links? (Target must be student, caller must be admin)
       if (targetRole === 'student' && callerRole === 'admin') {
-        canUpdateTeachers = true;
-        console.log(`[updateUserWL] Auth: Admin updating student teachers.`);
+        const callerIsActiveAdminCheck = await isActiveAdmin(supabaseAdminClient, callerId);
+        if (callerIsActiveAdminCheck) {
+          canUpdateTeachers = true;
+        } else {
+          console.warn(
+            `[updateUserWL] Caller ${callerId} has 'admin' role but is not active. Denying teacher link update.`
+          );
+        }
       }
     } else {
       console.warn(
         `[updateUserWL] Could not determine caller role for ${callerId}. Authorization denied.`
       );
+      // This case should be caught by the earlier check, but added for safety
+      return new Response(JSON.stringify({ error: 'Could not verify caller role.' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // --- 7. Process Updates Based on Permissions ---
+    // --- 7. Process Updates Based on Permissions (Logic remains the same) ---
     const profileUpdatesPayload: Record<string, any> = {};
     let hasProfilePayload = false;
     const allErrors: string[] = [];
 
-    // Check and prepare profile updates
     if (updates.firstName !== undefined) {
       if (!canUpdateProfile) allErrors.push('Not authorized to update first name.');
       else {
@@ -352,17 +296,10 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Perform profile update if authorized and changes exist
     if (hasProfilePayload && canUpdateProfile) {
-      if (
-        !profileUpdatesPayload.first_name &&
-        !profileUpdatesPayload.last_name &&
-        !profileUpdatesPayload.hasOwnProperty('nickname')
-      ) {
-        console.log(
-          `[updateUserWL] No actual profile field changes detected for ${userIdToUpdate}. Skipping DB update.`
-        );
-        hasProfilePayload = false; // Prevent unnecessary DB call if only whitespace was trimmed
+      if (profileUpdatesPayload.first_name === '' || profileUpdatesPayload.last_name === '') {
+        allErrors.push('First Name and Last Name cannot be empty.');
+        hasProfilePayload = false;
       } else {
         console.log(`Updating profile for ${userIdToUpdate}:`, profileUpdatesPayload);
         const { error: profileUpdateError } = await supabaseAdminClient
@@ -383,10 +320,8 @@ Deno.serve(async (req: Request) => {
       console.warn(`Skipping profile update for ${userIdToUpdate} due to lack of authorization.`);
     }
 
-    // Sync instrument links if authorized and data provided
     if (targetRole === 'student' && updates.instrumentIds !== undefined) {
       if (canUpdateInstruments) {
-        console.log(`Syncing instruments for student ${userIdToUpdate}`);
         const { errors: instrumentErrors } = await syncLinkTable(
           supabaseAdminClient,
           'student_instruments',
@@ -397,16 +332,11 @@ Deno.serve(async (req: Request) => {
         allErrors.push(...instrumentErrors);
       } else {
         allErrors.push('Not authorized to update instrument links.');
-        console.warn(
-          `Skipping instrument sync for ${userIdToUpdate} - Caller ${callerId} not authorized.`
-        );
       }
     }
 
-    // Sync teacher links if authorized (Admin only) and data provided
     if (targetRole === 'student' && updates.linkedTeacherIds !== undefined) {
       if (canUpdateTeachers) {
-        console.log(`Syncing teachers for student ${userIdToUpdate}`);
         const { errors: teacherErrors } = await syncLinkTable(
           supabaseAdminClient,
           'student_teachers',
@@ -417,28 +347,24 @@ Deno.serve(async (req: Request) => {
         allErrors.push(...teacherErrors);
       } else {
         allErrors.push('Not authorized to update teacher links.');
-        console.warn(
-          `Skipping teacher sync for ${userIdToUpdate} - Caller ${callerId} not authorized.`
-        );
       }
     }
 
-    // --- 8. Final Response ---
+    // --- 8. Final Response (Logic remains the same) ---
     if (allErrors.length > 0) {
       const isOnlyAuthErrors = allErrors.every(e => e.toLowerCase().includes('not authorized'));
-      const statusCode = isOnlyAuthErrors ? 403 : 500; // Use 403 if only auth errors, 500 otherwise
+      const statusCode = isOnlyAuthErrors ? 403 : 500;
       return new Response(
         JSON.stringify({ error: `User update completed with errors: ${allErrors.join('; ')}` }),
         { status: statusCode, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // If no errors occurred
     const successResponse = { message: `User ${userIdToUpdate} processed successfully.` };
     console.log(`User ${userIdToUpdate} update request processed.`);
     return new Response(JSON.stringify(successResponse), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200, // OK
+      status: 200,
     });
   } catch (error) {
     console.error('Unhandled Update User Function Error:', error);
@@ -449,4 +375,4 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-console.log('updateUserWithLinks function initialized (v4 - refined auth checks).');
+console.log('updateUserWithLinks function initialized (v5 - uses shared helpers).');

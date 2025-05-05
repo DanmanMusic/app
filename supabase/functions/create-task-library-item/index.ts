@@ -2,17 +2,15 @@
 
 import { createClient, SupabaseClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
-// Import decode function from Deno standard library's base64 module
-import { decode } from 'https://deno.land/std@0.203.0/encoding/base64.ts';
-
-// Name of your storage bucket for task attachments
-const TASK_ATTACHMENT_BUCKET = 'task-library-attachments';
+// Import shared helpers
+import { isActiveAdminOrTeacher } from '../_shared/authHelpers.ts';
+import { uploadAttachment, deleteAttachment } from '../_shared/storageHelpers.ts';
 
 // Define expected structure for file data in the payload
 interface FilePayload {
-  base64: string; // Base64 encoded file content from client
-  mimeType: string; // e.g., 'application/pdf', 'image/jpeg'
-  fileName: string; // Original file name (for extension)
+  base64: string;
+  mimeType: string;
+  fileName: string;
 }
 
 // Define expected structure for the main payload
@@ -21,98 +19,55 @@ interface CreateTaskPayload {
   description?: string;
   baseTickets: number;
   referenceUrl?: string;
-  instrumentIds?: string[]; // Optional array of instrument UUIDs
-  file?: FilePayload; // Optional file upload details
+  instrumentIds?: string[];
+  file?: FilePayload;
 }
 
-// Helper: Check if user is an active Admin or Teacher
-async function isActiveAdminOrTeacher(
+// Helper: Sync Link Table (Keep local for creation)
+async function syncInstrumentLinks(
   supabase: SupabaseClient,
-  userId: string
-): Promise<{ authorized: boolean; role: string | null }> {
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('role, status')
-      .eq('id', userId)
-      .single();
-
-    if (error) throw error;
-
-    const isActive = data?.status === 'active';
-    const isAllowedRole = data?.role === 'admin' || data?.role === 'teacher';
-
-    return { authorized: isActive && isAllowedRole, role: data?.role };
-  } catch (err) {
-    console.error('Error in isActiveAdminOrTeacher check:', err.message);
-    return { authorized: false, role: null };
+  taskId: string,
+  newInstrumentIds: string[]
+): Promise<{ errors: string[] }> {
+  const errors: string[] = [];
+  if (!newInstrumentIds || newInstrumentIds.length === 0) {
+    console.log(
+      `[createTaskLibItem] No instrument IDs provided for task ${taskId}. Skipping sync.`
+    );
+    return { errors };
   }
-}
-
-// Helper: Upload file to storage
-async function uploadAttachment(
-  supabase: SupabaseClient,
-  file: FilePayload,
-  userId: string
-): Promise<string | null> {
+  console.log(`[createTaskLibItem] Syncing instruments for new task ${taskId}`);
   try {
-    const fileExt = file.fileName.split('.').pop()?.toLowerCase() || 'bin';
-    // Sanitize filename slightly, though Storage handles most issues
-    const safeBaseName = file.fileName.replace(/[^a-zA-Z0-9_.-]/g, '_').replace(`.${fileExt}`, '');
-    const filePath = `public/${userId}/${Date.now()}_${safeBaseName}.${fileExt}`; // Use user ID for organization
-
-    console.log(`Attempting upload to Storage: ${filePath} (MIME: ${file.mimeType})`);
-
-    // Decode base64 string received from client into binary data
-    const fileData = decode(file.base64);
-
-    const { data, error: uploadError } = await supabase.storage
-      .from(TASK_ATTACHMENT_BUCKET)
-      .upload(filePath, fileData, {
-        // Pass decoded binary data
-        contentType: file.mimeType,
-        upsert: false, // Prevent accidental overwrites
-      });
-
-    if (uploadError) {
-      throw new Error(`Storage upload error: ${uploadError.message}`);
+    const rowsToInsert = newInstrumentIds.map(instId => ({
+      task_library_id: taskId,
+      instrument_id: instId,
+    }));
+    console.log(`[createTaskLibItem] Inserting ${rowsToInsert.length} instrument links...`);
+    const { error: insertError } = await supabase
+      .from('task_library_instruments')
+      .insert(rowsToInsert);
+    if (insertError) {
+      errors.push(`Failed inserting new instrument links: ${insertError.message}`);
+      console.error(`[createTaskLibItem] Error inserting links: ${insertError.message}`);
+    } else {
+      console.log(`[createTaskLibItem] Inserted instrument links successfully.`);
     }
-    console.log(`File uploaded successfully to Storage: ${data?.path}`);
-    return data?.path ?? null; // Return the storage path
-  } catch (error) {
-    console.error('uploadAttachment error:', error.message);
-    return null; // Indicate failure
+  } catch (syncError) {
+    errors.push(`Unexpected error syncing instruments: ${syncError.message}`);
+    console.error(`[createTaskLibItem] Unexpected sync error: ${syncError.message}`);
   }
-}
-
-// Helper: Delete file from storage (for cleanup on error)
-async function deleteAttachment(supabase: SupabaseClient, path: string | null): Promise<boolean> {
-  if (!path) return true; // Nothing to delete
-  console.warn(`Attempting cleanup: Deleting attachment from Storage: ${path}`);
-  try {
-    const { error } = await supabase.storage.from(TASK_ATTACHMENT_BUCKET).remove([path]); // path should be relative path within bucket
-    if (error) throw error;
-    console.log(`Cleanup successful: Deleted attachment ${path}`);
-    return true;
-  } catch (error) {
-    console.error(`Cleanup failed: Could not delete attachment ${path}:`, error.message);
-    return false; // Indicate cleanup failure
-  }
+  return { errors };
 }
 
 // Main Edge Function Handler
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-  // Ensure POST method
-  if (req.method !== 'POST') {
+  // Handle CORS preflight & Method Check (POST)
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST')
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
       status: 405,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  }
 
   console.log(`Received ${req.method} request for create-task-library-item`);
 
@@ -128,9 +83,8 @@ Deno.serve(async (req: Request) => {
   }
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
-    global: { fetch: fetch }, // Important for Deno environment
+    global: { fetch: fetch },
   });
-  console.log('Supabase admin client initialized.');
 
   try {
     // 1. Authenticate the user making the request
@@ -157,8 +111,8 @@ Deno.serve(async (req: Request) => {
     const callerId = user.id;
     console.log(`Request received from authenticated user: ${callerId}`);
 
-    // 2. Authorize: Check if the user is an active Admin or Teacher
-    const { authorized, role: callerRole } = await isActiveAdminOrTeacher(supabaseAdmin, callerId);
+    // 2. Authorize: Check if the user is an active Admin or Teacher - Using imported helper
+    const { authorized, role: callerRole } = await isActiveAdminOrTeacher(supabaseAdmin, callerId); // Use shared helper
     if (!authorized) {
       console.warn(
         `Authorization failed: User ${callerId} (Role: ${callerRole}) is not an active Admin or Teacher.`
@@ -174,7 +128,12 @@ Deno.serve(async (req: Request) => {
     let payload: CreateTaskPayload;
     try {
       payload = await req.json();
-      console.log('Parsed payload:', payload);
+      console.log('Parsed payload:', {
+        ...payload,
+        file: payload.file
+          ? { name: payload.file.fileName, mimeType: payload.file.mimeType, base64: '...' }
+          : undefined,
+      });
     } catch (e) {
       console.error('Payload parsing error:', e);
       return new Response(JSON.stringify({ error: 'Invalid JSON payload' }), {
@@ -183,7 +142,9 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // *** RESTORED VALIDATION ***
     if (!payload.title || typeof payload.title !== 'string' || payload.title.trim().length === 0) {
+      console.warn('Payload validation failed: Missing title.');
       return new Response(JSON.stringify({ error: 'Missing or invalid required field: title' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -195,6 +156,7 @@ Deno.serve(async (req: Request) => {
       !Number.isInteger(payload.baseTickets) ||
       payload.baseTickets < 0
     ) {
+      console.warn('Payload validation failed: Invalid baseTickets.');
       return new Response(
         JSON.stringify({
           error: 'Missing or invalid required field: baseTickets (must be non-negative integer)',
@@ -202,22 +164,27 @@ Deno.serve(async (req: Request) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    // Add more specific validation if needed (e.g., URL format, instrument ID format)
+    // Validate file structure if present
+    if (
+      payload.file &&
+      (!payload.file.base64 || !payload.file.fileName || !payload.file.mimeType)
+    ) {
+      console.warn('Payload validation failed: Incomplete file data.');
+      return new Response(
+        JSON.stringify({
+          error: 'Incomplete file data in payload (requires base64, fileName, mimeType)',
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    // *** END RESTORED VALIDATION ***
 
-    // 4. Handle File Upload (if included)
+    // 4. Handle File Upload (if included) - Using imported helper
     let attachmentPath: string | null = null;
     if (payload.file) {
-      console.log('File data found in payload, attempting upload...');
-      if (!payload.file.base64 || !payload.file.mimeType || !payload.file.fileName) {
-        console.error('File payload missing base64, mimeType, or fileName.');
-        return new Response(JSON.stringify({ error: 'Incomplete file data in payload' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      attachmentPath = await uploadAttachment(supabaseAdmin, payload.file, callerId);
+      console.log('File data found in payload, attempting upload via shared helper...');
+      attachmentPath = await uploadAttachment(supabaseAdmin, payload.file, callerId); // Use shared helper
       if (!attachmentPath) {
-        // Upload helper already logged error
         return new Response(JSON.stringify({ error: 'File upload to storage failed' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -229,63 +196,48 @@ Deno.serve(async (req: Request) => {
     // 5. Insert Task into Database
     const taskToInsert = {
       title: payload.title.trim(),
-      description: payload.description?.trim() || null, // Store null if empty/missing
+      description: payload.description?.trim() || null,
       base_tickets: payload.baseTickets,
-      reference_url: payload.referenceUrl?.trim() || null, // Store null if empty/missing
-      created_by_id: callerId, // Set creator to the authenticated user
-      attachment_path: attachmentPath, // Store path from upload, or null
-      // 'is_public' column is removed based on previous discussion
+      reference_url: payload.referenceUrl?.trim() || null,
+      created_by_id: callerId,
+      attachment_path: attachmentPath,
     };
 
     console.log('Attempting DB insert for task_library:', taskToInsert);
     const { data: createdTaskData, error: insertTaskError } = await supabaseAdmin
       .from('task_library')
       .insert(taskToInsert)
-      .select() // Select the created row
-      .single(); // Expect one row
+      .select()
+      .single();
 
+    // *** RESTORED DB INSERT ERROR HANDLING + CLEANUP ***
     if (insertTaskError) {
       console.error('DB Insert Error (task_library):', insertTaskError);
-      // Attempt to clean up uploaded file if DB insert failed
+      // Attempt cleanup if upload happened
       if (attachmentPath) {
-        await deleteAttachment(supabaseAdmin, attachmentPath);
+        console.warn(`DB insert failed, attempting cleanup of uploaded file: ${attachmentPath}`);
+        await deleteAttachment(supabaseAdmin, attachmentPath); // Use shared helper
       }
       return new Response(
         JSON.stringify({ error: `Database insert failed: ${insertTaskError.message}` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    // *** END RESTORED HANDLING ***
     const createdTaskId = createdTaskData.id;
     console.log(`Task created successfully in DB (ID: ${createdTaskId}).`);
 
-    // 6. Insert Instrument Links (if provided)
+    // 6. Insert Instrument Links (if provided) - Using local helper
     const instrumentIds = payload.instrumentIds;
-    if (instrumentIds && Array.isArray(instrumentIds) && instrumentIds.length > 0) {
-      const linksToInsert = instrumentIds.map(instId => ({
-        task_library_id: createdTaskId,
-        instrument_id: instId,
-      }));
-      console.log(
-        `Attempting to insert ${linksToInsert.length} instrument links for task ${createdTaskId}...`
+    const syncResult = await syncInstrumentLinks(supabaseAdmin, createdTaskId, instrumentIds || []);
+    if (syncResult.errors.length > 0) {
+      console.error(
+        `Errors inserting instrument links for task ${createdTaskId}: ${syncResult.errors.join('; ')}`
       );
-      const { error: insertLinkError } = await supabaseAdmin
-        .from('task_library_instruments')
-        .insert(linksToInsert);
-
-      if (insertLinkError) {
-        // Log error but don't necessarily fail the whole request. The main task was created.
-        console.error(
-          `Failed to insert instrument links for task ${createdTaskId}:`,
-          insertLinkError.message
-        );
-        // TODO: Consider if this should be a hard failure - requires transactionality (RPC)
-      } else {
-        console.log(`Inserted instrument links successfully for task ${createdTaskId}.`);
-      }
+      // Log error but don't fail the request
     }
 
-    // 7. Return Success Response (basic task data)
-    // Client will likely need to refetch lists to see the fully joined data (instruments)
+    // 7. Return Success Response
     console.log('Create task process completed successfully.');
     return new Response(JSON.stringify(createdTaskData), {
       status: 201, // Created
@@ -300,4 +252,4 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-console.log('create-task-library-item function initialized.');
+console.log('create-task-library-item function initialized (v2 - uses shared helpers).');
