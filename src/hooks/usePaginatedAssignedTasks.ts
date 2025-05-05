@@ -8,7 +8,6 @@ import {
 } from '../api/assignedTasks';
 import { AssignedTask, UserStatus } from '../types/dataTypes';
 
-// Keep existing type aliases
 export type TaskAssignmentFilterStatus = 'all' | 'assigned' | 'pending' | 'completed';
 export type StudentTaskFilterStatus = UserStatus | 'all';
 
@@ -28,19 +27,17 @@ export interface UsePaginatedAssignedTasksReturn {
   isError: boolean;
   error: Error | null;
 
-  // Keep studentId for direct student filtering (optional, used by AdminStudentDetailView)
   studentId?: string | null;
   setStudentId?: (id: string | null) => void;
-  // No need to return teacherId, it's an input parameter
 }
 
 const ITEMS_PER_PAGE = 15;
 
 export const usePaginatedAssignedTasks = (
-  initialAssignmentFilter: TaskAssignmentFilterStatus = 'all', // Default to 'all' now
+  initialAssignmentFilter: TaskAssignmentFilterStatus = 'all',
   initialStudentStatusFilter: StudentTaskFilterStatus = 'active',
   initialStudentId: string | null = null,
-  teacherId?: string // <-- ADD teacherId parameter
+  teacherId?: string
 ): UsePaginatedAssignedTasksReturn => {
   const queryClient = useQueryClient();
   const [assignmentFilter, setAssignmentFilter] =
@@ -48,12 +45,11 @@ export const usePaginatedAssignedTasks = (
   const [studentStatusFilter, setStudentStatusFilter] = useState<StudentTaskFilterStatus>(
     initialStudentStatusFilter
   );
-  // Keep studentId state if needed for other views using this hook
+
   const [studentId, setStudentId] = useState<string | null>(initialStudentId);
 
   const [currentPage, setCurrentPage] = useState(1);
 
-  // --- UPDATE queryKey to include teacherId ---
   const queryKey = [
     'assigned-tasks',
     {
@@ -62,7 +58,7 @@ export const usePaginatedAssignedTasks = (
       assignmentStatus: assignmentFilter,
       studentStatus: studentStatusFilter,
       studentId: studentId,
-      teacherId: teacherId, // <-- ADD teacherId to key
+      teacherId: teacherId,
     },
   ];
 
@@ -75,12 +71,12 @@ export const usePaginatedAssignedTasks = (
         assignmentStatus: assignmentFilter as TaskAssignmentFilterStatusAPI,
         studentStatus: studentStatusFilter as StudentTaskFilterStatusAPI,
         studentId: studentId ?? undefined,
-        teacherId: teacherId, // <-- PASS teacherId to fetch function
+        teacherId: teacherId,
       }),
     placeholderData: keepPreviousData,
     staleTime: 1 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
-    // Enable the query only if not filtering by teacher OR if teacherId is provided
+
     enabled: !teacherId || !!teacherId,
   });
 
@@ -90,18 +86,13 @@ export const usePaginatedAssignedTasks = (
   const totalPages = data?.totalPages ?? 1;
   const totalItems = data?.totalItems ?? 0;
 
-  // --- UPDATE useEffect dependency array for resetting page ---
   useEffect(() => {
-    // Reset to page 1 if filters OR teacherId change (and not already on page 1)
     if (currentPage !== 1) {
       console.log(`[usePaginatedAssignedTasks] Filters or teacherId changed, resetting page to 1.`);
       setCurrentPage(1);
     }
-    // Note: We don't reset if only initial filters change via props,
-    // internal state drives the reset. Initial filters set the *first* state.
-  }, [assignmentFilter, studentStatusFilter, studentId, teacherId]); // <-- ADD teacherId dependency
+  }, [assignmentFilter, studentStatusFilter, studentId, teacherId]);
 
-  // --- UPDATE useEffect dependency array and prefetch params for prefetching ---
   useEffect(() => {
     const effectiveTotalPages = totalPages >= 1 ? totalPages : 1;
     const prefetchParamsBase = {
@@ -109,14 +100,13 @@ export const usePaginatedAssignedTasks = (
       assignmentStatus: assignmentFilter as TaskAssignmentFilterStatusAPI,
       studentStatus: studentStatusFilter as StudentTaskFilterStatusAPI,
       studentId: studentId ?? undefined,
-      teacherId: teacherId, // <-- ADD teacherId to prefetch params
+      teacherId: teacherId,
     };
 
-    // Prefetch next page
     if (!isPlaceholderData && currentPage < effectiveTotalPages && !isFetching) {
       const nextPage = currentPage + 1;
       const nextQueryKey = ['assigned-tasks', { ...prefetchParamsBase, page: nextPage }];
-      // console.log(`[usePaginatedAssignedTasks] Prefetching next page: ${nextPage}`); // Keep logging if desired
+
       queryClient.prefetchQuery({
         queryKey: nextQueryKey,
         queryFn: () => fetchAssignedTasks({ ...prefetchParamsBase, page: nextPage }),
@@ -124,11 +114,10 @@ export const usePaginatedAssignedTasks = (
       });
     }
 
-    // Prefetch previous page
     if (!isPlaceholderData && currentPage > 1 && !isFetching) {
       const prevPage = currentPage - 1;
       const prevQueryKey = ['assigned-tasks', { ...prefetchParamsBase, page: prevPage }];
-      // console.log(`[usePaginatedAssignedTasks] Prefetching previous page: ${prevPage}`); // Keep logging if desired
+
       queryClient.prefetchQuery({
         queryKey: prevQueryKey,
         queryFn: () => fetchAssignedTasks({ ...prefetchParamsBase, page: prevPage }),
@@ -136,7 +125,6 @@ export const usePaginatedAssignedTasks = (
       });
     }
   }, [
-    // <-- ADD teacherId dependency here too
     currentPage,
     totalPages,
     isPlaceholderData,

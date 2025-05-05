@@ -341,6 +341,11 @@ export const commonSharedStyles = StyleSheet.create({
   linkedStudentItem: {
     backgroundColor: colors.backgroundGrey,
   },
+  linkText: {
+    color: colors.primary,
+    textDecorationLine: 'underline',
+    fontWeight: '600',
+  },
   listArea: {
     marginTop: 10,
     width: '100%',
@@ -377,7 +382,6 @@ export const commonSharedStyles = StyleSheet.create({
     width: '100%',
   },
   modalFooter: {
-    marginTop: 20,
     width: '100%',
     gap: 10,
   },

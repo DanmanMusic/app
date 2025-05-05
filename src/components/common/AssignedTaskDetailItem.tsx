@@ -90,7 +90,7 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
         {allowDelete && (
           <Button
             title="Remove"
-            onPress={() => onDelete!(item.id)} // Pass only ID to the parent handler
+            onPress={() => onDelete!(item.id)}
             color={colors.danger}
             disabled={disabled}
           />

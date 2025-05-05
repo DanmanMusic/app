@@ -5,23 +5,19 @@ import { TaskLibraryItem } from '../types/dataTypes';
 import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 
-// Define explicit type for the Native file object expected from pickers
 interface NativeFileObject {
   uri: string;
   name?: string;
-  mimeType?: string; // expo-document-picker uses mimeType
-  type?: string; // expo-image-picker might use type
+  mimeType?: string;
+  type?: string;
   size?: number;
-  [key: string]: any; // Allow other properties
+  [key: string]: any;
 }
 
-// Update function signature to accept File (web) or NativeFileObject (native)
 export const fileToBase64 = (file: File | NativeFileObject): Promise<string> => {
   return new Promise(async (resolve, reject) => {
     try {
-      // Use Platform.OS check FIRST for clarity
       if (Platform.OS === 'web') {
-        // On web, we expect a File object
         if (file instanceof File) {
           const reader = new FileReader();
           reader.readAsDataURL(file);
@@ -34,9 +30,7 @@ export const fileToBase64 = (file: File | NativeFileObject): Promise<string> => 
             }
           };
           reader.onerror = error => reject(new Error(`FileReader error: ${error}`));
-        }
-        // Handle edge case where web might receive a URI (less common)
-        else if (
+        } else if (
           typeof file === 'object' &&
           file &&
           'uri' in file &&
@@ -63,16 +57,11 @@ export const fileToBase64 = (file: File | NativeFileObject): Promise<string> => 
             reject(new Error(`Failed to fetch file from web URI: ${fetchError.message}`));
           }
         } else {
-          // If it's web but not a File object, it's unsupported
           console.error('[fileToBase64 Web] Received unsupported input type:', file);
           reject(new Error('Unsupported file input type on web platform'));
         }
-      }
-      // --- Native Platform ---
-      else {
-        // On native, we expect an object with a 'uri' property
+      } else {
         if (typeof file === 'object' && file && 'uri' in file && typeof file.uri === 'string') {
-          // Type assertion now safe because we checked for 'uri'
           const nativeFile = file as NativeFileObject;
           console.log(`[fileToBase64 Native] Reading file from URI: ${nativeFile.uri}`);
           try {
@@ -89,7 +78,6 @@ export const fileToBase64 = (file: File | NativeFileObject): Promise<string> => 
             reject(new Error(`Failed to read native file: ${fsError.message}.`));
           }
         } else {
-          // If it's native but not the expected object shape, it's unsupported
           console.error('[fileToBase64 Native] Received unsupported input type:', file);
           reject(new Error('Unsupported file input type on native platform'));
         }
@@ -101,7 +89,6 @@ export const fileToBase64 = (file: File | NativeFileObject): Promise<string> => 
   });
 };
 
-// --- fetchTaskLibrary remains the same ---
 export const fetchTaskLibrary = async (): Promise<TaskLibraryItem[]> => {
   const client = getSupabase();
   console.log(`[API taskLibrary] Fetching Task Library`);
@@ -137,15 +124,13 @@ export const fetchTaskLibrary = async (): Promise<TaskLibraryItem[]> => {
   return taskLibrary;
 };
 
-// --- Update type hint in createTaskLibraryItem and updateTaskLibraryItem ---
 export const createTaskLibraryItem = async (
   taskData: Omit<TaskLibraryItem, 'id'> & {
     file?: File | NativeFileObject;
     mimeType?: string;
     fileName?: string;
-  } // Use NativeFileObject type
+  }
 ): Promise<TaskLibraryItem> => {
-  // ... function logic remains the same ...
   const client = getSupabase();
   const {
     file,
@@ -178,9 +163,9 @@ export const createTaskLibraryItem = async (
 
   if (file && !finalMimeType && file instanceof File) finalMimeType = file.type;
   else if (file && !finalMimeType && typeof file === 'object' && 'mimeType' in file)
-    finalMimeType = file.mimeType; // Use mimeType for native
+    finalMimeType = file.mimeType;
   else if (file && !finalMimeType && typeof file === 'object' && 'type' in file)
-    finalMimeType = file.type; // Fallback to type
+    finalMimeType = file.type;
   if (file && !finalFileName && file instanceof File) finalFileName = file.name;
   else if (file && !finalFileName && typeof file === 'object' && 'name' in file)
     finalFileName = file.name;
@@ -188,7 +173,7 @@ export const createTaskLibraryItem = async (
 
   if (file && finalMimeType && finalFileName) {
     try {
-      const base64 = await fileToBase64(file); // Pass the correct object type
+      const base64 = await fileToBase64(file);
       payload.file = { base64, mimeType: finalMimeType, fileName: finalFileName };
     } catch (error: any) {
       throw new Error(`Failed to process file: ${error.message}`);
@@ -231,7 +216,7 @@ export const updateTaskLibraryItem = async ({
 }: {
   taskId: string;
   updates: Partial<Omit<TaskLibraryItem, 'id' | 'createdById'>>;
-  file?: File | NativeFileObject | null; // Use NativeFileObject type
+  file?: File | NativeFileObject | null;
   mimeType?: string;
   fileName?: string;
 }): Promise<TaskLibraryItem> => {
@@ -239,7 +224,6 @@ export const updateTaskLibraryItem = async ({
   const updatePayload: any = {};
   let hasChanges = false;
 
-  // ... map text/numeric/instrument updates ...
   if (updates.hasOwnProperty('title')) {
     updatePayload.title = updates.title?.trim();
     hasChanges = true;
@@ -275,7 +259,7 @@ export const updateTaskLibraryItem = async ({
   } else if (file) {
     let finalMimeType = providedMimeType;
     let finalFileName = providedFileName;
-    // ... logic to determine finalMimeType/finalFileName ...
+
     if (!finalMimeType && file instanceof File) finalMimeType = file.type;
     else if (file && !finalMimeType && typeof file === 'object' && 'mimeType' in file)
       finalMimeType = file.mimeType;
@@ -288,7 +272,7 @@ export const updateTaskLibraryItem = async ({
 
     if (finalMimeType && finalFileName) {
       try {
-        const base64 = await fileToBase64(file); // Pass correct object type
+        const base64 = await fileToBase64(file);
         updatePayload.file = { base64, mimeType: finalMimeType, fileName: finalFileName };
         hasChanges = true;
       } catch (error: any) {
@@ -300,7 +284,6 @@ export const updateTaskLibraryItem = async ({
   }
 
   if (!hasChanges) {
-    // ... refetch current item logic ...
     const { data: currentData, error: currentError } = await client
       .from('task_library')
       .select(`*, task_library_instruments ( instrument_id )`)
@@ -359,7 +342,6 @@ export const updateTaskLibraryItem = async ({
   return updatedTask;
 };
 
-// deleteTaskLibraryItem remains the same
 export const deleteTaskLibraryItem = async (taskId: string): Promise<void> => {
   const client = getSupabase();
   const payload = { taskId };

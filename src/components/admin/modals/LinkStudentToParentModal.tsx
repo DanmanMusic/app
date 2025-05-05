@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-import { fetchStudents } from '../../../api/users'; // To find students
-import { linkStudentToParent } from '../../../api/users'; // API to create the link
+import { fetchStudents } from '../../../api/users';
+import { linkStudentToParent } from '../../../api/users';
 import { SimplifiedStudent, User } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
@@ -22,9 +22,9 @@ import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 interface LinkStudentToParentModalProps {
   visible: boolean;
   onClose: () => void;
-  parentId: string; // The ID of the parent we are linking to
-  parentName: string; // For display purposes
-  // Pass already linked IDs to filter them out from selection
+  parentId: string;
+  parentName: string;
+
   currentlyLinkedStudentIds?: string[];
 }
 
@@ -33,51 +33,47 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
   onClose,
   parentId,
   parentName,
-  currentlyLinkedStudentIds = [], // Default to empty array
+  currentlyLinkedStudentIds = [],
 }) => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedStudentName, setSelectedStudentName] = useState<string | null>(null);
 
-  // Query for active students, potentially filtered by search term
   const {
     data: studentListResult,
     isLoading: isLoadingStudents,
     isError: isErrorStudents,
     error: errorStudents,
   } = useQuery({
-    // Query key includes search term to refetch when it changes
     queryKey: ['students', { filter: 'active', context: 'linkParentModal', search: searchTerm }],
     queryFn: () =>
       fetchStudents({
         filter: 'active',
         searchTerm: searchTerm,
-        limit: 50, // Limit results for performance in modal search
+        limit: 50,
         page: 1,
       }),
-    enabled: visible, // Only fetch when modal is visible
-    staleTime: 1 * 60 * 1000, // Cache search results briefly
+    enabled: visible,
+    staleTime: 1 * 60 * 1000,
   });
 
-  // Filter out already linked students and prepare display list
   const availableStudents = useMemo(() => {
     const allFetched = studentListResult?.students ?? [];
     return allFetched
-      .filter(student => !currentlyLinkedStudentIds.includes(student.id)) // Exclude already linked
-      .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
+      .filter(student => !currentlyLinkedStudentIds.includes(student.id))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [studentListResult, currentlyLinkedStudentIds]);
 
-  // Mutation to link the selected student
   const linkMutation = useMutation({
     mutationFn: (studentIdToLink: string) => linkStudentToParent(parentId, studentIdToLink),
     onSuccess: (_, studentIdLinked) => {
       Toast.show({ type: 'success', text1: 'Success', text2: `Student linked successfully.` });
-      // Invalidate the parent's profile query to update their linkedStudentIds list
+
       queryClient.invalidateQueries({ queryKey: ['userProfile', parentId] });
-      // Also invalidate the generic parents list query if it exists
+
       queryClient.invalidateQueries({ queryKey: ['parents'] });
-      onClose(); // Close the modal
+      onClose();
     },
     onError: (error: Error) => {
       Toast.show({
@@ -90,7 +86,6 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
     },
   });
 
-  // Reset state when modal opens
   useEffect(() => {
     if (visible) {
       setSearchTerm('');
@@ -100,15 +95,11 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
     }
   }, [visible]);
 
-  // Handler when a student is selected from the list
   const handleSelectStudent = (student: SimplifiedStudent) => {
     setSelectedStudentId(student.id);
     setSelectedStudentName(student.name);
-    // Optionally move to a confirmation step, or allow direct linking from list?
-    // For simplicity, let's allow direct linking confirmation now.
   };
 
-  // Handler for the final "Link" button
   const handleConfirmLink = () => {
     if (!selectedStudentId) {
       Toast.show({

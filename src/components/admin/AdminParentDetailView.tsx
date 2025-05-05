@@ -42,8 +42,8 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
   } = useQuery<{ email: string | null } | null, Error>({
     queryKey: ['authUser', viewingUserId],
     queryFn: () => fetchAuthUser(viewingUserId),
-    enabled: !!viewingUserId && !!onInitiatePinGeneration, // Only fetch if PIN generation is possible
-    staleTime: 15 * 60 * 1000, // Cache for a while
+    enabled: !!viewingUserId && !!onInitiatePinGeneration,
+    staleTime: 15 * 60 * 1000,
   });
 
   const [isLinkStudentModalVisible, setIsLinkStudentModalVisible] = useState(false);
@@ -105,7 +105,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
       queryClient.invalidateQueries({ queryKey: ['parents'] });
       queryClient.invalidateQueries({ queryKey: ['students'] });
 
-      closeUnlinkConfirmModal(); // Close confirmation modal
+      closeUnlinkConfirmModal();
     },
     onError: (error: Error) => {
       Toast.show({
@@ -114,7 +114,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
         text2: error.message || 'Could not unlink student.',
         position: 'bottom',
       });
-      // Keep confirmation modal open on error? Or close? Closing for now.
+
       closeUnlinkConfirmModal();
     },
   });
@@ -122,7 +122,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
   const closeUnlinkConfirmModal = () => {
     setIsUnlinkConfirmModalVisible(false);
     setLinkToRemove(null);
-    unlinkMutation.reset(); // Reset mutation state
+    unlinkMutation.reset();
   };
 
   const parentDisplayName = useMemo(
@@ -162,7 +162,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
   const handleLinkStudent = () => setIsLinkStudentModalVisible(true);
 
   const handleInitiateUnlink = (studentToUnlink: User) => {
-    if (!parent) return; // Should not happen if button is visible
+    if (!parent) return;
     setLinkToRemove({
       parentId: parent.id,
       studentId: studentToUnlink.id,
@@ -300,7 +300,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
                     title="Unlink Student"
                     onPress={() => handleInitiateUnlink(studentItem)}
                     color={colors.danger}
-                    disabled={unlinkMutation.isPending} // Disable while unlinking
+                    disabled={unlinkMutation.isPending}
                   />
                 </View>
               </View>

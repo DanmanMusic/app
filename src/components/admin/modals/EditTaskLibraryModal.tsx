@@ -1,37 +1,24 @@
 // src/components/admin/modals/EditTaskLibraryModal.tsx
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'; // Added useQuery
-import {
-  Modal,
-  View,
-  Text,
-  Button,
-  TextInput,
-  ScrollView,
-  ActivityIndicator,
-  Platform,
-  Linking,
-} from 'react-native'; // Added Linking
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
-import * as DocumentPicker from 'expo-document-picker'; // Import document picker
+import * as DocumentPicker from 'expo-document-picker';
 
-import { updateTaskLibraryItem } from '../../../api/taskLibrary'; // API uses Edge Func now
-import { fetchInstruments } from '../../../api/instruments'; // Import fetchInstruments
+import { updateTaskLibraryItem } from '../../../api/taskLibrary';
+import { fetchInstruments } from '../../../api/instruments';
 
-import { Instrument, TaskLibraryItem } from '../../../types/dataTypes'; // Import Instrument
+import { Instrument, TaskLibraryItem } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { EditTaskLibraryModalProps } from '../../../types/componentProps';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
-import { getSupabase } from '../../../lib/supabaseClient'; // Import for signed URL
-
-const TASK_ATTACHMENT_BUCKET = 'task-library-attachments';
+import { handleViewAttachment } from '../../../lib/supabaseClient';
 
 const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
   visible,
   taskToEdit,
   onClose,
 }) => {
-  // Form state initialized from taskToEdit
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [baseTickets, setBaseTickets] = useState<number | ''>('');
@@ -39,10 +26,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
   const [selectedInstrumentIds, setSelectedInstrumentIds] = useState<string[]>([]);
   const [currentAttachmentPath, setCurrentAttachmentPath] = useState<string | undefined>(undefined);
 
-  // State for handling file changes
-  // 'keep': No change
-  // 'replace': User picked a new file
-  // 'remove': User clicked remove button
   type FileAction = 'keep' | 'replace' | 'remove';
   const [fileAction, setFileAction] = useState<FileAction>('keep');
   const [newPickedDocument, setNewPickedDocument] =
@@ -51,7 +34,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
 
   const queryClient = useQueryClient();
 
-  // Fetch available instruments
   const {
     data: instruments = [],
     isLoading: isLoadingInstruments,
@@ -63,13 +45,11 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     enabled: visible,
   });
 
-  // Update Mutation
   const mutation = useMutation({
-    mutationFn: updateTaskLibraryItem, // Calls API -> Edge Func
+    mutationFn: updateTaskLibraryItem,
     onSuccess: updatedTask => {
-      // We refetch within the API function now, so this data should be fresh
-      queryClient.invalidateQueries({ queryKey: ['task-library'] }); // Still good practice
-      queryClient.setQueryData(['task-library', { id: updatedTask.id }], updatedTask); // Optionally update specific item cache
+      queryClient.invalidateQueries({ queryKey: ['task-library'] });
+      queryClient.setQueryData(['task-library', { id: updatedTask.id }], updatedTask);
       onClose();
       Toast.show({
         type: 'success',
@@ -89,7 +69,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     },
   });
 
-  // Effect to populate form when taskToEdit changes or modal becomes visible
   useEffect(() => {
     if (visible && taskToEdit) {
       setTitle(taskToEdit.title);
@@ -98,13 +77,12 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       setReferenceUrl(taskToEdit.referenceUrl || '');
       setSelectedInstrumentIds(taskToEdit.instrumentIds || []);
       setCurrentAttachmentPath(taskToEdit.attachmentPath || '');
-      // Reset file handling state
+
       setFileAction('keep');
       setNewPickedDocument(null);
       setFileError(null);
       mutation.reset();
     } else {
-      // Clear form if modal closes or no task
       setTitle('');
       setDescription('');
       setBaseTickets('');
@@ -115,9 +93,8 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       setNewPickedDocument(null);
       setFileError(null);
     }
-  }, [visible, taskToEdit]); // Rerun when visibility or task changes
+  }, [visible, taskToEdit]);
 
-  // Function to handle picking a *new* document
   const pickDocument = async () => {
     setFileError(null);
     try {
@@ -127,9 +104,8 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       });
       if (!result.canceled) {
         setNewPickedDocument(result);
-        setFileAction('replace'); // Mark intent to replace
+        setFileAction('replace');
       } else {
-        // If cancelled, revert action only if it was 'replace'
         if (fileAction === 'replace') {
           setFileAction('keep');
           setNewPickedDocument(null);
@@ -139,49 +115,13 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       console.error('Error picking document:', error);
       setFileError('Failed to pick document.');
       setNewPickedDocument(null);
-      setFileAction('keep'); // Revert action on error
+      setFileAction('keep');
     }
   };
 
-  // Function to mark attachment for removal
   const handleRemoveAttachment = () => {
     setFileAction('remove');
-    setNewPickedDocument(null); // Clear any newly picked doc
-  };
-
-  // Function to view/download current attachment (basic example)
-  const viewCurrentAttachment = async () => {
-    if (!currentAttachmentPath) return;
-    try {
-      const supabase = getSupabase();
-      // Get a temporary signed URL (expires in 60 seconds)
-      const { data, error } = await supabase.storage
-        .from(TASK_ATTACHMENT_BUCKET)
-        .createSignedUrl(currentAttachmentPath, 60); // 60 seconds expiry
-
-      if (error) throw error;
-
-      if (data?.signedUrl) {
-        // Attempt to open the URL in the browser/system handler
-        const supported = await Linking.canOpenURL(data.signedUrl);
-        if (supported) {
-          await Linking.openURL(data.signedUrl);
-        } else {
-          Toast.show({
-            type: 'error',
-            text1: 'Error',
-            text2: `Cannot open URL for this file type.`,
-          });
-        }
-      }
-    } catch (error: any) {
-      console.error('Error getting signed URL:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: `Could not get download link: ${error.message}`,
-      });
-    }
+    setNewPickedDocument(null);
   };
 
   const toggleInstrumentSelection = (id: string) => {
@@ -191,7 +131,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     );
   };
 
-  // Handle Save Changes
   const handleSave = () => {
     if (!taskToEdit) return;
 
@@ -199,7 +138,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     const numericTickets =
       typeof baseTickets === 'number' ? baseTickets : parseInt(String(baseTickets || '-1'), 10);
 
-    // --- Basic Validation ---
     if (!trimmedTitle) {
       Toast.show({
         type: 'error',
@@ -225,11 +163,9 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       return;
     }
 
-    // --- Prepare Updates Payload ---
     const updates: Partial<Omit<TaskLibraryItem, 'id' | 'createdById'>> = {};
     let hasChanges = false;
 
-    // Check standard fields
     if (trimmedTitle !== taskToEdit.title) {
       updates.title = trimmedTitle;
       hasChanges = true;
@@ -242,17 +178,14 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       updates.baseTickets = numericTickets;
       hasChanges = true;
     }
-    const currentRefUrl = taskToEdit.referenceUrl || ''; // Treat null/undefined as empty string for comparison
+    const currentRefUrl = taskToEdit.referenceUrl || '';
     const newRefUrl = referenceUrl.trim();
 
     if (newRefUrl !== currentRefUrl) {
-      // Check if value actually changed
-      // If changed, set DB value to the new trimmed value OR explicitly null if now empty
       updates.referenceUrl = newRefUrl === '' ? null : newRefUrl;
       hasChanges = true;
     }
 
-    // Check instrument links
     const initialInstrumentIds = (taskToEdit.instrumentIds || []).sort();
     const currentInstrumentIds = [...selectedInstrumentIds].sort();
     if (JSON.stringify(initialInstrumentIds) !== JSON.stringify(currentInstrumentIds)) {
@@ -260,7 +193,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       hasChanges = true;
     }
 
-    // --- Prepare File Payload for API ---
     let fileApiPayload: {
       file?: any;
       mimeType?: string;
@@ -269,8 +201,8 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     } = {};
 
     if (fileAction === 'remove') {
-      fileApiPayload.file = null; // Signal removal intention to API
-      // Only consider it a change if there was an attachment before
+      fileApiPayload.file = null;
+
       if (currentAttachmentPath) hasChanges = true;
     } else if (
       fileAction === 'replace' &&
@@ -289,9 +221,8 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
         return;
       }
       fileApiPayload = { file: asset, mimeType: asset.mimeType, fileName: asset.name };
-      hasChanges = true; // Replacing is always a change
+      hasChanges = true;
     }
-    // If fileAction is 'keep', fileApiPayload remains empty, no file change sent
 
     if (!hasChanges) {
       Toast.show({
@@ -304,11 +235,10 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       return;
     }
 
-    // --- Call Mutation ---
     mutation.mutate({
       taskId: taskToEdit.id,
-      updates: updates, // Contains text/numeric/instrument changes
-      ...fileApiPayload, // Spread file info (file object, mime, name) or delete flag
+      updates: updates,
+      ...fileApiPayload,
     });
   };
 
@@ -319,7 +249,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     baseTickets === '' ||
     baseTickets < 0;
 
-  // Display name for the current attachment or newly picked file
   const currentFileNameDisplay =
     fileAction === 'replace' &&
     newPickedDocument &&
@@ -327,11 +256,10 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     newPickedDocument.assets
       ? newPickedDocument.assets[0].name
       : fileAction !== 'remove' && currentAttachmentPath
-        ? currentAttachmentPath.split('/').pop() // Basic name extraction
+        ? currentAttachmentPath.split('/').pop()
         : 'None';
 
   if (!taskToEdit && visible) {
-    // Handle case where modal is visible but task data is missing (shouldn't happen with useEffect)
     return (
       <Modal visible={true} transparent={true}>
         <View style={commonSharedStyles.centeredView}>
@@ -350,8 +278,7 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
         <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>Edit Library Task</Text>
           <Text style={commonSharedStyles.modalSubTitle}>ID: {taskToEdit?.id}</Text>
-          <ScrollView style={commonSharedStyles.modalScrollView}>
-            {/* Title, Tickets, Description, URL Inputs */}
+          <ScrollView style={[commonSharedStyles.modalScrollView, { paddingHorizontal: 2 }]}>
             <Text style={commonSharedStyles.label}>Task Title:</Text>
             <TextInput
               style={commonSharedStyles.input}
@@ -418,14 +345,14 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
             </View>
 
             {/* Attachment Management */}
-            <Text style={commonSharedStyles.label}>Attachment:</Text>
+            <Text style={commonSharedStyles.label}>Attachment (Optional):</Text>
             <View style={[commonSharedStyles.baseItem, { marginBottom: 15, padding: 10 }]}>
               <Text style={{ marginBottom: 10 }}>Current: {currentFileNameDisplay}</Text>
               <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
                 {currentAttachmentPath && fileAction !== 'remove' && (
                   <Button
                     title="View Current"
-                    onPress={viewCurrentAttachment}
+                    onPress={() => handleViewAttachment(currentAttachmentPath)}
                     disabled={mutation.isPending}
                     color={colors.secondary}
                   />

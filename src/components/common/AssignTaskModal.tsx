@@ -17,7 +17,7 @@ import Toast from 'react-native-toast-message';
 import { createAssignedTask } from '../../api/assignedTasks';
 import { fetchTaskLibrary } from '../../api/taskLibrary';
 import { fetchStudents, fetchUserProfile } from '../../api/users';
-import { fetchInstruments } from '../../api/instruments'; // Need instruments for display
+import { fetchInstruments } from '../../api/instruments';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   AssignedTask,
@@ -25,11 +25,11 @@ import {
   SimplifiedStudent,
   User,
   Instrument,
-} from '../../types/dataTypes'; // Import Instrument
+} from '../../types/dataTypes';
 import { AssignTaskModalProps } from '../../types/componentProps';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers'; // Import helper
+import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
 
 export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   visible,
@@ -39,7 +39,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   const { currentUserId: assignerId, currentUserRole } = useAuth();
   const queryClient = useQueryClient();
 
-  // State
   const [step, setStep] = useState(1);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedLibraryTask, setSelectedLibraryTask] = useState<TaskLibraryItem | null>(null);
@@ -47,10 +46,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   const [adHocTitle, setAdHocTitle] = useState('');
   const [adHocDescription, setAdHocDescription] = useState('');
   const [adHocBasePoints, setAdHocBasePoints] = useState<number | ''>('');
-  const [adHocReferenceUrl, setAdHocReferenceUrl] = useState(''); // State for AdHoc URL
+  const [adHocReferenceUrl, setAdHocReferenceUrl] = useState('');
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
 
-  // Queries
   const {
     data: taskLibrary = [],
     isLoading: isLoadingLibrary,
@@ -105,15 +103,13 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     staleTime: 5 * 60 * 1000,
   });
 
-  // Query for all instruments (needed for display in library list item)
   const { data: instruments = [], isLoading: isLoadingInstruments } = useQuery<Instrument[]>({
     queryKey: ['instruments'],
     queryFn: fetchInstruments,
     staleTime: Infinity,
-    enabled: visible && step === 2 && !isAdHocMode, // Only when library is shown
+    enabled: visible && step === 2 && !isAdHocMode,
   });
 
-  // Memos
   const sortedTasks = useMemo(
     () => [...taskLibrary].sort((a, b) => a.title.localeCompare(b.title)),
     [taskLibrary]
@@ -144,7 +140,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       !selectedStudentProfile.instrumentIds ||
       taskLibrary.length === 0
     ) {
-      // Show all fetched tasks if student data is pending/missing or library empty
       return sortedTasks;
     }
     const studentInstruments = selectedStudentProfile.instrumentIds;
@@ -155,7 +150,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     });
   }, [sortedTasks, selectedStudentProfile, isLoadingSelectedStudent, taskLibrary.length]);
 
-  // Mutation
   const mutation = useMutation({
     mutationFn: createAssignedTask,
     onSuccess: createdAssignment => {
@@ -182,7 +176,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     },
   });
 
-  // Effect to reset state
   useEffect(() => {
     if (visible) {
       setIsAdHocMode(false);
@@ -190,7 +183,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       setAdHocTitle('');
       setAdHocDescription('');
       setAdHocBasePoints('');
-      setAdHocReferenceUrl(''); // Reset adhoc URL
+      setAdHocReferenceUrl('');
       setStudentSearchTerm('');
       mutation.reset();
       if (preselectedStudentId) {
@@ -201,7 +194,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         setStep(1);
       }
     } else {
-      // Clear all potentially sensitive state on close
       setStep(1);
       setSelectedStudentId(null);
       setSelectedLibraryTask(null);
@@ -212,9 +204,8 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       setAdHocReferenceUrl('');
       setStudentSearchTerm('');
     }
-  }, [visible, preselectedStudentId]); // Only run when visibility or preselection changes
+  }, [visible, preselectedStudentId]);
 
-  // Handlers
   const handleStudentSelect = (studentId: string) => {
     setSelectedStudentId(studentId);
     setStep(2);
@@ -234,8 +225,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Custom title required.' });
       return;
     }
-    // Description is optional for AdHoc? Let's assume yes for now.
-    // if (!adHocDescription.trim()) { Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Custom description required.' }); return; }
+
     if (isNaN(numericPoints) || numericPoints < 0) {
       Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Valid points required.' });
       return;
@@ -293,15 +283,15 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       assignmentPayload = {
         studentId: selectedStudentId,
         taskTitle: adHocTitle.trim(),
-        taskDescription: adHocDescription.trim(), // Send empty string if needed, API/EF handles null
+        taskDescription: adHocDescription.trim(),
         taskBasePoints: numericPoints,
-        taskLinkUrl: url || null, // Send null if empty
+        taskLinkUrl: url || null,
       };
     } else if (selectedLibraryTask) {
       assignmentPayload = {
         studentId: selectedStudentId,
         taskTitle: selectedLibraryTask.title,
-        taskDescription: selectedLibraryTask.description || '', // Use description or empty string
+        taskDescription: selectedLibraryTask.description || '',
         taskBasePoints: selectedLibraryTask.baseTickets,
         taskLinkUrl: selectedLibraryTask.referenceUrl || null,
         taskAttachmentPath: selectedLibraryTask.attachmentPath || null,
@@ -325,9 +315,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     } else onClose();
   };
 
-  // Render Logic
   const renderStepContent = () => {
-    // Step 1: Select Student
     if (step === 1 && !preselectedStudentId) {
       return (
         <>
@@ -372,7 +360,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       );
     }
 
-    // Step 2: Select Task
     if (step === 2) {
       return (
         <>
@@ -497,7 +484,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                   !isErrorLibrary &&
                   !isErrorSelectedStudent && (
                     <FlatList
-                      data={filteredTaskLibraryForStudent} // Use filtered list
+                      data={filteredTaskLibraryForStudent}
                       keyExtractor={item => item.id}
                       renderItem={({ item }) => (
                         <TouchableOpacity onPress={() => handleLibraryTaskSelect(item)}>
@@ -532,7 +519,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       );
     }
 
-    // Step 3: Confirmation
     if (step === 3) {
       const taskTitle = isAdHocMode ? adHocTitle : selectedLibraryTask?.title;
       const taskPoints = isAdHocMode ? adHocBasePoints : selectedLibraryTask?.baseTickets;
@@ -553,7 +539,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     return null;
   };
 
-  // Modal Structure
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
       <View style={commonSharedStyles.centeredView}>

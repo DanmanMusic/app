@@ -5,7 +5,6 @@ import { View, Text, ScrollView, Button, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
-// *** Import deleteAssignedTask and AssignedTask ***
 import { deleteAssignedTask } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
 import { deleteTaskLibraryItem } from '../api/taskLibrary';
@@ -58,7 +57,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const { currentUserId: adminUserId } = useAuth();
   const queryClient = useQueryClient();
 
-  // --- State Management ---
   const [viewingSection, setViewingSection] = useState<AdminSection>('dashboard');
   const [activeUserTab, setActiveUserTab] = useState<UserTab>('students');
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
@@ -77,14 +75,14 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const [isRedeemModalVisible, setIsRedeemModalVisible] = useState(false);
   const [isGeneratePinModalVisible, setIsGeneratePinModalVisible] = useState(false);
   const [isSetCredentialsModalVisible, setIsSetCredentialsModalVisible] = useState(false);
-  // *** State for Assigned Task Deletion ***
+
   const [isDeleteAssignedTaskConfirmVisible, setIsDeleteAssignedTaskConfirmVisible] =
     useState(false);
   const [assignedTaskToDelete, setAssignedTaskToDelete] = useState<AssignedTask | null>(null);
 
   const [taskToEdit, setTaskToEdit] = useState<TaskLibraryItem | null>(null);
   const [taskLibToDelete, setTaskLibToDelete] = useState<TaskLibraryItem | null>(null);
-  // Removed assignedTaskToDelete state from here, moved above
+
   const [userToManage, setUserToManage] = useState<User | null>(null);
   const [userForPin, setUserForPin] = useState<User | null>(null);
 
@@ -138,12 +136,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     },
   });
 
-  // *** Mutation for Deleting Assigned Tasks ***
   const deleteAssignedTaskMutation = useMutation({
-    mutationFn: deleteAssignedTask, // Use the imported API function
+    mutationFn: deleteAssignedTask,
     onSuccess: (_, deletedAssignmentId) => {
       console.log(`Assigned task ${deletedAssignmentId} removed successfully.`);
-      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] }); // Invalidate all task lists
+      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
       closeDeleteAssignedTaskConfirmModal();
       Toast.show({ type: 'success', text1: 'Success', text2: 'Assigned task removed.' });
     },
@@ -218,7 +215,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     }
   };
 
-  // *** Handlers for Assigned Task Deletion ***
   const handleInitiateDeleteAssignedTask = (task: AssignedTask) => {
     setAssignedTaskToDelete(task);
     setIsDeleteAssignedTaskConfirmVisible(true);
@@ -236,7 +232,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
     deleteAssignedTaskMutation.reset();
   };
 
-  // Other handlers remain the same
   const handleInitiateEditUser = (user: User) => {
     setUserToManage(user);
     setIsEditUserModalVisible(true);
@@ -506,7 +501,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
               </Text>
             </View>
             <PaginatedTasksList
-              key={JSON.stringify(adminTaskInitialFilters)} // Force re-render if filters change
+              key={JSON.stringify(adminTaskInitialFilters)}
               viewingRole="admin"
               initialAssignmentFilter={adminTaskInitialFilters?.assignment ?? 'all'}
               initialStudentStatusFilter={adminTaskInitialFilters?.student ?? 'all'}
@@ -637,7 +632,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           onClose={handleCloseRedeemModal}
           studentId={userToManage.id}
           studentName={getUserDisplayName(userToManage)}
-          redeemerId={adminUserId} // Assuming admin redeems
+          redeemerId={adminUserId}
         />
       )}
       <EditMyInfoModal visible={isEditInfoModalVisible} onClose={handleCloseEditInfoModal} />

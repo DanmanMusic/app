@@ -1,6 +1,6 @@
 // src/components/admin/modals/CreateTaskLibraryModal.tsx
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'; // Added useQuery
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Modal,
   View,
@@ -15,9 +15,9 @@ import Toast from 'react-native-toast-message';
 import * as DocumentPicker from 'expo-document-picker';
 
 import { createTaskLibraryItem } from '../../../api/taskLibrary';
-import { fetchInstruments } from '../../../api/instruments'; // Import fetchInstruments
+import { fetchInstruments } from '../../../api/instruments';
 
-import { Instrument, TaskLibraryItem } from '../../../types/dataTypes'; // Import Instrument
+import { Instrument, TaskLibraryItem } from '../../../types/dataTypes';
 import { colors } from '../../../styles/colors';
 import { CreateTaskLibraryModalProps } from '../../../types/componentProps';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
@@ -27,7 +27,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
   const [description, setDescription] = useState('');
   const [baseTickets, setBaseTickets] = useState<number | ''>('');
   const [referenceUrl, setReferenceUrl] = useState('');
-  const [selectedInstrumentIds, setSelectedInstrumentIds] = useState<string[]>([]); // Renamed state
+  const [selectedInstrumentIds, setSelectedInstrumentIds] = useState<string[]>([]);
   const [pickedDocument, setPickedDocument] = useState<DocumentPicker.DocumentPickerResult | null>(
     null
   );
@@ -35,7 +35,6 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
 
   const queryClient = useQueryClient();
 
-  // Fetch available instruments
   const {
     data: instruments = [],
     isLoading: isLoadingInstruments,
@@ -43,8 +42,8 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
   } = useQuery<Instrument[], Error>({
     queryKey: ['instruments'],
     queryFn: fetchInstruments,
-    staleTime: Infinity, // Instruments don't change often
-    enabled: visible, // Only fetch when modal is visible
+    staleTime: Infinity,
+    enabled: visible,
   });
 
   const mutation = useMutation({
@@ -76,7 +75,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
       setDescription('');
       setBaseTickets('');
       setReferenceUrl('');
-      setSelectedInstrumentIds([]); // Reset selected instruments
+      setSelectedInstrumentIds([]);
       setPickedDocument(null);
       setFileError(null);
       mutation.reset();
@@ -98,7 +97,6 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
     }
   };
 
-  // Toggle instrument selection
   const toggleInstrumentSelection = (id: string) => {
     setSelectedInstrumentIds(prev =>
       prev.includes(id) ? prev.filter(instId => instId !== id) : [...prev, id]
@@ -154,7 +152,6 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
       filePayload = { file: asset, mimeType: asset.mimeType, fileName: asset.name };
     }
 
-    // Use selectedInstrumentIds state here
     const newTaskData: Omit<TaskLibraryItem, 'id'> & {
       file?: any;
       mimeType?: string;
@@ -164,15 +161,14 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
       description: description.trim(),
       baseTickets: numericTickets,
       referenceUrl: referenceUrl.trim() || undefined,
-      instrumentIds: selectedInstrumentIds, // Use state variable
-      createdById: '', // EF sets this
+      instrumentIds: selectedInstrumentIds,
+      createdById: '',
       ...filePayload,
     };
 
     mutation.mutate(newTaskData);
   };
 
-  // Disable create if instruments are loading
   const isCreateDisabled =
     mutation.isPending ||
     isLoadingInstruments ||
@@ -185,8 +181,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
       <View style={commonSharedStyles.centeredView}>
         <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>Create New Library Task</Text>
-          <ScrollView style={commonSharedStyles.modalScrollView}>
-            {/* Title, Tickets, Description, URL Inputs (same as before) */}
+          <ScrollView style={[commonSharedStyles.modalScrollView, { paddingHorizontal: 2 }]}>
             <Text style={commonSharedStyles.label}>Task Title:</Text>
             <TextInput
               style={commonSharedStyles.input}

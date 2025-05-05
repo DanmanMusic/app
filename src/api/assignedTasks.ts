@@ -64,7 +64,6 @@ const mapDbRowToAssignedTaskWithNames = (row: any): AssignedTask => {
 
 const mapRpcRowToAssignedTask = (row: any): AssignedTask => {
   const getAssignerName = () => {
-    // Use names returned directly from the RPC function
     if (row.assigner_first_name || row.assigner_last_name) {
       return getUserDisplayName({
         firstName: row.assigner_first_name,
@@ -72,12 +71,11 @@ const mapRpcRowToAssignedTask = (row: any): AssignedTask => {
         nickname: row.assigner_nickname,
       });
     }
-    // Fallback to ID if names are null (e.g., assigner profile deleted)
+
     return row.assigned_by_id ? `ID: ${row.assigned_by_id}` : 'Unknown Assigner';
   };
 
   const getVerifierName = () => {
-    // Use names returned directly from the RPC function
     if (!row.verifier_first_name && !row.verifier_last_name) return undefined;
     return (
       getUserDisplayName({
@@ -85,11 +83,11 @@ const mapRpcRowToAssignedTask = (row: any): AssignedTask => {
         lastName: row.verifier_last_name,
         nickname: row.verifier_nickname,
       }) || (row.verified_by_id ? `ID: ${row.verified_by_id}` : undefined)
-    ); // Fallback to ID
+    );
   };
 
   const getStudentStatus = (): UserStatus | 'unknown' => {
-    const status = row.student_profile_status; // Use the status column from RPC result
+    const status = row.student_profile_status;
     if (status === 'active' || status === 'inactive') {
       return status as UserStatus;
     }
@@ -112,7 +110,7 @@ const mapRpcRowToAssignedTask = (row: any): AssignedTask => {
     actualPointsAwarded: row.actual_points_awarded ?? undefined,
     taskLinkUrl: row.task_link_url ?? null,
     taskAttachmentPath: row.task_attachment_path ?? null,
-    // Use the helper functions which now use RPC result columns
+
     assignerName: getAssignerName(),
     verifierName: getVerifierName(),
     studentStatus: getStudentStatus(),
@@ -139,18 +137,15 @@ export const fetchAssignedTasks = async ({
     `[fetchAssignedTasks RPC v2] Calling RPC: page=${page}, limit=${limit}, assignment=${assignmentStatus}, student=${studentStatus}, studentId=${studentId}, teacherId=${teacherId}`
   );
 
-  // Define parameters for the RPC call
   const rpcParams = {
     p_page: page,
     p_limit: limit,
     p_assignment_status: assignmentStatus,
     p_student_status: studentStatus,
-    p_student_id: studentId || null, // Pass null if undefined
-    p_teacher_id: teacherId || null, // Pass null if undefined
+    p_student_id: studentId || null,
+    p_teacher_id: teacherId || null,
   };
 
-  // --- Execute the RPC call ---
-  // The RPC function now returns total_count in each row
   const { data: rpcData, error: rpcError } = await client.rpc(
     'get_assigned_tasks_filtered',
     rpcParams
@@ -161,8 +156,6 @@ export const fetchAssignedTasks = async ({
     throw new Error(`Failed to fetch assigned tasks via RPC: ${rpcError.message}`);
   }
 
-  // --- Get total count from the FIRST row of the result ---
-  // Use nullish coalescing for safety
   const totalItems = Number(rpcData?.[0]?.total_count ?? 0);
   const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
 
@@ -170,7 +163,6 @@ export const fetchAssignedTasks = async ({
     `[fetchAssignedTasks RPC v2] Call successful. Total Count: ${totalItems}, Rows fetched: ${rpcData?.length ?? 0}`
   );
 
-  // Map the data returned from the RPC call
   const tasks = (rpcData || []).map(mapRpcRowToAssignedTask);
 
   return { items: tasks, totalPages, currentPage: page, totalItems };

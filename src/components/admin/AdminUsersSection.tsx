@@ -1,9 +1,9 @@
 // src/components/admin/AdminUsersSection.tsx
-import React from 'react'; // No longer needs { useState }
+import React from 'react';
 import { View, Text, Button, FlatList, TextInput, ActivityIndicator } from 'react-native';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
-import { AdminUsersSectionProps } from '../../types/componentProps'; // Assumes type is updated
+import { AdminUsersSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent, User, UserStatus } from '../../types/dataTypes';
 import { AdminUserItem } from '../common/AdminUserItem';
 import { AdminStudentItem } from '../common/AdminStudentItem';
@@ -16,12 +16,10 @@ import { capitalizeFirstLetter } from '../../utils/helpers';
 
 export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   activeTab,
-  instruments, // Keep instruments prop
+  instruments,
   onViewManageUser,
   onInitiateAssignTaskForStudent,
-  // REMOVED filter/search props
 }) => {
-  // Get ALL state and setters needed for students from the hook
   const {
     students,
     currentPage: studentCurrentPage,
@@ -32,13 +30,12 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     isFetching: isStudentFetching,
     isError: isStudentError,
     error: studentError,
-    currentFilter: studentFilterState, // State for filter
-    setFilter: setStudentFilterState, // Setter for filter
-    searchTerm: studentSearchTermState, // State for search
-    setSearchTerm: setStudentSearchTermState, // Setter for search
+    currentFilter: studentFilterState,
+    setFilter: setStudentFilterState,
+    searchTerm: studentSearchTermState,
+    setSearchTerm: setStudentSearchTermState,
   } = usePaginatedStudents();
 
-  // Other hooks remain the same
   const {
     teachers,
     currentPage: teacherCurrentPage,
@@ -75,7 +72,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     error: adminError,
   } = usePaginatedAdmins();
 
-  // Switch logic remains the same
   let displayData: Array<User | SimplifiedStudent>;
   let currentPage: number;
   let totalPages: number;
@@ -143,13 +139,12 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
       error = null;
   }
 
-  // renderUserItem remains the same
   const renderUserItem = ({ item }: { item: User | SimplifiedStudent }) => {
     if (activeTab === 'students') {
       return (
         <AdminStudentItem
           student={item as SimplifiedStudent}
-          instruments={instruments} // Pass instruments prop down
+          instruments={instruments}
           onViewManage={onViewManageUser}
           onInitiateAssignTask={onInitiateAssignTaskForStudent}
         />
@@ -165,7 +160,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     return `Error loading ${resource}: ${error.message}`;
   };
 
-  // Handlers now use setters directly from the student hook
   const handleFilterChange = (filter: UserStatus | 'all') => {
     setStudentFilterState(filter);
   };

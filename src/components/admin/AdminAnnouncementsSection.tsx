@@ -7,7 +7,7 @@ import Toast from 'react-native-toast-message';
 import { fetchAnnouncements, deleteAnnouncement } from '../../api/announcements';
 
 import { Announcement } from '../../types/dataTypes';
-// Correctly using commonSharedStyles
+
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 
@@ -155,7 +155,7 @@ export const AdminAnnouncementsSection = () => {
               </View>
             </View>
           )}
-          scrollEnabled={false} // Assuming this list won't be long enough to need scrolling within the main view's scroll
+          scrollEnabled={false}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
           ListEmptyComponent={() => (
             <Text style={commonSharedStyles.baseEmptyText}>No announcements found.</Text>

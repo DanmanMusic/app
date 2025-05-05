@@ -57,7 +57,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
     try {
       console.log('[LoginModal] Attempting Supabase email/password sign in...');
       try {
-        // --- Use storage helper for cleanup ---
         await removeItem(CUSTOM_REFRESH_TOKEN_KEY);
         console.log('[LoginModal] Cleared any existing PIN refresh token.');
       } catch (e) {
@@ -106,7 +105,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
       console.log('[LoginModal] PIN Claim successful via API:', sessionData);
 
       try {
-        // --- Use storage helper to store ---
         await storeItem(CUSTOM_REFRESH_TOKEN_KEY, sessionData.refresh_token);
         console.log('[LoginModal] Custom refresh token stored successfully.');
       } catch (storeError) {
@@ -117,7 +115,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
           text2: 'Could not save session token locally.',
           position: 'bottom',
         });
-        // --- Use storage helper for cleanup if store fails ---
+
         try {
           await removeItem(CUSTOM_REFRESH_TOKEN_KEY);
         } catch (removeErr) {
@@ -126,7 +124,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
         throw new Error('Failed to store session.');
       }
 
-      // Set the Supabase session (still needed for immediate use)
       await supabase.auth.setSession({
         access_token: sessionData.access_token,
         refresh_token: sessionData.refresh_token,
@@ -139,7 +136,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
       console.error('[LoginModal] Error claiming PIN via API or storing token:', catchError);
       setError(catchError.message || 'An error occurred during PIN login.');
       try {
-        // --- Use storage helper for cleanup on overall failure ---
         await removeItem(CUSTOM_REFRESH_TOKEN_KEY);
       } catch (e) {
         console.warn('Could not clear pin token on failed login', e);

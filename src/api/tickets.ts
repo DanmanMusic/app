@@ -14,13 +14,13 @@ interface BalanceResponse {
 
 interface RedeemRewardSuccessResponse {
   message: string;
-  newBalance: number; // The RPC function returns the calculated new balance
+  newBalance: number;
 }
 
 interface AdjustTicketsSuccessResponse {
   message: string;
-  transaction: TicketTransaction; // Return the created transaction record
-  newBalance: number; // Return the new balance calculated by the server
+  transaction: TicketTransaction;
+  newBalance: number;
 }
 
 const mapDbRowToTicketTransaction = (row: any): TicketTransaction => ({
@@ -117,28 +117,24 @@ export const fetchStudentBalance = async (studentId: string): Promise<number> =>
 
 export const adjustTickets = async ({
   studentId,
-  amount, // Keep amount as integer (positive or negative)
+  amount,
   notes,
-  // adjusterId is handled by the Edge Function via the auth token
 }: {
   studentId: string;
-  amount: number; // Can be positive or negative, but not zero
+  amount: number;
   notes: string;
 }): Promise<AdjustTicketsSuccessResponse> => {
-  // Update return type
   const client = getSupabase();
   console.log(
     `[API adjustTickets] Calling Edge Function "adjustTickets" for student ${studentId}, amount: ${amount}`
   );
 
-  // Prepare payload for the Edge Function
   const payload = {
     studentId: studentId,
     amount: amount,
     notes: notes,
   };
 
-  // Basic client-side validation
   if (
     !payload.studentId ||
     typeof payload.amount !== 'number' ||
@@ -177,13 +173,11 @@ export const adjustTickets = async ({
       detailedError += ` (Context: ${error.context.message})`;
     }
 
-    // Throw the error message from the Edge Function (e.g., "Insufficient balance")
     throw new Error(`Ticket adjustment failed: ${detailedError}`);
   }
 
   console.log('[API adjustTickets] Edge Function returned successfully:', data);
 
-  // Validate the success response structure from the Edge Function
   if (
     !data ||
     typeof data !== 'object' ||
@@ -195,11 +189,9 @@ export const adjustTickets = async ({
     throw new Error('Ticket adjustment function returned invalid data format.');
   }
 
-  // Map the returned transaction data if necessary (or assume Edge Function returns camelCase)
-  // For now, assume direct mapping works or adjust if needed
   const responseData = {
     ...data,
-    transaction: mapDbRowToTicketTransaction(data.transaction), // Map the nested transaction
+    transaction: mapDbRowToTicketTransaction(data.transaction),
   };
 
   return responseData as AdjustTicketsSuccessResponse;
@@ -208,18 +200,15 @@ export const adjustTickets = async ({
 export const redeemReward = async ({
   studentId,
   rewardId,
-  // redeemerId is handled by the Edge Function via the auth token, not passed from client API
 }: {
   studentId: string;
   rewardId: string;
 }): Promise<RedeemRewardSuccessResponse> => {
-  // Return the success response structure
   const client = getSupabase();
   console.log(
     `[API redeemReward] Calling Edge Function "redeemReward" for student ${studentId}, reward ${rewardId}`
   );
 
-  // Prepare payload for the Edge Function
   const payload = {
     studentId: studentId,
     rewardId: rewardId,
@@ -256,13 +245,11 @@ export const redeemReward = async ({
       detailedError += ` (Context: ${error.context.message})`;
     }
 
-    // Throw the error message received from the Edge Function (e.g., "Insufficient balance")
     throw new Error(`Redemption failed: ${detailedError}`);
   }
 
   console.log('[API redeemReward] Edge Function returned successfully:', data);
 
-  // Validate the success response structure
   if (
     !data ||
     typeof data !== 'object' ||
@@ -273,6 +260,5 @@ export const redeemReward = async ({
     throw new Error('Reward redemption function returned invalid data format.');
   }
 
-  // Return the success message and new balance
   return data as RedeemRewardSuccessResponse;
 };

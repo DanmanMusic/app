@@ -49,7 +49,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     queryKey: ['userProfile', targetStudentId],
     queryFn: () => fetchUserProfile(targetStudentId!),
     enabled: !!targetStudentId,
-    staleTime: 5 * 60 * 1000, // Re-fetch profile data occasionally
+    staleTime: 5 * 60 * 1000,
   });
 
   const {
@@ -61,7 +61,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     queryKey: ['balance', targetStudentId],
     queryFn: () => fetchStudentBalance(targetStudentId!),
     enabled: !!user && user.status === 'active',
-    staleTime: 1 * 60 * 1000, // Re-fetch balance more frequently
+    staleTime: 1 * 60 * 1000,
   });
 
   const {
@@ -72,7 +72,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   } = useQuery<RewardItem[], Error>({
     queryKey: ['rewards'],
     queryFn: fetchRewards,
-    staleTime: 10 * 60 * 1000, // Rewards change less often
+    staleTime: 10 * 60 * 1000,
   });
 
   const {
@@ -94,28 +94,28 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   } = useQuery<Instrument[], Error>({
     queryKey: ['instruments'],
     queryFn: fetchInstruments,
-    staleTime: Infinity, // Instruments rarely change
+    staleTime: Infinity,
   });
 
   const {
     data: activeTeachers = [],
-    isLoading: teachersLoading, // This variable is now defined
+    isLoading: teachersLoading,
     isError: teachersError,
     error: teachersErrorMsg,
   } = useQuery<User[], Error>({
-    queryKey: ['teachers', { status: 'active', context: 'studentViewLookup' }], // Unique context
+    queryKey: ['teachers', { status: 'active', context: 'studentViewLookup' }],
     queryFn: async () => {
-      const result = await fetchTeachers({ page: 1, limit: 1000 }); // Fetch all active
+      const result = await fetchTeachers({ page: 1, limit: 1000 });
       return (result?.items || []).filter(t => t.status === 'active');
     },
-    enabled: !!user, // Enable when user data is available
-    staleTime: 10 * 60 * 1000, // Cache for 10 mins
+    enabled: !!user,
+    staleTime: 10 * 60 * 1000,
   });
 
   const teacherNames = useMemo(() => {
     if (!user || !user.linkedTeacherIds || user.linkedTeacherIds.length === 0) return 'None';
-    if (teachersLoading) return 'Loading...'; // Use the teachersLoading state
-    if (teachersError) return 'Error'; // Handle teacher fetch error
+    if (teachersLoading) return 'Loading...';
+    if (teachersError) return 'Error';
 
     return (
       user.linkedTeacherIds
@@ -123,11 +123,10 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           const teacher = activeTeachers.find(t => t.id === id);
           return teacher ? getUserDisplayName(teacher) : `Unknown (${id.substring(0, 6)}...)`;
         })
-        .join(', ') || 'N/A' // Fallback if mapping results in empty
+        .join(', ') || 'N/A'
     );
   }, [user, activeTeachers, teachersLoading, teachersError]);
 
-  // --- Paginated Data Hooks ---
   const {
     tasks: paginatedTasks,
     currentPage: tasksCurrentPage,
@@ -152,7 +151,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     totalItems: totalHistoryCount,
   } = usePaginatedStudentHistory(targetStudentId);
 
-  // --- Mutations ---
   const markCompleteMutation = useMutation({
     mutationFn: (assignmentId: string) =>
       updateAssignedTask({ assignmentId, updates: { isComplete: true } }),
@@ -592,13 +590,13 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
               )}
               {!rewardsLoading && !rewardsError && (
                 <FlatList
-                  data={rewardsCatalog} // Catalog is already sorted by cost in the query
+                  data={rewardsCatalog}
                   keyExtractor={item => `reward-${item.id}`}
                   renderItem={({ item }) => (
                     <RewardItemStudent
                       item={item}
                       currentBalance={balance}
-                      isGoal={item.id === studentGoalRewardId} // Use studentGoalRewardId
+                      isGoal={item.id === studentGoalRewardId}
                     />
                   )}
                   ItemSeparatorComponent={() => <View style={{ height: 10 }} />}

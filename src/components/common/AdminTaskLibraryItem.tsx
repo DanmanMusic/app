@@ -1,19 +1,16 @@
 // src/components/common/AdminTaskLibraryItem.tsx
 
 import React from 'react';
-import { Button, Text, View, Linking, StyleSheet, TouchableOpacity } from 'react-native';
+import { Button, Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import Toast from 'react-native-toast-message';
 
 import { colors } from '../../styles/colors';
 import { AdminTaskLibraryItemProps } from '../../types/componentProps';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { fetchInstruments } from '../../api/instruments';
 import { getInstrumentNames } from '../../utils/helpers';
-import { getSupabase } from '../../lib/supabaseClient';
+import { getSupabase, handleOpenUrl, handleViewAttachment } from '../../lib/supabaseClient';
 import { Instrument } from '../../types/dataTypes';
-
-const TASK_ATTACHMENT_BUCKET = 'task-library-attachments';
 
 export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
   item,
@@ -28,40 +25,6 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
   });
 
   const instrumentNames = getInstrumentNames(item.instrumentIds, allInstruments);
-
-  const handleOpenUrl = async (url: string | null | undefined) => {
-    if (!url) return;
-    const supported = await Linking.canOpenURL(url);
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      Toast.show({ type: 'error', text1: 'Error', text2: `Cannot open URL: ${url}` });
-      console.error(`Don't know how to open this URL: ${url}`);
-    }
-  };
-
-  const handleViewAttachment = async () => {
-    if (!item.attachmentPath) return;
-    try {
-      const supabase = getSupabase();
-      const { data, error } = await supabase.storage
-        .from(TASK_ATTACHMENT_BUCKET)
-        .createSignedUrl(item.attachmentPath, 60);
-
-      if (error) throw error;
-
-      if (data?.signedUrl) {
-        handleOpenUrl(data.signedUrl);
-      }
-    } catch (error: any) {
-      console.error('Error getting signed URL for attachment:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: `Could not get download link: ${error.message}`,
-      });
-    }
-  };
 
   return (
     <View
@@ -88,7 +51,7 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
         {item.referenceUrl ? (
           <TouchableOpacity onPress={() => handleOpenUrl(item.referenceUrl)}>
             <Text style={styles.detailText}>
-              Reference: <Text style={styles.linkText}>{item.referenceUrl}</Text>
+              Reference: <Text style={commonSharedStyles.linkText}>{item.referenceUrl}</Text>
             </Text>
           </TouchableOpacity>
         ) : (
@@ -98,9 +61,9 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
         )}
 
         {item.attachmentPath ? (
-          <TouchableOpacity onPress={handleViewAttachment}>
+          <TouchableOpacity onPress={() => handleViewAttachment(item.attachmentPath)}>
             <Text style={styles.detailText}>
-              Attachment: <Text style={styles.linkText}>View/Download</Text>
+              Attachment: <Text style={commonSharedStyles.linkText}>View/Download</Text>
             </Text>
           </TouchableOpacity>
         ) : (
@@ -143,10 +106,5 @@ const styles = StyleSheet.create({
   detailValue: {
     fontWeight: '600',
     color: colors.textPrimary,
-  },
-  linkText: {
-    color: colors.primary,
-    textDecorationLine: 'underline',
-    fontWeight: '600',
   },
 });

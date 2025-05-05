@@ -26,19 +26,18 @@ const ITEMS_PER_PAGE = 20;
 export const usePaginatedStudents = (): UsePaginatedStudentsReturn => {
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
-  const [currentFilter, setInternalFilter] = useState<UserStatus | 'all'>('active'); // Rename internal setter
-  const [searchTerm, setInternalSearchTerm] = useState(''); // Rename internal setter
+  const [currentFilter, setInternalFilter] = useState<UserStatus | 'all'>('active');
+  const [searchTerm, setInternalSearchTerm] = useState('');
 
-  // *** Wrap setters in useCallback with logging ***
   const setFilter = useCallback((filter: UserStatus | 'all') => {
     console.log(`[usePaginatedStudents] setFilter called with: ${filter}`);
     setInternalFilter(filter);
-  }, []); // No dependencies needed for basic setter
+  }, []);
 
   const setSearchTerm = useCallback((term: string) => {
     console.log(`[usePaginatedStudents] setSearchTerm called with: ${term}`);
     setInternalSearchTerm(term);
-  }, []); // No dependencies needed for basic setter
+  }, []);
 
   const queryKey = [
     'students',

@@ -4,7 +4,7 @@ import Slider from '@react-native-community/slider';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { updateAssignedTask } from '../../api/assignedTasks'; // Use the API function wrapper
+import { updateAssignedTask } from '../../api/assignedTasks';
 import { fetchUserProfile } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
 import { User } from '../../types/dataTypes';
@@ -18,22 +18,19 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   task,
   onClose,
 }) => {
-  const { currentUserId: verifierId } = useAuth(); // Verifier is the currently logged-in user
+  const { currentUserId: verifierId } = useAuth();
   const studentId = task?.studentId;
   const queryClient = useQueryClient();
 
-  // Modal state
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<VerificationStatusInput | undefined>(
     undefined
-  ); // Use the specific input type
+  );
   const [awardedPoints, setAwardedPoints] = useState<number>(0);
-  const [baseTickets, setBaseTickets] = useState<number>(0); // Store base tickets from task prop
+  const [baseTickets, setBaseTickets] = useState<number>(0);
 
-  // Type expected by the Edge function/API payload
   type VerificationStatusInput = 'verified' | 'partial' | 'incomplete';
 
-  // Query to fetch student details for display
   const {
     data: student,
     isLoading: isLoadingStudent,
@@ -42,30 +39,29 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   } = useQuery<User | null, Error>({
     queryKey: ['userProfile', studentId, { context: 'verificationModal' }],
     queryFn: () => (studentId ? fetchUserProfile(studentId) : Promise.resolve(null)),
-    enabled: !!visible && !!studentId, // Only fetch when modal is visible with a studentId
+    enabled: !!visible && !!studentId,
     staleTime: 5 * 60 * 1000,
   });
 
-  // Mutation to call the API function (which calls the Edge Function)
   const verifyMutation = useMutation({
-    mutationFn: updateAssignedTask, // Use the existing API function wrapper
+    mutationFn: updateAssignedTask,
     onSuccess: updatedTask => {
       console.log(
         `[TaskVerificationModal] Task ${updatedTask.id} verification processed successfully via API/Edge Function.`
       );
-      // Invalidate queries to refresh task lists and potentially balance/history
+
       queryClient.invalidateQueries({
         queryKey: ['assigned-tasks', { studentId: updatedTask.studentId }],
       });
-      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] }); // Broader invalidation for lists
-      queryClient.invalidateQueries({ queryKey: ['balance', updatedTask.studentId] }); // Invalidate balance
+      queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['balance', updatedTask.studentId] });
       queryClient.invalidateQueries({
         queryKey: ['ticket-history', { studentId: updatedTask.studentId }],
-      }); // Invalidate history
-      queryClient.invalidateQueries({ queryKey: ['ticket-history'] }); // Invalidate global history
-      queryClient.invalidateQueries({ queryKey: ['taskStats', 'pendingCount'] }); // Invalidate pending count
+      });
+      queryClient.invalidateQueries({ queryKey: ['ticket-history'] });
+      queryClient.invalidateQueries({ queryKey: ['taskStats', 'pendingCount'] });
 
-      setCurrentStep(3); // Move to confirmation step
+      setCurrentStep(3);
     },
     onError: (error: Error) => {
       console.error('[TaskVerificationModal] Error verifying task:', error);
@@ -107,14 +103,13 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
         break;
       case 'incomplete':
         initialPoints = 0;
-        break; // Always 0 for incomplete
+        break;
     }
     setSelectedStatus(status);
     setAwardedPoints(initialPoints);
-    setCurrentStep(2); // Move to points adjustment step
+    setCurrentStep(2);
   };
 
-  // Handler for confirming the points and triggering the mutation
   const handleConfirmTickets = () => {
     if (!selectedStatus || !verifierId || !task) {
       Toast.show({
@@ -124,7 +119,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
       });
       return;
     }
-    if (verifyMutation.isPending) return; // Prevent double submit
+    if (verifyMutation.isPending) return;
     if (selectedStatus === 'incomplete' && awardedPoints !== 0) {
       Toast.show({
         type: 'error',
@@ -155,10 +150,8 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     const updatePayload = {
       assignmentId: task.id,
       updates: {
-        // Structure expected by updateAssignedTask when verifying
         verificationStatus: selectedStatus,
         actualPointsAwarded: awardedPoints,
-        // verifiedById will be set by the Edge Function using the caller's token
       },
     };
 
@@ -166,11 +159,9 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     verifyMutation.mutate(updatePayload);
   };
 
-  // --- Rendering Logic ---
-
   if (!visible || !task) {
     return null;
-  } // Don't render if not visible or no task
+  }
 
   const studentNameDisplay = isLoadingStudent
     ? 'Loading student...'
@@ -185,7 +176,6 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     : 'N/A';
   const basePointsDisplay = baseTickets;
 
-  // Step 1: Select Status
   if (currentStep === 1) {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -242,9 +232,8 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     );
   }
 
-  // Step 2: Adjust Points (if status selected)
   if (currentStep === 2 && selectedStatus) {
-    const isConfirmDisabled = verifyMutation.isPending; // Disable only while mutation runs
+    const isConfirmDisabled = verifyMutation.isPending;
 
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -344,7 +333,6 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
     );
   }
 
-  // Step 3: Confirmation / Done
   if (currentStep === 3) {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>

@@ -1,7 +1,7 @@
 // src/components/common/SharedHeader.tsx
-import React, { useState, useMemo } from 'react'; // Remove useMemo if no longer needed
+import React, { useState, useMemo } from 'react';
 import { View, Text, Button } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext'; // Import useAuth
+import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import ConfirmationModal from './ConfirmationModal';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
@@ -31,10 +31,9 @@ export const SharedHeader: React.FC<SharedHeaderProps> = ({ onSetLoginPress, onE
 
   const handleLogoutPress = () => {
     console.log('[SharedHeader] handleLogoutPress triggered.');
-    console.log('[SharedHeader] Context isPinSession:', isPinSession); // Log context value
+    console.log('[SharedHeader] Context isPinSession:', isPinSession);
 
     if (isPinSession) {
-      // Use the flag from context
       console.log('[SharedHeader] PIN session detected. Setting confirmation modal visible.');
       setIsConfirmLogoutVisible(true);
     } else {

@@ -226,7 +226,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.log(
               '[AuthContext] tryInitialPinRefresh: supabase.auth.setSession SUCCEEDED. Listener will update state.'
             );
-            // isLoadingSession will be set to false by the listener or profile fetch effect
           }
         } catch (refreshError: any) {
           if (!isMounted) return;
@@ -498,7 +497,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// useAuth hook
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {

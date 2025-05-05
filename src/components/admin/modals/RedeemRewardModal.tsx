@@ -13,15 +13,12 @@ import {
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-// API Imports
 import { fetchRewards } from '../../../api/rewards';
-import { fetchStudentBalance, redeemReward } from '../../../api/tickets'; // Use updated redeemReward
+import { fetchStudentBalance, redeemReward } from '../../../api/tickets';
 
-// Type Imports
 import { RewardItem } from '../../../types/dataTypes';
 import { RedeemRewardModalProps } from '../../../types/componentProps';
 
-// Style Imports
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
@@ -30,27 +27,24 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
   onClose,
   studentId,
   studentName,
-  // redeemerId is no longer needed as a prop, comes from auth context via API call
 }) => {
   const queryClient = useQueryClient();
   const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
 
-  // Fetch student balance
   const {
     data: currentBalance = 0,
     isLoading: balanceLoading,
     isError: balanceError,
     error: balanceErrorMsg,
-    refetch: refetchBalance, // Add refetch function
+    refetch: refetchBalance,
   } = useQuery<number, Error>({
     queryKey: ['balance', studentId, { context: 'redeemModal' }],
     queryFn: () => fetchStudentBalance(studentId),
-    enabled: visible && !!studentId, // Enable only when modal is visible and studentId is present
-    staleTime: 0, // Fetch fresh balance when modal opens or studentId changes
-    gcTime: 1 * 60 * 1000, // Cache for 1 minute
+    enabled: visible && !!studentId,
+    staleTime: 0,
+    gcTime: 1 * 60 * 1000,
   });
 
-  // Fetch rewards catalog
   const {
     data: rewardsCatalog = [],
     isLoading: isLoadingRewards,
@@ -59,61 +53,54 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
   } = useQuery<RewardItem[], Error>({
     queryKey: ['rewards'],
     queryFn: fetchRewards,
-    staleTime: 10 * 60 * 1000, // Cache rewards for 10 mins
-    enabled: visible, // Enable only when modal is visible
+    staleTime: 10 * 60 * 1000,
+    enabled: visible,
   });
 
-  // Mutation for redeeming reward (calls the API function which calls the Edge Function)
   const redeemMutation = useMutation({
-    mutationFn: redeemReward, // Use the updated API function
+    mutationFn: redeemReward,
     onSuccess: (data, variables) => {
-      // data here is { message, newBalance }
       console.log(
         `[RedeemRewardModal] Redemption successful for student ${variables.studentId}, reward ${variables.rewardId}. New Balance: ${data.newBalance}`
       );
       Toast.show({ type: 'success', text1: 'Redemption Successful!', text2: data.message });
 
-      // Invalidate relevant queries AFTER success
       queryClient.invalidateQueries({ queryKey: ['balance', variables.studentId] });
       queryClient.invalidateQueries({
         queryKey: ['ticket-history', { studentId: variables.studentId }],
       });
-      queryClient.invalidateQueries({ queryKey: ['ticket-history'] }); // Invalidate global history
-      // Optionally force immediate balance refetch for UI update, though invalidation often suffices
-      // refetchBalance();
+      queryClient.invalidateQueries({ queryKey: ['ticket-history'] });
 
-      onClose(); // Close modal on success
+      onClose();
     },
     onError: (error: Error) => {
       console.error('[RedeemRewardModal] Redemption mutation failed:', error);
       Toast.show({
         type: 'error',
         text1: 'Redemption Failed',
-        text2: error.message || 'Could not redeem reward.', // Display error from Edge Function/RPC
+        text2: error.message || 'Could not redeem reward.',
         position: 'bottom',
         visibilityTime: 5000,
       });
     },
   });
 
-  // Reset selection when modal opens or student changes
   useEffect(() => {
     if (visible) {
       setSelectedRewardId(null);
       redeemMutation.reset();
-      // Refetch balance when modal becomes visible for the specific student
+
       if (studentId) {
         refetchBalance();
       }
     }
-  }, [visible, studentId, refetchBalance]); // Add refetchBalance to dependencies
+  }, [visible, studentId, refetchBalance]);
 
-  // Handler for selecting a reward item
   const handleSelectItem = (reward: RewardItem) => {
-    if (redeemMutation.isPending || balanceLoading) return; // Prevent selection during loading/mutation
+    if (redeemMutation.isPending || balanceLoading) return;
 
     if (!balanceError && currentBalance >= reward.cost) {
-      setSelectedRewardId(reward.id); // Select if affordable
+      setSelectedRewardId(reward.id);
     } else if (!balanceError && currentBalance < reward.cost) {
       Toast.show({
         type: 'error',
@@ -121,9 +108,8 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
         text2: `Need ${reward.cost - currentBalance} more tickets.`,
         position: 'bottom',
       });
-      setSelectedRewardId(null); // Deselect if not affordable
+      setSelectedRewardId(null);
     } else {
-      // Handle balance error case - maybe prevent selection?
       Toast.show({
         type: 'error',
         text1: 'Error',
@@ -133,7 +119,6 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
     }
   };
 
-  // Handler for the final confirmation button
   const handleConfirmRedemption = () => {
     if (!selectedRewardId) {
       Toast.show({ type: 'error', text1: 'Error', text2: 'Please select a reward to redeem.' });
@@ -154,36 +139,32 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
 
     const selectedReward = rewardsCatalog.find(r => r.id === selectedRewardId);
     if (!selectedReward) {
-      // Should not happen if selectedRewardId is set from list
       Toast.show({ type: 'error', text1: 'Error', text2: 'Selected reward data not found.' });
       return;
     }
 
-    // Double-check affordability right before mutation
     if (currentBalance < selectedReward.cost) {
       Toast.show({
         type: 'error',
         text1: 'Insufficient Tickets',
         text2: `Cannot redeem ${selectedReward.name}. Balance might have changed.`,
       });
-      setSelectedRewardId(null); // Deselect if suddenly unaffordable
+      setSelectedRewardId(null);
       return;
     }
 
     console.log(
       `[RedeemRewardModal] Initiating redemption mutation for student ${studentId}, reward ${selectedRewardId}`
     );
-    // Call the mutation with studentId and rewardId
+
     redeemMutation.mutate({
       studentId: studentId,
       rewardId: selectedRewardId,
     });
   };
 
-  // Find selected reward details for display/confirmation
   const selectedReward = rewardsCatalog.find(r => r.id === selectedRewardId);
 
-  // Determine if confirm button should be disabled
   const isConfirmDisabled =
     !selectedRewardId ||
     balanceLoading ||
@@ -191,21 +172,19 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
     isLoadingRewards ||
     balanceError;
 
-  // Render function for each reward item in the list
   const renderRewardItem = ({ item }: { item: RewardItem }) => {
-    // Determine affordability based on fetched balance (handle loading/error states)
     const canAfford = balanceLoading ? null : balanceError ? false : currentBalance >= item.cost;
     const isSelected = item.id === selectedRewardId;
 
     return (
       <TouchableOpacity
         onPress={() => handleSelectItem(item)}
-        disabled={balanceLoading || balanceError || redeemMutation.isPending || isLoadingRewards} // Disable touch during loading/mutation
+        disabled={balanceLoading || balanceError || redeemMutation.isPending || isLoadingRewards}
       >
         <View
           style={[
             commonSharedStyles.rewardItemBase,
-            // Apply styles based on affordability and selection
+
             canAfford === false && commonSharedStyles.rewardItemUnaffordable,
             isSelected && commonSharedStyles.rewardItemSelected,
           ]}
@@ -269,14 +248,14 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
           {!isLoadingRewards && !isErrorRewards && (
             <FlatList
               style={commonSharedStyles.listItemFull}
-              data={rewardsCatalog} // Already sorted by cost in API fetch? If not, add sort here.
+              data={rewardsCatalog}
               renderItem={renderRewardItem}
               keyExtractor={item => item.id}
               ItemSeparatorComponent={() => <View style={commonSharedStyles.separator} />}
               ListEmptyComponent={
                 <Text style={commonSharedStyles.baseEmptyText}>No rewards available.</Text>
               }
-              extraData={selectedRewardId || currentBalance} // Re-render list if selection or balance changes
+              extraData={selectedRewardId || currentBalance}
             />
           )}
 

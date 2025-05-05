@@ -2,10 +2,7 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-// --- Define storage keys centrally ---
 export const CUSTOM_REFRESH_TOKEN_KEY = 'pin_refresh_token';
-// Add other keys if needed, e.g.:
-// export const CUSTOM_ACCESS_TOKEN_KEY = 'pin_access_token';
 
 export const storeItem = async (key: string, value: string): Promise<void> => {
   try {
@@ -18,7 +15,7 @@ export const storeItem = async (key: string, value: string): Promise<void> => {
     }
   } catch (error) {
     console.error(`[StorageHelper] Error storing item (key: ${key}):`, error);
-    // Optionally re-throw or handle specific errors
+
     throw new Error(`Failed to store item for key: ${key}`);
   }
 };
@@ -40,8 +37,8 @@ export const getItem = async (key: string): Promise<string | null> => {
     return value;
   } catch (error) {
     console.error(`[StorageHelper] Error retrieving item (key: ${key}):`, error);
-    // Optionally re-throw or handle specific errors
-    return null; // Return null on error to indicate failure
+
+    return null;
   }
 };
 
@@ -56,7 +53,7 @@ export const removeItem = async (key: string): Promise<void> => {
     }
   } catch (error) {
     console.error(`[StorageHelper] Error removing item (key: ${key}):`, error);
-    // Optionally re-throw or handle specific errors
+
     throw new Error(`Failed to remove item for key: ${key}`);
   }
 };

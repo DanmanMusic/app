@@ -4,14 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Modal, View, Text, Button, TextInput, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-// API Imports
-import { fetchStudentBalance, adjustTickets } from '../../../api/tickets'; // Use updated adjustTickets
+import { fetchStudentBalance, adjustTickets } from '../../../api/tickets';
 
-// Context & Type Imports
-// import { useAuth } from '../../../contexts/AuthContext'; // No longer need adjusterId from context
 import { ManualTicketAdjustmentModalProps } from '../../../types/componentProps';
 
-// Style Imports
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
@@ -21,77 +17,66 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
   studentId,
   studentName,
 }) => {
-  // const { currentUserId: adminUserId } = useAuth(); // Adjuster ID comes from token now
   const queryClient = useQueryClient();
 
-  // State for the form
-  const [amount, setAmount] = useState<number | ''>(''); // Amount to add/subtract
-  const [notes, setNotes] = useState(''); // Reason for adjustment
-  const [isSubtracting, setIsSubtracting] = useState(false); // Mode toggle
+  const [amount, setAmount] = useState<number | ''>('');
+  const [notes, setNotes] = useState('');
+  const [isSubtracting, setIsSubtracting] = useState(false);
 
-  // Query for current balance display
   const {
     data: currentBalance = 0,
     isLoading: balanceLoading,
     isError: balanceError,
     error: balanceErrorMsg,
-    refetch: refetchBalance, // Function to refetch balance
+    refetch: refetchBalance,
   } = useQuery<number, Error>({
     queryKey: ['balance', studentId, { context: 'adjustmentModal' }],
     queryFn: () => fetchStudentBalance(studentId),
-    enabled: visible && !!studentId, // Only fetch when modal visible and studentId set
-    staleTime: 0, // Fetch fresh balance on open
+    enabled: visible && !!studentId,
+    staleTime: 0,
     gcTime: 2 * 60 * 1000,
   });
 
-  // Mutation hook for adjusting tickets (calls API -> Edge Function)
   const mutation = useMutation({
-    mutationFn: adjustTickets, // Use the API function that calls the Edge Function
+    mutationFn: adjustTickets,
     onSuccess: data => {
-      // Data is { message, transaction, newBalance }
       console.log('[AdjustModal] Ticket adjustment successful:', data);
       Toast.show({ type: 'success', text1: 'Success!', text2: data.message });
 
-      // Invalidate queries to update UI elsewhere
       queryClient.invalidateQueries({ queryKey: ['balance', studentId] });
       queryClient.invalidateQueries({ queryKey: ['ticket-history', { studentId: studentId }] });
-      queryClient.invalidateQueries({ queryKey: ['ticket-history'] }); // Global history
+      queryClient.invalidateQueries({ queryKey: ['ticket-history'] });
 
-      // Optional: Immediately update the balance query data for this modal
       queryClient.setQueryData(
         ['balance', studentId, { context: 'adjustmentModal' }],
         data.newBalance
       );
 
-      onClose(); // Close modal on success
+      onClose();
     },
     onError: (error: Error) => {
       console.error('[AdjustModal] Ticket adjustment failed:', error);
       Toast.show({
         type: 'error',
         text1: 'Adjustment Failed',
-        text2: error.message || 'Could not adjust tickets.', // Show error from Edge Function
+        text2: error.message || 'Could not adjust tickets.',
         position: 'bottom',
         visibilityTime: 5000,
       });
     },
   });
 
-  // Effect to reset form when modal opens or student changes
   useEffect(() => {
     if (visible && studentId) {
       setAmount('');
       setNotes('');
       setIsSubtracting(false);
       mutation.reset();
-      refetchBalance(); // Fetch fresh balance on open
+      refetchBalance();
     }
-    // No cleanup needed when hiding, as state is reset on visible=true
-  }, [visible, studentId, refetchBalance]); // Rerun if visibility or student changes
+  }, [visible, studentId, refetchBalance]);
 
-  // Handler for confirm button press
   const handleAdjust = () => {
-    // Basic client-side validation (Edge function does more thorough checks)
     if (amount === '' || isNaN(Number(amount)) || Number(amount) <= 0) {
       Toast.show({
         type: 'error',
@@ -108,11 +93,10 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
       });
       return;
     }
-    if (mutation.isPending) return; // Prevent double submit
+    if (mutation.isPending) return;
 
     const adjustmentAmount = isSubtracting ? -Number(amount) : Number(amount);
 
-    // Client-side check for subtraction (optional, Edge Func also checks)
     if (isSubtracting && !balanceLoading && !balanceError && currentBalance < Number(amount)) {
       Toast.show({
         type: 'error',
@@ -125,23 +109,20 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
     console.log(`[AdjustModal] Initiating ticket adjustment mutation. Amount: ${adjustmentAmount}`);
     mutation.mutate({
       studentId: studentId,
-      amount: adjustmentAmount, // Send positive or negative value
+      amount: adjustmentAmount,
       notes: notes.trim(),
-      // adjusterId is handled by Edge Function
     });
   };
 
-  // Calculate preview (handle loading/error states)
   const numericAmount = Number(amount);
   const newBalancePreview =
     balanceLoading || balanceError || isNaN(numericAmount) || amount === ''
-      ? '...' // Show loading/error indicator
+      ? '...'
       : currentBalance + (isSubtracting ? -numericAmount : numericAmount);
 
-  // Determine button text and disable state
   const actionText = isSubtracting ? 'Subtract' : 'Add';
   const confirmButtonText = mutation.isPending ? 'Processing...' : `${actionText} Tickets`;
-  // Disable if loading balance, mutation pending, or form invalid
+
   const isConfirmDisabled =
     balanceLoading || mutation.isPending || amount === '' || Number(amount) <= 0 || !notes.trim();
 
@@ -173,13 +154,13 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
               title="Add Tickets"
               onPress={() => setIsSubtracting(false)}
               color={!isSubtracting ? colors.primary : colors.secondary}
-              disabled={mutation.isPending || balanceLoading || balanceError} // Also disable if balance error
+              disabled={mutation.isPending || balanceLoading || balanceError}
             />
             <Button
               title="Subtract Tickets"
               onPress={() => setIsSubtracting(true)}
               color={isSubtracting ? colors.warning : colors.secondary}
-              disabled={mutation.isPending || balanceLoading || balanceError} // Also disable if balance error
+              disabled={mutation.isPending || balanceLoading || balanceError}
             />
           </View>
 
@@ -187,10 +168,10 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
           <Text style={commonSharedStyles.label}>Amount to {actionText}:</Text>
           <TextInput
             style={commonSharedStyles.input}
-            value={String(amount)} // Ensure value is string for input
+            value={String(amount)}
             onChangeText={text =>
               setAmount(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || '')
-            } // Allow only positive integers
+            }
             placeholder="Enter amount (e.g., 100)"
             placeholderTextColor={colors.textLight}
             keyboardType="numeric"
@@ -220,15 +201,14 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
               <Text style={commonSharedStyles.baseSecondaryText}>Adjusting Tickets...</Text>
             </View>
           )}
-          {mutation.isError &&
-            !mutation.isPending && ( // Show error only if not pending
-              <Text style={[commonSharedStyles.errorText, { marginTop: 10 }]}>
-                Error:{' '}
-                {mutation.error instanceof Error
-                  ? mutation.error.message
-                  : 'Failed to adjust tickets'}
-              </Text>
-            )}
+          {mutation.isError && !mutation.isPending && (
+            <Text style={[commonSharedStyles.errorText, { marginTop: 10 }]}>
+              Error:{' '}
+              {mutation.error instanceof Error
+                ? mutation.error.message
+                : 'Failed to adjust tickets'}
+            </Text>
+          )}
 
           {/* Action Buttons */}
           <View style={commonSharedStyles.full}>

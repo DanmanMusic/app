@@ -3,18 +3,14 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Modal, View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 
-// API Import
 import { fetchRewards } from '../../../api/rewards';
 
-// Type Imports
 import { RewardItem } from '../../../types/dataTypes';
 import { SetGoalModalProps } from '../../../types/componentProps';
 
-// Style Imports
 import { colors } from '../../../styles/colors';
-import { commonSharedStyles } from '../../../styles/commonSharedStyles'; // Use common
+import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
-// Component Import
 import { RewardGoalItem } from '../../common/RewardGoalItem';
 
 export const SetGoalModal: React.FC<SetGoalModalProps> = ({
@@ -24,29 +20,24 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
   currentGoalId,
   onSetGoal,
 }) => {
-  // Query to fetch available rewards
   const {
     data: rewardsCatalog = [],
     isLoading,
     isError,
     error,
   } = useQuery<RewardItem[], Error>({
-    queryKey: ['rewards'], // Use the same query key as other places fetching rewards
+    queryKey: ['rewards'],
     queryFn: fetchRewards,
-    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
-    enabled: visible, // Only fetch when the modal is visible
+    staleTime: 10 * 60 * 1000,
+    enabled: visible,
   });
 
-  // Handler when a reward is selected as the goal
   const handleSelectGoal = (id: string) => {
-    onSetGoal(id); // Pass the selected ID back to the parent (StudentView)
-    // StudentView will handle closing the modal via mutation success/error
+    onSetGoal(id);
   };
 
-  // Handler to clear the current goal
   const handleClearGoal = () => {
-    onSetGoal(null); // Pass null back to indicate clearing the goal
-    // StudentView will handle closing the modal via mutation success/error
+    onSetGoal(null);
   };
 
   return (
@@ -72,11 +63,10 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
           {/* Rewards List */}
           {!isLoading && !isError && (
             <FlatList
-              style={commonSharedStyles.listItemFull} // Use common style for list container
-              data={rewardsCatalog.sort((a, b) => a.cost - b.cost)} // Sort by cost ascending
+              style={commonSharedStyles.listItemFull}
+              data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
-                // RewardGoalItem uses commonSharedStyles internally now
                 <RewardGoalItem
                   item={item}
                   isCurrentGoal={item.id === currentGoalId}
@@ -84,13 +74,13 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
                   onSelect={handleSelectGoal}
                 />
               )}
-              ItemSeparatorComponent={() => <View style={{ height: 8 }} />} // Consistent separator
+              ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
               ListEmptyComponent={
                 <Text style={commonSharedStyles.baseEmptyText}>
                   No rewards available to set as goal.
                 </Text>
               }
-              ListFooterComponent={<View style={{ height: 10 }} />} // Footer space
+              ListFooterComponent={<View style={{ height: 10 }} />}
             />
           )}
 

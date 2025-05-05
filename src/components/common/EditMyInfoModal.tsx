@@ -309,7 +309,7 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
             </View>
           )}
 
-          <ScrollView style={commonSharedStyles.modalScrollView}>
+          <ScrollView style={[commonSharedStyles.modalScrollView, { paddingHorizontal: 2 }]}>
             {mode === 'profile' && (
               <View>
                 <Text style={commonSharedStyles.modalSectionTitle}>Profile Details</Text>
@@ -361,7 +361,7 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
               </View>
             )}
             {mode === 'credentials' && hasSetUpCredentials && (
-              <View>
+              <View style={{ paddingHorizontal: 2 }}>
                 <Text style={commonSharedStyles.modalSectionTitle}>Login Details</Text>
                 {isLoadingAuthData && <ActivityIndicator color={colors.secondary} />}
                 {isErrorAuthData && (

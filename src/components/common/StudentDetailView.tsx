@@ -19,7 +19,12 @@ import { fetchStudentBalance } from '../../api/tickets';
 import { fetchUserProfile, fetchTeachers, fetchAuthUser } from '../../api/users';
 import { usePaginatedStudentHistory } from '../../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../../hooks/usePaginatedStudentTasks';
-import { getSupabase } from '../../lib/supabaseClient';
+import {
+  getSupabase,
+  handleOpenUrl,
+  handleViewAttachment,
+  TASK_ATTACHMENT_BUCKET,
+} from '../../lib/supabaseClient';
 import { TicketHistoryItem } from './TicketHistoryItem';
 import PaginationControls from '../admin/PaginationControls';
 import { AssignedTask, Instrument, User } from '../../types/dataTypes';
@@ -28,8 +33,6 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 import { StudentDetailViewProps } from '../../types/componentProps';
 import { useAuth } from '../../contexts/AuthContext';
-
-const TASK_ATTACHMENT_BUCKET = 'task-library-attachments';
 
 export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
   viewingStudentId,
@@ -42,9 +45,8 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
   onInitiatePinGeneration,
   onInitiateDeleteTask,
 }) => {
-  const { currentUserId: loggedInUserId, currentUserRole } = useAuth(); // Get current user role and ID
+  const { currentUserId: loggedInUserId, currentUserRole } = useAuth();
 
-  // --- Queries ---
   const {
     data: student,
     isLoading: studentLoading,
@@ -95,8 +97,8 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
   } = useQuery<{ email: string | null } | null, Error>({
     queryKey: ['authUser', viewingStudentId],
     queryFn: () => fetchAuthUser(viewingStudentId),
-    enabled: !!viewingStudentId && !!onInitiatePinGeneration, // Only fetch if PIN generation is possible
-    staleTime: 15 * 60 * 1000, // Cache for a while
+    enabled: !!viewingStudentId && !!onInitiatePinGeneration,
+    staleTime: 15 * 60 * 1000,
   });
 
   const {
@@ -123,7 +125,6 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
     totalItems: totalHistoryCount,
   } = usePaginatedStudentHistory(viewingStudentId);
 
-  // --- Memos and Derived State ---
   const isStudentActive = useMemo(() => student?.status === 'active', [student]);
   const studentDisplayName = useMemo(
     () => (student ? getUserDisplayName(student) : 'Loading...'),
@@ -203,40 +204,6 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
   const handlePinGenerationClick = () => {
     if (student && onInitiatePinGeneration) {
       onInitiatePinGeneration(student);
-    }
-  };
-
-  const handleOpenUrl = async (url: string | null | undefined) => {
-    if (!url) return;
-    const supported = await Linking.canOpenURL(url);
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      Toast.show({ type: 'error', text1: 'Error', text2: `Cannot open URL: ${url}` });
-    }
-  };
-
-  const handleViewAttachment = async (attachmentPath: string | null | undefined) => {
-    if (!attachmentPath) return;
-    try {
-      const supabase = getSupabase();
-      const { data, error } = await supabase.storage
-        .from(TASK_ATTACHMENT_BUCKET)
-        .createSignedUrl(attachmentPath, 60);
-
-      if (error) throw error;
-      if (data?.signedUrl) {
-        await handleOpenUrl(data.signedUrl);
-      } else {
-        throw new Error('Could not generate download URL.');
-      }
-    } catch (error: any) {
-      console.error('Error getting/opening attachment URL:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: `Could not get/open attachment: ${error.message}`,
-      });
     }
   };
 

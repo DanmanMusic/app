@@ -4,9 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-import { updateUser, fetchTeachers, fetchUserProfile } from '../../api/users'; // Ensure updateUser calls the correct EF
+import { updateUser, fetchTeachers, fetchUserProfile } from '../../api/users';
 import { fetchInstruments } from '../../api/instruments';
-import { useAuth } from '../../contexts/AuthContext'; // Import useAuth
+import { useAuth } from '../../contexts/AuthContext';
 
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
@@ -134,16 +134,14 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       setSelectedInstrumentIds([]);
       setSelectedTeacherIds([]);
     }
-  }, [visible, userToEdit, isSuccessUserToEdit]); // Depend on visibility and fetched user data
+  }, [visible, userToEdit, isSuccessUserToEdit]);
 
-  // Handlers for selection toggles
   const toggleInstrumentSelection = (id: string) => {
     setSelectedInstrumentIds(prev =>
       prev.includes(id) ? prev.filter(instrumentId => instrumentId !== id) : [...prev, id]
     );
   };
   const toggleTeacherSelection = (id: string) => {
-    // Check caller role before allowing selection change
     if (currentUserRole !== 'admin') {
       Toast.show({
         type: 'info',
@@ -157,7 +155,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     );
   };
 
-  // Handle save button press
   const handleSaveChanges = () => {
     if (!userToEdit) {
       Toast.show({ type: 'error', text1: 'Error', text2: 'User data not loaded.' });
@@ -190,7 +187,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       hasChanges = true;
     }
     if (trimmedNickname !== (userToEdit.nickname || '')) {
-      updatesPayload.nickname = trimmedNickname || undefined; // Send undefined for empty/cleared
+      updatesPayload.nickname = trimmedNickname || undefined;
       hasChanges = true;
     }
 
@@ -286,14 +283,14 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={commonSharedStyles.centeredView}>
-        <View style={commonSharedStyles.modalView}>
+      <View style={[commonSharedStyles.centeredView]}>
+        <View style={[commonSharedStyles.modalView]}>
           <Text style={commonSharedStyles.modalTitle}>Edit User: {currentUserDisplayName}</Text>
           <Text style={commonSharedStyles.modalSubTitle}>
             Role: {userToEdit.role.toUpperCase()} (ID: {userToEdit.id})
           </Text>
 
-          <ScrollView style={commonSharedStyles.modalScrollView}>
+          <ScrollView style={[commonSharedStyles.modalScrollView, { paddingHorizontal: 2 }]}>
             <Text style={commonSharedStyles.label}>First Name:</Text>
             <TextInput
               style={commonSharedStyles.input}

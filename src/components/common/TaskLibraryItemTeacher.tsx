@@ -9,10 +9,13 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 import { fetchInstruments } from '../../api/instruments';
 import { getInstrumentNames } from '../../utils/helpers';
-import { getSupabase } from '../../lib/supabaseClient';
+import {
+  getSupabase,
+  handleOpenUrl,
+  handleViewAttachment,
+  TASK_ATTACHMENT_BUCKET,
+} from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
-
-const TASK_ATTACHMENT_BUCKET = 'task-library-attachments';
 
 interface TaskLibraryItemTeacherProps {
   item: TaskLibraryItem;
@@ -38,44 +41,6 @@ export const TaskLibraryItemTeacher: React.FC<TaskLibraryItemTeacherProps> = ({
   });
 
   const instrumentNames = getInstrumentNames(item.instrumentIds, allInstruments);
-
-  const handleOpenUrl = async (url: string | null | undefined) => {
-    if (!url) return;
-    const supported = await Linking.canOpenURL(url);
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: `Cannot open URL: ${url}`,
-        position: 'bottom',
-      });
-    }
-  };
-
-  const handleViewAttachment = async () => {
-    if (!item.attachmentPath) return;
-    try {
-      const supabase = getSupabase();
-      const { data, error } = await supabase.storage
-        .from(TASK_ATTACHMENT_BUCKET)
-        .createSignedUrl(item.attachmentPath, 60);
-
-      if (error) throw error;
-      if (data?.signedUrl) {
-        handleOpenUrl(data.signedUrl);
-      }
-    } catch (error: any) {
-      console.error('Error getting signed URL for attachment:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: `Could not get download link: ${error.message}`,
-        position: 'bottom',
-      });
-    }
-  };
 
   return (
     <View style={[commonSharedStyles.baseItem]}>
@@ -104,7 +69,7 @@ export const TaskLibraryItemTeacher: React.FC<TaskLibraryItemTeacherProps> = ({
             </Text>
           )}
           {item.attachmentPath ? (
-            <TouchableOpacity onPress={handleViewAttachment}>
+            <TouchableOpacity onPress={() => handleViewAttachment(item.attachmentPath)}>
               <Text style={styles.detailText}>
                 Attachment: <Text style={styles.linkText}>View/Download</Text>
               </Text>

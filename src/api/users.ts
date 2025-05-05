@@ -35,7 +35,7 @@ interface UpdateAuthResponse {
 }
 
 const mapProfileToUser = async (
-  profile: any, // Keep 'any' for now as profile structure varies slightly by fetch point
+  profile: any,
   client: ReturnType<typeof getSupabase>
 ): Promise<User> => {
   console.log(`[mapProfileToUser] Mapping profile for ID: ${profile.id}, Role: ${profile.role}`);
@@ -44,9 +44,7 @@ const mapProfileToUser = async (
   let linkedTeacherIds: string[] | undefined = undefined;
   let linkedStudentIds: string[] | undefined = undefined;
 
-  // Fetch links based on role (existing logic)
   if (profile.role === 'student') {
-    // ... (fetch instruments - existing logic) ...
     const { data: instruments, error: instError } = await client
       .from('student_instruments')
       .select('instrument_id')
@@ -58,7 +56,6 @@ const mapProfileToUser = async (
       );
     else instrumentIds = instruments?.map(i => i.instrument_id) || [];
 
-    // ... (fetch teachers - existing logic) ...
     const { data: teachers, error: teachError } = await client
       .from('student_teachers')
       .select('teacher_id')
@@ -70,7 +67,6 @@ const mapProfileToUser = async (
       );
     else linkedTeacherIds = teachers?.map(t => t.teacher_id) || [];
   } else if (profile.role === 'parent') {
-    // ... (fetch students - existing logic) ...
     const { data: students, error: stuError } = await client
       .from('parent_students')
       .select('student_id')
@@ -83,7 +79,6 @@ const mapProfileToUser = async (
     else linkedStudentIds = students?.map(s => s.student_id) || [];
   }
 
-  // Map the core profile fields AND the new goal field
   const mappedUser: User = {
     id: profile.id,
     role: profile.role as UserRole,
@@ -91,9 +86,8 @@ const mapProfileToUser = async (
     lastName: profile.last_name,
     nickname: profile.nickname ?? undefined,
     status: profile.status as UserStatus,
-    current_goal_reward_id: profile.current_goal_reward_id ?? null, // <-- MAP THE GOAL ID HERE
+    current_goal_reward_id: profile.current_goal_reward_id ?? null,
 
-    // Conditionally add link arrays only if they were fetched/defined
     ...(instrumentIds !== undefined && { instrumentIds }),
     ...(linkedTeacherIds !== undefined && { linkedTeacherIds }),
     ...(linkedStudentIds !== undefined && { linkedStudentIds }),
@@ -281,23 +275,20 @@ export const fetchUserProfile = async (userId: string): Promise<User | null> => 
   const client = getSupabase();
   console.log(`[fetchUserProfile] Attempting to fetch profile for user: ${userId}`);
 
-  let profile: any = null; // Keep 'any' for raw DB result
+  let profile: any = null;
   try {
-    // Modify the select string to include the goal column
     const { data, error } = await client
       .from('profiles')
-      .select('id, role, first_name, last_name, nickname, status, current_goal_reward_id') // <-- ADDED goal column
+      .select('id, role, first_name, last_name, nickname, status, current_goal_reward_id')
       .eq('id', userId)
       .single();
 
-    // ... (existing error handling for fetch) ...
     if (error) {
       if (error.code === 'PGRST116') {
-        // Resource Not Found
         console.warn(`[fetchUserProfile] Profile not found for user ${userId}.`);
-        return null; // Return null specifically for not found
+        return null;
       }
-      // Log other errors but still throw
+
       console.error(`[fetchUserProfile] Error fetching profile for ${userId}:`, error.message);
       throw new Error(`Failed to fetch profile: ${error.message}`);
     }
@@ -305,7 +296,7 @@ export const fetchUserProfile = async (userId: string): Promise<User | null> => 
       console.warn(
         `[fetchUserProfile] No profile data returned for user ${userId}, but no error received.`
       );
-      return null; // Return null if no data but no error
+      return null;
     }
 
     profile = data;
@@ -313,7 +304,7 @@ export const fetchUserProfile = async (userId: string): Promise<User | null> => 
       `[fetchUserProfile] Profile data fetched for ${userId}. Raw Goal ID: ${profile.current_goal_reward_id}`
     );
     console.log(`[fetchUserProfile] Proceeding to map...`);
-    // mapProfileToUser will now handle mapping the goal ID
+
     const mappedUser = await mapProfileToUser(profile, client);
     console.log(
       `[fetchUserProfile] Successfully fetched and mapped profile for ${userId}. Mapped Goal ID: ${mappedUser.current_goal_reward_id}`
@@ -324,7 +315,7 @@ export const fetchUserProfile = async (userId: string): Promise<User | null> => 
       `[fetchUserProfile] CAUGHT ERROR fetching/mapping profile for ${userId}:`,
       catchError.message
     );
-    // Re-throw the error to be handled by react-query
+
     throw catchError;
   }
 };
@@ -386,7 +377,7 @@ export const updateUser = async ({
   updates,
 }: {
   userId: string;
-  // The updates object now directly matches what the Edge Function expects
+
   updates: Partial<Omit<User, 'id' | 'role' | 'status'>>;
 }): Promise<User> => {
   const client = getSupabase();
@@ -395,22 +386,19 @@ export const updateUser = async ({
     updates
   );
 
-  // Prepare payload for the Edge Function
   const payload = {
     userIdToUpdate: userId,
     updates: {
-      // Ensure the structure matches the Edge Function's expectation
       firstName: updates.firstName,
       lastName: updates.lastName,
-      // Pass null if nickname is empty string, otherwise pass trimmed or undefined
+
       nickname: updates.nickname === '' ? null : updates.nickname?.trim(),
-      // Pass link arrays if they exist in the updates object
+
       ...(updates.instrumentIds !== undefined && { instrumentIds: updates.instrumentIds }),
       ...(updates.linkedTeacherIds !== undefined && { linkedTeacherIds: updates.linkedTeacherIds }),
     },
   };
 
-  // Remove undefined keys from the inner 'updates' object to keep payload clean
   Object.keys(payload.updates).forEach(
     key =>
       payload.updates[key as keyof typeof payload.updates] === undefined &&
@@ -425,7 +413,7 @@ export const updateUser = async ({
 
   if (error) {
     console.error('[API updateUser] Error invoking updateUserWithLinks function:', error);
-    // Attempt to parse nested error message if available
+
     let detailedError = error.message || 'Unknown function error';
     if (
       error.context &&
@@ -449,12 +437,9 @@ export const updateUser = async ({
 
   console.log('[API updateUser] Edge Function returned successfully:', data);
 
-  // Edge function currently only returns a message.
-  // For consistency, we should refetch the user profile after a successful update.
   console.log(`[API updateUser] Update reported success for ${userId}. Re-fetching profile...`);
   const updatedUser = await fetchUserProfile(userId);
   if (!updatedUser) {
-    // This case is less likely if the update succeeded, but handle it.
     console.error(
       `[API updateUser] Update succeeded, but failed to re-fetch profile for ${userId}.`
     );
@@ -462,14 +447,13 @@ export const updateUser = async ({
   }
 
   console.log(`[API updateUser] User ${userId} update process finished.`);
-  return updatedUser; // Return the freshly fetched user profile
+  return updatedUser;
 };
 
 export const deleteUser = async (userId: string): Promise<void> => {
   const client = getSupabase();
   console.log(`[API deleteUser] Calling Edge Function "deleteUser" for ID: ${userId}`);
 
-  // Prepare payload for the Edge Function
   const payload = {
     userIdToDelete: userId,
   };
@@ -505,12 +489,10 @@ export const deleteUser = async (userId: string): Promise<void> => {
       detailedError += ` (Context: ${error.context.message})`;
     }
 
-    // Throw the error message from the Edge Function
     throw new Error(`User deletion failed: ${detailedError}`);
   }
 
   console.log('[API deleteUser] Edge Function returned successfully:', data);
-  // No need to return anything on successful delete (Promise<void>)
 };
 
 export const toggleUserStatus = async (userId: string): Promise<User> => {
@@ -556,24 +538,20 @@ export const toggleUserStatus = async (userId: string): Promise<User> => {
 
   console.log('[API toggleUserStatus] Edge Function returned successfully:', data);
 
-  // Edge function returns { id, status }. We need the full User object for consistency.
-  // Re-fetch the full profile after successful status toggle.
   console.log(`[API toggleUserStatus] Status toggled for ${userId}. Re-fetching full profile...`);
-  const updatedUser = await fetchUserProfile(userId); // Use existing fetchUserProfile
+  const updatedUser = await fetchUserProfile(userId);
   if (!updatedUser) {
     console.error(
       `[API toggleUserStatus] Status updated, but failed to re-fetch profile for ${userId}.`
     );
-    // This shouldn't really happen if the update succeeded, but handle it.
-    // Perhaps return a partial user object based on 'data'? Or throw?
-    // Let's throw an error for clarity.
+
     throw new Error(`Status updated, but failed to re-fetch profile.`);
   }
 
   console.log(
     `[API toggleUserStatus] Successfully toggled status and refetched profile for ${userId}.`
   );
-  return updatedUser; // Return the freshly fetched full user profile
+  return updatedUser;
 };
 
 /**
@@ -755,28 +733,25 @@ export const linkStudentToParent = async (parentId: string, studentId: string): 
     throw new Error('Parent ID and Student ID are required for linking.');
   }
 
-  // Prepare the row to insert into the link table
   const linkData = {
     parent_id: parentId,
     student_id: studentId,
-    // created_at is handled by default value in DB
   };
 
   const { error } = await client.from('parent_students').insert(linkData);
 
   if (error) {
     console.error(`[API linkStudentToParent] Error inserting link:`, error);
-    // Handle specific errors like duplicate key (23505) if needed
+
     if (error.code === '23505') {
       throw new Error(`Student ${studentId} is already linked to Parent ${parentId}.`);
     }
-    // Handle FK constraint errors (23503) if parent/student doesn't exist (shouldn't happen if selected from UI)
+
     if (error.code === '23503') {
       throw new Error(`Linking failed: Parent or Student ID not found.`);
     }
-    // Handle RLS errors (though Admin should bypass)
+
     if (error.code === '42501') {
-      // permission denied
       throw new Error(`Permission denied. Ensure you are logged in as an Admin.`);
     }
     throw new Error(`Failed to link student to parent: ${error.message}`);
@@ -810,7 +785,7 @@ export const unlinkStudentFromParent = async (
 
   if (error) {
     console.error(`[API unlinkStudentFromParent] Error deleting link:`, error);
-    // Handle RLS errors
+
     if (error.code === '42501') {
       throw new Error(`Permission denied. Ensure you are logged in as an Admin.`);
     }
@@ -821,8 +796,6 @@ export const unlinkStudentFromParent = async (
     console.warn(
       `[API unlinkStudentFromParent] No link found to delete for Parent ${parentId} and Student ${studentId}.`
     );
-    // Decide if this is an error or just a no-op success
-    // throw new Error("Link not found.");
   } else {
     console.log(`[API unlinkStudentFromParent] Link deleted successfully.`);
   }
@@ -832,7 +805,6 @@ export const updateStudentGoal = async (
   studentId: string,
   rewardId: string | null
 ): Promise<{ id: string; current_goal_reward_id?: string | null }> => {
-  // Adjusted return type for clarity
   const client = getSupabase();
   console.log(
     `[API updateStudentGoal] Updating goal for student ${studentId} to reward ${rewardId}`
@@ -840,14 +812,14 @@ export const updateStudentGoal = async (
 
   const { data, error } = await client
     .from('profiles')
-    .update({ current_goal_reward_id: rewardId }) // Use snake_case for DB column
+    .update({ current_goal_reward_id: rewardId })
     .eq('id', studentId)
-    .select('id, current_goal_reward_id') // Select the updated fields
-    .single(); // Expect single row update
+    .select('id, current_goal_reward_id')
+    .single();
 
   if (error) {
     console.error(`[API updateStudentGoal] Error updating goal for student ${studentId}:`, error);
-    // Check for RLS violation error (though it shouldn't happen if called correctly)
+
     if (error.code === '42501') {
       throw new Error('Permission denied. You might not be allowed to update this goal.');
     }
@@ -861,9 +833,8 @@ export const updateStudentGoal = async (
 
   console.log(`[API updateStudentGoal] Goal updated successfully for ${studentId}`);
 
-  // Return the relevant part of the updated profile data
   return {
     id: data.id,
-    current_goal_reward_id: data.current_goal_reward_id, // Keep snake_case as returned by DB select
+    current_goal_reward_id: data.current_goal_reward_id,
   };
 };

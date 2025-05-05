@@ -1,28 +1,22 @@
 // src/components/common/PaginatedTasksList.tsx
 import React, { useMemo } from 'react';
-// *** Removed useQuery for users ***
+
 import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 
-// API Imports
-// *** Removed user API imports ***
-import { AssignedTask, User } from '../../types/dataTypes'; // Keep types
+import { AssignedTask, User } from '../../types/dataTypes';
 import { TaskAssignmentFilterStatusAPI, StudentTaskFilterStatusAPI } from '../../api/assignedTasks';
 
-// Hook Imports
 import { usePaginatedAssignedTasks } from '../../hooks/usePaginatedAssignedTasks';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Component Imports
 import { AssignedTaskDetailItem } from './AssignedTaskDetailItem';
 import PaginationControls from '../admin/PaginationControls';
 
-// Style & Helper Imports
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
 import { useQuery } from '@tanstack/react-query';
 import { fetchStudents, fetchUserProfile } from '../../api/users';
 import { getUserDisplayName } from '../../utils/helpers';
-// *** Removed getUserDisplayName import ***
 
 interface PaginatedTasksListProps {
   viewingRole: 'admin' | 'teacher';
@@ -43,7 +37,6 @@ export const PaginatedTasksList: React.FC<PaginatedTasksListProps> = ({
 }) => {
   const { currentUserId: authUserId } = useAuth();
 
-  // Hook now returns tasks with names/status included
   const {
     tasks,
     currentPage,
@@ -88,7 +81,6 @@ export const PaginatedTasksList: React.FC<PaginatedTasksListProps> = ({
     });
     return lookup;
   }, [allStudentsProfilesData]);
-  // --- End Student Name Lookup ---
 
   return (
     <View style={commonSharedStyles.flex1}>

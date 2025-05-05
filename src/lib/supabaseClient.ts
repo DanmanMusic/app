@@ -1,10 +1,51 @@
 // src/lib/supabaseClient.ts
 import { createClient, SupabaseClientOptions } from '@supabase/supabase-js';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import Toast from 'react-native-toast-message';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+export const TASK_ATTACHMENT_BUCKET = 'task-library-attachments';
+
+export const handleOpenUrl = async (url: string | null | undefined) => {
+  if (!url) return;
+  const supported = await Linking.canOpenURL(url);
+  if (supported) {
+    await Linking.openURL(url);
+  } else {
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: `Cannot open URL: ${url}`,
+      position: 'bottom',
+    });
+  }
+};
+
+export const handleViewAttachment = async (path: string | null | undefined) => {
+  if (!path) return;
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase.storage
+      .from(TASK_ATTACHMENT_BUCKET)
+      .createSignedUrl(path, 60);
+
+    if (error) throw error;
+
+    if (data?.signedUrl) {
+      handleOpenUrl(data.signedUrl);
+    }
+  } catch (error: any) {
+    console.error('Error getting signed URL for attachment:', error);
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: `Could not get download link: ${error.message}`,
+    });
+  }
+};
 
 const SecureStoreAdapter = {
   getItem: (key: string) => {
@@ -29,6 +70,7 @@ const storageOptions: SupabaseClientOptions<'public'>['auth'] = {
 };
 
 if (!supabaseUrl || !supabaseAnonKey) {
+  const TASK_ATTACHMENT_BUCKET = 'task-library-attachments';
   const errorMessage =
     'Supabase URL or Anon Key is missing. Make sure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are set in your .env file and restart the bundler.';
   console.error('*********************************************************************');

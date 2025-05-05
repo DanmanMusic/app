@@ -7,7 +7,7 @@ import Toast from 'react-native-toast-message';
 
 import { deleteAssignedTask } from '../api/assignedTasks';
 import { fetchUserProfile } from '../api/users';
-import { deleteTaskLibraryItem } from '../api/taskLibrary'; // Import Task Library API
+import { deleteTaskLibraryItem } from '../api/taskLibrary';
 import { fetchInstruments } from '../api/instruments';
 
 import { TeacherDashboardSection } from '../components/teacher/TeacherDashboardSection';
@@ -22,11 +22,11 @@ import ConfirmationModal from '../components/common/ConfirmationModal';
 import { PaginatedTasksList } from '../components/common/PaginatedTasksList';
 import { SharedHeader } from '../components/common/SharedHeader';
 import CreateTaskLibraryModal from '../components/admin/modals/CreateTaskLibraryModal';
-import EditTaskLibraryModal from '../components/admin/modals/EditTaskLibraryModal'; // Import Edit modal
+import EditTaskLibraryModal from '../components/admin/modals/EditTaskLibraryModal';
 
 import { useAuth } from '../contexts/AuthContext';
 import { TeacherSection, TeacherViewProps } from '../types/componentProps';
-import { AssignedTask, Instrument, User, TaskLibraryItem } from '../types/dataTypes'; // Import TaskLibraryItem
+import { AssignedTask, Instrument, User, TaskLibraryItem } from '../types/dataTypes';
 
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
@@ -55,7 +55,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   const [isDeleteTaskLibConfirmVisible, setIsDeleteTaskLibConfirmVisible] = useState(false);
   const [taskLibToDelete, setTaskLibToDelete] = useState<TaskLibraryItem | null>(null);
 
-  // --- Queries ---
   const {
     data: teacherUser,
     isLoading: teacherLoading,
@@ -93,7 +92,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     refetchOnWindowFocus: true,
   });
 
-  // --- Mutations ---
   const deleteAssignedTaskMutation = useMutation({
     mutationFn: deleteAssignedTask,
     onSuccess: (_, deletedAssignmentId) => {
@@ -142,7 +140,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     },
   });
 
-  // --- Handlers ---
   const handleInitiateDeleteAssignedTask = (task: AssignedTask) => {
     setAssignedTaskToDelete(task);
     setIsDeleteAssignedTaskConfirmVisible(true);
@@ -253,7 +250,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     deleteTaskLibMutation.reset();
   };
 
-  // --- Loading / Error States ---
   const isLoadingCore = teacherLoading || instrumentsLoading;
 
   if (isLoadingCore) {
