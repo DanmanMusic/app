@@ -21,11 +21,16 @@ interface ClaimPinSuccessResponse {
   viewing_student_id?: string; // Only relevant for 'parent' role
 }
 
-// Helper to hash the refresh token (MUST match refresh-pin-session)
-// IMPORTANT: Add salting for production security.
-async function hashToken(token: string): Promise<string> {
+async function hashTokenWithSalt(token: string): Promise<string> {
+  const salt = Deno.env.get('REFRESH_TOKEN_SALT');
+  if (!salt) {
+    console.error('CRITICAL: REFRESH_TOKEN_SALT environment variable is not set!');
+    throw new Error('Server configuration error [Salt Missing]'); // Fail loudly if salt is missing
+  }
+
   const encoder = new TextEncoder();
-  const data = encoder.encode(token); // Add salt here!
+  // Concatenate salt and token BEFORE encoding
+  const data = encoder.encode(salt + token); // Consistent order: salt first
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
@@ -188,7 +193,7 @@ Deno.serve(async (req: Request) => {
     );
 
     // b. Hash the Refresh Token
-    const refreshTokenHash = await hashToken(refreshToken);
+    const refreshTokenHash = await hashTokenWithSalt(refreshToken);
 
     // c. Store Hashed Refresh Token in DB
     const { error: refreshTokenStoreError } = await supabaseAdminClient

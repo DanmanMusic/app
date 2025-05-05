@@ -146,7 +146,6 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
 
   return (
     <>
-      {/* Main Management Modal */}
       <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={onClose}>
         <View style={commonSharedStyles.centeredView}>
           <View style={commonSharedStyles.modalView}>
@@ -165,14 +164,13 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
               </Text>
             </Text>
 
-            {/* Loading indicator for toggle status */}
             {toggleStatusMutation.isPending && (
               <View style={commonSharedStyles.baseRowCentered}>
                 <ActivityIndicator size="small" color={colors.primary} />
                 <Text style={commonSharedStyles.baseSecondaryText}>Updating Status...</Text>
               </View>
             )}
-            {/* Error display for toggle status */}
+
             {toggleStatusMutation.isError && !toggleStatusMutation.isPending && (
               <Text style={commonSharedStyles.errorText}>
                 Status update failed:{' '}
@@ -182,7 +180,6 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
               </Text>
             )}
 
-            {/* Action Buttons */}
             <View style={commonSharedStyles.full}>
               <Button
                 title={toggleButtonText}
@@ -198,7 +195,6 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
               />
             </View>
 
-            {/* Error display specifically for delete mutation failure */}
             {deleteMutation.isError && !deleteMutation.isPending && (
               <Text style={[commonSharedStyles.errorText, { marginTop: 5 }]}>
                 Deletion Error:{' '}
@@ -208,7 +204,6 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
               </Text>
             )}
 
-            {/* Footer Close Button */}
             <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
               <Button
                 title="Close"
@@ -221,7 +216,6 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
         </View>
       </Modal>
 
-      {/* Nested Confirmation Modal for Deletion */}
       <ConfirmationModal
         visible={isConfirmDeleteVisible}
         title="Confirm Permanent Deletion"

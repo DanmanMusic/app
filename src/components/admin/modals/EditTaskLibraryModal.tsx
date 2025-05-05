@@ -315,7 +315,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
               editable={!mutation.isPending}
             />
 
-            {/* Instrument Selector */}
             <Text style={commonSharedStyles.label}>Instruments (Optional):</Text>
             <View style={[commonSharedStyles.baseItem, { marginBottom: 15, padding: 10 }]}>
               {isLoadingInstruments && <ActivityIndicator color={colors.primary} />}
@@ -344,7 +343,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
                 ))}
             </View>
 
-            {/* Attachment Management */}
             <Text style={commonSharedStyles.label}>Attachment (Optional):</Text>
             <View style={[commonSharedStyles.baseItem, { marginBottom: 15, padding: 10 }]}>
               <Text style={{ marginBottom: 10 }}>Current: {currentFileNameDisplay}</Text>
@@ -378,7 +376,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
             </View>
           </ScrollView>
 
-          {/* Mutation Status & Buttons */}
           {mutation.isPending && (
             <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />

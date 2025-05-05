@@ -1,6 +1,6 @@
 // src/components/common/EditMyInfoModal.tsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Modal,
   View,
@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-import { updateUser, fetchAuthUser, updateAuthCredentials } from '../../api/users';
+import { updateUser, updateAuthCredentials } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
 import { User } from '../../types/dataTypes';
 
@@ -29,35 +29,23 @@ interface EditMyInfoModalProps {
 type EditMode = 'profile' | 'credentials';
 
 export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClose }) => {
-  const { appUser, currentUserId } = useAuth();
+  const { appUser, supabaseUser, currentUserId } = useAuth();
   const queryClient = useQueryClient();
 
   const [mode, setMode] = useState<EditMode>('profile');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [nickname, setNickname] = useState('');
-  const [currentEmail, setCurrentEmail] = useState<string | null>(null);
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const {
-    data: authData,
-    isLoading: isLoadingAuthData,
-    isError: isErrorAuthData,
-    error: errorAuthData,
-    refetch: refetchAuthData,
-  } = useQuery<{ email: string | null } | null, Error>({
-    queryKey: ['authUser', currentUserId, { context: 'editMyInfoModal' }],
-    queryFn: () => (currentUserId ? fetchAuthUser(currentUserId) : Promise.resolve(null)),
-    enabled: visible && !!currentUserId,
-    staleTime: 5 * 60 * 1000,
-  });
+  const currentAuthEmail = useMemo(() => supabaseUser?.email ?? null, [supabaseUser]);
 
   const hasSetUpCredentials = useMemo(() => {
-    const email = authData?.email;
+    const email = currentAuthEmail;
     return !!email && !email.endsWith('@placeholder.app');
-  }, [authData]);
+  }, [currentAuthEmail]);
 
   const profileUpdateMutation = useMutation({
     mutationFn: (updates: Partial<Omit<User, 'id' | 'role' | 'status'>>) => {
@@ -99,7 +87,7 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
         visibilityTime: 6000,
         position: 'bottom',
       });
-      await refetchAuthData();
+      queryClient.invalidateQueries({ queryKey: ['userProfile', currentUserId] });
       onClose();
     },
     onError: (error: Error) => {
@@ -120,21 +108,21 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
       setLastName(appUser.lastName || '');
       setNickname(appUser.nickname || '');
 
-      setNewEmail(
-        authData?.email && !authData.email.endsWith('@placeholder.app') ? authData.email : ''
-      );
-      setCurrentEmail(authData?.email ?? null);
+      const contextEmail = supabaseUser?.email ?? null;
+      setNewEmail(contextEmail && !contextEmail.endsWith('@placeholder.app') ? contextEmail : '');
+
       setNewPassword('');
       setConfirmPassword('');
 
       profileUpdateMutation.reset();
       credentialsUpdateMutation.reset();
-      setMode(hasSetUpCredentials ? 'profile' : 'profile');
+      const setup = !!contextEmail && !contextEmail.endsWith('@placeholder.app');
+      setMode('profile');
     } else if (!visible) {
       setNewPassword('');
       setConfirmPassword('');
     }
-  }, [visible, appUser, authData, hasSetUpCredentials]);
+  }, [visible, appUser, supabaseUser]);
 
   const handleProfileSave = () => {
     if (!appUser || !currentUserId || profileUpdateMutation.isPending) return;
@@ -189,7 +177,7 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
     const updatePayload: { email?: string; password?: string } = {};
     let changesMade = false;
 
-    if (trimmedEmail && trimmedEmail !== currentEmail) {
+    if (trimmedEmail && trimmedEmail !== currentAuthEmail) {
       if (!trimmedEmail.includes('@')) {
         Toast.show({
           type: 'error',
@@ -243,8 +231,7 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
     profileUpdateMutation.isPending || !firstName.trim() || !lastName.trim();
   const isCredentialsSaveDisabled =
     credentialsUpdateMutation.isPending || (!newEmail.trim() && !newPassword);
-  const isOverallLoading =
-    isLoadingAuthData || profileUpdateMutation.isPending || credentialsUpdateMutation.isPending;
+  const isOverallLoading = profileUpdateMutation.isPending || credentialsUpdateMutation.isPending;
 
   if (!visible) return null;
 
@@ -363,21 +350,17 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
             {mode === 'credentials' && hasSetUpCredentials && (
               <View style={{ paddingHorizontal: 2 }}>
                 <Text style={commonSharedStyles.modalSectionTitle}>Login Details</Text>
-                {isLoadingAuthData && <ActivityIndicator color={colors.secondary} />}
-                {isErrorAuthData && (
-                  <Text style={commonSharedStyles.errorText}>Error loading current email.</Text>
-                )}
                 <Text style={commonSharedStyles.label}>Email:</Text>
                 <TextInput
                   style={commonSharedStyles.input}
                   value={newEmail}
                   onChangeText={setNewEmail}
-                  placeholder={currentEmail || 'Enter Email'}
+                  placeholder={currentAuthEmail || 'Enter Email'}
                   placeholderTextColor={colors.textLight}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoComplete="email"
-                  editable={!isOverallLoading && !isLoadingAuthData}
+                  editable={!isOverallLoading}
                 />
                 <Text style={commonSharedStyles.label}>New Password (Optional):</Text>
                 <TextInput

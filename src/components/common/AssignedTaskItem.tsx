@@ -1,13 +1,7 @@
-import { Button, Linking, Text, TouchableOpacity, View } from 'react-native';
+import { Button, Text, TouchableOpacity, View } from 'react-native';
 import { AssignedTask } from '../../types/dataTypes';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import Toast from 'react-native-toast-message';
-import {
-  getSupabase,
-  handleOpenUrl,
-  handleViewAttachment,
-  TASK_ATTACHMENT_BUCKET,
-} from '../../lib/supabaseClient';
+import { handleOpenUrl, handleViewAttachment } from '../../lib/supabaseClient';
 
 export const AssignedTaskItem = ({
   task,
@@ -38,7 +32,7 @@ export const AssignedTaskItem = ({
     >
       <View>
         <Text style={commonSharedStyles.itemTitle}>{task.taskTitle}</Text>
-        {task.taskDescription && (
+        {!!task.taskDescription && (
           <Text style={[commonSharedStyles.baseSecondaryText, { marginBottom: 5 }]}>
             {task.taskDescription}
           </Text>
@@ -58,7 +52,6 @@ export const AssignedTaskItem = ({
             </Text>
           </TouchableOpacity>
         )}
-
         {task.actualPointsAwarded !== undefined && task.verificationStatus !== 'pending' && (
           <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textSuccess]}>
             Awarded: {task.actualPointsAwarded ?? 0} Tickets

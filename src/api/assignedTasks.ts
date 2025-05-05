@@ -1,8 +1,7 @@
 // src/api/assignedTasks.ts
-
 import { getSupabase } from '../lib/supabaseClient';
 import { AssignedTask, TaskVerificationStatus, UserStatus } from '../types/dataTypes';
-import { getUserDisplayName } from '../utils/helpers';
+import { fileToBase64, getUserDisplayName, NativeFileObject } from '../utils/helpers';
 
 export type TaskAssignmentFilterStatusAPI = 'all' | 'assigned' | 'pending' | 'completed';
 export type StudentTaskFilterStatusAPI = UserStatus | 'all';
@@ -173,9 +172,9 @@ export const createAssignedTask = async (
     AssignedTask,
     | 'id'
     | 'assignedById'
+    | 'assignedDate'
     | 'isComplete'
     | 'verificationStatus'
-    | 'assignedDate'
     | 'completedDate'
     | 'verifiedById'
     | 'verifiedDate'
@@ -183,17 +182,32 @@ export const createAssignedTask = async (
     | 'assignerName'
     | 'verifierName'
     | 'studentStatus'
-  >
+  > & { file?: NativeFileObject | File; mimeType?: string; fileName?: string }
 ): Promise<AssignedTask> => {
   const client = getSupabase();
 
-  const payload = {
-    studentId: assignmentData.studentId,
-    taskTitle: assignmentData.taskTitle,
-    taskDescription: assignmentData.taskDescription,
-    taskBasePoints: assignmentData.taskBasePoints,
-    taskLinkUrl: assignmentData.taskLinkUrl || null,
-    taskAttachmentPath: assignmentData.taskAttachmentPath || null,
+  const {
+    file,
+    mimeType: providedMimeType,
+    fileName: providedFileName,
+    ...restAssignmentData
+  } = assignmentData;
+
+  const payload: {
+    studentId: string;
+    taskTitle: string;
+    taskDescription: string;
+    taskBasePoints: number;
+    taskLinkUrl: string | null;
+    taskAttachmentPath?: string | null;
+    file?: { base64: string; mimeType: string; fileName: string };
+  } = {
+    studentId: restAssignmentData.studentId,
+    taskTitle: restAssignmentData.taskTitle,
+    taskDescription: restAssignmentData.taskDescription || '',
+    taskBasePoints: restAssignmentData.taskBasePoints,
+    taskLinkUrl: restAssignmentData.taskLinkUrl || null,
+    taskAttachmentPath: undefined,
   };
 
   if (
@@ -202,15 +216,96 @@ export const createAssignedTask = async (
     payload.taskBasePoints == null ||
     payload.taskBasePoints < 0
   ) {
-    throw new Error(
-      'Missing required fields for task assignment (studentId, title, description, basePoints).'
-    );
+    throw new Error('Missing required fields for task assignment (studentId, title, basePoints).');
   }
+
+  if (file) {
+    let finalMimeType = providedMimeType;
+    let finalFileName = providedFileName;
+    if (!finalMimeType && file instanceof File) finalMimeType = file.type;
+    else if (!finalMimeType && typeof file === 'object' && 'mimeType' in file)
+      finalMimeType = file.mimeType;
+    else if (!finalMimeType && typeof file === 'object' && 'type' in file)
+      finalMimeType = file.type;
+    if (!finalFileName && file instanceof File) finalFileName = file.name;
+    else if (!finalFileName && typeof file === 'object' && 'name' in file)
+      finalFileName = file.name;
+    if (!finalFileName && finalMimeType) {
+      const extension = finalMimeType.split('/')[1] || 'bin';
+      finalFileName = `attachment_${Date.now()}.${extension}`;
+      console.warn(
+        `[createAssignedTask] Could not determine filename, generated: ${finalFileName}`
+      );
+    } else if (!finalFileName && !finalMimeType) {
+      finalFileName = `attachment_${Date.now()}.bin`;
+      console.error(
+        '[createAssignedTask] Could not determine filename or mimeType. Falling back to .bin'
+      );
+    }
+
+    if (finalMimeType && finalFileName) {
+      console.log(
+        `[createAssignedTask] Processing file: Name=${finalFileName}, Type=${finalMimeType}`
+      );
+      try {
+        const base64 = await fileToBase64(file); // Use the helper
+        payload.file = { base64, mimeType: finalMimeType, fileName: finalFileName };
+        payload.taskAttachmentPath = undefined; // Ensure library path isn't sent
+        console.log(`[createAssignedTask] Base64 conversion successful. Adding to payload.`);
+      } catch (error: any) {
+        console.error('[createAssignedTask] Error converting file to base64:', error);
+        throw new Error(`Failed to process file for upload: ${error.message}`);
+      }
+    } else {
+      console.warn(
+        '[createAssignedTask] File provided but could not determine mimeType or fileName reliably. Skipping attachment.'
+      );
+      payload.taskAttachmentPath = restAssignmentData.taskAttachmentPath || null; // Use library path if available
+    }
+  } else if (restAssignmentData.taskAttachmentPath) {
+    payload.taskAttachmentPath = restAssignmentData.taskAttachmentPath;
+    console.log(
+      '[createAssignedTask] No new file, using existing path from library:',
+      payload.taskAttachmentPath
+    );
+  } else {
+    payload.taskAttachmentPath = null; // No file, no library path
+  }
+
+  console.log('[createAssignedTask] Calling assignTask Edge Function with payload:', {
+    ...payload,
+    file: payload.file ? { ...payload.file, base64: '...' } : undefined,
+  });
 
   const { data, error } = await client.functions.invoke('assignTask', {
     body: payload,
   });
 
+  if (error) {
+    let detailedError = error.message || 'Unknown function error';
+    if (error.context?.message) {
+      detailedError += ` (Context: ${error.context.message})`;
+    }
+    console.error('[createAssignedTask] Edge Function error:', detailedError);
+    throw new Error(`Task assignment failed: ${detailedError}`);
+  }
+
+  if (!data || typeof data !== 'object' || !data.id) {
+    console.error('[createAssignedTask] Edge Function returned invalid data:', data);
+    throw new Error('Task assignment function returned invalid data format.');
+  }
+
+  console.log('[createAssignedTask] Edge Function successful, returning task:', data);
+  return data as AssignedTask;
+};
+
+export const deleteAssignedTask = async (assignmentId: string): Promise<void> => {
+  const client = getSupabase();
+
+  const payload = { assignmentId };
+  if (!payload.assignmentId) throw new Error('Assignment ID missing.');
+
+  const { data, error } = await client.functions.invoke('deleteAssignedTask', { body: payload });
   if (error) {
     let detailedError = error.message || 'Unknown function error';
     if (
@@ -229,14 +324,8 @@ export const createAssignedTask = async (
     if (error.context?.message) {
       detailedError += ` (Context: ${error.context.message})`;
     }
-    throw new Error(`Task assignment failed: ${detailedError}`);
+    throw new Error(`Failed to delete assigned task: ${detailedError}`);
   }
-
-  if (!data || typeof data !== 'object' || !data.id) {
-    throw new Error('Task assignment function returned invalid data format.');
-  }
-
-  return data as AssignedTask;
 };
 
 export const updateAssignedTask = async ({
@@ -355,34 +444,5 @@ export const updateAssignedTask = async ({
         `Failed to fetch current task ${assignmentId}: ${currentError?.message || 'Not Found'}`
       );
     return mapDbRowToAssignedTaskWithNames(currentData);
-  }
-};
-
-export const deleteAssignedTask = async (assignmentId: string): Promise<void> => {
-  const client = getSupabase();
-
-  const payload = { assignmentId };
-  if (!payload.assignmentId) throw new Error('Assignment ID missing.');
-
-  const { data, error } = await client.functions.invoke('deleteAssignedTask', { body: payload });
-  if (error) {
-    let detailedError = error.message || 'Unknown function error';
-    if (
-      error.context &&
-      typeof error.context === 'object' &&
-      error.context !== null &&
-      'error' in error.context
-    ) {
-      detailedError = String((error.context as any).error) || detailedError;
-    } else {
-      try {
-        const parsed = JSON.parse(error.message);
-        if (parsed && parsed.error) detailedError = String(parsed.error);
-      } catch (e) {}
-    }
-    if (error.context?.message) {
-      detailedError += ` (Context: ${error.context.message})`;
-    }
-    throw new Error(`Failed to delete assigned task: ${detailedError}`);
   }
 };

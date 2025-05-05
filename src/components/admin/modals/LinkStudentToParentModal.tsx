@@ -127,7 +127,6 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
           <Text style={commonSharedStyles.modalContextInfo}>Parent: {parentName}</Text>
           <Text style={commonSharedStyles.modalStepTitle}>Select Student to Link:</Text>
 
-          {/* Search Input */}
           <TextInput
             style={[commonSharedStyles.input, commonSharedStyles.searchInput]}
             placeholder="Search active students by name..."
@@ -139,7 +138,6 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
             editable={!linkMutation.isPending}
           />
 
-          {/* Student List */}
           <View style={commonSharedStyles.listItemFull}>
             {isLoadingStudents && (
               <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
@@ -179,14 +177,12 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
             )}
           </View>
 
-          {/* Selected Student Confirmation Display */}
           {selectedStudentName && (
             <Text style={commonSharedStyles.selectionConfirmation}>
               Selected: {selectedStudentName}
             </Text>
           )}
 
-          {/* Mutation Status */}
           {linkMutation.isPending && (
             <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -202,7 +198,6 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
             </Text>
           )}
 
-          {/* Action Buttons */}
           <View style={commonSharedStyles.full}>
             <Button
               title={linkMutation.isPending ? 'Linking...' : 'Link Selected Student'}

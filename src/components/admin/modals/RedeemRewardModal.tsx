@@ -199,7 +199,7 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
             <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textGold]}>
               {item.cost} Tickets
             </Text>
-            {/* Show affordability status */}
+
             {canAfford === false && (
               <Text style={commonSharedStyles.cannotAffordText}>
                 (Need {item.cost - currentBalance} more)
@@ -212,7 +212,7 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
               <Text style={commonSharedStyles.cannotAffordText}>(Balance Error)</Text>
             )}
           </View>
-          {/* Show checkmark if selected */}
+
           {isSelected && <Text style={commonSharedStyles.checkmark}>✓</Text>}
         </View>
       </TouchableOpacity>
@@ -229,7 +229,7 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
             Current Balance:{' '}
             {balanceLoading ? 'Loading...' : balanceError ? 'Error' : `${currentBalance} Tickets`}
           </Text>
-          {/* Display errors */}
+
           {balanceError && (
             <Text style={commonSharedStyles.errorText}>
               Balance Error: {balanceErrorMsg?.message}
@@ -239,12 +239,10 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
             <Text style={commonSharedStyles.errorText}>Rewards Error: {errorRewards?.message}</Text>
           )}
 
-          {/* Loading indicator for rewards list */}
           {isLoadingRewards && (
             <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
           )}
 
-          {/* Rewards List */}
           {!isLoadingRewards && !isErrorRewards && (
             <FlatList
               style={commonSharedStyles.listItemFull}
@@ -259,7 +257,6 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
             />
           )}
 
-          {/* Footer Buttons */}
           <View style={commonSharedStyles.full}>
             <Button
               title={redeemMutation.isPending ? 'Redeeming...' : `Redeem Selected`}

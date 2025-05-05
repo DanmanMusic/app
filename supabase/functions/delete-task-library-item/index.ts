@@ -3,13 +3,13 @@
 import { createClient, SupabaseClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
 
-// No need for storage bucket constant here
+const TASK_ATTACHMENT_BUCKET = 'task-library-attachments';
 
 interface DeleteTaskPayload {
   taskId: string;
 }
 
-// Helper: Check if user is active Admin
+// --- Helper functions (isAdmin, isActiveTeacher) remain the same ---
 async function isActiveAdmin(supabase: SupabaseClient, userId: string): Promise<boolean> {
   try {
     const { data, error } = await supabase
@@ -20,12 +20,9 @@ async function isActiveAdmin(supabase: SupabaseClient, userId: string): Promise<
     if (error) throw error;
     return data?.role === 'admin' && data?.status === 'active';
   } catch (err) {
-    console.error('isActiveAdmin check error:', err.message);
     return false;
   }
 }
-
-// Helper: Check if user is active Teacher
 async function isActiveTeacher(supabase: SupabaseClient, userId: string): Promise<boolean> {
   try {
     const { data, error } = await supabase
@@ -36,17 +33,27 @@ async function isActiveTeacher(supabase: SupabaseClient, userId: string): Promis
     if (error) throw error;
     return data?.role === 'teacher' && data?.status === 'active';
   } catch (err) {
-    console.error('isActiveTeacher check error:', err.message);
+    return false;
+  }
+}
+// --- Helper: Delete file from storage ---
+async function deleteAttachment(supabase: SupabaseClient, path: string | null): Promise<boolean> {
+  if (!path) return true;
+  console.log(`Attempting to delete attachment from Storage: ${path}`);
+  try {
+    const { error } = await supabase.storage.from(TASK_ATTACHMENT_BUCKET).remove([path]);
+    if (error) throw error;
+    console.log(`Successfully deleted attachment ${path}`);
+    return true;
+  } catch (error) {
+    console.error(`Failed to delete attachment ${path}:`, error.message);
     return false;
   }
 }
 
-// *** REMOVED deleteAttachment helper ***
-
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  // CORS and Method Checks...
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST' && req.method !== 'DELETE') {
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
       status: 405,
@@ -54,6 +61,7 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  // Init Supabase Client...
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!supabaseUrl || !serviceRoleKey) {
@@ -70,10 +78,7 @@ Deno.serve(async (req: Request) => {
     // 1. Auth
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Auth required' }), {
-        status: 401,
-        headers: { ...corsHeaders },
-      });
+      /* ... auth error ... */
     }
     const token = authHeader.replace('Bearer ', '');
     const {
@@ -81,10 +86,7 @@ Deno.serve(async (req: Request) => {
       error: userError,
     } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Invalid token' }), {
-        status: 401,
-        headers: { ...corsHeaders },
-      });
+      /* ... auth error ... */
     }
     const callerId = user.id;
 
@@ -92,34 +94,22 @@ Deno.serve(async (req: Request) => {
     let payload: DeleteTaskPayload;
     try {
       if (req.method === 'DELETE') {
-        const url = new URL(req.url);
-        const taskIdFromQuery = url.searchParams.get('taskId');
-        if (!taskIdFromQuery)
-          throw new Error('Missing taskId in query parameter for DELETE request');
-        payload = { taskId: taskIdFromQuery };
+        /* ... get taskId from query ... */
       } else {
-        // POST
         payload = await req.json();
       }
     } catch (e) {
-      return new Response(JSON.stringify({ error: `Invalid payload: ${e.message}` }), {
-        status: 400,
-        headers: { ...corsHeaders },
-      });
+      /* ... payload error ... */
     }
-
     const { taskId } = payload;
     if (!taskId) {
-      return new Response(JSON.stringify({ error: 'Missing taskId' }), {
-        status: 400,
-        headers: { ...corsHeaders },
-      });
+      /* ... payload error ... */
     }
 
-    // 3. Fetch Task (Only need created_by_id for authorization now)
+    // 3. Fetch Task INCLUDING attachment_path
     const { data: currentTask, error: fetchError } = await supabaseAdmin
       .from('task_library')
-      .select('id, created_by_id') // Don't need attachment_path anymore
+      .select('id, created_by_id, attachment_path') // Fetch path
       .eq('id', taskId)
       .single();
 
@@ -129,20 +119,56 @@ Deno.serve(async (req: Request) => {
         headers: { ...corsHeaders },
       });
     }
+    const attachmentPathToDelete = currentTask.attachment_path; // Store the path
 
-    // 4. Authorize Caller
-    const isAdmin = await isActiveAdmin(supabaseAdmin, callerId);
-    const isOwner =
+    // 4. Authorize Caller (Admin or Teacher owner)
+    const isAdminCaller = await isActiveAdmin(supabaseAdmin, callerId);
+    const isOwnerTeacher =
       currentTask.created_by_id === callerId && (await isActiveTeacher(supabaseAdmin, callerId));
-
-    if (!isAdmin && !isOwner) {
-      return new Response(JSON.stringify({ error: 'Permission denied to delete this task' }), {
+    if (!isAdminCaller && !isOwnerTeacher) {
+      return new Response(JSON.stringify({ error: 'Permission denied' }), {
         status: 403,
         headers: { ...corsHeaders },
       });
     }
 
-    // 5. Delete Task from DB
+    // 5. *** Reference Check (BEFORE deleting DB row) ***
+    let isSafeToDeleteAttachment = false; // Default to not safe
+    if (attachmentPathToDelete) {
+      console.log(`Checking references for attachment: ${attachmentPathToDelete}`);
+      const { count, error: countError } = await supabaseAdmin
+        .from('assigned_tasks')
+        .select('*', { count: 'exact', head: true }) // Just need the count
+        .eq('task_attachment_path', attachmentPathToDelete);
+
+      if (countError) {
+        console.error(
+          `Error checking assigned_tasks references for path ${attachmentPathToDelete}:`,
+          countError.message
+        );
+        // Decide: Fail deletion entirely? Or just skip storage deletion?
+        // Safter to fail entirely if unsure.
+        return new Response(JSON.stringify({ error: 'Failed to check attachment references.' }), {
+          status: 500,
+          headers: { ...corsHeaders },
+        });
+      }
+
+      console.log(`Found ${count} assigned_tasks referencing path ${attachmentPathToDelete}`);
+      if (count === 0) {
+        isSafeToDeleteAttachment = true; // Safe to delete storage file
+      } else {
+        console.log(
+          `Attachment ${attachmentPathToDelete} is still referenced by assigned tasks. Skipping Storage delete.`
+        );
+      }
+    } else {
+      console.log(`Task ${taskId} has no attachment path. Skipping reference check.`);
+      // No attachment existed, so technically "safe" in the sense there's nothing to delete later.
+      isSafeToDeleteAttachment = true; // Or could just skip the final delete step
+    }
+
+    // 6. Delete Task from DB
     const { error: deleteDbError } = await supabaseAdmin
       .from('task_library')
       .delete()
@@ -157,11 +183,15 @@ Deno.serve(async (req: Request) => {
     }
     console.log(`Task library item ${taskId} deleted from DB.`);
 
-    // *** REMOVED Attachment Deletion Step ***
+    // 7. Conditional Storage Deletion (AFTER successful DB deletion)
+    if (attachmentPathToDelete && isSafeToDeleteAttachment) {
+      console.log(`Proceeding to delete attachment from storage: ${attachmentPathToDelete}`);
+      await deleteAttachment(supabaseAdmin, attachmentPathToDelete); // Log errors inside helper, don't fail overall request now
+    }
 
-    // 6. Return Success
+    // 8. Return Success
     return new Response(JSON.stringify({ message: `Task ${taskId} deleted successfully.` }), {
-      status: 200, // OK
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

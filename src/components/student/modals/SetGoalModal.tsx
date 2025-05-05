@@ -48,19 +48,16 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
             {currentGoalId ? 'Change Your Goal' : 'Set Your Goal'}
           </Text>
 
-          {/* Loading Indicator */}
           {isLoading && (
             <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} size="large" />
           )}
 
-          {/* Error Display */}
           {isError && (
             <Text style={[commonSharedStyles.errorText, { marginVertical: 10 }]}>
               Error loading rewards: {error?.message || 'Unknown error'}
             </Text>
           )}
 
-          {/* Rewards List */}
           {!isLoading && !isError && (
             <FlatList
               style={commonSharedStyles.listItemFull}
@@ -84,13 +81,10 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
             />
           )}
 
-          {/* Action Buttons Footer */}
           <View style={commonSharedStyles.modalFooter}>
             {currentGoalId && (
               <Button title="Clear Current Goal" onPress={handleClearGoal} color={colors.warning} />
             )}
-            {/* Add spacing only if clear button is shown */}
-            {/* {currentGoalId && <View style={{ height: 10 }} />}  <-- Removed, handled by modalFooter gap */}
             <Button title="Cancel" onPress={onClose} color={colors.secondary} />
           </View>
         </View>

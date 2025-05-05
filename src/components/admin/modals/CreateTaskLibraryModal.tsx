@@ -227,7 +227,6 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
               editable={!mutation.isPending}
             />
 
-            {/* *** Instrument Selector UI *** */}
             <Text style={commonSharedStyles.label}>Instruments (Optional):</Text>
             <View style={[commonSharedStyles.baseItem, { marginBottom: 15, padding: 10 }]}>
               {isLoadingInstruments && <ActivityIndicator color={colors.primary} />}
@@ -255,9 +254,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
                   <Text style={commonSharedStyles.baseEmptyText}>No instruments available.</Text>
                 ))}
             </View>
-            {/* *** End Instrument Selector UI *** */}
 
-            {/* Attachment Picker (same as before) */}
             <Text style={commonSharedStyles.label}>Attachment (Optional):</Text>
             <View
               style={[
@@ -286,7 +283,6 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
             )}
           </ScrollView>
 
-          {/* Mutation Status & Buttons (same as before) */}
           {mutation.isPending && (
             <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />

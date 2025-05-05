@@ -142,7 +142,6 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
             </Text>
           )}
 
-          {/* Add/Subtract Toggle */}
           <View
             style={[
               commonSharedStyles.baseRow,
@@ -164,7 +163,6 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
             />
           </View>
 
-          {/* Form Inputs */}
           <Text style={commonSharedStyles.label}>Amount to {actionText}:</Text>
           <TextInput
             style={commonSharedStyles.input}
@@ -189,12 +187,10 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
             editable={!mutation.isPending && !balanceLoading && !balanceError}
           />
 
-          {/* New Balance Preview */}
           <Text style={commonSharedStyles.previewText}>
             New Balance Preview: {newBalancePreview} Tickets
           </Text>
 
-          {/* Mutation Status */}
           {mutation.isPending && (
             <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
@@ -210,7 +206,6 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
             </Text>
           )}
 
-          {/* Action Buttons */}
           <View style={commonSharedStyles.full}>
             <Button
               title={confirmButtonText}

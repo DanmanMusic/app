@@ -28,12 +28,8 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 -- == Helper Functions ==
 
--- Drop functions if they exist to ensure clean creation/update
-DROP FUNCTION IF EXISTS public.is_active_admin(uuid);
-DROP FUNCTION IF EXISTS public.is_active_admin_or_teacher(uuid);
-DROP FUNCTION IF EXISTS public.can_student_or_parent_update_profile_limited(uuid);
-
 -- Function: is_active_admin
+-- Checks if a given user ID belongs to an active admin.
 CREATE OR REPLACE FUNCTION public.is_active_admin(user_id uuid)
 RETURNS boolean AS $$
 DECLARE
@@ -51,19 +47,25 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Function: is_active_admin_or_teacher
+-- Checks if a given user ID belongs to an active admin or teacher.
 CREATE OR REPLACE FUNCTION public.is_active_admin_or_teacher(user_id uuid)
 RETURNS boolean AS $$
 DECLARE
   user_role text;
+  user_status text;
 BEGIN
-  SELECT role INTO user_role
+  SELECT role, status INTO user_role, user_status
   FROM public.profiles
-  WHERE id = user_id AND status = 'active';
-  RETURN user_role IN ('admin', 'teacher');
+  WHERE id = user_id;
+
+  RETURN user_status = 'active' AND user_role IN ('admin', 'teacher');
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Function: can_student_or_parent_update_profile_limited
+
+-- Function: can_student_or_parent_update_profile_limited (Definitive Version)
+-- Checks if the current user is the student OR a linked parent (and active)
+-- AND the target profile is NOT an admin profile.
 CREATE OR REPLACE FUNCTION public.can_student_or_parent_update_profile_limited(profile_id uuid)
 RETURNS boolean
 LANGUAGE sql
@@ -88,9 +90,8 @@ AS $$
       AND auth.uid() = ps.parent_id -- Current user is the linked parent
       AND parent_profile.status = 'active' -- Parent is active
   )
-  -- Ensure the target profile being updated isn't an admin profile (redundant check, but safe)
+  -- Ensure the target profile being updated isn't an admin profile
   AND EXISTS (SELECT 1 FROM public.profiles target WHERE target.id = profile_id AND target.role <> 'admin');
-
 $$;
 
 -- == Grant Execute Permissions ==
@@ -99,21 +100,24 @@ GRANT EXECUTE ON FUNCTION public.is_active_admin(uuid) TO service_role;
 GRANT EXECUTE ON FUNCTION public.is_active_admin_or_teacher(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_active_admin_or_teacher(uuid) TO service_role;
 GRANT EXECUTE ON FUNCTION public.can_student_or_parent_update_profile_limited(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_student_or_parent_update_profile_limited(uuid) TO service_role; -- Grant to service_role too if EFs might call it
 
 
 -- == Updated At Trigger ==
-DO $$
+-- Create the trigger function first (idempotent)
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'handle_updated_at' AND pg_namespace.nspname = 'public') THEN
-    CREATE TRIGGER on_profile_update
-    BEFORE UPDATE ON public.profiles
-    FOR EACH ROW
-    EXECUTE FUNCTION public.handle_updated_at();
-     RAISE NOTICE 'Trigger on_profile_update created for public.profiles.';
-  ELSE
-    RAISE WARNING 'Function public.handle_updated_at() not found. Skipping trigger creation for profiles table.';
-  END IF;
-END $$;
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Apply the trigger
+CREATE TRIGGER on_profile_update
+BEFORE UPDATE ON public.profiles
+FOR EACH ROW
+EXECUTE FUNCTION public.handle_updated_at();
 
 -- == Indexes ==
 CREATE INDEX idx_profiles_role ON public.profiles (role);
@@ -137,9 +141,9 @@ COMMENT ON POLICY "Profiles: Allow individual read own profile" ON public.profil
 CREATE POLICY "Profiles: Allow teachers read linked students" ON public.profiles
   FOR SELECT TO authenticated
   USING (
-    public.is_active_admin_or_teacher(auth.uid())
-    AND role = 'student'
-    AND EXISTS (
+    public.is_active_admin_or_teacher(auth.uid()) -- Check caller is active teacher/admin
+    AND role = 'student' -- Target row is a student
+    AND EXISTS ( -- Check link
       SELECT 1 FROM public.student_teachers st
       WHERE st.teacher_id = auth.uid() AND st.student_id = public.profiles.id
     )
@@ -149,13 +153,14 @@ COMMENT ON POLICY "Profiles: Allow teachers read linked students" ON public.prof
 CREATE POLICY "Profiles: Allow parents read linked children" ON public.profiles
   FOR SELECT TO authenticated
   USING (
-    role = 'student'
-    AND EXISTS (
+    role = 'student' -- Target row is a student
+    AND EXISTS ( -- Check link
       SELECT 1 FROM public.parent_students ps
       WHERE ps.parent_id = auth.uid() AND ps.student_id = public.profiles.id
     )
-    -- Add check for parent status using the new function structure
-    AND EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.status = 'active')
+    AND EXISTS ( -- Check parent is active
+      SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.status = 'active'
+    )
   );
 COMMENT ON POLICY "Profiles: Allow parents read linked children" ON public.profiles IS 'Allows active parents to read the profiles of students linked to them as children.';
 
@@ -183,17 +188,12 @@ USING (
     public.can_student_or_parent_update_profile_limited(id) -- Check if current user is the student or linked parent (and active)
 )
 WITH CHECK (
-    (id = id)    
-    -- public.can_student_or_parent_update_profile_limited(id) -- Re-check permission
-    AND role = (SELECT p.role FROM public.profiles p WHERE p.id = profiles.id) -- Use profiles.id here
-    AND status = (SELECT p.status FROM public.profiles p WHERE p.id = profiles.id)
-    -- AND first_name = (SELECT p.first_name FROM public.profiles p WHERE p.id = profiles.id)
-    -- AND last_name = (SELECT p.last_name FROM public.profiles p WHERE p.id = profiles.id)
-    -- AND current_goal_reward_id = (SELECT p.current_goal_reward_id FROM public.profiles p WHERE p.id = profiles.id)
-    -- AND nickname = (SELECT p.nickname FROM public.profiles p WHERE p.id = profiles.id)
+    -- Re-assert the USING condition for the check.
+    -- The Edge Function controls *which* fields are actually updatable.
+    public.can_student_or_parent_update_profile_limited(id)
 );
 COMMENT ON POLICY "Profiles: Allow student/parent update limited fields" ON public.profiles
-IS 'Allows active students or their active linked parents to update ONLY the nickname or current_goal_reward_id of the student profile.';
+IS 'Allows active students or their active linked parents to update their profile (specific fields controlled by Edge Function).';
 
 -- Note: Active Admins perform updates via Edge Functions which bypass RLS by default.
 -- Note: Teachers currently cannot update student profiles directly via RLS. They use updateUserWithLinks Edge Function.

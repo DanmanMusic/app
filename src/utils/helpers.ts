@@ -1,6 +1,16 @@
-import { ImageSourcePropType, ImageURISource } from 'react-native';
+import { ImageSourcePropType, Platform } from 'react-native';
 import { getSupabase } from '../lib/supabaseClient';
-import { Instrument, TaskLibraryItem, User } from '../types/dataTypes';
+import { Instrument, User } from '../types/dataTypes';
+import * as FileSystem from 'expo-file-system';
+
+export interface NativeFileObject {
+  uri: string;
+  name?: string;
+  mimeType?: string;
+  type?: string;
+  size?: number;
+  [key: string]: any;
+}
 
 export const getUserDisplayName = (
   userOrProfile:
@@ -116,3 +126,78 @@ export const timestampDisplay = (timestamp: string) =>
     hour: 'numeric',
     minute: '2-digit',
   });
+
+export const fileToBase64 = (file: File | NativeFileObject): Promise<string> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (Platform.OS === 'web') {
+        if (file instanceof File) {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => {
+            const result = reader.result as string;
+            if (result.includes(',')) {
+              resolve(result.split(',')[1]);
+            } else {
+              resolve(result);
+            }
+          };
+          reader.onerror = error => reject(new Error(`FileReader error: ${error}`));
+        } else if (
+          typeof file === 'object' &&
+          file &&
+          'uri' in file &&
+          typeof file.uri === 'string'
+        ) {
+          console.warn('[fileToBase64 Web] Received URI on web platform, attempting fetch...');
+          try {
+            const response = await fetch(file.uri);
+            if (!response.ok) throw new Error(`Fetch failed with status ${response.status}`);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onload = () => {
+              const result = reader.result as string;
+              if (result.includes(',')) {
+                resolve(result.split(',')[1]);
+              } else {
+                resolve(result);
+              }
+            };
+            reader.onerror = error => reject(error);
+          } catch (fetchError: any) {
+            console.error('[fileToBase64 Web] Error fetching URI:', fetchError);
+            reject(new Error(`Failed to fetch file from web URI: ${fetchError.message}`));
+          }
+        } else {
+          console.error('[fileToBase64 Web] Received unsupported input type:', file);
+          reject(new Error('Unsupported file input type on web platform'));
+        }
+      } else {
+        if (typeof file === 'object' && file && 'uri' in file && typeof file.uri === 'string') {
+          const nativeFile = file as NativeFileObject;
+          console.log(`[fileToBase64 Native] Reading file from URI: ${nativeFile.uri}`);
+          try {
+            const base64 = await FileSystem.readAsStringAsync(nativeFile.uri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            console.log(`[fileToBase64 Native] Read successful, base64 length: ${base64.length}`);
+            resolve(base64);
+          } catch (fsError: any) {
+            console.error(
+              '[fileToBase64 Native] Error reading file with expo-file-system:',
+              fsError
+            );
+            reject(new Error(`Failed to read native file: ${fsError.message}.`));
+          }
+        } else {
+          console.error('[fileToBase64 Native] Received unsupported input type:', file);
+          reject(new Error('Unsupported file input type on native platform'));
+        }
+      }
+    } catch (error) {
+      console.error('[fileToBase64] Unexpected error:', error);
+      reject(error);
+    }
+  });
+};

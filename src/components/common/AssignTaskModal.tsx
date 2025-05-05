@@ -11,8 +11,10 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
+import * as DocumentPicker from 'expo-document-picker';
 
 import { createAssignedTask } from '../../api/assignedTasks';
 import { fetchTaskLibrary } from '../../api/taskLibrary';
@@ -31,6 +33,15 @@ import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
 
+interface NativeFileObject {
+  uri: string;
+  name?: string;
+  mimeType?: string;
+  type?: string;
+  size?: number;
+  [key: string]: any;
+}
+
 export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   visible,
   onClose,
@@ -48,6 +59,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   const [adHocBasePoints, setAdHocBasePoints] = useState<number | ''>('');
   const [adHocReferenceUrl, setAdHocReferenceUrl] = useState('');
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
+  const [adHocPickedDocument, setAdHocPickedDocument] =
+    useState<DocumentPicker.DocumentPickerResult | null>(null);
+  const [adHocFileError, setAdHocFileError] = useState<string | null>(null);
 
   const {
     data: taskLibrary = [],
@@ -151,7 +165,19 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   }, [sortedTasks, selectedStudentProfile, isLoadingSelectedStudent, taskLibrary.length]);
 
   const mutation = useMutation({
-    mutationFn: createAssignedTask,
+    mutationFn: (
+      payload: Omit<
+        AssignedTask,
+        | 'id'
+        | 'assignedById'
+        | 'assignedDate'
+        | 'isComplete'
+        | 'verificationStatus'
+        | 'studentStatus'
+        | 'assignerName'
+        | 'verifierName'
+      > & { file?: NativeFileObject | File }
+    ) => createAssignedTask(payload),
     onSuccess: createdAssignment => {
       queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
       queryClient.invalidateQueries({
@@ -185,6 +211,8 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       setAdHocBasePoints('');
       setAdHocReferenceUrl('');
       setStudentSearchTerm('');
+      setAdHocPickedDocument(null);
+      setAdHocFileError(null);
       mutation.reset();
       if (preselectedStudentId) {
         setSelectedStudentId(preselectedStudentId);
@@ -203,8 +231,28 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       setAdHocBasePoints('');
       setAdHocReferenceUrl('');
       setStudentSearchTerm('');
+      setAdHocPickedDocument(null);
+      setAdHocFileError(null);
     }
   }, [visible, preselectedStudentId]);
+
+  const pickAdHocDocument = async () => {
+    setAdHocFileError(null);
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
+      setAdHocPickedDocument(result.canceled ? null : result);
+      if (!result.canceled && (!result.assets || result.assets.length === 0)) {
+        setAdHocFileError('Failed to access selected file.');
+      }
+    } catch (error) {
+      console.error('Error picking ad-hoc document:', error);
+      setAdHocFileError('Failed to pick document.');
+      setAdHocPickedDocument(null);
+    }
+  };
 
   const handleStudentSelect = (studentId: string) => {
     setSelectedStudentId(studentId);
@@ -213,6 +261,8 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   const handleLibraryTaskSelect = (task: TaskLibraryItem) => {
     setSelectedLibraryTask(task);
     setIsAdHocMode(false);
+    setAdHocPickedDocument(null);
+    setAdHocFileError(null);
     setStep(3);
   };
   const handleAdHocSubmit = () => {
@@ -225,7 +275,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Custom title required.' });
       return;
     }
-
     if (isNaN(numericPoints) || numericPoints < 0) {
       Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Valid points required.' });
       return;
@@ -235,6 +284,18 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         type: 'error',
         text1: 'Validation Error',
         text2: 'URL must start with http/https.',
+      });
+      return;
+    }
+    if (
+      adHocPickedDocument &&
+      !adHocPickedDocument.canceled &&
+      (!adHocPickedDocument.assets || adHocPickedDocument.assets.length === 0)
+    ) {
+      Toast.show({
+        type: 'error',
+        text1: 'File Error',
+        text2: adHocFileError || 'Selected file is invalid or inaccessible.',
       });
       return;
     }
@@ -259,7 +320,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       | 'studentStatus'
       | 'assignerName'
       | 'verifierName'
-    > & { taskLinkUrl?: string | null };
+    > & { file?: NativeFileObject | File };
 
     if (isAdHocMode) {
       const numericPoints =
@@ -280,12 +341,32 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         return;
       }
 
+      let fileToUpload: NativeFileObject | File | undefined = undefined;
+      if (
+        adHocPickedDocument &&
+        !adHocPickedDocument.canceled &&
+        adHocPickedDocument.assets &&
+        adHocPickedDocument.assets.length > 0
+      ) {
+        fileToUpload = adHocPickedDocument.assets[0];
+        if (!fileToUpload?.uri || !fileToUpload?.name || !fileToUpload?.mimeType) {
+          Toast.show({
+            type: 'error',
+            text1: 'File Error',
+            text2: 'Selected file is missing required information.',
+          });
+          return;
+        }
+      }
+
       assignmentPayload = {
         studentId: selectedStudentId,
         taskTitle: adHocTitle.trim(),
         taskDescription: adHocDescription.trim(),
         taskBasePoints: numericPoints,
         taskLinkUrl: url || null,
+        taskAttachmentPath: null,
+        ...(fileToUpload && { file: fileToUpload }),
       };
     } else if (selectedLibraryTask) {
       assignmentPayload = {
@@ -308,11 +389,18 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   };
 
   const goBack = () => {
-    if (step === 3) setStep(2);
-    else if (step === 2 && !preselectedStudentId) {
+    if (step === 3) {
+      setStep(2);
+      if (isAdHocMode) {
+      } else {
+        setSelectedLibraryTask(null);
+      }
+    } else if (step === 2 && !preselectedStudentId) {
       setSelectedStudentId(null);
       setStep(1);
-    } else onClose();
+    } else {
+      onClose();
+    }
   };
 
   const renderStepContent = () => {
@@ -372,7 +460,11 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                 commonSharedStyles.toggleButton,
                 !isAdHocMode && commonSharedStyles.toggleButtonActive,
               ]}
-              onPress={() => setIsAdHocMode(false)}
+              onPress={() => {
+                setIsAdHocMode(false);
+                setAdHocPickedDocument(null);
+                setAdHocFileError(null);
+              }}
               disabled={mutation.isPending}
             >
               <Text
@@ -389,7 +481,10 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                 commonSharedStyles.toggleButton,
                 isAdHocMode && commonSharedStyles.toggleButtonActive,
               ]}
-              onPress={() => setIsAdHocMode(true)}
+              onPress={() => {
+                setIsAdHocMode(true);
+                setSelectedLibraryTask(null);
+              }}
               disabled={mutation.isPending}
             >
               <Text
@@ -403,7 +498,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={commonSharedStyles.modalScrollView}>
+          <ScrollView style={[commonSharedStyles.modalScrollView, { paddingHorizontal: 2 }]}>
             {isAdHocMode ? (
               <View>
                 <Text style={commonSharedStyles.label}>Custom Task Title:</Text>
@@ -439,7 +534,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                   keyboardType="numeric"
                   editable={!mutation.isPending}
                 />
-                {/* Add AdHoc Reference URL Input */}
                 <Text style={commonSharedStyles.label}>Reference URL (Optional):</Text>
                 <TextInput
                   style={commonSharedStyles.input}
@@ -451,7 +545,40 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                   autoCapitalize="none"
                   editable={!mutation.isPending}
                 />
-
+                <Text style={commonSharedStyles.label}>Attachment (Optional):</Text>
+                <View
+                  style={[
+                    commonSharedStyles.baseRow,
+                    { alignItems: 'center', marginBottom: 5, gap: 10 },
+                  ]}
+                >
+                  <Button
+                    title={
+                      adHocPickedDocument && !adHocPickedDocument.canceled
+                        ? 'Change File'
+                        : 'Attach File'
+                    }
+                    onPress={pickAdHocDocument}
+                    disabled={mutation.isPending}
+                    color={colors.info}
+                  />
+                  {adHocPickedDocument &&
+                    !adHocPickedDocument.canceled &&
+                    adHocPickedDocument.assets && (
+                      <Text
+                        style={commonSharedStyles.baseSecondaryText}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        Selected: {adHocPickedDocument.assets[0].name}
+                      </Text>
+                    )}
+                </View>
+                {adHocFileError && (
+                  <Text style={[commonSharedStyles.errorText, { marginBottom: 15 }]}>
+                    {adHocFileError}
+                  </Text>
+                )}
                 <Button
                   title="Use This Custom Task"
                   onPress={handleAdHocSubmit}
@@ -523,6 +650,14 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       const taskTitle = isAdHocMode ? adHocTitle : selectedLibraryTask?.title;
       const taskPoints = isAdHocMode ? adHocBasePoints : selectedLibraryTask?.baseTickets;
       const taskUrl = isAdHocMode ? adHocReferenceUrl : selectedLibraryTask?.referenceUrl;
+      const taskAttachmentName = isAdHocMode
+        ? adHocPickedDocument && !adHocPickedDocument.canceled && adHocPickedDocument.assets
+          ? adHocPickedDocument.assets[0].name
+          : null
+        : selectedLibraryTask?.attachmentPath
+          ? selectedLibraryTask.attachmentPath.split('/').pop()
+          : null;
+
       return (
         <>
           <Text style={commonSharedStyles.modalStepTitle}>
@@ -533,6 +668,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             {selectedStudentName}"?
           </Text>
           {taskUrl && <Text style={commonSharedStyles.baseLightText}>Link: {taskUrl}</Text>}
+          {taskAttachmentName && (
+            <Text style={commonSharedStyles.baseLightText}>Attachment: {taskAttachmentName}</Text>
+          )}
         </>
       );
     }

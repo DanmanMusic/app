@@ -84,7 +84,6 @@ export const PaginatedTasksList: React.FC<PaginatedTasksListProps> = ({
 
   return (
     <View style={commonSharedStyles.flex1}>
-      {/* Filter Section */}
       <View style={commonSharedStyles.filterSection}>
         <View style={commonSharedStyles.baseRowCentered}>
           <Text style={commonSharedStyles.filterLabel}>Task Status:</Text>

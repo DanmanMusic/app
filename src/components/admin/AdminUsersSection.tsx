@@ -199,7 +199,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
             >
               Show:
             </Text>
-            {/* Buttons use state from hook and call internal handler */}
             <Button
               title="Active"
               onPress={() => handleFilterChange('active')}
@@ -216,7 +215,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
               color={studentFilterState === 'all' ? colors.info : colors.secondary}
             />
           </View>
-          {/* Input uses state from hook and calls internal handler */}
           <TextInput
             style={[commonSharedStyles.input, commonSharedStyles.baseMarginTopBottom]}
             placeholder="Search Students by Name..."
@@ -231,7 +229,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
 
       {activeTab !== 'students' && <View style={{ height: 5 }} />}
 
-      {/* List rendering area remains the same */}
       <View style={commonSharedStyles.listArea}>
         {(isLoading || isFetching) && (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />

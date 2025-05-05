@@ -1,4 +1,4 @@
--- supabase/migrations/<timestamp>_create_task_library_table.sql -- Replace with actual timestamp
+-- supabase/migrations/20250426231110_create_task_library_table.sql
 
 -- == Create Task Library Table ==
 -- Includes columns for creator tracking, attachments, and reference URLs
@@ -9,17 +9,8 @@ CREATE TABLE public.task_library (
     base_tickets integer NOT NULL CHECK (base_tickets >= 0),
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now(),
-
-    -- Link to the user who created the task (Admin or Teacher)
-    -- Made NOT NULL and requires a default for initial setup
-    created_by_id uuid NOT NULL,
-      -- Ensure you replace 'YOUR_DEFAULT_ADMIN_USER_ID' below
-      -- DEFAULT 'YOUR_DEFAULT_ADMIN_USER_ID'::uuid, -- Set Default only if table is initially empty
-
-    -- Path to optional attachment in Storage bucket 'task-library-attachments'
+    created_by_id uuid NOT NULL, -- FK added below
     attachment_path text NULL,
-
-    -- Optional external URL related to the task
     reference_url text NULL
 );
 
@@ -43,34 +34,32 @@ COMMENT ON COLUMN public.task_library.reference_url IS 'Optional external URL re
 ALTER TABLE public.task_library ENABLE ROW LEVEL SECURITY;
 
 -- == Indexes ==
--- Index the new foreign key
+-- Index the foreign key
 CREATE INDEX IF NOT EXISTS idx_task_library_created_by ON public.task_library (created_by_id);
 -- Add index for potential filtering on title if needed often
 -- CREATE INDEX IF NOT EXISTS idx_task_library_title ON public.task_library USING gin (to_tsvector('english', title));
 
 -- == Updated At Trigger ==
 -- Assumes handle_updated_at function exists from a previous migration
-DO $$
+-- Create the trigger function first (idempotent) if not already present
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'handle_updated_at' AND pg_namespace.nspname = 'public') THEN
-    CREATE TRIGGER on_task_library_update
-    BEFORE UPDATE ON public.task_library
-    FOR EACH ROW
-    EXECUTE FUNCTION public.handle_updated_at();
-    RAISE NOTICE 'Trigger on_task_library_update created for public.task_library.';
-  ELSE
-    RAISE WARNING 'Function public.handle_updated_at() not found. Skipping trigger creation for task_library table.';
-  END IF;
-END $$;
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Apply the trigger
+CREATE TRIGGER on_task_library_update
+BEFORE UPDATE ON public.task_library
+FOR EACH ROW
+EXECUTE FUNCTION public.handle_updated_at();
 
 
 -- == RLS Policies ==
--- NOTE: These are initial policies. Writes (INSERT/UPDATE/DELETE) will
---       primarily be handled by Edge Functions later, especially for teachers.
---       The SELECT policy will need refinement based on the `created_by_id` role check.
 
--- Initial SELECT Policy: Allow any active Admin or Teacher to read everything for now.
--- Will be refined later to filter based on creator role.
+-- SELECT Policy: Allow any active Admin or Teacher to read all tasks.
 CREATE POLICY "Task Library: Allow active admin/teacher read access"
 ON public.task_library
 FOR SELECT
@@ -78,17 +67,40 @@ TO authenticated
 USING (public.is_active_admin_or_teacher(auth.uid())); -- Use the combined active check
 
 COMMENT ON POLICY "Task Library: Allow active admin/teacher read access" ON public.task_library
-IS 'Allows active Admins or Teachers to view all task library items (Initial Policy).';
+IS 'Allows active Admins or Teachers to view all task library items.';
 
 
--- Initial WRITE Policy (INSERT, UPDATE, DELETE): Allow ONLY Active Admins for now.
--- Teacher writes MUST go through Edge Functions later.
-CREATE POLICY "Task Library: Allow active admin write access (Initial)"
+-- WRITE Policy (INSERT, UPDATE, DELETE):
+-- Allow active Admins full control.
+-- Allow active Teachers control ONLY for tasks they created.
+-- NOTE: Edge Functions handle the primary write logic using service_role.
+--       This RLS acts as a safeguard for direct API access.
+CREATE POLICY "Task Library: Allow admin/owner write access"
 ON public.task_library
 FOR ALL -- Covers INSERT, UPDATE, DELETE
 TO authenticated
-USING (public.is_active_admin(auth.uid())) -- Allow if the user IS an active admin
-WITH CHECK (public.is_active_admin(auth.uid())); -- Ensure they remain active admin
+USING (
+    -- Allow if user is an active admin
+    public.is_active_admin(auth.uid())
+    OR
+    -- OR Allow if user is an active teacher AND owns the task (for UPDATE/DELETE)
+    (
+        public.is_active_admin_or_teacher(auth.uid()) -- Check if active teacher
+        AND created_by_id = auth.uid() -- Check ownership
+    )
+)
+WITH CHECK (
+    -- For INSERT: Must be admin OR (teacher AND setting created_by_id to self)
+    -- For UPDATE/DELETE: Must be admin OR (teacher AND owns the existing row)
+    public.is_active_admin(auth.uid())
+    OR
+    (
+        public.is_active_admin_or_teacher(auth.uid())
+        AND created_by_id = auth.uid() -- Ensures teacher sets creator correctly on INSERT and owns on UPDATE/DELETE
+    )
+);
 
-COMMENT ON POLICY "Task Library: Allow active admin write access (Initial)" ON public.task_library
-IS 'Allows active Admins to create, update, and delete task library items directly (Initial Policy - Teacher writes via Edge Functions).';
+COMMENT ON POLICY "Task Library: Allow admin/owner write access" ON public.task_library
+IS 'Allows active Admins full write access, and allows active Teachers write access ONLY for tasks they created.';
+
+-- End of Migration

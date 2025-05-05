@@ -21,15 +21,19 @@ interface RefreshTokenSuccessResponse {
   viewing_student_id?: string; // Include if parent role
 }
 
-// Helper to hash the refresh token (MUST match claim-onetime-pin)
-// IMPORTANT: Use a strong, salted hash in production.
-async function hashToken(token: string): Promise<string> {
+async function hashTokenWithSalt(token: string): Promise<string> {
+  const salt = Deno.env.get('REFRESH_TOKEN_SALT');
+  if (!salt) {
+    console.error('CRITICAL: REFRESH_TOKEN_SALT environment variable is not set!');
+    throw new Error('Server configuration error [Salt Missing]'); // Fail loudly if salt is missing
+  }
+
   const encoder = new TextEncoder();
-  const data = encoder.encode(token); // Add salt here!
+  // Concatenate salt and token BEFORE encoding
+  const data = encoder.encode(salt + token); // Consistent order: salt first
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  // console.log(`Hashing refresh token (length ${token.length}) for comparison.`); // Reduced logging
   return hashHex;
 }
 
@@ -92,7 +96,7 @@ Deno.serve(async (req: Request) => {
     const receivedRefreshToken = payload.refresh_token;
 
     // 4. Hash the received token
-    const receivedTokenHash = await hashToken(receivedRefreshToken);
+    const receivedTokenHash = await hashTokenWithSalt(receivedRefreshToken);
     console.log(`Looking up refresh token hash ending with: ...${receivedTokenHash.slice(-6)}`);
 
     // 5. Find matching token hash in the database
