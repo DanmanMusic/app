@@ -38,6 +38,11 @@ export const AssignedTaskItem = ({
     >
       <View>
         <Text style={commonSharedStyles.itemTitle}>{task.taskTitle}</Text>
+        {task.taskDescription && (
+          <Text style={[commonSharedStyles.baseSecondaryText, { marginBottom: 5 }]}>
+            {task.taskDescription}
+          </Text>
+        )}
         <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
         {task.taskLinkUrl && (
           <TouchableOpacity onPress={() => handleOpenUrl(task.taskLinkUrl)}>

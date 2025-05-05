@@ -672,7 +672,7 @@ export const commonSharedStyles = StyleSheet.create({
   taskItemStatus: {
     color: colors.textSecondary,
     fontSize: 14,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   taskItemTitle: {
     color: colors.textPrimary,
