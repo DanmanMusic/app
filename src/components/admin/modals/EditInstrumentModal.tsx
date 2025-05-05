@@ -231,6 +231,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
+              color={colors.primary}
               disabled={mutation.isPending || !name.trim()}
             />
           </View>

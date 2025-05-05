@@ -195,6 +195,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
+              color={colors.primary}
               disabled={isSaveDisabled}
             />
           </View>

@@ -115,6 +115,7 @@ export const AdminRewardsSection = () => {
         <Button
           title="Add New Reward"
           onPress={handleAddPress}
+          color={colors.primary}
           disabled={deleteMutation.isPending}
         />
       </View>

@@ -95,7 +95,11 @@ export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = (
               onPress={() => setViewingSection('students')}
               color={colors.warning}
             />
-            <Button title="Tasks" onPress={() => setViewingSection('tasks')} />
+            <Button
+              title="Tasks"
+              onPress={() => setViewingSection('tasks')}
+              color={colors.primary}
+            />
           </View>
         ) : (
           <Text style={commonSharedStyles.baseEmptyText}>No students.</Text>

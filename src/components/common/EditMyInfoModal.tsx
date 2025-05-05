@@ -344,6 +344,7 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
                   <Button
                     title={profileUpdateMutation.isPending ? 'Saving...' : 'Save Profile Changes'}
                     onPress={handleProfileSave}
+                    color={colors.primary}
                     disabled={isProfileSaveDisabled || isOverallLoading}
                   />
                 </View>
@@ -405,6 +406,7 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
                   <Button
                     title={credentialsUpdateMutation.isPending ? 'Saving...' : 'Save Login Changes'}
                     onPress={handleCredentialsSave}
+                    color={colors.primary}
                     disabled={
                       isCredentialsSaveDisabled ||
                       isOverallLoading ||

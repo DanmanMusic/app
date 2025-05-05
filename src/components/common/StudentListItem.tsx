@@ -41,8 +41,18 @@ export const StudentListItem = ({
       </Text>
     </View>
     <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
-      <Button title="View Profile" onPress={() => onViewProfile(student.id)} />
-      {student.isActive && <Button title="Assign Task" onPress={() => onAssignTask(student.id)} />}
+      <Button
+        title="View Profile"
+        onPress={() => onViewProfile(student.id)}
+        color={colors.primary}
+      />
+      {student.isActive && (
+        <Button
+          title="Assign Task"
+          onPress={() => onAssignTask(student.id)}
+          color={colors.primary}
+        />
+      )}
     </View>
   </View>
 );

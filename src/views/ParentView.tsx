@@ -141,7 +141,11 @@ export const ParentView = () => {
             <View style={commonSharedStyles.baseCentered}>
               <ActivityIndicator size="large" color={colors.primary} />
               <Text>Loading Student Details...</Text>
-              <Button title="Back to Students" onPress={() => setViewingStudentId(null)} />
+              <Button
+                title="← Students"
+                onPress={() => setViewingStudentId(null)}
+                color={colors.primary}
+              />
             </View>
           </SafeAreaView>
         );
@@ -156,7 +160,11 @@ export const ParentView = () => {
         <SafeAreaView style={commonSharedStyles.flex1}>
           <View style={commonSharedStyles.flex1}>
             <Text style={commonSharedStyles.errorText}>Error: {specificErrorMsg}</Text>
-            <Button title="Back to Students" onPress={() => setViewingStudentId(null)} />
+            <Button
+              title="← Students"
+              onPress={() => setViewingStudentId(null)}
+              color={colors.primary}
+            />
           </View>
         </SafeAreaView>
       );

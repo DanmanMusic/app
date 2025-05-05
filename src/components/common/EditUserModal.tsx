@@ -424,6 +424,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             <Button
               title={profileUpdateMutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSaveChanges}
+              color={colors.primary}
               disabled={isSaveDisabled}
             />
           </View>

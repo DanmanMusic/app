@@ -313,14 +313,18 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
               Error loading student details:{' '}
               {studentDetailErrorMsg?.message || 'Student not found or error occurred.'}
             </Text>
-            <Button title="Back to My Students" onPress={handleBackFromProfile} />
+            <Button
+              title="Back to My Students"
+              onPress={handleBackFromProfile}
+              color={colors.primary}
+            />
           </View>
         );
       }
       return (
         <>
           <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseMargin]}>
-            <Button title="← Back" onPress={handleBackFromProfile} />
+            <Button title="← Back" onPress={handleBackFromProfile} color={colors.primary} />
           </View>
           <StudentDetailView
             viewingStudentId={viewingStudentId}
@@ -346,6 +350,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
           <Button
             title="Dashboard"
             onPress={() => setViewingSection('dashboard')}
+            color={colors.primary}
             disabled={viewingSection === 'dashboard'}
           />
         </View>

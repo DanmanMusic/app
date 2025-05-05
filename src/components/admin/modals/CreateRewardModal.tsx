@@ -216,6 +216,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Reward'}
               onPress={handleCreate}
+              color={colors.primary}
               disabled={isCreateDisabled}
             />
           </View>

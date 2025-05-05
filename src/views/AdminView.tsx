@@ -367,7 +367,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             <Text style={commonSharedStyles.errorText}>
               Failed to load details for user ID: {viewingUserId}. User might have been deleted.
             </Text>
-            <Button title="Back to List" onPress={handleBackFromDetailView} />
+            <Button
+              title="Back to List"
+              onPress={handleBackFromDetailView}
+              color={colors.primary}
+            />
           </View>
         );
       }
@@ -459,6 +463,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
                     setViewingSection('announcements');
                     setAdminTaskInitialFilters(null);
                   }}
+                  color={colors.primary}
                 />
                 <Button
                   title="Instruments"
@@ -466,6 +471,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
                     setViewingSection('instruments');
                     setAdminTaskInitialFilters(null);
                   }}
+                  color={colors.primary}
                 />
                 <Button
                   title="Rewards"
@@ -473,6 +479,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
                     setViewingSection('rewards');
                     setAdminTaskInitialFilters(null);
                   }}
+                  color={colors.primary}
                 />
               </View>
             </View>
@@ -564,6 +571,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
                 setViewingSection('dashboard');
                 setAdminTaskInitialFilters(null);
               }}
+              color={colors.primary}
               disabled={viewingSection === 'dashboard'}
             />
           </View>
@@ -573,7 +581,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         <>
           {showBackButton && (
             <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseMargin]}>
-              <Button title="← Back" onPress={handleBackFromDetailView} />
+              <Button title="← Back" onPress={handleBackFromDetailView} color={colors.primary} />
             </View>
           )}
           <View style={commonSharedStyles.flex1}>{renderMainContent()}</View>

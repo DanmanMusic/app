@@ -98,24 +98,28 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
                     onPress={() => {
                       handleUserSelection('students');
                     }}
+                    color={colors.primary}
                   />
                   <Button
                     title={teacherButtonTitle}
                     onPress={() => {
                       handleUserSelection('teachers');
                     }}
+                    color={colors.primary}
                   />
                   <Button
                     title={parentButtonTitle}
                     onPress={() => {
                       handleUserSelection('parents');
                     }}
+                    color={colors.primary}
                   />
                   <Button
                     title={adminButtonTitle}
                     onPress={() => {
                       handleUserSelection('admins');
                     }}
+                    color={colors.primary}
                   />
                 </View>
               </View>
@@ -151,8 +155,16 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
                     disabled={isErrorTaskStats}
                   />
                 )}
-                <Button title="Tasks" onPress={() => setViewingSection('tasks')} />
-                <Button title="History" onPress={() => setViewingSection('history')} />
+                <Button
+                  title="Tasks"
+                  onPress={() => setViewingSection('tasks')}
+                  color={colors.primary}
+                />
+                <Button
+                  title="History"
+                  onPress={() => setViewingSection('history')}
+                  color={colors.primary}
+                />
               </View>
             </View>
           )}

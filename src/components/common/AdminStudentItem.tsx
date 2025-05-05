@@ -54,9 +54,14 @@ export const AdminStudentItem = ({
             console.log(`[AdminStudentItem] Button Press - student.id: ${student?.id}`);
             onViewManage(student.id, 'student');
           }}
+          color={colors.primary}
         />
         {student.isActive && (
-          <Button title="Assign Task" onPress={() => onInitiateAssignTask(student.id)} />
+          <Button
+            title="Assign Task"
+            onPress={() => onInitiateAssignTask(student.id)}
+            color={colors.primary}
+          />
         )}
       </View>
     </View>

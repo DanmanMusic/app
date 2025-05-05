@@ -42,7 +42,11 @@ export const AdminUserItem = ({
       )}
     </View>
     <View>
-      <Button title="View Details" onPress={() => onViewManage(user.id, user.role)} />
+      <Button
+        title="View Details"
+        onPress={() => onViewManage(user.id, user.role)}
+        color={colors.primary}
+      />
     </View>
   </View>
 );

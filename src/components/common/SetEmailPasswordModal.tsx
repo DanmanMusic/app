@@ -170,6 +170,7 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Credentials'}
               onPress={handleSave}
+              color={colors.primary}
               disabled={isSaveDisabled}
             />
           </View>

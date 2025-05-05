@@ -31,7 +31,11 @@ export const ParentStudentListItem: React.FC<ParentStudentListItemProps> = ({
     </View>
     <View>
       {student.status === 'active' && (
-        <Button title="View Dashboard" onPress={() => onSelectStudent(student.id)} />
+        <Button
+          title="View Dashboard"
+          onPress={() => onSelectStudent(student.id)}
+          color={colors.primary}
+        />
       )}
     </View>
   </View>

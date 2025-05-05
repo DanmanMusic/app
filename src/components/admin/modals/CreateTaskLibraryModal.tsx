@@ -303,6 +303,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Task'}
               onPress={handleCreate}
+              color={colors.primary}
               disabled={isCreateDisabled}
             />
           </View>

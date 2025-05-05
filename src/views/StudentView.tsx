@@ -387,17 +387,17 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
           <Button
             title="Dashboard"
             onPress={() => setActiveTab('dashboard')}
-            color={activeTab === 'dashboard' ? '' : colors.secondary}
+            color={activeTab === 'dashboard' ? colors.primary : colors.secondary}
           />
           <Button
             title="Rewards"
             onPress={() => setActiveTab('rewards')}
-            color={activeTab === 'rewards' ? '' : colors.secondary}
+            color={activeTab === 'rewards' ? colors.primary : colors.secondary}
           />
           <Button
             title="Announcements"
             onPress={() => setActiveTab('announcements')}
-            color={activeTab === 'announcements' ? '' : colors.secondary}
+            color={activeTab === 'announcements' ? colors.primary : colors.secondary}
           />
         </View>
         <View style={commonSharedStyles.flex1}>
@@ -433,7 +433,11 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                         </Text>
                       </View>
                       <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
-                        <Button title="Change Goal" onPress={handleSetGoalPress} />
+                        <Button
+                          title="Change Goal"
+                          onPress={handleSetGoalPress}
+                          color={colors.primary}
+                        />
                       </View>
                     </View>
                     <Text style={[commonSharedStyles.baseSecondaryText, { marginBottom: 5 }]}>
@@ -470,7 +474,11 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                     >
                       No goal set yet.
                     </Text>
-                    <Button title="Set a Goal" onPress={handleSetGoalPress} />
+                    <Button
+                      title="Set a Goal"
+                      onPress={handleSetGoalPress}
+                      color={colors.primary}
+                    />
                   </View>
                 ))}
               <View style={commonSharedStyles.baseMarginTopBottom}>

@@ -208,6 +208,7 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
             <Button
               title={linkMutation.isPending ? 'Linking...' : 'Link Selected Student'}
               onPress={handleConfirmLink}
+              color={colors.primary}
               disabled={isLinkDisabled}
             />
           </View>

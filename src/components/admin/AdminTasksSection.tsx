@@ -50,9 +50,14 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
           <Button
             title="Assign Task to Student"
             onPress={onInitiateAssignTask}
+            color={colors.primary}
             disabled={deleteTaskMutationPending}
           />
-          <Button title="View All Assigned Tasks" onPress={() => onViewVerifications(false)} />
+          <Button
+            title="View All Assigned Tasks"
+            onPress={() => onViewVerifications(false)}
+            color={colors.primary}
+          />
         </View>
         <Text style={[commonSharedStyles.baseSubTitleText, commonSharedStyles.baseMarginTopBottom]}>
           Task Library ({taskLibrary.length})

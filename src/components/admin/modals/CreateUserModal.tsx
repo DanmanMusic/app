@@ -291,6 +291,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create User'}
               onPress={handleCreatePress}
+              color={colors.primary}
               disabled={isCreateDisabled}
             />
           </View>

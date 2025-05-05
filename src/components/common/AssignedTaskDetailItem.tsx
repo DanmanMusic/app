@@ -112,6 +112,7 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
           <Button
             title="Verify"
             onPress={() => onInitiateVerification!(item)}
+            color={colors.primary}
             disabled={disabled}
           />
         )}

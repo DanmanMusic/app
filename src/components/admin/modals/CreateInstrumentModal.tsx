@@ -167,6 +167,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Instrument'}
               onPress={handleCreate}
+              color={colors.primary}
               disabled={mutation.isPending || !name.trim()}
             />
           </View>

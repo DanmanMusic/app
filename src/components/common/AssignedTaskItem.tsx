@@ -3,6 +3,7 @@ import { AssignedTask } from '../../types/dataTypes';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { handleOpenUrl, handleViewAttachment } from '../../lib/supabaseClient';
 import { timestampDisplay } from '../../utils/helpers';
+import { colors } from '../../styles/colors';
 
 export const AssignedTaskItem = ({
   task,
@@ -36,7 +37,6 @@ export const AssignedTaskItem = ({
         {!!task.taskDescription && (
           <Text style={[commonSharedStyles.baseSecondaryText]}>{task.taskDescription}</Text>
         )}
-        <Text style={commonSharedStyles.baseSecondaryText}>Status: {taskStatus}</Text>
         {task.taskLinkUrl && (
           <TouchableOpacity onPress={() => handleOpenUrl(task.taskLinkUrl)}>
             <Text style={commonSharedStyles.baseSecondaryText}>
@@ -51,6 +51,18 @@ export const AssignedTaskItem = ({
             </Text>
           </TouchableOpacity>
         )}
+        {(taskStatus === 'Assigned' || task.verificationStatus === 'pending') && (
+          <Text
+            style={[
+              commonSharedStyles.baseSecondaryText,
+              commonSharedStyles.bold,
+              { color: colors.secondary },
+            ]}
+          >
+            Available: {task.taskBasePoints ?? 0} {task.taskBasePoints === 1 ? 'Ticket' : 'Tickets'}
+          </Text>
+        )}
+        <Text style={commonSharedStyles.baseSecondaryText}>Status: {taskStatus}</Text>
         {task.actualPointsAwarded !== undefined && task.verificationStatus !== 'pending' && (
           <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textSuccess]}>
             Awarded: {task.actualPointsAwarded ?? 0} Tickets
@@ -75,6 +87,7 @@ export const AssignedTaskItem = ({
           <Button
             title={isLoading ? 'Marking...' : 'Mark Complete'}
             onPress={() => onMarkComplete(task.id)}
+            color={colors.primary}
             disabled={isLoading}
           />
         )}

@@ -295,6 +295,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
                   <Button
                     title="View Profile"
                     onPress={() => onViewStudentProfile(studentItem.id)}
+                    color={colors.primary}
                   />
                   <Button
                     title="Unlink Student"

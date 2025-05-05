@@ -607,6 +607,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                 <Button
                   title="Use This Custom Task"
                   onPress={handleAdHocSubmit}
+                  color={colors.primary}
                   disabled={
                     mutation.isPending ||
                     !adHocTitle.trim() ||
@@ -725,6 +726,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
               <Button
                 title={mutation.isPending ? 'Assigning...' : 'Confirm & Assign'}
                 onPress={handleConfirm}
+                color={colors.primary}
                 disabled={mutation.isPending}
               />
             )}

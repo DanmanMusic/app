@@ -205,6 +205,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               <Button
                 title="Verified"
                 onPress={() => handleStatusSelect('verified')}
+                color={colors.primary}
                 disabled={isLoadingStudent || verifyMutation.isPending}
               />
               <Button
@@ -312,6 +313,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               <Button
                 title={verifyMutation.isPending ? 'Processing...' : 'Confirm Verification'}
                 onPress={handleConfirmTickets}
+                color={colors.primary}
                 disabled={isConfirmDisabled}
               />
               <Button
@@ -357,7 +359,7 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               </Text>
             </Text>
             <View style={commonSharedStyles.full}>
-              <Button title="Done" onPress={onClose} />
+              <Button title="Done" onPress={onClose} color={colors.primary} />
             </View>
           </View>
         </View>

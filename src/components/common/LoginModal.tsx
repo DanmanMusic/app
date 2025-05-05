@@ -223,6 +223,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
                 <Button
                   title={isLoading ? 'Logging In...' : 'Login with Email'}
                   onPress={handleEmailLogin}
+                  color={colors.primary}
                   disabled={isLoading}
                 />
               </View>
@@ -247,6 +248,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
                 <Button
                   title={isLoading ? 'Verifying...' : 'Login with PIN'}
                   onPress={handlePinLogin}
+                  color={colors.primary}
                   disabled={isLoading}
                 />
               </View>

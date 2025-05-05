@@ -26,7 +26,12 @@ export const AdminInstrumentItem: React.FC<AdminInstrumentItemProps> = ({
       <Text style={[commonSharedStyles.baseSubTitleText]}>{item.name}</Text>
     </View>
     <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
-      <Button title="Edit" onPress={() => onEdit(item)} disabled={disabled} />
+      <Button
+        title="Edit"
+        onPress={() => onEdit(item)}
+        disabled={disabled}
+        color={colors.primary}
+      />
       <Button
         title="Delete"
         onPress={() => onDelete(item)}

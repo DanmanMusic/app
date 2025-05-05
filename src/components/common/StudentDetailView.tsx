@@ -302,6 +302,7 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
             <Button
               title="Adjust Tickets"
               onPress={handleAdjustmentClick}
+              color={colors.primary}
               disabled={!isStudentActive || balanceLoading}
             />
           )}
@@ -313,7 +314,9 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
               color={colors.success}
             />
           )}
-          {isStudentActive && <Button title="Assign Task" onPress={handleAssignTaskClick} />}
+          {isStudentActive && (
+            <Button title="Assign Task" onPress={handleAssignTaskClick} color={colors.primary} />
+          )}
           <Button title="Edit Info" onPress={handleEditClick} color={colors.warning} />
           {onInitiateStatusUser && (
             <Button title="Manage Status" onPress={handleStatusClick} color={colors.secondary} />

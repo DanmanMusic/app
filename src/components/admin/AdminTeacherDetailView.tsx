@@ -185,7 +185,11 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
                 </Text>
               </View>
               <View>
-                <Button title="View Profile" onPress={() => onViewStudentProfile(item.id)} />
+                <Button
+                  title="View Profile"
+                  onPress={() => onViewStudentProfile(item.id)}
+                  color={colors.primary}
+                />
               </View>
             </View>
           )}

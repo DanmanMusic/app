@@ -164,6 +164,7 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
             <Button
               title={mutation.isPending ? 'Creating...' : 'Create Announcement'}
               onPress={handleCreate}
+              color={colors.primary}
               disabled={isCreateDisabled}
             />
           </View>

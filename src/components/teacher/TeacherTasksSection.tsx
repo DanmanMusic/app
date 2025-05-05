@@ -48,8 +48,8 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
           { marginBottom: 20, alignItems: 'flex-start' },
         ]}
       >
-        <Button title="Assign Task" onPress={onInitiateAssignTaskGeneral} />
-        <Button title="View All Assigned Tasks" onPress={onViewAllTasks} />
+        <Button title="Assign Task" onPress={onInitiateAssignTaskGeneral} color={colors.primary} />
+        <Button title="View All Assigned Tasks" onPress={onViewAllTasks} color={colors.primary} />
       </View>
 
       <Text style={[commonSharedStyles.baseSubTitleText, commonSharedStyles.baseMarginTopBottom]}>

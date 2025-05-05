@@ -116,6 +116,7 @@ export const AdminAnnouncementsSection = () => {
         <Button
           title="Create New Announcement"
           onPress={handleAddPress}
+          color={colors.primary}
           disabled={isLoading || deleteMutation.isPending}
         />
       </View>
@@ -144,6 +145,7 @@ export const AdminAnnouncementsSection = () => {
                 <Button
                   title="Edit"
                   onPress={() => handleEditPress(item)}
+                  color={colors.primary}
                   disabled={deleteMutation.isPending}
                 />
                 <Button

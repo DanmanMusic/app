@@ -396,6 +396,7 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
             <Button
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
+              color={colors.primary}
               disabled={isSaveDisabled}
             />
           </View>

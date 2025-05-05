@@ -105,7 +105,7 @@ export const AdminInstrumentsSection = () => {
         </Text>
       </View>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
-        <Button title="Add New Instrument" onPress={handleAddPress} />
+        <Button title="Add New Instrument" onPress={handleAddPress} color={colors.primary} />
       </View>
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />

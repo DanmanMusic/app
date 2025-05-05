@@ -90,12 +90,12 @@ export const PaginatedTasksList: React.FC<PaginatedTasksListProps> = ({
           <Button
             title="All"
             onPress={() => setAssignmentFilter('all')}
-            color={assignmentFilter === 'all' ? '' : colors.secondary}
+            color={assignmentFilter === 'all' ? colors.primary : colors.secondary}
           />
           <Button
             title="Assigned"
             onPress={() => setAssignmentFilter('assigned')}
-            color={assignmentFilter === 'assigned' ? '' : colors.secondary}
+            color={assignmentFilter === 'assigned' ? colors.primary : colors.secondary}
           />
           <Button
             title="Pending"
