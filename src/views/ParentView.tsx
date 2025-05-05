@@ -15,12 +15,14 @@ import { getUserDisplayName } from '../utils/helpers';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
 import { SharedHeader } from '../components/common/SharedHeader';
+import EditMyInfoModal from '../components/common/EditMyInfoModal';
 
 export const ParentView = () => {
   const { currentUserId: parentUserId } = useAuth();
 
   const [viewingStudentId, setViewingStudentId] = useState<string | null>(null);
 
+  const [isEditInfoModalVisible, setIsEditInfoModalVisible] = useState(false);
   const [isSetCredentialsModalVisible, setIsSetCredentialsModalVisible] = useState(false);
 
   const {
@@ -64,6 +66,7 @@ export const ParentView = () => {
     () => linkedStudentsQueriesResults.some(result => result.isError),
     [linkedStudentsQueriesResults]
   );
+  const handleCloseEditInfoModal = () => setIsEditInfoModalVisible(false);
 
   const hasMultipleStudents = linkedStudents.length > 1;
 
@@ -169,24 +172,31 @@ export const ParentView = () => {
             commonSharedStyles.baseMargin,
           ]}
         >
-          <SharedHeader onSetLoginPress={() => setIsSetCredentialsModalVisible(true)} />
+          <SharedHeader
+            onSetLoginPress={() => setIsSetCredentialsModalVisible(true)}
+            onEditInfoPress={() => setIsEditInfoModalVisible(true)}
+          />
         </View>
-        <View
-          style={[
-            commonSharedStyles.baseRow,
-            commonSharedStyles.baseMarginTopBottom,
-            commonSharedStyles.justifySpaceBetween,
-            commonSharedStyles.baseMargin,
-          ]}
-        >
-          <Text style={[commonSharedStyles.baseSubTitleText]}>
-            Viewing: {getUserDisplayName(studentToView)}
-          </Text>
+        <View style={[commonSharedStyles.baseMarginTopBottom, commonSharedStyles.baseMargin]}>
           {hasMultipleStudents && (
-            <Button title="← Students" onPress={() => setViewingStudentId(null)} />
+            <View style={commonSharedStyles.baseRow}>
+              <Button title="← Students" onPress={() => setViewingStudentId(null)} />
+            </View>
           )}
+          <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
+            <Text
+              style={[
+                commonSharedStyles.baseTitleText,
+                commonSharedStyles.baseMarginTopBottom,
+                commonSharedStyles.bold,
+              ]}
+            >
+              Viewing: {getUserDisplayName(studentToView)}
+            </Text>
+          </View>
         </View>
         <StudentView studentIdToView={viewingStudentId} />
+        <EditMyInfoModal visible={isEditInfoModalVisible} onClose={handleCloseEditInfoModal} />
         <SetEmailPasswordModal
           visible={isSetCredentialsModalVisible}
           onClose={() => setIsSetCredentialsModalVisible(false)}
@@ -206,7 +216,10 @@ export const ParentView = () => {
             commonSharedStyles.baseMargin,
           ]}
         >
-          <SharedHeader onSetLoginPress={() => setIsSetCredentialsModalVisible(true)} />
+          <SharedHeader
+            onSetLoginPress={() => setIsSetCredentialsModalVisible(true)}
+            onEditInfoPress={() => setIsEditInfoModalVisible(true)}
+          />
         </View>
         <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
           <Text
@@ -241,6 +254,7 @@ export const ParentView = () => {
           <Text style={commonSharedStyles.baseEmptyText}>No students linked to your account.</Text>
         ) : null}
       </View>
+      <EditMyInfoModal visible={isEditInfoModalVisible} onClose={handleCloseEditInfoModal} />
       <SetEmailPasswordModal
         visible={isSetCredentialsModalVisible}
         onClose={() => setIsSetCredentialsModalVisible(false)}

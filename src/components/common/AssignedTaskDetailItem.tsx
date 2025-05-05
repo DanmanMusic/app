@@ -42,35 +42,44 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
     : 'Assigned';
 
   return (
-    <View style={[commonSharedStyles.baseItem, commonSharedStyles.baseColumn, { gap: 3 }]}>
-      <Text style={commonSharedStyles.itemTitle}>{item.taskTitle}</Text>
-      <Text style={commonSharedStyles.baseSecondaryText}>
-        Student: {studentName} (
-        {studentStatusDisplay === 'unknown' ? 'Status Unknown' : studentStatusDisplay})
-      </Text>
-      <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
-      <Text style={commonSharedStyles.baseSecondaryText}>
-        Assigned: {new Date(item.assignedDate).toLocaleDateString()} by {assignerNameDisplay}
-      </Text>
-      {item.completedDate && (
+    <View
+      style={[
+        commonSharedStyles.baseItem,
+        commonSharedStyles.baseRow,
+        commonSharedStyles.baseGap,
+        commonSharedStyles.justifySpaceBetween,
+      ]}
+    >
+      <View>
+        <Text style={commonSharedStyles.itemTitle}>{item.taskTitle}</Text>
         <Text style={commonSharedStyles.baseSecondaryText}>
-          Completed: {new Date(item.completedDate).toLocaleDateString()}
+          Student: {studentName} (
+          {studentStatusDisplay === 'unknown' ? 'Status Unknown' : studentStatusDisplay})
         </Text>
-      )}
-      {item.verifiedDate && item.verificationStatus !== 'pending' && (
+        <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
         <Text style={commonSharedStyles.baseSecondaryText}>
-          Verified: {new Date(item.verifiedDate).toLocaleDateString()} by {verifierNameDisplay}
+          Assigned: {new Date(item.assignedDate).toLocaleDateString()} by {assignerNameDisplay}
         </Text>
-      )}
-      {item.actualPointsAwarded !== undefined && item.verificationStatus !== 'pending' && (
-        <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textSuccess]}>
-          Awarded: {item.actualPointsAwarded ?? 0} Tickets
-        </Text>
-      )}
-      {item.isComplete && item.verificationStatus === 'pending' && (
-        <Text style={commonSharedStyles.pendingNote}>Awaiting verification...</Text>
-      )}
-      <View style={commonSharedStyles.assignedTaskActions}>
+        {item.completedDate && (
+          <Text style={commonSharedStyles.baseSecondaryText}>
+            Completed: {new Date(item.completedDate).toLocaleDateString()}
+          </Text>
+        )}
+        {item.verifiedDate && item.verificationStatus !== 'pending' && (
+          <Text style={commonSharedStyles.baseSecondaryText}>
+            Verified: {new Date(item.verifiedDate).toLocaleDateString()} by {verifierNameDisplay}
+          </Text>
+        )}
+        {item.actualPointsAwarded !== undefined && item.verificationStatus !== 'pending' && (
+          <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textSuccess]}>
+            Awarded: {item.actualPointsAwarded ?? 0} Tickets
+          </Text>
+        )}
+        {item.isComplete && item.verificationStatus === 'pending' && (
+          <Text style={commonSharedStyles.pendingNote}>Awaiting verification...</Text>
+        )}
+      </View>
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
         {allowVerify && (
           <Button
             title="Verify"

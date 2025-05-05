@@ -21,35 +21,45 @@ export const AssignedTaskItem = ({
   const showMarkCompleteButton = !task.isComplete && canMark && onMarkComplete;
 
   return (
-    <View style={commonSharedStyles.baseItem}>
-      <Text style={commonSharedStyles.itemTitle}>{task.taskTitle}</Text>
-      <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
-      {task.actualPointsAwarded !== undefined && task.verificationStatus !== 'pending' && (
-        <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textSuccess]}>
-          Awarded: {task.actualPointsAwarded ?? 0} Tickets
-        </Text>
-      )}
-      {task.completedDate && (
-        <Text style={commonSharedStyles.baseSecondaryText}>
-          Completed: {new Date(task.completedDate).toLocaleDateString()}
-        </Text>
-      )}
-      {task.verifiedDate && task.verificationStatus !== 'pending' && (
-        <Text style={commonSharedStyles.baseSecondaryText}>
-          Verified: {new Date(task.verifiedDate).toLocaleDateString()}
-        </Text>
-      )}
-      {showMarkCompleteButton && (
-        <Button
-          title={isLoading ? 'Marking...' : 'Mark Complete'}
-          onPress={() => onMarkComplete(task.id)}
-          disabled={isLoading}
-        />
-      )}
-      {!task.isComplete && !canMark && <Button title="Mark Complete" disabled={true} />}
-      {task.isComplete && task.verificationStatus === 'pending' && (
-        <Text style={commonSharedStyles.pendingNote}>Awaiting teacher verification...</Text>
-      )}
+    <View
+      style={[
+        commonSharedStyles.baseItem,
+        commonSharedStyles.baseRow,
+        commonSharedStyles.justifySpaceBetween,
+      ]}
+    >
+      <View>
+        <Text style={commonSharedStyles.itemTitle}>{task.taskTitle}</Text>
+        <Text style={commonSharedStyles.taskItemStatus}>Status: {taskStatus}</Text>
+        {task.actualPointsAwarded !== undefined && task.verificationStatus !== 'pending' && (
+          <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textSuccess]}>
+            Awarded: {task.actualPointsAwarded ?? 0} Tickets
+          </Text>
+        )}
+        {task.completedDate && (
+          <Text style={commonSharedStyles.baseSecondaryText}>
+            Completed: {new Date(task.completedDate).toLocaleDateString()}
+          </Text>
+        )}
+        {task.verifiedDate && task.verificationStatus !== 'pending' && (
+          <Text style={commonSharedStyles.baseSecondaryText}>
+            Verified: {new Date(task.verifiedDate).toLocaleDateString()}
+          </Text>
+        )}
+        {task.isComplete && task.verificationStatus === 'pending' && (
+          <Text style={commonSharedStyles.pendingNote}>Awaiting teacher verification...</Text>
+        )}
+      </View>
+      <View>
+        {showMarkCompleteButton && (
+          <Button
+            title={isLoading ? 'Marking...' : 'Mark Complete'}
+            onPress={() => onMarkComplete(task.id)}
+            disabled={isLoading}
+          />
+        )}
+        {!task.isComplete && !canMark && <Button title="Mark Complete" disabled={true} />}
+      </View>
     </View>
   );
 };

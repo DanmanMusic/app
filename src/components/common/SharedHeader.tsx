@@ -9,9 +9,10 @@ import { capitalizeFirstLetter } from '../../utils/helpers';
 
 interface SharedHeaderProps {
   onSetLoginPress: () => void;
+  onEditInfoPress: () => void;
 }
 
-export const SharedHeader: React.FC<SharedHeaderProps> = ({ onSetLoginPress }) => {
+export const SharedHeader: React.FC<SharedHeaderProps> = ({ onSetLoginPress, onEditInfoPress }) => {
   const { appUser, supabaseUser, signOut, isPinSession } = useAuth();
   const [isConfirmLogoutVisible, setIsConfirmLogoutVisible] = useState(false);
 
@@ -60,6 +61,7 @@ export const SharedHeader: React.FC<SharedHeaderProps> = ({ onSetLoginPress }) =
         {displayName}
       </Text>
       <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
+        <Button title="Edit Info" onPress={onEditInfoPress} color={colors.warning} />
         {canSetLogin && <Button title="Set Login" onPress={onSetLoginPress} color={colors.info} />}
         <Button title="Logout" onPress={handleLogoutPress} color={colors.danger} />
       </View>

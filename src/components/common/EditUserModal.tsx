@@ -4,10 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-import { updateUser, fetchTeachers, fetchUserProfile } from '../../api/users';
+import { updateUser, fetchTeachers, fetchUserProfile } from '../../api/users'; // Ensure updateUser calls the correct EF
 import { fetchInstruments } from '../../api/instruments';
-
 import { useAuth } from '../../contexts/AuthContext'; // Import useAuth
+
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
@@ -20,36 +20,33 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   userToEdit: userToEditProp,
   onClose,
 }) => {
-  const { currentUserRole } = useAuth(); // Get the logged-in user's role
-  const isCallerAdmin = currentUserRole === 'admin'; // Check if the caller is admin
+  const { currentUserRole } = useAuth();
+  const queryClient = useQueryClient();
 
-  // State for form fields
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [nickname, setNickname] = useState('');
   const [selectedInstrumentIds, setSelectedInstrumentIds] = useState<string[]>([]);
   const [selectedTeacherIds, setSelectedTeacherIds] = useState<string[]>([]);
 
-  const queryClient = useQueryClient();
   const userIdToEdit = userToEditProp?.id;
 
-  // Fetch the LATEST user profile data when modal opens or user ID changes
   const {
     data: userToEdit,
     isLoading: isLoadingUserToEdit,
     isSuccess: isSuccessUserToEdit,
+    isError: isErrorUserToEdit,
+    error: errorUserToEdit,
   } = useQuery<User | null, Error>({
     queryKey: ['userProfile', userIdToEdit, { context: 'editUserModalFetch' }],
     queryFn: () => (userIdToEdit ? fetchUserProfile(userIdToEdit) : Promise.resolve(null)),
-    enabled: visible && !!userIdToEdit, // Fetch only when modal is visible and user ID exists
+    enabled: visible && !!userIdToEdit,
     staleTime: 1 * 60 * 1000,
     refetchOnWindowFocus: true,
   });
 
-  // Determine if the user being edited is a student
   const isStudentRole = userToEdit?.role === 'student';
 
-  // Fetch all instruments if editing a student
   const {
     data: instruments = [],
     isLoading: isLoadingInstruments,
@@ -62,7 +59,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     enabled: visible && isStudentRole,
   });
 
-  // Fetch all active teachers if editing a student
   const {
     data: activeTeachers = [],
     isLoading: isLoadingTeachers,
@@ -78,25 +74,22 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     staleTime: 5 * 60 * 1000,
   });
 
-  // Mutation hook for updating the user
-  const mutation = useMutation({
-    mutationFn: updateUser, // Calls the API function which now calls the Edge Function
+  const profileUpdateMutation = useMutation({
+    mutationFn: (vars: {
+      userId: string;
+      updates: Partial<Omit<User, 'id' | 'role' | 'status'>>;
+    }) => updateUser({ userId: vars.userId, updates: vars.updates }),
     onSuccess: updatedUser => {
-      console.log('[EditUserModal] User update successful:', updatedUser);
-      // Invalidate relevant queries
+      console.log('[EditUserModal] User update successful via mutation.');
       queryClient.invalidateQueries({ queryKey: ['userProfile', updatedUser.id] });
       if (updatedUser.role === 'student') queryClient.invalidateQueries({ queryKey: ['students'] });
       if (updatedUser.role === 'teacher') queryClient.invalidateQueries({ queryKey: ['teachers'] });
       if (updatedUser.role === 'parent') queryClient.invalidateQueries({ queryKey: ['parents'] });
       if (updatedUser.role === 'admin') queryClient.invalidateQueries({ queryKey: ['admins'] });
       queryClient.invalidateQueries({ queryKey: ['activeProfilesForDevSelector'] });
+
+      Toast.show({ type: 'success', text1: 'User Updated', position: 'bottom' });
       onClose();
-      Toast.show({
-        type: 'success',
-        text1: 'Success',
-        text2: 'User updated successfully.',
-        position: 'bottom',
-      });
     },
     onError: (error: Error) => {
       console.error('[EditUserModal] Error updating user:', error);
@@ -109,16 +102,14 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     },
   });
 
-  // Effect to initialize form state based on the fetched user data
   useEffect(() => {
     console.log(
-      `[EditUserModal useEffect] Running. Visible: ${visible}, User Loaded: ${isSuccessUserToEdit}, User Data:`,
-      userToEdit
+      `[EditUserModal useEffect] Running. Visible: ${visible}, User Loaded: ${isSuccessUserToEdit}, User Data ID: ${userToEdit?.id}`
     );
     if (visible && userToEdit) {
       console.log('[EditUserModal useEffect] Setting form state...');
-      setFirstName(userToEdit.firstName);
-      setLastName(userToEdit.lastName);
+      setFirstName(userToEdit.firstName || '');
+      setLastName(userToEdit.lastName || '');
       setNickname(userToEdit.nickname || '');
       if (userToEdit.role === 'student') {
         const instrumentsToSet = userToEdit.instrumentIds || [];
@@ -135,9 +126,8 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         setSelectedInstrumentIds([]);
         setSelectedTeacherIds([]);
       }
-      mutation.reset(); // Reset mutation state when opening
+      profileUpdateMutation.reset();
     } else if (!visible) {
-      // Clear state when modal closes
       setFirstName('');
       setLastName('');
       setNickname('');
@@ -153,8 +143,8 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     );
   };
   const toggleTeacherSelection = (id: string) => {
-    // Only allow admins to change teacher selection
-    if (!isCallerAdmin) {
+    // Check caller role before allowing selection change
+    if (currentUserRole !== 'admin') {
       Toast.show({
         type: 'info',
         text1: 'Permission Denied',
@@ -173,6 +163,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       Toast.show({ type: 'error', text1: 'Error', text2: 'User data not loaded.' });
       return;
     }
+    if (profileUpdateMutation.isPending) return;
 
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
@@ -187,62 +178,60 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       return;
     }
 
-    const updates: Partial<Omit<User, 'id' | 'role' | 'status'>> = {};
-    let hasProfileChanges = false;
-    let hasLinkChanges = false;
+    const updatesPayload: Partial<Omit<User, 'id' | 'role' | 'status'>> = {};
+    let hasChanges = false;
 
-    // Check for changes in basic fields
-    if (trimmedFirstName !== userToEdit.firstName) {
-      updates.firstName = trimmedFirstName;
-      hasProfileChanges = true;
+    if (trimmedFirstName !== (userToEdit.firstName || '')) {
+      updatesPayload.firstName = trimmedFirstName;
+      hasChanges = true;
     }
-    if (trimmedLastName !== userToEdit.lastName) {
-      updates.lastName = trimmedLastName;
-      hasProfileChanges = true;
+    if (trimmedLastName !== (userToEdit.lastName || '')) {
+      updatesPayload.lastName = trimmedLastName;
+      hasChanges = true;
     }
     if (trimmedNickname !== (userToEdit.nickname || '')) {
-      updates.nickname = trimmedNickname || undefined;
-      hasProfileChanges = true;
+      updatesPayload.nickname = trimmedNickname || undefined; // Send undefined for empty/cleared
+      hasChanges = true;
     }
 
-    // Check for changes in student-specific link tables
     if (userToEdit.role === 'student') {
-      const initialInstrumentIds = (userToEdit.instrumentIds || []).sort();
-      const currentInstrumentIds = [...selectedInstrumentIds].sort();
-      if (JSON.stringify(currentInstrumentIds) !== JSON.stringify(initialInstrumentIds)) {
-        hasLinkChanges = true;
+      if (currentUserRole === 'admin' || currentUserRole === 'teacher') {
+        const initialInstrumentIds = (userToEdit.instrumentIds || []).sort();
+        const currentInstrumentIds = [...selectedInstrumentIds].sort();
+        if (JSON.stringify(currentInstrumentIds) !== JSON.stringify(initialInstrumentIds)) {
+          updatesPayload.instrumentIds = selectedInstrumentIds;
+          hasChanges = true;
+        }
       }
-      // Always include instruments payload for students (EF handles sync)
-      updates.instrumentIds = selectedInstrumentIds;
 
-      const initialTeacherIds = (userToEdit.linkedTeacherIds || []).sort();
-      const currentTeacherIds = [...selectedTeacherIds].sort();
-      if (JSON.stringify(currentTeacherIds) !== JSON.stringify(initialTeacherIds)) {
-        hasLinkChanges = true;
+      if (currentUserRole === 'admin') {
+        const initialTeacherIds = (userToEdit.linkedTeacherIds || []).sort();
+        const currentTeacherIds = [...selectedTeacherIds].sort();
+        if (JSON.stringify(currentTeacherIds) !== JSON.stringify(initialTeacherIds)) {
+          updatesPayload.linkedTeacherIds = selectedTeacherIds;
+          hasChanges = true;
+        }
       }
-      // Always include teachers payload (EF handles authorization)
-      updates.linkedTeacherIds = selectedTeacherIds;
     }
 
-    if (!hasProfileChanges && !hasLinkChanges) {
-      console.log('[EditUserModal] No changes detected.');
+    if (!hasChanges) {
+      console.log('[EditUserModal] No relevant changes detected or authorized to send.');
+      Toast.show({ type: 'info', text1: 'No Changes', text2: 'No information was modified.' });
       onClose();
       return;
     }
 
-    console.log('[EditUserModal] Calling mutation with updates:', updates);
-    mutation.mutate({ userId: userToEdit.id, updates });
+    console.log('[EditUserModal] Calling mutation with updatesPayload:', updatesPayload);
+    profileUpdateMutation.mutate({ userId: userToEdit.id, updates: updatesPayload });
   };
 
-  // Determine if save should be disabled
   const isSaveDisabled =
-    mutation.isPending ||
+    profileUpdateMutation.isPending ||
     isLoadingUserToEdit ||
     !firstName.trim() ||
     !lastName.trim() ||
     (isStudentRole && (isLoadingInstruments || isLoadingTeachers));
 
-  // Handle loading state for the user being edited
   if (visible && isLoadingUserToEdit) {
     return (
       <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -255,28 +244,46 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       </Modal>
     );
   }
-
-  // If the modal is visible but userToEdit (fetched data) is null/undefined, handle close
-  if (visible && !userToEdit) {
-    useEffect(() => {
-      if (visible && !isLoadingUserToEdit && !userToEdit) {
-        console.error(
-          '[EditUserModal] Modal visible but user data failed to load after fetch attempt.'
-        );
-        Toast.show({ type: 'error', text1: 'Error', text2: 'Could not load user details.' });
-        onClose(); // Auto-close if fetch failed
-      }
-    }, [visible, isLoadingUserToEdit, userToEdit, onClose]);
-    return null; // Render nothing while closing
+  if (visible && isErrorUserToEdit) {
+    console.error('Error fetching user to edit:', errorUserToEdit);
+    Toast.show({
+      type: 'error',
+      text1: 'Error Loading User',
+      text2: errorUserToEdit?.message || 'Could not load user details.',
+      position: 'bottom',
+      visibilityTime: 4000,
+    });
+    return (
+      <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
+        <View style={commonSharedStyles.centeredView}>
+          <View style={commonSharedStyles.modalView}>
+            <Text style={commonSharedStyles.modalTitle}>Error</Text>
+            <Text style={commonSharedStyles.errorText}>Could not load user details to edit.</Text>
+            <Text style={commonSharedStyles.errorText}>{errorUserToEdit?.message}</Text>
+            <View style={[commonSharedStyles.full, { marginTop: 20 }]}>
+              <Button title="Close" onPress={onClose} color={colors.secondary} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
   }
-
-  if (!userToEdit) {
+  if (visible && !userToEdit && !isLoadingUserToEdit) {
+    console.error('[EditUserModal] Modal visible but user data is null after load attempt.');
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: 'User data unavailable.',
+      position: 'bottom',
+    });
+    return null;
+  }
+  if (!visible || !userToEdit) {
     return null;
   }
 
   const currentUserDisplayName = getUserDisplayName(userToEdit);
 
-  // --- JSX Rendering ---
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
       <View style={commonSharedStyles.centeredView}>
@@ -287,20 +294,23 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
           </Text>
 
           <ScrollView style={commonSharedStyles.modalScrollView}>
-            {/* Basic Info Fields */}
             <Text style={commonSharedStyles.label}>First Name:</Text>
             <TextInput
               style={commonSharedStyles.input}
               value={firstName}
               onChangeText={setFirstName}
-              editable={!mutation.isPending}
+              editable={!profileUpdateMutation.isPending}
+              placeholder="Enter First Name"
+              placeholderTextColor={colors.textLight}
             />
             <Text style={commonSharedStyles.label}>Last Name:</Text>
             <TextInput
               style={commonSharedStyles.input}
               value={lastName}
               onChangeText={setLastName}
-              editable={!mutation.isPending}
+              editable={!profileUpdateMutation.isPending}
+              placeholder="Enter Last Name"
+              placeholderTextColor={colors.textLight}
             />
             <Text style={commonSharedStyles.label}>Nickname (Optional):</Text>
             <TextInput
@@ -309,7 +319,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
               onChangeText={setNickname}
               placeholder="Optional Nickname"
               placeholderTextColor={colors.textLight}
-              editable={!mutation.isPending}
+              editable={!profileUpdateMutation.isPending}
             />
 
             {isStudentRole && (
@@ -333,7 +343,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                               title={inst.name}
                               onPress={() => toggleInstrumentSelection(inst.id)}
                               color={isSelected ? colors.success : colors.secondary}
-                              disabled={mutation.isPending}
+                              disabled={profileUpdateMutation.isPending}
                             />
                           );
                         })
@@ -346,10 +356,9 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                   )}
                 </View>
 
-                {/* Teachers Section (Teachers CANNOT edit this) */}
                 <View style={commonSharedStyles.roleSpecificSection}>
                   <Text style={commonSharedStyles.roleSectionTitle}>Linked Teachers</Text>
-                  {!isCallerAdmin && (
+                  {currentUserRole !== 'admin' && (
                     <Text style={commonSharedStyles.infoText}>
                       Only Admins can modify teacher links.
                     </Text>
@@ -369,10 +378,11 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                             <Button
                               key={teacher.id}
                               title={getUserDisplayName(teacher)}
-                              onPress={() => toggleTeacherSelection(teacher.id)} // Press handled by toggle function
+                              onPress={() => toggleTeacherSelection(teacher.id)}
                               color={isSelected ? colors.success : colors.secondary}
-                              // Disable button interaction if not admin
-                              disabled={mutation.isPending || !isCallerAdmin}
+                              disabled={
+                                profileUpdateMutation.isPending || currentUserRole !== 'admin'
+                              }
                             />
                           );
                         })
@@ -388,24 +398,23 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             )}
           </ScrollView>
 
-          {/* Mutation Status */}
-          {mutation.isPending && (
+          {profileUpdateMutation.isPending && (
             <View style={commonSharedStyles.baseRowCentered}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={commonSharedStyles.baseSecondaryText}>Saving Changes...</Text>
             </View>
           )}
-          {mutation.isError && (
+          {profileUpdateMutation.isError && (
             <Text style={commonSharedStyles.errorText}>
               Error:{' '}
-              {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
+              {profileUpdateMutation.error instanceof Error
+                ? profileUpdateMutation.error.message
+                : 'Failed to save changes'}
             </Text>
           )}
-
-          {/* Action Buttons */}
           <View style={commonSharedStyles.full}>
             <Button
-              title={mutation.isPending ? 'Saving...' : 'Save Changes'}
+              title={profileUpdateMutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSaveChanges}
               disabled={isSaveDisabled}
             />
@@ -415,7 +424,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
-              disabled={mutation.isPending}
+              disabled={profileUpdateMutation.isPending}
             />
           </View>
         </View>

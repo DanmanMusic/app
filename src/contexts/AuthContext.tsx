@@ -11,6 +11,7 @@ import React, {
 } from 'react';
 import { Session, User as SupabaseAuthUser } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { getSupabase } from '../lib/supabaseClient';
 import { fetchUserProfile } from '../api/users';
@@ -18,69 +19,97 @@ import { refreshPinSession } from '../api/auth';
 import { getItem, removeItem, CUSTOM_REFRESH_TOKEN_KEY } from '../lib/storageHelper';
 import { User, UserRole } from '../types/dataTypes';
 
-interface AuthState {
-  isLoading: boolean;
+interface AuthContextType {
+  isLoadingSession: boolean;
+  isLoadingProfile: boolean;
   session: Session | null;
   supabaseUser: SupabaseAuthUser | null;
   appUser: User | null;
   error: Error | null;
-  viewingStudentIdContext: string | null;
-  isPinSessionContext: boolean; // Flag to track if the session originated from PIN
-}
-
-interface AuthContextType
-  extends Omit<AuthState, 'viewingStudentIdContext' | 'isPinSessionContext'> {
+  profileError: Error | null;
   signOut: () => Promise<void>;
   isAuthenticated: boolean;
   currentUserRole: UserRole | 'public';
   currentUserId?: string;
   currentViewingStudentId?: string;
-  isPinSession: boolean; // Expose the flag
+  isPinSession: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const supabase = getSupabase();
-  const [authState, setAuthState] = useState<AuthState>({
-    isLoading: true,
+  const queryClient = useQueryClient();
+
+  const [internalState, setInternalState] = useState<{
+    isLoadingSession: boolean;
+    session: Session | null;
+    supabaseUser: SupabaseAuthUser | null;
+    error: Error | null;
+    viewingStudentIdContext: string | null;
+    isPinSessionContext: boolean;
+  }>({
+    isLoadingSession: true,
     session: null,
     supabaseUser: null,
-    appUser: null,
     error: null,
     viewingStudentIdContext: null,
     isPinSessionContext: false,
   });
 
-  // Custom state update logger for debugging pin session flag changes
-  const setAuthStateWithLog = useCallback((updater: React.SetStateAction<AuthState>) => {
-    setAuthState(prevState => {
-      const nextState = typeof updater === 'function' ? updater(prevState) : updater;
-      if (prevState.isPinSessionContext !== nextState.isPinSessionContext) {
-        // Find caller information (less reliable in bundled JS, but useful for dev)
-        let callerInfo = 'unknown caller';
-        try {
-          // Attempt to get stack trace, might not work well in production builds
-          const stackLines = new Error().stack?.split('\n');
-          if (stackLines && stackLines.length > 2) {
-            // Adjust index based on where setAuthStateWithLog is called from
-            // Often the 3rd line (index 2) is the direct caller
-            callerInfo = stackLines[2]?.trim() ?? stackLines[1]?.trim() ?? 'unknown stack frame';
-          }
-        } catch (e) {}
-        console.log(
-          `[AuthContext setAuthStateWithLog] isPinSessionContext CHANGED from ${prevState.isPinSessionContext} to ${nextState.isPinSessionContext}. Caller: ${callerInfo}`
-        );
-      }
-      return nextState;
-    });
-  }, []);
+  const currentAuthUserId = internalState.supabaseUser?.id;
+  const {
+    data: appUser,
+    isLoading: isLoadingProfile,
+    isError: isErrorProfile,
+    error: profileError,
+  } = useQuery<User | null, Error>({
+    queryKey: ['userProfile', currentAuthUserId],
+    queryFn: () => {
+      if (!currentAuthUserId) return Promise.resolve(null);
+      console.log(`[AuthContext useQuery] Fetching profile for user: ${currentAuthUserId}`);
+      return fetchUserProfile(currentAuthUserId);
+    },
+    enabled: !!currentAuthUserId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 1,
+  });
 
   const signOutRef = useRef<() => Promise<void>>(async () => {});
 
+  const setInternalStateWithLog = useCallback(
+    (updater: React.SetStateAction<typeof internalState>) => {
+      setInternalState(prevState => {
+        const nextState = typeof updater === 'function' ? updater(prevState) : updater;
+        if (prevState.isPinSessionContext !== nextState.isPinSessionContext) {
+          let callerInfo = 'unknown caller';
+          try {
+            const stackLines = new Error().stack?.split('\n');
+            if (stackLines && stackLines.length > 2) {
+              callerInfo = stackLines[2]?.trim() ?? stackLines[1]?.trim() ?? 'unknown stack frame';
+            }
+          } catch (e) {}
+          console.log(
+            `[AuthContext setInternalState] isPinSessionContext CHANGED from ${prevState.isPinSessionContext} to ${nextState.isPinSessionContext}. Caller: ${callerInfo}`
+          );
+        }
+        if (prevState.session?.access_token !== nextState.session?.access_token)
+          console.log('[AuthContext setInternalState] Session access token changed.');
+        if (prevState.supabaseUser?.id !== nextState.supabaseUser?.id)
+          console.log(
+            `[AuthContext setInternalState] Supabase user changed to: ${nextState.supabaseUser?.id}`
+          );
+        return nextState;
+      });
+    },
+    []
+  );
+
   const signOut = useCallback(async () => {
     console.log('[AuthContext] signOut: Initiating sign out...');
-    setAuthStateWithLog(prev => ({ ...prev, isLoading: true }));
+    setInternalStateWithLog(prev => ({ ...prev, isLoadingSession: true, error: null }));
+    const userIdToRemove = internalState.supabaseUser?.id;
     try {
       await removeItem(CUSTOM_REFRESH_TOKEN_KEY);
       console.log('[AuthContext] signOut: Custom refresh token removed.');
@@ -89,11 +118,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     try {
       const { error } = await supabase.auth.signOut({ scope: 'local' });
-      setAuthStateWithLog({
-        isLoading: false,
+      if (userIdToRemove) {
+        queryClient.removeQueries({ queryKey: ['userProfile', userIdToRemove] });
+        queryClient.removeQueries({ queryKey: ['balance', userIdToRemove] });
+        queryClient.removeQueries({ queryKey: ['assigned-tasks', { studentId: userIdToRemove }] });
+        queryClient.removeQueries({ queryKey: ['ticket-history', { studentId: userIdToRemove }] });
+        console.log(`[AuthContext] signOut: Removed caches for ${userIdToRemove}`);
+      }
+      setInternalStateWithLog({
+        isLoadingSession: false,
         session: null,
         supabaseUser: null,
-        appUser: null,
         error: error ?? null,
         viewingStudentIdContext: null,
         isPinSessionContext: false,
@@ -109,26 +144,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (e) {
       console.error('[AuthContext] signOut: EXCEPTION during sign out:', e);
-      setAuthStateWithLog({
-        isLoading: false,
+      setInternalStateWithLog({
+        isLoadingSession: false,
         session: null,
         supabaseUser: null,
-        appUser: null,
         error: e instanceof Error ? e : new Error('Sign out failed'),
         viewingStudentIdContext: null,
         isPinSessionContext: false,
       });
     }
-  }, [supabase.auth, setAuthStateWithLog]);
+  }, [supabase.auth, setInternalStateWithLog, internalState.supabaseUser?.id, queryClient]);
 
   useEffect(() => {
     signOutRef.current = signOut;
   }, [signOut]);
 
-  // Effect 1: Check for initial PIN token on mount
   useEffect(() => {
     let isMounted = true;
-    console.log('[AuthContext] Mount Effect: Checking for initial session...');
     const tryInitialPinRefresh = async () => {
       console.log('[AuthContext] tryInitialPinRefresh: START');
       let storedRefreshToken: string | null = null;
@@ -141,9 +173,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (e) {
         console.error('[AuthContext] tryInitialPinRefresh: Error reading refresh token:', e);
         if (isMounted) {
-          setAuthStateWithLog(prev => ({
+          setInternalStateWithLog(prev => ({
             ...prev,
-            isLoading: false,
+            isLoadingSession: false,
             error: new Error('Failed to read session.'),
             isPinSessionContext: false,
           }));
@@ -156,9 +188,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.log(
             '[AuthContext] tryInitialPinRefresh: Found PIN token, setting state before refresh...'
           );
-          setAuthStateWithLog(prev => ({
+          setInternalStateWithLog(prev => ({
             ...prev,
-            isLoading: true,
+            isLoadingSession: true,
             isPinSessionContext: true,
             error: null,
           }));
@@ -180,20 +212,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             );
             await removeItem(CUSTOM_REFRESH_TOKEN_KEY);
             if (isMounted) {
-              setAuthStateWithLog(prev => ({
+              setInternalStateWithLog(prev => ({
                 ...prev,
-                isLoading: false,
+                isLoadingSession: false,
                 error: new Error('Failed to apply refreshed session.'),
                 session: null,
                 supabaseUser: null,
-                appUser: null,
+                viewingStudentIdContext: null,
                 isPinSessionContext: false,
               }));
             }
           } else {
             console.log(
-              '[AuthContext] tryInitialPinRefresh: supabase.auth.setSession SUCCEEDED. Listener will handle profile fetch.'
+              '[AuthContext] tryInitialPinRefresh: supabase.auth.setSession SUCCEEDED. Listener will update state.'
             );
+            // isLoadingSession will be set to false by the listener or profile fetch effect
           }
         } catch (refreshError: any) {
           if (!isMounted) return;
@@ -202,9 +235,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             refreshError?.message
           );
           await removeItem(CUSTOM_REFRESH_TOKEN_KEY);
-          setAuthStateWithLog(prev => ({
+          setInternalStateWithLog(prev => ({
             ...prev,
-            isLoading: false,
+            isLoadingSession: false,
             session: null,
             supabaseUser: null,
             appUser: null,
@@ -223,19 +256,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (!isMounted) return;
             if (!session) {
               console.log('[AuthContext] No Supabase session found either.');
-              setAuthStateWithLog(prev => ({
+              setInternalStateWithLog(prev => ({
                 ...prev,
-                isLoading: false,
+                isLoadingSession: false,
                 session: null,
                 supabaseUser: null,
-                appUser: null,
                 isPinSessionContext: false,
               }));
             } else {
               console.log('[AuthContext] Initial Supabase session found. Assuming non-PIN.');
-              setAuthStateWithLog(prev => ({
+              setInternalStateWithLog(prev => ({
                 ...prev,
-                isLoading: true,
+                isLoadingSession: false,
                 session: session,
                 supabaseUser: session.user,
                 isPinSessionContext: false,
@@ -243,10 +275,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           })
           .catch(err => {
+            console.error('[AuthContext] Error checking initial Supabase session:', err);
             if (isMounted) {
-              setAuthStateWithLog(prev => ({
+              setInternalStateWithLog(prev => ({
                 ...prev,
-                isLoading: false,
+                isLoadingSession: false,
                 error: err,
                 isPinSessionContext: false,
               }));
@@ -260,9 +293,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       isMounted = false;
     };
-  }, [supabase.auth, setAuthStateWithLog]);
+  }, [supabase.auth, setInternalStateWithLog]);
 
-  // Effect 2: Listen for Auth State Changes
   useEffect(() => {
     let isListenerMounted = true;
     console.log('[AuthContext] Setting up onAuthStateChange listener...');
@@ -291,30 +323,67 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       switch (event) {
         case 'INITIAL_SESSION':
+          if (!session) {
+            console.log(
+              '[AuthContext] INITIAL_SESSION event without session object. Treating as SIGNED_OUT.'
+            );
+            setInternalStateWithLog(prev => ({
+              ...prev,
+              isLoadingSession: false,
+              session: null,
+              supabaseUser: null,
+              error: null,
+              viewingStudentIdContext: null,
+              isPinSessionContext: false,
+            }));
+          } else {
+            setInternalStateWithLog(prev => ({
+              ...prev,
+              isLoadingSession: false,
+              session,
+              supabaseUser: session.user,
+              error: null,
+              isPinSessionContext: isLikelyPinSession,
+              viewingStudentIdContext:
+                prev.supabaseUser?.id === session.user?.id ? prev.viewingStudentIdContext : null,
+            }));
+          }
+          break;
         case 'SIGNED_IN':
         case 'TOKEN_REFRESHED':
         case 'USER_UPDATED':
           console.log(`[AuthContext] Handling ${event}.`);
           if (session) {
-            setAuthStateWithLog(prev => ({
-              ...prev,
-              session,
-              supabaseUser: session.user,
-              isLoading: !prev.appUser || prev.appUser.id !== session.user.id,
-              error: null,
-              isPinSessionContext: isLikelyPinSession,
-            }));
+            setInternalStateWithLog(prev => {
+              const userChanged = prev.supabaseUser?.id !== session.user?.id;
+              return {
+                ...prev,
+                isLoadingSession: false,
+                session,
+                supabaseUser: session.user,
+                error: null,
+                isPinSessionContext: isLikelyPinSession,
+                viewingStudentIdContext: userChanged ? null : prev.viewingStudentIdContext,
+              };
+            });
           } else {
             console.warn(`[AuthContext] Event ${event} received without session.`);
+            setInternalStateWithLog({
+              isLoadingSession: false,
+              session: null,
+              supabaseUser: null,
+              error: new Error(`Auth event ${event} without session`),
+              viewingStudentIdContext: null,
+              isPinSessionContext: false,
+            });
           }
           break;
         case 'SIGNED_OUT':
           console.log(`[AuthContext] Handling SIGNED_OUT.`);
-          setAuthStateWithLog({
-            isLoading: false,
+          setInternalStateWithLog({
+            isLoadingSession: false,
             session: null,
             supabaseUser: null,
-            appUser: null,
             error: null,
             viewingStudentIdContext: null,
             isPinSessionContext: false,
@@ -326,155 +395,105 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       console.log(`[AuthContext] Listener finished processing event: ${event}.`);
     });
-
     return () => {
       isListenerMounted = false;
       console.log('[AuthContext] Cleaning up onAuthStateChange listener.');
       subscription?.unsubscribe();
     };
-  }, [supabase.auth, setAuthStateWithLog]);
+  }, [supabase.auth, setInternalStateWithLog]);
 
-  // Effect 3: Fetch App User Profile when Supabase User changes
   useEffect(() => {
-    let isProfileFetchMounted = true;
-    const userToLoad = authState.supabaseUser;
-    const shouldFetch =
-      userToLoad && (!authState.appUser || authState.appUser.id !== userToLoad.id);
+    const metaRole = internalState.session?.user?.app_metadata?.role;
+    const metaViewingId = internalState.session?.user?.app_metadata?.viewing_student_id;
+    const viewingIdContext = metaRole === 'parent' && metaViewingId ? metaViewingId : null;
 
-    if (shouldFetch) {
-      console.log(
-        `[AuthContext] Profile Fetch Effect: Triggered for user ${userToLoad.id}. Fetching profile...`
-      );
-      if (!authState.isLoading) {
-        setAuthStateWithLog(prev => ({ ...prev, isLoading: true, error: null }));
+    setInternalStateWithLog(prev => {
+      if (prev.viewingStudentIdContext !== viewingIdContext) {
+        console.log(
+          `[AuthContext] Updating viewingStudentIdContext from ${prev.viewingStudentIdContext} to: ${viewingIdContext}`
+        );
+        return { ...prev, viewingStudentIdContext: viewingIdContext };
       }
+      return prev;
+    });
+  }, [internalState.session, setInternalStateWithLog]);
 
-      fetchUserProfile(userToLoad.id)
-        .then(profile => {
-          if (!isProfileFetchMounted) return;
-          console.log(
-            `[AuthContext] Profile Fetch Effect: fetchUserProfile result for ${userToLoad.id}. Profile found: ${!!profile}`
-          );
-          if (profile) {
-            const metaRole = authState.session?.user?.app_metadata?.role;
-            const metaViewingId = authState.session?.user?.app_metadata?.viewing_student_id;
-            let effectiveRole = profile.role;
-            let viewingIdContext = null;
-
-            if (metaRole && ['admin', 'teacher', 'student', 'parent'].includes(metaRole)) {
-              if (metaRole === 'parent') {
-                effectiveRole = 'parent';
-                viewingIdContext = metaViewingId ?? null;
-              } else {
-                effectiveRole = profile.role === metaRole ? metaRole : profile.role;
-              }
-            }
-
-            setAuthStateWithLog(prev => {
-              if (prev.supabaseUser?.id !== userToLoad.id) {
-                console.warn(
-                  '[AuthContext] Profile Fetch Effect: User context changed during fetch. Ignoring stale result.'
-                );
-                return prev;
-              }
-              const finalAppUser = { ...profile, role: effectiveRole };
-              return {
-                ...prev,
-                isLoading: false,
-                appUser: finalAppUser,
-                viewingStudentIdContext: viewingIdContext,
-                error: null,
-              };
-            });
-          } else {
-            console.error(
-              `[AuthContext] Profile Fetch Effect: Profile not found for user ${userToLoad.id}. Signing out.`
-            );
-            signOutRef.current();
-          }
-        })
-        .catch(async error => {
-          if (!isProfileFetchMounted) return;
-          console.error(
-            `[AuthContext] Profile Fetch Effect: Error fetching profile for ${userToLoad.id}:`,
-            error?.message
-          );
-          if (authState.supabaseUser?.id === userToLoad.id) {
-            await signOutRef.current();
-          } else {
-            console.warn(
-              '[AuthContext] Profile Fetch Effect: Error caught for a stale user fetch. Ignoring.'
-            );
-          }
-        });
-    } else if (!userToLoad && authState.appUser) {
-      console.log(
-        '[AuthContext] Profile Fetch Effect: supabaseUser is null, ensuring appUser is null.'
+  useEffect(() => {
+    if (isErrorProfile && profileError && currentAuthUserId) {
+      console.error(
+        `[AuthContext] Profile query failed for user ${currentAuthUserId}:`,
+        profileError.message
       );
-      setAuthStateWithLog(prev => ({
-        ...prev,
-        appUser: null,
-        viewingStudentIdContext: null,
-        isLoading: false,
-      }));
-    } else if (!userToLoad && authState.isLoading) {
-      console.log(
-        '[AuthContext] Profile Fetch Effect: No user to load, setting isLoading to false.'
-      );
-      setAuthStateWithLog(prev => ({ ...prev, isLoading: false }));
+      if (profileError.message.includes('not found')) {
+        console.warn(`[AuthContext] Profile not found for ${currentAuthUserId}, signing out.`);
+        signOutRef.current();
+      } else {
+        setInternalStateWithLog(prev => ({ ...prev, error: profileError }));
+      }
+    } else if (!isErrorProfile && internalState.error === profileError) {
+      setInternalStateWithLog(prev => ({ ...prev, error: null }));
     }
+  }, [
+    isErrorProfile,
+    profileError,
+    currentAuthUserId,
+    internalState.error,
+    setInternalStateWithLog,
+  ]);
 
-    return () => {
-      isProfileFetchMounted = false;
-    };
-  }, [authState.supabaseUser?.id, authState.session?.access_token, setAuthStateWithLog]);
-
-  // --- Calculate Derived State ---
   const isAuthenticated = useMemo(
-    () => !!authState.session && !!authState.appUser && authState.appUser.status === 'active',
-    [authState.session, authState.appUser]
+    () => !!internalState.session && !!appUser && appUser.status === 'active',
+    [internalState.session, appUser]
   );
 
   const currentUserRole: UserRole | 'public' = useMemo(() => {
-    if (!isAuthenticated || !authState.appUser) return 'public';
-    if (authState.viewingStudentIdContext) {
-      // If viewing context ID exists, assume parent role
-      return 'parent';
+    if (!isAuthenticated || !appUser) return 'public';
+    if (internalState.viewingStudentIdContext) {
+      return appUser.role === 'parent' ? 'parent' : appUser.role;
     }
-    return authState.appUser.role;
-  }, [isAuthenticated, authState.appUser, authState.viewingStudentIdContext]);
+    return appUser.role;
+  }, [isAuthenticated, appUser, internalState.viewingStudentIdContext]);
 
-  const currentUserId = authState.appUser?.id;
-  const currentViewingStudentId = authState.viewingStudentIdContext ?? undefined;
+  const currentUserId = appUser?.id;
+  const currentViewingStudentId = internalState.viewingStudentIdContext ?? undefined;
 
-  // Construct the context value
+  const isLoading = internalState.isLoadingSession || isLoadingProfile;
+
   const value: AuthContextType = useMemo(
     () => ({
-      isLoading: authState.isLoading,
-      session: authState.session,
-      supabaseUser: authState.supabaseUser,
-      appUser: authState.appUser,
-      error: authState.error,
+      isLoadingSession: internalState.isLoadingSession,
+      isLoadingProfile: isLoadingProfile,
+      session: internalState.session,
+      supabaseUser: internalState.supabaseUser,
+      appUser: appUser ?? null,
+      error: internalState.error,
+      profileError: profileError,
       signOut: signOutRef.current,
       isAuthenticated,
       currentUserRole,
       currentUserId,
       currentViewingStudentId,
-      isPinSession: authState.isPinSessionContext,
+      isPinSession: internalState.isPinSessionContext,
     }),
     [
-      authState.isLoading,
-      authState.session,
-      authState.supabaseUser,
-      authState.appUser,
-      authState.error,
+      internalState.isLoadingSession,
+      isLoadingProfile,
+      internalState.session,
+      internalState.supabaseUser,
+      appUser,
+      internalState.error,
+      profileError,
       isAuthenticated,
       currentUserRole,
       currentUserId,
       currentViewingStudentId,
-      authState.isPinSessionContext,
+      internalState.isPinSessionContext,
     ]
   );
+
+  useEffect(() => {
+    console.log(`[AuthContext] Final isLoading state reported: ${isLoading}`);
+  }, [isLoading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

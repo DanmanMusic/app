@@ -62,6 +62,63 @@ const mapDbRowToAssignedTaskWithNames = (row: any): AssignedTask => {
   };
 };
 
+const mapRpcRowToAssignedTask = (row: any): AssignedTask => {
+  const getAssignerName = () => {
+    // Use names returned directly from the RPC function
+    if (row.assigner_first_name || row.assigner_last_name) {
+      return getUserDisplayName({
+        firstName: row.assigner_first_name,
+        lastName: row.assigner_last_name,
+        nickname: row.assigner_nickname,
+      });
+    }
+    // Fallback to ID if names are null (e.g., assigner profile deleted)
+    return row.assigned_by_id ? `ID: ${row.assigned_by_id}` : 'Unknown Assigner';
+  };
+
+  const getVerifierName = () => {
+    // Use names returned directly from the RPC function
+    if (!row.verifier_first_name && !row.verifier_last_name) return undefined;
+    return (
+      getUserDisplayName({
+        firstName: row.verifier_first_name,
+        lastName: row.verifier_last_name,
+        nickname: row.verifier_nickname,
+      }) || (row.verified_by_id ? `ID: ${row.verified_by_id}` : undefined)
+    ); // Fallback to ID
+  };
+
+  const getStudentStatus = (): UserStatus | 'unknown' => {
+    const status = row.student_profile_status; // Use the status column from RPC result
+    if (status === 'active' || status === 'inactive') {
+      return status as UserStatus;
+    }
+    return 'unknown';
+  };
+
+  return {
+    id: row.id,
+    studentId: row.student_id,
+    assignedById: row.assigned_by_id,
+    assignedDate: row.assigned_date,
+    taskTitle: row.task_title,
+    taskDescription: row.task_description,
+    taskBasePoints: row.task_base_points,
+    isComplete: row.is_complete,
+    completedDate: row.completed_date ?? undefined,
+    verificationStatus: (row.verification_status as TaskVerificationStatus) ?? undefined,
+    verifiedById: row.verified_by_id ?? undefined,
+    verifiedDate: row.verified_date ?? undefined,
+    actualPointsAwarded: row.actual_points_awarded ?? undefined,
+    taskLinkUrl: row.task_link_url ?? null,
+    taskAttachmentPath: row.task_attachment_path ?? null,
+    // Use the helper functions which now use RPC result columns
+    assignerName: getAssignerName(),
+    verifierName: getVerifierName(),
+    studentStatus: getStudentStatus(),
+  };
+};
+
 export const fetchAssignedTasks = async ({
   page = 1,
   limit = 15,
@@ -78,86 +135,43 @@ export const fetchAssignedTasks = async ({
   teacherId?: string;
 }): Promise<AssignedTasksListResponse> => {
   const client = getSupabase();
+  console.log(
+    `[fetchAssignedTasks RPC v2] Calling RPC: page=${page}, limit=${limit}, assignment=${assignmentStatus}, student=${studentStatus}, studentId=${studentId}, teacherId=${teacherId}`
+  );
 
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit - 1;
+  // Define parameters for the RPC call
+  const rpcParams = {
+    p_page: page,
+    p_limit: limit,
+    p_assignment_status: assignmentStatus,
+    p_student_status: studentStatus,
+    p_student_id: studentId || null, // Pass null if undefined
+    p_teacher_id: teacherId || null, // Pass null if undefined
+  };
 
-  const selectString = `
-      id,
-      student_id,
-      assigned_by_id,
-      assigned_date,
-      task_title,
-      task_description,
-      task_base_points,
-      is_complete,
-      completed_date,
-      verification_status,
-      verified_by_id,
-      verified_date,
-      actual_points_awarded,
-      student_profile:profiles!fk_assigned_tasks_student ( status ),
-      assigner_profile:profiles!fk_assigned_tasks_assigner ( first_name, last_name, nickname ),
-      verifier_profile:profiles!fk_assigned_tasks_verifier ( first_name, last_name, nickname )
-    `;
+  // --- Execute the RPC call ---
+  // The RPC function now returns total_count in each row
+  const { data: rpcData, error: rpcError } = await client.rpc(
+    'get_assigned_tasks_filtered',
+    rpcParams
+  );
 
-  let query = client.from('assigned_tasks').select(selectString, { count: 'exact' });
-
-  if (studentId) {
-    query = query.eq('student_id', studentId);
+  if (rpcError) {
+    console.error('[fetchAssignedTasks RPC v2] RPC execution error:', rpcError);
+    throw new Error(`Failed to fetch assigned tasks via RPC: ${rpcError.message}`);
   }
 
-  switch (assignmentStatus) {
-    case 'assigned':
-      query = query.eq('is_complete', false);
-      break;
-    case 'pending':
-      query = query.eq('is_complete', true);
-      query = query.eq('verification_status', 'pending');
-      break;
-    case 'completed':
-      query = query.eq('is_complete', true);
-      query = query.not('verification_status', 'eq', 'pending');
-      break;
-  }
-
-  if (studentStatus !== 'all') {
-    console.log(
-      `[Supabase] Applying student status filter: student_profile.status eq ${studentStatus}`
-    ); // Add log
-    query = query.filter('student_profile.status', 'eq', studentStatus);
-  }
-
-  let studentIdsForTeacher: string[] | null = null;
-  if (teacherId && !studentId) {
-    const { data: teacherStudentLinks, error: linkError } = await client
-      .from('student_teachers')
-      .select('student_id')
-      .eq('teacher_id', teacherId);
-
-    if (linkError) {
-      throw new Error(`Failed to fetch student links for teacher: ${linkError.message}`);
-    }
-    studentIdsForTeacher = teacherStudentLinks?.map(link => link.student_id) || [];
-
-    if (studentIdsForTeacher.length === 0) {
-      return { items: [], totalPages: 1, currentPage: 1, totalItems: 0 };
-    }
-    query = query.in('student_id', studentIdsForTeacher);
-  }
-
-  query = query.order('assigned_date', { ascending: false }).range(startIndex, endIndex);
-
-  const { data, error, count } = await query;
-
-  if (error) {
-    throw new Error(`Failed to fetch assigned tasks: ${error.message}`);
-  }
-
-  const totalItems = count ?? 0;
+  // --- Get total count from the FIRST row of the result ---
+  // Use nullish coalescing for safety
+  const totalItems = Number(rpcData?.[0]?.total_count ?? 0);
   const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
 
-  const tasks = (data || []).map(mapDbRowToAssignedTaskWithNames);
+  console.log(
+    `[fetchAssignedTasks RPC v2] Call successful. Total Count: ${totalItems}, Rows fetched: ${rpcData?.length ?? 0}`
+  );
+
+  // Map the data returned from the RPC call
+  const tasks = (rpcData || []).map(mapRpcRowToAssignedTask);
 
   return { items: tasks, totalPages, currentPage: page, totalItems };
 };

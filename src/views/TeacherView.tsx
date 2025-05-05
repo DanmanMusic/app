@@ -30,29 +30,25 @@ import { AssignedTask, Instrument, User, TaskLibraryItem } from '../types/dataTy
 
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
+import EditMyInfoModal from '../components/common/EditMyInfoModal';
 
 export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId: teacherId } = useAuth();
   const queryClient = useQueryClient();
 
-  // --- State ---
   const [viewingSection, setViewingSection] = useState<TeacherSection>('dashboard');
   const [viewingStudentId, setViewingStudentId] = useState<string | null>(null);
-  // Assign Task Modals
   const [isAssignTaskModalVisible, setIsAssignTaskModalVisible] = useState(false);
   const [assignTaskTargetStudentId, setAssignTaskTargetStudentId] = useState<string | null>(null);
-  // Edit Student Modal
   const [isEditStudentModalVisible, setIsEditStudentModalVisible] = useState(false);
   const [studentToEdit, setStudentToEdit] = useState<User | null>(null);
-  // Other Modals
+  const [isEditInfoModalVisible, setIsEditInfoModalVisible] = useState(false);
   const [isSetCredentialsModalVisible, setIsSetCredentialsModalVisible] = useState(false);
   const [isGeneratePinModalVisible, setIsGeneratePinModalVisible] = useState(false);
   const [userForPin, setUserForPin] = useState<User | null>(null);
-  // Assigned Task Delete Confirmation
   const [isDeleteAssignedTaskConfirmVisible, setIsDeleteAssignedTaskConfirmVisible] =
     useState(false);
   const [assignedTaskToDelete, setAssignedTaskToDelete] = useState<AssignedTask | null>(null);
-  // Task Library Modals & State
   const [isCreateTaskModalVisible, setIsCreateTaskModalVisible] = useState(false);
   const [isEditTaskLibModalVisible, setIsEditTaskLibModalVisible] = useState(false);
   const [taskLibToEdit, setTaskLibToEdit] = useState<TaskLibraryItem | null>(null);
@@ -165,6 +161,8 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   const handleViewProfile = (studentId: string) => setViewingStudentId(studentId);
   const handleBackFromProfile = () => setViewingStudentId(null);
   const handleViewAllTasks = () => setViewingSection('tasks-full');
+
+  const handleCloseEditInfoModal = () => setIsEditInfoModalVisible(false);
 
   const handleInitiateAssignTaskForStudent = (studentId: string) => {
     setAssignTaskTargetStudentId(studentId);
@@ -412,12 +410,15 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
           commonSharedStyles.baseMargin,
         ]}
       >
-        <SharedHeader onSetLoginPress={() => setIsSetCredentialsModalVisible(true)} />
+        <SharedHeader
+          onSetLoginPress={() => setIsSetCredentialsModalVisible(true)}
+          onEditInfoPress={() => setIsEditInfoModalVisible(true)}
+        />
       </View>
 
       {renderMainContent()}
 
-      {/* Modals */}
+      <EditMyInfoModal visible={isEditInfoModalVisible} onClose={handleCloseEditInfoModal} />
       <SetEmailPasswordModal
         visible={isSetCredentialsModalVisible}
         onClose={() => setIsSetCredentialsModalVisible(false)}

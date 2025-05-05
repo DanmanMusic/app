@@ -52,6 +52,7 @@ import { AdminSection, AdminViewProps, UserTab } from '../types/componentProps';
 import { getUserDisplayName } from '../utils/helpers';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 import { colors } from '../styles/colors';
+import EditMyInfoModal from '../components/common/EditMyInfoModal';
 
 export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId: adminUserId } = useAuth();
@@ -63,6 +64,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
   const [viewingUserRole, setViewingUserRole] = useState<UserRole | null>(null);
 
+  const [isEditInfoModalVisible, setIsEditInfoModalVisible] = useState(false);
   const [isCreateUserModalVisible, setIsCreateUserModalVisible] = useState(false);
   const [isAssignTaskModalVisible, setIsAssignTaskModalVisible] = useState(false);
   const [assignTaskTargetStudentId, setAssignTaskTargetStudentId] = useState<string | null>(null);
@@ -154,6 +156,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
       });
     },
   });
+
+  const handleCloseEditInfoModal = () => setIsEditInfoModalVisible(false);
 
   const handleViewManageUser = (userId: string, role: UserRole) => {
     setViewingUserId(userId);
@@ -537,7 +541,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           commonSharedStyles.baseMargin,
         ]}
       >
-        <SharedHeader onSetLoginPress={() => setIsSetCredentialsModalVisible(true)} />
+        <SharedHeader
+          onSetLoginPress={() => setIsSetCredentialsModalVisible(true)}
+          onEditInfoPress={() => setIsEditInfoModalVisible(true)}
+        />
       </View>
 
       {!viewingUserId ? (
@@ -633,6 +640,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
           redeemerId={adminUserId} // Assuming admin redeems
         />
       )}
+      <EditMyInfoModal visible={isEditInfoModalVisible} onClose={handleCloseEditInfoModal} />
       <SetEmailPasswordModal
         visible={isSetCredentialsModalVisible}
         onClose={handleCloseSetCredentialsModal}

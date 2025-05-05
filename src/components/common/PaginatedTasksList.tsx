@@ -5,7 +5,7 @@ import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 
 // API Imports
 // *** Removed user API imports ***
-import { AssignedTask, User, UserStatus } from '../../types/dataTypes'; // Keep types
+import { AssignedTask, User } from '../../types/dataTypes'; // Keep types
 import { TaskAssignmentFilterStatusAPI, StudentTaskFilterStatusAPI } from '../../api/assignedTasks';
 
 // Hook Imports
@@ -99,12 +99,12 @@ export const PaginatedTasksList: React.FC<PaginatedTasksListProps> = ({
           <Button
             title="All"
             onPress={() => setAssignmentFilter('all')}
-            color={assignmentFilter === 'all' ? colors.primary : colors.secondary}
+            color={assignmentFilter === 'all' ? '' : colors.secondary}
           />
           <Button
             title="Assigned"
             onPress={() => setAssignmentFilter('assigned')}
-            color={assignmentFilter === 'assigned' ? colors.primary : colors.secondary}
+            color={assignmentFilter === 'assigned' ? '' : colors.secondary}
           />
           <Button
             title="Pending"
@@ -128,7 +128,7 @@ export const PaginatedTasksList: React.FC<PaginatedTasksListProps> = ({
             <Button
               title="Inactive"
               onPress={() => setStudentStatusFilter('inactive')}
-              color={studentStatusFilter === 'inactive' ? colors.secondary : colors.secondary}
+              color={studentStatusFilter === 'inactive' ? colors.warning : colors.secondary}
             />
             <Button
               title="All"
