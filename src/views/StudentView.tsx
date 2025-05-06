@@ -4,15 +4,10 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, FlatList, Button, Image, ActivityIndicator } from 'react-native';
 
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
-import { fetchAnnouncements } from '../api/announcements';
-import { updateAssignedTask } from '../api/assignedTasks';
-import { fetchInstruments } from '../api/instruments';
-import { fetchRewards } from '../api/rewards';
-import { fetchStudentBalance } from '../api/tickets';
-import { fetchTeachers, fetchUserProfile, updateStudentGoal } from '../api/users';
 import PaginationControls from '../components/admin/PaginationControls';
 import { AnnouncementListItem } from '../components/common/AnnouncementListItem';
 import { AssignedTaskItem } from '../components/common/AssignedTaskItem';
@@ -22,14 +17,26 @@ import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
 import { SharedHeader } from '../components/common/SharedHeader';
 import { TicketHistoryItem } from '../components/common/TicketHistoryItem';
 import SetGoalModal from '../components/student/modals/SetGoalModal';
-import { useAuth } from '../contexts/AuthContext';
+
 import { usePaginatedStudentHistory } from '../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../hooks/usePaginatedStudentTasks';
+
+import { useAuth } from '../contexts/AuthContext';
+
 import { colors } from '../styles/colors';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
+
 import { StudentViewProps } from '../types/componentProps';
 import { Announcement, Instrument, RewardItem, User } from '../types/dataTypes';
+
 import { getInstrumentNames, getUserDisplayName } from '../utils/helpers';
+
+import { fetchAnnouncements } from '../api/announcements';
+import { updateAssignedTask } from '../api/assignedTasks';
+import { fetchInstruments } from '../api/instruments';
+import { fetchRewards } from '../api/rewards';
+import { fetchStudentBalance } from '../api/tickets';
+import { fetchTeachers, fetchUserProfile, updateStudentGoal } from '../api/users';
 
 type StudentTab = 'dashboard' | 'tasks' | 'rewards' | 'announcements';
 
@@ -93,7 +100,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     data: instruments = [],
     isLoading: instrumentsLoading,
     isError: instrumentsError,
-    error: instrumentsErrorMsg,
+    error: _instrumentsErrorMsg,
   } = useQuery<Instrument[], Error>({
     queryKey: ['instruments'],
     queryFn: fetchInstruments,
@@ -104,7 +111,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     data: activeTeachers = [],
     isLoading: teachersLoading,
     isError: teachersError,
-    error: teachersErrorMsg,
+    error: _teachersErrorMsg,
   } = useQuery<User[], Error>({
     queryKey: ['teachers', { status: 'active', context: 'studentViewLookup' }],
     queryFn: async () => {

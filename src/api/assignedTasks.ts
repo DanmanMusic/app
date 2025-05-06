@@ -1,6 +1,8 @@
 // src/api/assignedTasks.ts
 import { getSupabase } from '../lib/supabaseClient';
+
 import { AssignedTask, TaskVerificationStatus, UserStatus } from '../types/dataTypes';
+
 import { fileToBase64, getUserDisplayName, NativeFileObject } from '../utils/helpers';
 
 export type TaskAssignmentFilterStatusAPI = 'all' | 'assigned' | 'pending' | 'completed';
@@ -279,7 +281,7 @@ export const deleteAssignedTask = async (assignmentId: string): Promise<void> =>
   const payload = { assignmentId };
   if (!payload.assignmentId) throw new Error('Assignment ID missing.');
 
-  const { data, error } = await client.functions.invoke('deleteAssignedTask', { body: payload });
+  const { error } = await client.functions.invoke('deleteAssignedTask', { body: payload });
   if (error) {
     let detailedError = error.message || 'Unknown function error';
     if (
@@ -293,7 +295,7 @@ export const deleteAssignedTask = async (assignmentId: string): Promise<void> =>
       try {
         const parsed = JSON.parse(error.message);
         if (parsed && parsed.error) detailedError = String(parsed.error);
-      } catch (e) {}
+      } catch (_e) {}
     }
     if (error.context?.message) {
       detailedError += ` (Context: ${error.context.message})`;

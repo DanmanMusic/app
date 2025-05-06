@@ -1,18 +1,10 @@
 // src/components/admin/modals/CreateTaskLibraryModal.tsx
 import React, { useState, useEffect } from 'react';
 
-import {
-  Modal,
-  View,
-  Text,
-  Button,
-  TextInput,
-  ScrollView,
-  ActivityIndicator,
-  Platform,
-} from 'react-native';
+import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
+
 import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-toast-message';
 
@@ -34,8 +26,6 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
   );
   const [fileError, setFileError] = useState<string | null>(null);
 
-  const queryClient = useQueryClient();
-
   const {
     data: instruments = [],
     isLoading: isLoadingInstruments,
@@ -49,16 +39,6 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
 
   const mutation = useMutation({
     mutationFn: createTaskLibraryItem,
-    onSuccess: createdTask => {
-      queryClient.invalidateQueries({ queryKey: ['task-library'] });
-      onClose();
-      Toast.show({
-        type: 'success',
-        text1: 'Success',
-        text2: 'Task library item created.',
-        position: 'bottom',
-      });
-    },
     onError: error => {
       Toast.show({
         type: 'error',

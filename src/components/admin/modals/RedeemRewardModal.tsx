@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import Toast from 'react-native-toast-message';
 
 import { fetchRewards } from '../../../api/rewards';
@@ -185,8 +186,6 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
       rewardId: selectedRewardId,
     });
   };
-
-  const selectedReward = rewardsCatalog.find(r => r.id === selectedRewardId);
 
   const isConfirmDisabled =
     !selectedRewardId ||

@@ -13,13 +13,16 @@ import React, {
 import { Platform } from 'react-native';
 
 import { Session, User as SupabaseAuthUser } from '@supabase/supabase-js';
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { getItem, removeItem, CUSTOM_REFRESH_TOKEN_KEY } from '../lib/storageHelper';
+import { getSupabase } from '../lib/supabaseClient';
+
+import { User, UserRole } from '../types/dataTypes';
 
 import { refreshPinSession } from '../api/auth';
 import { fetchUserProfile } from '../api/users';
-import { getItem, removeItem, CUSTOM_REFRESH_TOKEN_KEY } from '../lib/storageHelper';
-import { getSupabase } from '../lib/supabaseClient';
-import { User, UserRole } from '../types/dataTypes';
 
 interface AuthContextType {
   isLoadingSession: boolean;
@@ -91,7 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (stackLines && stackLines.length > 2) {
               callerInfo = stackLines[2]?.trim() ?? stackLines[1]?.trim() ?? 'unknown stack frame';
             }
-          } catch (e) {}
+          } catch (_e) {}
           console.log(
             `[AuthContext setInternalState] isPinSessionContext CHANGED from ${prevState.isPinSessionContext} to ${nextState.isPinSessionContext}. Caller: ${callerInfo}`
           );

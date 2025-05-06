@@ -7,8 +7,6 @@ import { corsHeaders } from '../_shared/cors.ts';
 // Import shared helpers
 import { deleteAttachment } from '../_shared/storageHelpers.ts';
 
-const TASK_ATTACHMENT_BUCKET = 'task-library-attachments'; // Define bucket name
-
 interface DeleteTaskPayload {
   assignmentId: string; // The ID of the assigned_tasks record to delete
 }

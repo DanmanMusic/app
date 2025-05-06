@@ -1,17 +1,10 @@
 // src/components/common/StudentDetailView.tsx
 import React, { useMemo } from 'react';
 
-import {
-  View,
-  Text,
-  ScrollView,
-  Button,
-  FlatList,
-  ActivityIndicator,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, Button, FlatList, ActivityIndicator } from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
+
 import Toast from 'react-native-toast-message';
 
 import { AssignedTaskDetailItem } from './AssignedTaskDetailItem';
@@ -58,7 +51,7 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
     data: balance = 0,
     isLoading: balanceLoading,
     isError: balanceError,
-    error: balanceErrorMsg,
+    error: _balanceErrorMsg,
   } = useQuery<number, Error>({
     queryKey: ['balance', viewingStudentId],
     queryFn: () => fetchStudentBalance(viewingStudentId),
@@ -98,14 +91,14 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
 
   const {
     tasks: paginatedTasks,
-    currentPage: tasksCurrentPage,
-    totalPages: tasksTotalPages,
-    setPage: setTasksPage,
+    currentPage: _tasksCurrentPage,
+    totalPages: _tasksTotalPages,
+    setPage: _setTasksPage,
     isLoading: studentTasksLoading,
-    isFetching: studentTasksFetching,
+    isFetching: _studentTasksFetching,
     isError: studentTasksError,
     error: studentTasksErrorObject,
-    totalItems: totalTasksCount,
+    totalItems: _totalTasksCount,
   } = usePaginatedStudentTasks(viewingStudentId);
 
   const {
@@ -347,12 +340,6 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
             data={filteredTasksForDisplay}
             keyExtractor={item => `task-${item.id}`}
             renderItem={({ item }) => {
-              const allowVerify =
-                onInitiateVerification &&
-                item.isComplete &&
-                item.verificationStatus === 'pending' &&
-                isStudentActive;
-
               let canDelete = false;
               if (!item.isComplete || item.verificationStatus === 'pending') {
                 if (currentUserRole === 'admin') {

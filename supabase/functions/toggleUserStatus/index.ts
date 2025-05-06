@@ -1,6 +1,6 @@
 // supabase/functions/toggleUserStatus/index.ts
 
-import { createClient, SupabaseClient } from 'supabase-js';
+import { createClient } from 'supabase-js';
 
 import { isActiveAdmin } from '../_shared/authHelpers.ts'; // Use isActiveAdmin
 import { corsHeaders } from '../_shared/cors.ts';

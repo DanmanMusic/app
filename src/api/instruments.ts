@@ -4,6 +4,7 @@ import { decode } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system';
 
 import { getSupabase } from '../lib/supabaseClient';
+
 import { Instrument } from '../types/dataTypes';
 
 const INSTRUMENT_ICONS_BUCKET = 'instrument-icons';

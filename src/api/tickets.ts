@@ -1,4 +1,5 @@
 import { getSupabase } from '../lib/supabaseClient';
+
 import { TicketTransaction, TransactionType } from '../types/dataTypes';
 
 interface TicketHistoryResponse {
@@ -6,10 +7,6 @@ interface TicketHistoryResponse {
   totalPages: number;
   currentPage: number;
   totalItems: number;
-}
-
-interface BalanceResponse {
-  balance: number;
 }
 
 interface RedeemRewardSuccessResponse {
@@ -78,11 +75,6 @@ export const fetchTicketHistory = async ({
   return { items: historyItems, totalPages, currentPage: page, totalItems };
 };
 
-/**
- * Fetches the current ticket balance for a specific student from Supabase.
- * NOTE: This implementation sums transactions, which can be inefficient.
- * Consider using a DB view or function, or a dedicated balance column later.
- */
 export const fetchStudentBalance = async (studentId: string): Promise<number> => {
   const client = getSupabase();
   console.log(`[Supabase] Fetching balance for student ${studentId} by summing transactions.`);
@@ -100,19 +92,9 @@ export const fetchStudentBalance = async (studentId: string): Promise<number> =>
 
     throw new Error(`Failed to calculate balance for student ${studentId}: ${error.message}`);
   }
-
   const balance = (data || []).reduce((sum, transaction) => sum + transaction.amount, 0);
-
   console.log(`[Supabase] Calculated balance for student ${studentId}: ${balance}`);
-
   return balance;
-
-  /*
-
-   const { data, error } = await client.rpc('get_student_balance', { p_student_id: studentId });
-   if (error) { throw new Error(...) }
-   return data ?? 0;
-  */
 };
 
 export const adjustTickets = async ({
@@ -167,7 +149,7 @@ export const adjustTickets = async ({
       try {
         const parsed = JSON.parse(error.message);
         if (parsed && parsed.error) detailedError = String(parsed.error);
-      } catch (e) {}
+      } catch (_e) {}
     }
     if (error.context?.message) {
       detailedError += ` (Context: ${error.context.message})`;
@@ -239,7 +221,7 @@ export const redeemReward = async ({
       try {
         const parsed = JSON.parse(error.message);
         if (parsed && parsed.error) detailedError = String(parsed.error);
-      } catch (e) {}
+      } catch (_e) {}
     }
     if (error.context?.message) {
       detailedError += ` (Context: ${error.context.message})`;

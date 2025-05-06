@@ -2,8 +2,9 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
-import { fetchParents } from '../api/users';
 import { User } from '../types/dataTypes';
+
+import { fetchParents } from '../api/users';
 
 interface UsePaginatedParentsReturn {
   parents: User[];

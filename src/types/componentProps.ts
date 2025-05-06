@@ -6,8 +6,9 @@ import {
   TaskLibraryItem,
   User,
   UserRole,
-  UserStatus,
 } from '../types/dataTypes';
+
+import { StudentTaskFilterStatusAPI, TaskAssignmentFilterStatusAPI } from '../api/assignedTasks';
 
 export interface AdminViewProps {
   onInitiateVerificationModal?: (task: AssignedTask) => void;
@@ -245,4 +246,13 @@ export interface AdminAdminDetailViewProps {
   viewingUserId: string;
   onInitiateStatusUser: (user: User) => void;
   onInitiatePinGeneration?: (user: User) => void;
+}
+
+export interface PaginatedTasksListProps {
+  viewingRole: 'admin' | 'teacher';
+  teacherId?: string;
+  initialAssignmentFilter?: TaskAssignmentFilterStatusAPI;
+  initialStudentStatusFilter?: StudentTaskFilterStatusAPI;
+  onInitiateVerification: (task: AssignedTask) => void;
+  onInitiateDelete: (task: AssignedTask) => void;
 }

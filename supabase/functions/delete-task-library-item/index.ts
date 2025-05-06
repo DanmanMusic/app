@@ -1,6 +1,6 @@
 // supabase/functions/delete-task-library-item/index.ts
 
-import { createClient, SupabaseClient } from 'supabase-js';
+import { createClient } from 'supabase-js';
 
 import { isActiveAdmin, isActiveTeacher } from '../_shared/authHelpers.ts';
 import { corsHeaders } from '../_shared/cors.ts';

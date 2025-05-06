@@ -113,7 +113,7 @@ Deno.serve(async (req: Request) => {
     let requestBody: UpdateRequestBody;
     try {
       requestBody = await req.json();
-    } catch (e) {
+    } catch (_e) {
       return new Response(JSON.stringify({ error: 'Invalid JSON payload' }), {
         status: 400,
         headers: { ...corsHeaders },

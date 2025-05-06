@@ -6,6 +6,7 @@ import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
 import Slider from '@react-native-community/slider';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import Toast from 'react-native-toast-message';
 
 import { updateAssignedTask } from '../../api/assignedTasks';

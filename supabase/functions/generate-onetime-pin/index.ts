@@ -1,6 +1,6 @@
 // supabase/functions/generate-onetime-pin/index.ts
 
-import { createClient, SupabaseClient } from 'supabase-js';
+import { createClient } from 'supabase-js';
 
 import { isActiveAdminOrTeacher } from '../_shared/authHelpers.ts'; // Use shared helper
 import { corsHeaders } from '../_shared/cors.ts';

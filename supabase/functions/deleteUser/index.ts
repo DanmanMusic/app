@@ -1,6 +1,6 @@
 // supabase/functions/deleteUser/index.ts
 
-import { createClient, SupabaseClient } from 'supabase-js';
+import { createClient } from 'supabase-js';
 
 import { isActiveAdmin } from '../_shared/authHelpers.ts'; // Use isActiveAdmin
 import { corsHeaders } from '../_shared/cors.ts';
@@ -133,7 +133,7 @@ Deno.serve(async (req: Request) => {
 
     // 8. Call Supabase Admin API to Delete User by ID
     console.log(`Attempting to permanently delete user: ${userIdToDelete}`);
-    const { data: deleteResult, error: deleteError } =
+    const { data: _deleteResult, error: deleteError } =
       await supabaseAdminClient.auth.admin.deleteUser(userIdToDelete);
 
     if (deleteError) {

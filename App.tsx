@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, Button, ActivityIndicator, ImageBackground } from 'react-native';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
@@ -25,7 +26,7 @@ const lightWoodBackground = require('./assets/backgrounds/light_wood.png'); // A
 const queryClient = new QueryClient();
 
 const AppContent = () => {
-  const { isLoading: authIsLoading, currentUserRole, error: authError, signOut } = useAuth();
+  const { isLoadingProfile, currentUserRole, error: authError, signOut } = useAuth();
 
   const [isVerificationModalVisible, setIsVerificationModalVisible] = useState(false);
   const [taskToVerify, setTaskToVerify] = useState<AssignedTask | null>(null);
@@ -44,7 +45,7 @@ const AppContent = () => {
   const handleCloseLoginModal = () => setIsLoginModalVisible(false);
 
   const renderMainView = () => {
-    if (authIsLoading) {
+    if (isLoadingProfile) {
       return (
         <View style={styles.centeredLoader}>
           <ActivityIndicator size="large" color={colors.primary} />

@@ -1,6 +1,6 @@
 // supabase/functions/get-user-auth-details/index.ts
 
-import { createClient, SupabaseClient } from 'supabase-js';
+import { createClient } from 'supabase-js';
 
 import { isActiveAdmin, isTeacherLinked } from '../_shared/authHelpers.ts'; // Use isActiveAdmin
 import { corsHeaders } from '../_shared/cors.ts';

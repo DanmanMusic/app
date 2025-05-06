@@ -2,12 +2,13 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
+import { AssignedTask } from '../types/dataTypes';
+
 import {
   fetchAssignedTasks,
   StudentTaskFilterStatusAPI,
   TaskAssignmentFilterStatusAPI,
 } from '../api/assignedTasks';
-import { AssignedTask } from '../types/dataTypes';
 
 export interface UsePaginatedStudentTasksReturn {
   tasks: AssignedTask[];

@@ -1,5 +1,7 @@
 import { getSupabase } from '../lib/supabaseClient';
+
 import { SimplifiedStudent, User, UserRole, UserStatus } from '../types/dataTypes';
+
 import { getUserDisplayName } from '../utils/helpers';
 
 interface ProfilesApiResponse {
@@ -345,7 +347,7 @@ export const createUser = async (
       try {
         const parsed = JSON.parse(error.message);
         if (parsed && parsed.error) detailedError = String(parsed.error);
-      } catch (e) {}
+      } catch (_e) {}
     }
 
     if (error.context?.message) {
@@ -426,7 +428,7 @@ export const updateUser = async ({
       try {
         const parsed = JSON.parse(error.message);
         if (parsed && parsed.error) detailedError = String(parsed.error);
-      } catch (e) {}
+      } catch (_e) {}
     }
     if (error.context?.message) {
       detailedError += ` (Context: ${error.context.message})`;
@@ -483,7 +485,7 @@ export const deleteUser = async (userId: string): Promise<void> => {
       try {
         const parsed = JSON.parse(error.message);
         if (parsed && parsed.error) detailedError = String(parsed.error);
-      } catch (e) {}
+      } catch (_e) {}
     }
     if (error.context?.message) {
       detailedError += ` (Context: ${error.context.message})`;
@@ -528,7 +530,7 @@ export const toggleUserStatus = async (userId: string): Promise<User> => {
       try {
         const parsed = JSON.parse(error.message);
         if (parsed && parsed.error) detailedError = String(parsed.error);
-      } catch (e) {}
+      } catch (_e) {}
     }
     if (error.context?.message) {
       detailedError += ` (Context: ${error.context.message})`;
@@ -553,6 +555,12 @@ export const toggleUserStatus = async (userId: string): Promise<User> => {
   );
   return updatedUser;
 };
+/*
+
+   const { data, error } = await client.rpc('get_student_balance', { p_student_id: studentId });
+   if (error) { throw new Error(...) }
+   return data ?? 0;
+  */
 
 export const generatePinForUser = async (
   targetUserId: string,
@@ -587,7 +595,7 @@ export const generatePinForUser = async (
       try {
         const parsed = JSON.parse(error.message);
         if (parsed && parsed.error) detailedError = String(parsed.error);
-      } catch (e) {}
+      } catch (_e) {}
     }
     if (error.context?.message) {
       detailedError += ` (Context: ${error.context.message})`;
@@ -633,7 +641,7 @@ export const updateAuthCredentials = async (
       try {
         const parsed = JSON.parse(error.message);
         if (parsed && parsed.error) detailedError = String(parsed.error);
-      } catch (e) {}
+      } catch (_e) {}
     }
     if (error.context?.message) {
       detailedError += ` (Context: ${error.context.message})`;
@@ -683,7 +691,7 @@ export const fetchAuthUser = async (userId: string): Promise<{ email: string | n
         try {
           const parsed = JSON.parse(error.message);
           if (parsed && parsed.error) detailedError = String(parsed.error);
-        } catch (e) {}
+        } catch (_e) {}
       }
       if (error.context?.message) {
         detailedError += ` (Context: ${error.context.message})`;

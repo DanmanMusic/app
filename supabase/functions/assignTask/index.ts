@@ -72,7 +72,7 @@ Deno.serve(async (req: Request) => {
           ? { name: payload.file.fileName, mimeType: payload.file.mimeType, base64: '...' }
           : undefined,
       }); // Avoid logging base64
-    } catch (jsonError) {
+    } catch (_jsonError) {
       return new Response(JSON.stringify({ error: 'Invalid request body.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

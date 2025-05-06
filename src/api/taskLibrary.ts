@@ -1,7 +1,9 @@
 // src/api/taskLibrary.ts
 
 import { getSupabase } from '../lib/supabaseClient';
+
 import { TaskLibraryItem } from '../types/dataTypes';
+
 import { fileToBase64, NativeFileObject } from '../utils/helpers';
 
 export const fetchTaskLibrary = async (): Promise<TaskLibraryItem[]> => {
@@ -221,7 +223,7 @@ export const updateTaskLibraryItem = async ({
     throw new Error('Task title cannot be empty.');
 
   const requestBody = { taskId, updates: updatePayload };
-  const { data: responseData, error } = await client.functions.invoke('update-task-library-item', {
+  const { error } = await client.functions.invoke('update-task-library-item', {
     body: requestBody,
   });
 
@@ -256,7 +258,7 @@ export const updateTaskLibraryItem = async ({
 export const deleteTaskLibraryItem = async (taskId: string): Promise<void> => {
   const client = getSupabase();
   const payload = { taskId };
-  const { data, error } = await client.functions.invoke('delete-task-library-item', {
+  const { error } = await client.functions.invoke('delete-task-library-item', {
     body: payload,
   });
   if (error) {

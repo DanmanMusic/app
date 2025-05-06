@@ -2,6 +2,7 @@
 import { Linking, Platform } from 'react-native';
 
 import { createClient, SupabaseClientOptions } from '@supabase/supabase-js';
+
 import * as SecureStore from 'expo-secure-store';
 import Toast from 'react-native-toast-message';
 
@@ -72,7 +73,6 @@ const storageOptions: SupabaseClientOptions<'public'>['auth'] = {
 };
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  const TASK_ATTACHMENT_BUCKET = 'task-library-attachments';
   const errorMessage =
     'Supabase URL or Anon Key is missing. Make sure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are set in your .env file and restart the bundler.';
   console.error('*********************************************************************');

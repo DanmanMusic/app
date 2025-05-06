@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import Toast from 'react-native-toast-message';
 
 import { updateUser, updateAuthCredentials } from '../../api/users';
@@ -117,7 +118,6 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
 
       profileUpdateMutation.reset();
       credentialsUpdateMutation.reset();
-      const setup = !!contextEmail && !contextEmail.endsWith('@placeholder.app');
       setMode('profile');
     } else if (!visible) {
       setNewPassword('');

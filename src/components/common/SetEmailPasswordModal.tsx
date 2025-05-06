@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 
 import { Modal, View, Text, Button, TextInput, ActivityIndicator } from 'react-native';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
+
 import Toast from 'react-native-toast-message';
 
 import { updateAuthCredentials } from '../../api/users';
@@ -20,9 +21,7 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
   visible,
   onClose,
 }) => {
-  const { appUser, signOut } = useAuth();
-  const queryClient = useQueryClient();
-
+  const { appUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

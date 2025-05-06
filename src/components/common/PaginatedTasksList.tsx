@@ -6,24 +6,15 @@ import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 
 import { AssignedTaskDetailItem } from './AssignedTaskDetailItem';
-import { TaskAssignmentFilterStatusAPI, StudentTaskFilterStatusAPI } from '../../api/assignedTasks';
 import { fetchStudents, fetchUserProfile } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePaginatedAssignedTasks } from '../../hooks/usePaginatedAssignedTasks';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
-import { AssignedTask, User } from '../../types/dataTypes';
+import { PaginatedTasksListProps } from '../../types/componentProps';
+import { User } from '../../types/dataTypes';
 import { getUserDisplayName } from '../../utils/helpers';
 import PaginationControls from '../admin/PaginationControls';
-
-interface PaginatedTasksListProps {
-  viewingRole: 'admin' | 'teacher';
-  teacherId?: string;
-  initialAssignmentFilter?: TaskAssignmentFilterStatusAPI;
-  initialStudentStatusFilter?: StudentTaskFilterStatusAPI;
-  onInitiateVerification: (task: AssignedTask) => void;
-  onInitiateDelete: (task: AssignedTask) => void;
-}
 
 export const PaginatedTasksList: React.FC<PaginatedTasksListProps> = ({
   viewingRole,

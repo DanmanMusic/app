@@ -1,4 +1,5 @@
 import { getSupabase } from '../lib/supabaseClient';
+
 import { Announcement, AnnouncementType } from '../types/dataTypes';
 
 export const fetchAnnouncements = async (): Promise<Announcement[]> => {

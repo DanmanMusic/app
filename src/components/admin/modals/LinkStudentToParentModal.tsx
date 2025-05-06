@@ -13,12 +13,13 @@ import {
 } from 'react-native';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import Toast from 'react-native-toast-message';
 
 import { fetchStudents, linkStudentToParent } from '../../../api/users';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
-import { SimplifiedStudent, User } from '../../../types/dataTypes';
+import { SimplifiedStudent } from '../../../types/dataTypes';
 
 interface LinkStudentToParentModalProps {
   visible: boolean;
@@ -68,7 +69,7 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
 
   const linkMutation = useMutation({
     mutationFn: (studentIdToLink: string) => linkStudentToParent(parentId, studentIdToLink),
-    onSuccess: (_, studentIdLinked) => {
+    onSuccess: (_, _studentIdLinked) => {
       Toast.show({
         type: 'success',
         text1: 'Success',

@@ -1,5 +1,4 @@
 // src/components/common/AdminTaskLibraryItem.tsx
-
 import React from 'react';
 
 import { Button, Text, View, StyleSheet, TouchableOpacity } from 'react-native';
@@ -7,7 +6,7 @@ import { Button, Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchInstruments } from '../../api/instruments';
-import { getSupabase, handleOpenUrl, handleViewAttachment } from '../../lib/supabaseClient';
+import { handleOpenUrl, handleViewAttachment } from '../../lib/supabaseClient';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminTaskLibraryItemProps } from '../../types/componentProps';

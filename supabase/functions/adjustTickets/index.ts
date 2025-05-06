@@ -1,6 +1,7 @@
 // supabase/functions/adjustTickets/index.ts
 
 import { createClient } from 'supabase-js';
+
 import { isActiveAdmin } from '../_shared/authHelpers.ts'; // Use isActiveAdmin
 import { corsHeaders } from '../_shared/cors.ts';
 // Import shared helper

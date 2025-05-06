@@ -4,13 +4,10 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Button, ActivityIndicator } from 'react-native';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
-import { deleteAssignedTask } from '../api/assignedTasks';
-import { fetchInstruments } from '../api/instruments';
-import { deleteTaskLibraryItem } from '../api/taskLibrary';
-import { fetchUserProfile } from '../api/users';
 import CreateTaskLibraryModal from '../components/admin/modals/CreateTaskLibraryModal';
 import EditTaskLibraryModal from '../components/admin/modals/EditTaskLibraryModal';
 import AssignTaskModal from '../components/common/AssignTaskModal';
@@ -25,11 +22,19 @@ import { StudentDetailView } from '../components/common/StudentDetailView';
 import { TeacherDashboardSection } from '../components/teacher/TeacherDashboardSection';
 import { TeacherStudentsSection } from '../components/teacher/TeacherStudentsSection';
 import { TeacherTasksSection } from '../components/teacher/TeacherTasksSection';
+
 import { useAuth } from '../contexts/AuthContext';
+
 import { colors } from '../styles/colors';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
+
 import { TeacherSection, TeacherViewProps } from '../types/componentProps';
 import { AssignedTask, Instrument, User, TaskLibraryItem } from '../types/dataTypes';
+
+import { deleteAssignedTask } from '../api/assignedTasks';
+import { fetchInstruments } from '../api/instruments';
+import { deleteTaskLibraryItem } from '../api/taskLibrary';
+import { fetchUserProfile } from '../api/users';
 
 export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId: teacherId } = useAuth();

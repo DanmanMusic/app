@@ -2,8 +2,9 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
-import { fetchAdmins } from '../api/users';
 import { User } from '../types/dataTypes';
+
+import { fetchAdmins } from '../api/users';
 
 interface UsePaginatedAdminsReturn {
   admins: User[];

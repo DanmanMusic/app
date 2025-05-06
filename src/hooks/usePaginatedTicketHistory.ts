@@ -2,8 +2,9 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
-import { fetchTicketHistory } from '../api/tickets';
 import { TicketTransaction } from '../types/dataTypes';
+
+import { fetchTicketHistory } from '../api/tickets';
 
 export interface UsePaginatedTicketHistoryReturn {
   history: TicketTransaction[];

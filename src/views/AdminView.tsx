@@ -4,17 +4,10 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Button, ActivityIndicator } from 'react-native';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
-import {
-  deleteAssignedTask,
-  TaskAssignmentFilterStatusAPI,
-  StudentTaskFilterStatusAPI,
-} from '../api/assignedTasks';
-import { fetchInstruments } from '../api/instruments';
-import { deleteTaskLibraryItem } from '../api/taskLibrary';
-import { fetchUserProfile } from '../api/users';
 import { AdminAdminDetailView } from '../components/admin/AdminAdminDetailView';
 import { AdminAnnouncementsSection } from '../components/admin/AdminAnnouncementsSection';
 import { AdminDashboardSection } from '../components/admin/AdminDashboardSection';
@@ -40,12 +33,25 @@ import { PaginatedTasksList } from '../components/common/PaginatedTasksList';
 import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
 import { SharedHeader } from '../components/common/SharedHeader';
 import { StudentDetailView } from '../components/common/StudentDetailView';
+
 import { useAuth } from '../contexts/AuthContext';
+
 import { colors } from '../styles/colors';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
+
 import { AdminSection, AdminViewProps, UserTab } from '../types/componentProps';
 import { AssignedTask, Instrument, TaskLibraryItem, User, UserRole } from '../types/dataTypes';
+
 import { getUserDisplayName } from '../utils/helpers';
+
+import {
+  deleteAssignedTask,
+  TaskAssignmentFilterStatusAPI,
+  StudentTaskFilterStatusAPI,
+} from '../api/assignedTasks';
+import { fetchInstruments } from '../api/instruments';
+import { deleteTaskLibraryItem } from '../api/taskLibrary';
+import { fetchUserProfile } from '../api/users';
 
 export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId: adminUserId } = useAuth();
@@ -115,7 +121,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
 
   const deleteTaskLibMutation = useMutation({
     mutationFn: deleteTaskLibraryItem,
-    onSuccess: (_, deletedTaskId) => {
+    onSuccess: (_, _deletedTaskId) => {
       queryClient.invalidateQueries({ queryKey: ['task-library'] });
       handleCloseDeleteTaskLibModal();
       Toast.show({

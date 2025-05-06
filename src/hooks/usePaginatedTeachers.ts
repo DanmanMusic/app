@@ -2,8 +2,9 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
-import { fetchTeachers } from '../api/users';
 import { User } from '../types/dataTypes';
+
+import { fetchTeachers } from '../api/users';
 
 interface UsePaginatedTeachersReturn {
   teachers: User[];

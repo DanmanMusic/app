@@ -3,19 +3,26 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 
 import { useQuery, useQueries, UseQueryResult } from '@tanstack/react-query';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { StudentView } from './StudentView';
-import { fetchUserProfile } from '../api/users';
 import EditMyInfoModal from '../components/common/EditMyInfoModal';
 import { ParentStudentListItem } from '../components/common/ParentStudentListItem';
 import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
 import { SharedHeader } from '../components/common/SharedHeader';
+
 import { useAuth } from '../contexts/AuthContext';
+
 import { colors } from '../styles/colors';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
+
 import { User } from '../types/dataTypes';
+
 import { getUserDisplayName } from '../utils/helpers';
+
+import { fetchUserProfile } from '../api/users';
+
+import { StudentView } from './StudentView';
 
 export const ParentView = () => {
   const { currentUserId: parentUserId } = useAuth();

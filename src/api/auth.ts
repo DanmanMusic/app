@@ -1,4 +1,5 @@
 import { getSupabase } from '../lib/supabaseClient';
+
 import { UserRole } from '../types/dataTypes';
 
 interface ClaimPinApiResponse {
@@ -43,7 +44,7 @@ export const claimPin = async (pin: string): Promise<ClaimPinApiResponse> => {
       try {
         const parsed = JSON.parse(error.message);
         if (parsed && parsed.error) detailedError = String(parsed.error);
-      } catch (e) {}
+      } catch (_e) {}
     }
     if (error.context?.message) {
       detailedError += ` (Context: ${error.context.message})`;
@@ -111,7 +112,7 @@ export const refreshPinSession = async (
       try {
         const parsed = JSON.parse(error.message);
         if (parsed && parsed.error) detailedError = String(parsed.error);
-      } catch (e) {}
+      } catch (_e) {}
     }
     if (error.context?.message) {
       detailedError += ` (Context: ${error.context.message})`;
