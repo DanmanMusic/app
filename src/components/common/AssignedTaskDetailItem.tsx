@@ -67,7 +67,6 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
             {studentStatusDisplay === 'unknown' ? 'Status Unknown' : studentStatusDisplay})
           </Text>
         )}
-        <Text style={commonSharedStyles.baseSecondaryText}>Status: {taskStatus}</Text>
         {item.taskLinkUrl && (
           <TouchableOpacity onPress={() => handleOpenUrl(item.taskLinkUrl)}>
             <Text style={commonSharedStyles.baseSecondaryText}>
@@ -82,6 +81,12 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
             </Text>
           </TouchableOpacity>
         )}
+        {item.verificationStatus !== 'verified' && (
+          <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.bold, {color: colors.secondary}]}>
+            Available: {item.taskBasePoints ?? 0} {item.taskBasePoints === 1 ? 'Ticket': 'Tickets' }
+          </Text>
+        )}
+        <Text style={commonSharedStyles.baseSecondaryText}>Status: {taskStatus}</Text>
         <Text style={commonSharedStyles.baseSecondaryText}>
           Assigned: {timestampDisplay(item.assignedDate)} by {assignerNameDisplay}
         </Text>
@@ -98,11 +103,6 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
         {item.actualPointsAwarded !== undefined && item.verificationStatus !== 'pending' && (
           <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textSuccess]}>
             Awarded: {item.actualPointsAwarded ?? 0} Tickets
-          </Text>
-        )}
-        {item.verificationStatus !== 'verified' && (
-          <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textWarning]}>
-            Base Points: {item.taskBasePoints ?? 0} Tickets
           </Text>
         )}
         {item.isComplete && item.verificationStatus === 'pending' && (

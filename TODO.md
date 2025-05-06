@@ -97,7 +97,7 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 
 - **[ ] Security Hardening:**
   - [x] Implement proper salting for `hashToken` function used for refresh tokens. (_Completed_)
-  - [ ] Consider implementing rolling refresh tokens in `refresh-pin-session`.
+  - [x] Consider implementing rolling refresh tokens in `refresh-pin-session`.
   * [ ] Final review and potential tightening of all RLS policies (post-feature completion).
 
 * **[ ] Debugging & Known Issues:**
@@ -119,13 +119,13 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
   - [ ] Parent Reminders?
 - **[ ] Refinements & Thorough Testing:**
   - [x] Add Foreign Key constraints with appropriate ON DELETE actions (CASCADE/SET NULL). (_Completed via SQL Editor, needs migration file update before final deploy_)
-  - **[ ] NEW:** Update original migration files (`..._create_assigned_tasks_table.sql`, `..._create_ticket_transactions_table.sql`, etc.) to include FKs and integrated helper functions before final deployment to new project.
+  - **[x] NEW:** Update original migration files (`..._create_assigned_tasks_table.sql`, `..._create_ticket_transactions_table.sql`, etc.) to include FKs and integrated helper functions before final deployment to new project.
   - **[ ] NEW:** Test user deletion cascade logic thoroughly (Admin, Teacher, Student, Parent). Verify related data (profiles, tasks, transactions, links) is handled correctly per `ON DELETE` rules.
   - **[ ] NEW:** Test user deactivation (`toggleUserStatus`) logic. Verify inactive users cannot log in. Check impact on linked data visibility (e.g., do inactive teachers still show as assigners/verifiers? Do inactive students appear in lists unless 'all' filter is used?). Specifically test Teacher deactivation impact on student linking/visibility.
   - **[ ] NEW:** Populate with more realistic data volumes and test pagination across all relevant lists (Admin users, tasks; Teacher students, tasks; Student tasks, history). Verify performance and UI responsiveness.
-  - [ ] Test all user role workflows end-to-end, especially Task Library features (including ad-hoc attachments) and Self-Edit.
-  - [ ] Refine UI/UX (including button styles, modal layouts - e.g., AssignTaskModal Step 2).
-  - [ ] Consider adding database-level checks (e.g., check constraints) for role consistency in link tables.
+  - [x] Test all user role workflows end-to-end, especially Task Library features (including ad-hoc attachments) and Self-Edit.
+  - [x] Refine UI/UX (including button styles, modal layouts - e.g., AssignTaskModal Step 2).
+  - [x] Consider adding database-level checks (e.g., check constraints) for role consistency in link tables.
   - [ ] Unit/integration tests (Optional).
 
 ## Supporting Features (Post-MVP / Lower Priority)
