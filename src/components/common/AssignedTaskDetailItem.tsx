@@ -82,8 +82,14 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
           </TouchableOpacity>
         )}
         {item.verificationStatus !== 'verified' && (
-          <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.bold, {color: colors.secondary}]}>
-            Available: {item.taskBasePoints ?? 0} {item.taskBasePoints === 1 ? 'Ticket': 'Tickets' }
+          <Text
+            style={[
+              commonSharedStyles.baseSecondaryText,
+              commonSharedStyles.bold,
+              { color: colors.secondary },
+            ]}
+          >
+            Available: {item.taskBasePoints ?? 0} {item.taskBasePoints === 1 ? 'Ticket' : 'Tickets'}
           </Text>
         )}
         <Text style={commonSharedStyles.baseSecondaryText}>Status: {taskStatus}</Text>

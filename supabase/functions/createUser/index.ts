@@ -2,24 +2,19 @@
 
 import { createClient } from 'supabase-js';
 
-import { isActiveAdmin } from '../_shared/authHelpers.ts'; // Use isActiveAdmin
+import { isActiveAdmin } from '../_shared/authHelpers.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-// Import shared helper
 
-// Define the expected request body structure
 interface CreateUserPayload {
   role: 'admin' | 'teacher' | 'student' | 'parent';
   firstName: string;
   lastName: string;
   nickname?: string;
-  // Student specific (optional)
   instrumentIds?: string[];
   linkedTeacherIds?: string[];
 }
 
-// Main Function Handler
 Deno.serve(async (req: Request) => {
-  // 1. Handle Preflight CORS request & Method Check
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST')
     return new Response(JSON.stringify({ error: `Method ${req.method} Not Allowed` }), {
@@ -30,7 +25,6 @@ Deno.serve(async (req: Request) => {
   console.log(`Received ${req.method} request for createUser`);
 
   try {
-    // 2. Initialize Supabase Admin Client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     if (!supabaseUrl || !serviceRoleKey) {
@@ -45,7 +39,6 @@ Deno.serve(async (req: Request) => {
       global: { fetch: fetch },
     });
 
-    // 3. Verify Caller is Authenticated
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       console.warn('Missing or invalid Authorization header.');
@@ -56,10 +49,11 @@ Deno.serve(async (req: Request) => {
     }
     const token = authHeader.replace('Bearer ', '');
     const {
-      data: { user },
+      data: { user: callerAdmin },
       error: userError,
     } = await supabaseAdminClient.auth.getUser(token);
-    if (userError || !user) {
+
+    if (userError || !callerAdmin) {
       console.error(
         'Auth token validation error:',
         userError?.message || 'User not found for token'
@@ -69,20 +63,38 @@ Deno.serve(async (req: Request) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    console.log('Caller User ID:', user.id);
+    console.log('Caller Admin ID:', callerAdmin.id);
 
-    // 4. Authorize Caller (Must be Active Admin) - Using imported helper
-    const callerIsActiveAdmin = await isActiveAdmin(supabaseAdminClient, user.id); // Use shared helper
+    const callerIsActiveAdmin = await isActiveAdmin(supabaseAdminClient, callerAdmin.id);
     if (!callerIsActiveAdmin) {
-      console.warn(`User ${user.id} attempted admin action without active admin role.`);
+      console.warn(`User ${callerAdmin.id} attempted admin action without active admin role.`);
       return new Response(
         JSON.stringify({ error: 'Permission denied: Active Admin role required.' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    console.log(`Admin action authorized for active admin ${user.id}.`);
+    console.log(`Admin action authorized for active admin ${callerAdmin.id}.`);
 
-    // 5. Parse Request Body
+    // NEW: Step 4.5 - Get the Admin's Company ID
+    const { data: adminProfile, error: adminProfileError } = await supabaseAdminClient
+      .from('profiles')
+      .select('company_id')
+      .eq('id', callerAdmin.id)
+      .single();
+
+    if (adminProfileError || !adminProfile?.company_id) {
+      console.error(
+        `Could not retrieve company_id for admin ${callerAdmin.id}:`,
+        adminProfileError
+      );
+      return new Response(JSON.stringify({ error: 'Could not determine admin company.' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const adminCompanyId = adminProfile.company_id;
+    console.log(`Admin belongs to company: ${adminCompanyId}`);
+
     let payload: CreateUserPayload;
     try {
       payload = await req.json();
@@ -95,7 +107,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // 6. Basic Payload Validation - *** RESTORED ***
     if (!payload.role || !payload.firstName || !payload.lastName) {
       console.warn('Payload validation failed: Missing required fields.');
       return new Response(
@@ -103,7 +114,6 @@ Deno.serve(async (req: Request) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    // Add role value check
     if (!['admin', 'teacher', 'student', 'parent'].includes(payload.role)) {
       console.warn(`Payload validation failed: Invalid role '${payload.role}'.`);
       return new Response(JSON.stringify({ error: 'Invalid role provided.' }), {
@@ -111,23 +121,20 @@ Deno.serve(async (req: Request) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    // *** END RESTORED VALIDATION ***
 
-    // 7. Create Auth User
-    const userEmail = `${crypto.randomUUID()}@placeholder.app`; // Placeholder email
+    const userEmail = `${crypto.randomUUID()}@placeholder.app`;
     console.log(
       `Attempting to create auth user with email ${userEmail} and role metadata: ${payload.role}`
     );
     const { data: authUserData, error: authError } =
       await supabaseAdminClient.auth.admin.createUser({
         email: userEmail,
-        // No password needed for PIN flow initially
         user_metadata: {
-          role: payload.role, // Store intended role in metadata
+          role: payload.role,
           full_name: `${payload.firstName} ${payload.lastName}`,
         },
-        email_confirm: true, // Auto-confirm placeholder email
-        phone_confirm: true, // Auto-confirm phone if ever used
+        email_confirm: true,
+        phone_confirm: true,
       });
 
     if (authError) {
@@ -143,17 +150,17 @@ Deno.serve(async (req: Request) => {
     const newUserId = authUserData.user.id;
     console.log('Auth user created successfully:', newUserId);
 
-    // --- Database Operations (Profile & Links) ---
     let profileDataResult: any = null;
     try {
-      // 8. Create Profile Entry
+      // MODIFIED: Inject the admin's company_id into the new profile
       const profileData = {
         id: newUserId,
         role: payload.role,
         first_name: payload.firstName,
         last_name: payload.lastName,
-        nickname: payload.nickname || null, // Use null if empty/undefined
-        status: 'active', // Default to active
+        nickname: payload.nickname || null,
+        status: 'active',
+        company_id: adminCompanyId, // <-- The critical addition
       };
       console.log(`Inserting profile for ${newUserId}:`, profileData);
       const { data: insertedProfile, error: profileError } = await supabaseAdminClient
@@ -161,43 +168,29 @@ Deno.serve(async (req: Request) => {
         .insert(profileData)
         .select()
         .single();
-      if (profileError) throw profileError; // Throw to trigger cleanup
+      if (profileError) throw profileError;
       profileDataResult = insertedProfile;
       console.log(`Profile created for ${newUserId}.`);
 
-      // 9. Handle Student Specifics (Links ONLY)
       if (payload.role === 'student') {
-        // Add Instrument Links
         if (payload.instrumentIds && payload.instrumentIds.length > 0) {
           const instrumentLinks = payload.instrumentIds.map(instId => ({
             student_id: newUserId,
             instrument_id: instId,
           }));
           console.log(`Inserting instrument links for student ${newUserId}:`, instrumentLinks);
-          const { error: instrumentLinkError } = await supabaseAdminClient
-            .from('student_instruments')
-            .insert(instrumentLinks);
-          if (instrumentLinkError)
-            console.error('Instrument Link Error:', instrumentLinkError.message); // Log but don't fail
-          else console.log(`Instrument links created for student ${newUserId}.`);
+          await supabaseAdminClient.from('student_instruments').insert(instrumentLinks);
         }
-        // Add Teacher Links
         if (payload.linkedTeacherIds && payload.linkedTeacherIds.length > 0) {
           const teacherLinks = payload.linkedTeacherIds.map(teachId => ({
             student_id: newUserId,
             teacher_id: teachId,
           }));
           console.log(`Inserting teacher links for student ${newUserId}:`, teacherLinks);
-          const { error: teacherLinkError } = await supabaseAdminClient
-            .from('student_teachers')
-            .insert(teacherLinks);
-          if (teacherLinkError)
-            console.error('Teacher Link Error:', teacherLinkError.message); // Log but don't fail
-          else console.log(`Teacher links created for student ${newUserId}.`);
+          await supabaseAdminClient.from('student_teachers').insert(teacherLinks);
         }
       }
 
-      // 10. Map result to expected client format
       const createdUserResponse = {
         id: profileDataResult.id,
         role: profileDataResult.role,
@@ -205,6 +198,7 @@ Deno.serve(async (req: Request) => {
         lastName: profileDataResult.last_name,
         nickname: profileDataResult.nickname ?? undefined,
         status: profileDataResult.status,
+        companyId: profileDataResult.company_id, // NEW: Return companyId
         ...(payload.role === 'student' && {
           instrumentIds: payload.instrumentIds || [],
           linkedTeacherIds: payload.linkedTeacherIds || [],
@@ -215,18 +209,11 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify(createdUserResponse), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 201,
-      }); // Created
+      });
     } catch (dbError) {
-      // --- Cleanup on DB Error ---
       console.error('Error during DB inserts after Auth User creation:', dbError.message);
       console.warn(`Attempting to delete orphaned auth user: ${newUserId}`);
-      const { error: deleteError } = await supabaseAdminClient.auth.admin.deleteUser(newUserId);
-      if (deleteError)
-        console.error(
-          `CRITICAL: Failed to delete orphaned auth user ${newUserId}:`,
-          deleteError.message
-        );
-      else console.log(`Successfully deleted orphaned auth user ${newUserId}.`);
+      await supabaseAdminClient.auth.admin.deleteUser(newUserId);
       return new Response(
         JSON.stringify({ error: `Failed to complete user creation: ${dbError.message}` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -234,16 +221,11 @@ Deno.serve(async (req: Request) => {
     }
   } catch (error) {
     console.error('Unhandled Create User Function Error:', error);
-    const statusCode = error.message.includes('required')
-      ? 403
-      : error.message.includes('Authentication') || error.message.includes('token')
-        ? 401
-        : 500;
     return new Response(
       JSON.stringify({ error: error.message || 'An unexpected error occurred.' }),
-      { status: statusCode, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
 
-console.log('CreateUser function initialized (v3 - uses shared helpers).');
+console.log('CreateUser function initialized (v4 - multi-tenant aware).');

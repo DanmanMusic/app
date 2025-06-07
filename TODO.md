@@ -98,7 +98,7 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 - **[ ] Security Hardening:**
   - [x] Implement proper salting for `hashToken` function used for refresh tokens. (_Completed_)
   - [x] Consider implementing rolling refresh tokens in `refresh-pin-session`.
-  * [ ] Final review and potential tightening of all RLS policies (post-feature completion).
+  - [ ] Final review and potential tightening of all RLS policies (post-feature completion).
 
 * **[ ] Debugging & Known Issues:**
   - [ ] **TESTING:** Thoroughly test the custom refresh token flow (`claim-onetime-pin` -> storage -> `refresh-pin-session`) on web (manual refresh needed after >1hr) and eventually native.
@@ -132,3 +132,79 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 
 - [ ] Frontend: Design and implement `PublicView` welcome/landing page using provided store assets.
 - [ ] Frontend: Evaluate and potentially implement opaque background images using provided assets.
+
+---
+
+## V2 Development Plan
+
+This plan outlines the major features and architectural changes for Version 2. It is structured in phases, starting with foundational work that enables all subsequent features.
+
+### Phase 5: Foundational Architecture (Multi-Tenancy & Notifications)
+
+- **[ ] Multi-Tenancy Implementation (Step Zero):**
+
+  - [ ] **Schema:** Create `companies` table migration (`id`, `name`, `created_at`). Seed with "Danmans Music".
+  - [ ] **Schema:** Create migrations to add `company_id` FK to all company-scoped tables (`profiles`, `instruments`, `rewards`, `task_library`, `assigned_tasks`, `ticket_transactions`, etc.).
+  - [ ] **RLS:** Refactor all RLS policies to enforce `company_id` isolation on every query.
+  - [ ] **Edge Functions:** Update all Edge Functions to be company-aware (e.g., `createUser` must set `company_id`).
+  - [ ] **API Layer:** Update all API client functions (`src/api/*.ts`) to correctly query within the user's company context.
+
+- **[ ] Notifications Infrastructure:**
+  - [ ] **Setup:** Install and configure `expo-notifications` library.
+  - [ ] **Schema:** Create `push_tokens` table migration (`user_id`, `token`, `created_at`).
+  - [ ] **Client:** Implement a `usePushNotifications` hook to handle permissions and token registration with the backend.
+  - [ ] **Backend:** Create the core `send-notification` Supabase Edge Function.
+  - [ ] **Pilot Feature (Daily Summary):**
+    - [ ] **DB Function:** Create `get_daily_activity_summary()` RPC function.
+    - [ ] **Cron Job:** Set up a `pg_cron` job to call the DB function and trigger the `send-notification` EF for all users, serving as an end-to-end test and system heartbeat.
+
+### Phase 6: Core Engagement Features
+
+- **[ ] Feature: Practice Streaks (Instant Gratification Model):**
+
+  - [ ] **Schema:** Create `practice_logs` table migration (`id`, `student_id`, `company_id`, `log_date`).
+  - [ ] **Backend:** Create the `log-practice-and-check-streak` Edge Function to handle logging, streak calculation, and immediate ticket awards on milestones.
+  - [ ] **Frontend:** Implement the "I Practiced Today!" button and streak display in `StudentView`.
+  - [ ] **Notifications:** Integrate `send-notification` calls within the `log-practice-and-check-streak` EF for milestone celebrations.
+
+- **[ ] Feature: Avatars:**
+
+  - [ ] **Storage:** Create a new `avatars` storage bucket with appropriate RLS.
+  - [ ] **Schema:** Add `avatar_path` column to `profiles` table via migration.
+  - [ ] **Frontend:** Implement an image upload component in the `EditMyInfoModal`.
+  - [ ] **UI:** Display avatars in user lists, detail views, and announcements.
+
+- **[ ] Feature: Enhanced Announcements:**
+
+  - [ ] **Backend:** Create system logic to auto-generate announcements for major reward redemptions and practice streak milestones.
+  - [ ] **Frontend:** Update the `AnnouncementListItem` component to display the user's avatar.
+  - [ ] **Frontend:** Create UI elements to display community summary data (e.g., "7 others want that ukulele").
+
+- **[ ] Feature: Student Goals & Self-Assignable Tasks:**
+
+  - [ ] **Schema:** Add `is_goal_eligible` boolean to `rewards` table via migration.
+  - [ ] **Schema:** Add `can_self_assign` boolean to `task_library` table via migration.
+  - [ ] **Frontend:** Update `SetGoalModal` to filter rewards based on the new flag.
+  - [ ] **Frontend:** Update the Student's task library view to allow self-assignment of tasks.
+
+- **[ ] Feature: The Music Journey:**
+  - [ ] **Schema:** Create `journey_locations` table migration (`id`, `company_id`, `name`, `description`, etc.).
+  - [ ] **Schema:** Add `journey_location_id` FK to `task_library` table via migration.
+  - [ ] **Backend:** Add logic/constraints to `assignTask` to handle the "1 active task per location" rule.
+  - [ ] **Frontend:** Design and implement the "Journey" view, overlaying locations on the poster image.
+
+### Phase 7: Notification Triggers & System Polish
+
+- **[ ] Implement Specific Notification Triggers:**
+
+  - [ ] **Teacher -> Student:** Update `assignTask` EF to notify students of new tasks.
+  - [ ] **System -> Student:** Update `verifyTask` EF to notify students of awarded tickets.
+  - [ ] **Student -> Teacher:** Update logic for marking a task complete to notify the teacher that verification is needed.
+  - [ ] **Parent Parallel Stream:** Update the `send-notification` EF to automatically send copies of student notifications to linked parents.
+
+- **[ ] V2 Refinements & Thorough Testing:**
+  - [ ] **Testing:** End-to-end test the multi-tenancy implementation. Create two test companies and ensure zero data crossover.
+  - [ ] **Testing:** Test all notification flows for all roles on a physical device.
+  - [ ] **Testing:** Verify edge cases for practice streaks (e.g., what happens if a user logs practice twice via different means).
+  - [ ] **UI/UX Review:** Conduct a full review of all new V2 features for usability and visual polish.
+  - [ ] **Data Policy:** Confirm and test `ON DELETE` cascade/set-null behavior for all new tables and relationships.

@@ -17,8 +17,14 @@ export interface NativeFileObject {
 
 export const getUserDisplayName = (
   userOrProfile:
-    | Pick<User, 'firstName' | 'lastName' | 'nickname'>
-    | { first_name?: string | null; last_name?: string | null; nickname?: string | null }
+    | Pick<User, 'firstName' | 'lastName' | 'nickname' | 'avatarPath'>
+    | {
+        // MODIFIED: Add avatar_path to make the type compatible with our new query result
+        first_name?: string | null;
+        last_name?: string | null;
+        nickname?: string | null;
+        avatar_path?: string | null;
+      }
     | undefined
     | null
 ): string => {
@@ -26,17 +32,19 @@ export const getUserDisplayName = (
     return 'Unknown User';
   }
 
+  // The logic inside the function doesn't need to change at all.
   const firstName =
     'firstName' in userOrProfile ? userOrProfile.firstName : userOrProfile.first_name;
   const lastName = 'lastName' in userOrProfile ? userOrProfile.lastName : userOrProfile.last_name;
   const nickname = userOrProfile.nickname;
 
-  const baseName = `${firstName || ''} ${lastName || ''}`.trim();
-
   if (nickname) {
-    return `${baseName} (${nickname})`;
+    return nickname;
   }
-  return baseName || 'Unnamed User';
+  if (firstName && lastName) {
+    return `${firstName} ${lastName}`;
+  }
+  return firstName || lastName || 'Unnamed User';
 };
 
 const getSupabasePublicUrl = (bucket: string, path: string | null | undefined): string | null => {

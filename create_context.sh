@@ -1,97 +1,130 @@
 #!/bin/bash
 
-OUTPUT_FILE="app_context.txt"
+set -e # Exit immediately if a command exits with a non-zero status.
+
+# --- Configuration ---
+OUTPUT_DIR="contexts"
 SCRIPT_NAME=$(basename "$0")
+TREE_EXCLUDE_PATTERN='node_modules|android/build|ios/build|ios/Pods|.git|'"$OUTPUT_DIR"
+GLOBAL_EXCLUDED_FILES=("$SCRIPT_NAME" "app_context.txt" "package-lock.json" "create_icons_zip.sh" "create_context.sh")
 
-REQUIRED_FILES=(
-    "package.json"
-    "app.json"
-    "tsconfig.json"
-    "App.tsx"
-)
+# --- Helper: The Builder Function ---
+# This function does the heavy lifting.
+# Usage: build_context "output_filename.txt" "Context Description" "dir1" "dir2" "file1" "file2" ...
+build_context() {
+    local output_file="$OUTPUT_DIR/$1"
+    local description="$2"
+    shift 2
+    local paths=("$@")
+    local all_files=()
 
-EXCLUDED_FILES=("$SCRIPT_NAME" "$OUTPUT_FILE" "package-lock.json" "create_icons_zip.sh")
+    echo "--- Building context: $1 ---"
+    
+    # Create header for the context file
+    echo "--- Project Context: $description ---" > "$output_file"
+    echo "--- Generated on: $(date) ---" >> "$output_file"
+    echo "" >> "$output_file"
 
-TREE_EXCLUDE_PATTERN='node_modules|android/build|ios/build|ios/Pods|.git|'"$OUTPUT_FILE"
+    # Add directory tree to the 'core' context for overall structure
+    if [[ "$1" == "context_core.txt" ]]; then
+        echo "--- Directory Structure (tree) ---" >> "$output_file"
+        if command -v tree >/dev/null 2>&1; then
+            tree -a -L 3 -I "$TREE_EXCLUDE_PATTERN" . >> "$output_file"
+        else
+            echo "Warning: 'tree' command not found. Cannot include directory structure." >> "$output_file"
+        fi
+        echo "--- End Directory Structure (tree) ---" >> "$output_file"
+        echo "" >> "$output_file"
+    fi
 
-echo "--- Starting to create $OUTPUT_FILE ---"
+    # Gather all files from specified paths
+    for path in "${paths[@]}"; do
+        if [ -d "$path" ]; then
+            # Find all files in the directory, excluding certain patterns
+            while IFS= read -r file; do
+                all_files+=("$file")
+            done < <(find "$path" -type f)
+        elif [ -f "$path" ]; then
+            all_files+=("$path")
+        fi
+    done
 
-if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
-    echo "Warning: Not inside a git repository."
-    echo "Using a fallback file listing method. Some files might be missed if .gitignore is not used."
-    IS_GIT_REPO=false
-else
-     IS_GIT_REPO=true
-fi
-
-> "$OUTPUT_FILE"
-
-echo "--- Start of Project Context ---" >> "$OUTPUT_FILE"
-echo "" >> "$OUTPUT_FILE"
-
-echo "--- Directory Structure (tree) ---" >> "$OUTPUT_FILE"
-echo "" >> "$OUTPUT_FILE"
-
-if command -v tree >/dev/null 2>&1; then
-    echo "Running 'tree'..."
-    tree -a -L 3 -I "$TREE_EXCLUDE_PATTERN" . 2>&1 >> "$OUTPUT_FILE"
-else
-    echo "Warning: 'tree' command not found." >> "$OUTPUT_FILE"
-    echo "Please install 'tree' to include directory structure (e.g., 'brew install tree' on macOS, 'sudo apt-get install tree' on Ubuntu/Debian, 'choco install tree' on Windows)." >> "$OUTPUT_FILE"
-    echo "Directory structure could not be included." >> "$OUTPUT_FILE"
-fi
-
-echo "" >> "$OUTPUT_FILE"
-echo "--- End Directory Structure (tree) ---" >> "$OUTPUT_FILE"
-echo "" >> "$OUTPUT_FILE"
-
-echo "--- File Contents ---" >> "$OUTPUT_FILE"
-echo "" >> "$OUTPUT_FILE"
-
-echo "Gathering file list..."
-
-printf "%s\0" "${REQUIRED_FILES[@]}" > /tmp/context_files_$$
-
-if [ "$IS_GIT_REPO" = true ]; then
-    git ls-files --cached --others --exclude-standard -z >> /tmp/context_files_$$
-fi
-
-echo "Processing files..."
-sort -z -u /tmp/context_files_$$ | while IFS= read -r -d '' file; do
-    trap "rm -f /tmp/context_files_$$" EXIT
-
-    if [ -f "$file" ]; then
-        IS_EXCLUDED=false
-        for excluded in "${EXCLUDED_FILES[@]}"; do
-            if [ "$file" == "$excluded" ]; then
-                IS_EXCLUDED=true
-                break
+    # De-duplicate and process files
+    printf "%s\n" "${all_files[@]}" | sort -u | while IFS= read -r file; do
+        # Skip globally excluded files
+        for excluded in "${GLOBAL_EXCLUDED_FILES[@]}"; do
+            if [[ "$file" == "$excluded" ]]; then
+                continue 2
             fi
         done
 
-        if [ "$IS_EXCLUDED" = true ]; then
-            echo "-> Skipping explicitly excluded file: $file"
-            continue
+        # Check for text-based files
+        if file --mime-type -b "$file" | grep -q -e '^text/' -e 'application/json' -e 'application/javascript' -e 'application/x-sql'; then
+            echo "    -> Including: $file"
+            echo "--- File: $file ---" >> "$output_file"
+            cat "$file" >> "$output_file"
+            echo "" >> "$output_file"
+            echo "--- End File: $file ---" >> "$output_file"
+            echo "" >> "$output_file"
         fi
+    done
+    echo "--- Finished building $1 ---"
+    echo ""
+}
 
-        if file --mime-type -b "$file" | grep -q -e '^text/' -e 'application/json' -e 'application/javascript'; then
-            echo "-> Including: $file"
-            echo "--- File: $file ---" >> "$OUTPUT_FILE"
-            cat "$file" >> "$OUTPUT_FILE"
-            echo "" >> "$OUTPUT_FILE"
-            echo "--- End File: $file ---" >> "$OUTPUT_FILE"
-            echo "" >> "$OUTPUT_FILE"
-        fi 
-    fi
-done
 
-rm -f /tmp/context_files_$$
+# --- Main Execution: The Orchestrator ---
 
-echo "--- End of File Contents ---" >> "$OUTPUT_FILE"
-echo "" >> "$OUTPUT_FILE"
+echo "--- Starting Context Generation ---"
 
-echo "--- End of Project Context ---" >> "$OUTPUT_FILE"
+# Clean and create output directory
+rm -rf "$OUTPUT_DIR"
+mkdir -p "$OUTPUT_DIR"
 
-echo "--- Finished creating $OUTPUT_FILE ---"
-echo "Review '$OUTPUT_FILE' to ensure it contains the desired information."
-echo "Note: The script file '$SCRIPT_NAME' and the output file '$OUTPUT_FILE' were intentionally excluded from the file contents section."
+# --- Define and Build Context Packages ---
+
+build_context "context_core.txt" \
+    "Core project configuration, entrypoint, and overall structure." \
+    "package.json" "app.json" "tsconfig.json" "App.tsx" "index.ts" "README.md"
+
+build_context "context_documentation.txt" \
+    "High-level project planning, specifications, and data models." \
+    "TODO.md" "SPECIFICATION.md" "MODEL.md" "ICONS.md"
+
+build_context "context_backend_database.txt" \
+    "Supabase database schema, migrations, and seed scripts." \
+    "supabase/migrations" "supabase/sql"
+
+build_context "context_backend_functions.txt" \
+    "Server-side business logic via Supabase Edge Functions." \
+    "supabase/functions"
+
+build_context "context_frontend_views.txt" \
+    "Top-level React Native view components for each user role." \
+    "src/views"
+
+build_context "context_frontend_components_admin.txt" \
+    "All React Native components specific to the Admin dashboard." \
+    "src/components/admin"
+
+build_context "context_frontend_components_common.txt" \
+    "Shared, reusable React Native components used across multiple views." \
+    "src/components/common"
+
+build_context "context_frontend_state.txt" \
+    "Client-side state management (React Context) and data-fetching hooks." \
+    "src/contexts" "src/hooks"
+
+build_context "context_frontend_api_and_types.txt" \
+    "Client-side API wrappers for Supabase and TypeScript type definitions." \
+    "src/api" "src/types" "src/lib" # Lib is closely related
+
+build_context "context_frontend_styling.txt" \
+    "Shared styling variables and stylesheets." \
+    "src/styles"
+
+# --- Completion ---
+echo "--- Context generation complete! ---"
+echo "Output files are in the '$OUTPUT_DIR/' directory:"
+ls -1 "$OUTPUT_DIR"
+echo "-----------------------------------"

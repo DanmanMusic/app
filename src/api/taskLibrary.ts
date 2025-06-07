@@ -1,9 +1,7 @@
 // src/api/taskLibrary.ts
 
 import { getSupabase } from '../lib/supabaseClient';
-
 import { TaskLibraryItem } from '../types/dataTypes';
-
 import { fileToBase64, NativeFileObject } from '../utils/helpers';
 
 export const fetchTaskLibrary = async (): Promise<TaskLibraryItem[]> => {
@@ -14,9 +12,9 @@ export const fetchTaskLibrary = async (): Promise<TaskLibraryItem[]> => {
     .select(
       `
         id, title, description, base_tickets, created_by_id,
-        attachment_path, reference_url,
+        attachment_path, reference_url, can_self_assign,
         task_library_instruments ( instrument_id )
-        `
+        ` // MODIFIED: Added can_self_assign
     )
     .order('title', { ascending: true });
 
@@ -36,11 +34,13 @@ export const fetchTaskLibrary = async (): Promise<TaskLibraryItem[]> => {
     attachmentPath: item.attachment_path ?? undefined,
     referenceUrl: item.reference_url ?? null,
     instrumentIds: item.task_library_instruments?.map((link: any) => link.instrument_id) ?? [],
+    canSelfAssign: item.can_self_assign, // MODIFIED: Map the new property
   }));
 
   return taskLibrary;
 };
 
+// MODIFIED: Added canSelfAssign to parameters
 export const createTaskLibraryItem = async (
   taskData: Omit<TaskLibraryItem, 'id'> & {
     file?: File | NativeFileObject;
@@ -63,6 +63,7 @@ export const createTaskLibraryItem = async (
   payload.referenceUrl =
     restTaskData.referenceUrl === null ? null : restTaskData.referenceUrl?.trim() || undefined;
   payload.instrumentIds = restTaskData.instrumentIds || [];
+  payload.canSelfAssign = restTaskData.canSelfAssign ?? false; // MODIFIED: Add to payload
 
   if (!payload.title) throw new Error('Task title cannot be empty.');
   if (
@@ -76,6 +77,7 @@ export const createTaskLibraryItem = async (
   let finalMimeType = providedMimeType;
   let finalFileName = providedFileName;
 
+  // File handling logic remains the same...
   if (file && !finalMimeType && file instanceof File) finalMimeType = file.type;
   else if (file && !finalMimeType && typeof file === 'object' && 'mimeType' in file)
     finalMimeType = file.mimeType;
@@ -100,13 +102,12 @@ export const createTaskLibraryItem = async (
     { body: payload }
   );
 
-  if (error) {
-    throw new Error(`Failed to create task: ${error.message || 'EF error'}`);
-  }
+  if (error) throw new Error(`Failed to create task: ${error.message || 'EF error'}`);
   if (!createdTaskRaw || typeof createdTaskRaw !== 'object' || !createdTaskRaw.id) {
     throw new Error('Invalid EF response');
   }
 
+  // MODIFIED: Map new property in the returned object
   const createdTask: TaskLibraryItem = {
     id: createdTaskRaw.id,
     title: createdTaskRaw.title,
@@ -116,10 +117,12 @@ export const createTaskLibraryItem = async (
     attachmentPath: createdTaskRaw.attachment_path ?? undefined,
     referenceUrl: createdTaskRaw.reference_url ?? null,
     instrumentIds: payload.instrumentIds || [],
+    canSelfAssign: createdTaskRaw.can_self_assign,
   };
   return createdTask;
 };
 
+// MODIFIED: Added canSelfAssign to parameters
 export const updateTaskLibraryItem = async ({
   taskId,
   updates,
@@ -137,6 +140,7 @@ export const updateTaskLibraryItem = async ({
   const updatePayload: any = {};
   let hasChanges = false;
 
+  // Logic for most fields remains the same...
   if (updates.hasOwnProperty('title')) {
     updatePayload.title = updates.title?.trim();
     hasChanges = true;
@@ -166,13 +170,19 @@ export const updateTaskLibraryItem = async ({
     hasChanges = true;
   }
 
+  // MODIFIED: Check for canSelfAssign
+  if (updates.hasOwnProperty('canSelfAssign')) {
+    updatePayload.canSelfAssign = updates.canSelfAssign;
+    hasChanges = true;
+  }
+
+  // File handling logic remains the same...
   if (file === null) {
     updatePayload.deleteAttachment = true;
     hasChanges = true;
   } else if (file) {
     let finalMimeType = providedMimeType;
     let finalFileName = providedFileName;
-
     if (!finalMimeType && file instanceof File) finalMimeType = file.type;
     else if (file && !finalMimeType && typeof file === 'object' && 'mimeType' in file)
       finalMimeType = file.mimeType;
@@ -191,34 +201,12 @@ export const updateTaskLibraryItem = async ({
       } catch (error: any) {
         throw new Error(`Failed to process file for update: ${error.message}`);
       }
-    } else {
-      console.warn('[API update] File provided but missing info.');
     }
   }
 
   if (!hasChanges) {
-    const { data: currentData, error: currentError } = await client
-      .from('task_library')
-      .select(`*, task_library_instruments ( instrument_id )`)
-      .eq('id', taskId)
-      .single();
-    if (currentError || !currentData)
-      throw new Error(
-        `Failed to fetch current task ${taskId}: ${currentError?.message || 'Not found'}`
-      );
-    return {
-      /* map currentData */ id: currentData.id,
-      title: currentData.title,
-      description: currentData.description ?? null,
-      baseTickets: currentData.base_tickets,
-      createdById: currentData.created_by_id,
-      attachmentPath: currentData.attachment_path ?? undefined,
-      referenceUrl: currentData.reference_url ?? null,
-      instrumentIds:
-        currentData.task_library_instruments?.map((link: any) => link.instrument_id) ?? [],
-    };
+    return fetchTaskLibrary().then(tasks => tasks.find(t => t.id === taskId)!);
   }
-
   if (updatePayload.title !== undefined && !updatePayload.title)
     throw new Error('Task title cannot be empty.');
 
@@ -226,10 +214,7 @@ export const updateTaskLibraryItem = async ({
   const { error } = await client.functions.invoke('update-task-library-item', {
     body: requestBody,
   });
-
-  if (error) {
-    throw new Error(`Failed to update task: ${error.message || 'Unknown EF error'}`);
-  }
+  if (error) throw new Error(`Failed to update task: ${error.message || 'Unknown EF error'}`);
 
   const { data: updatedData, error: refetchError } = await client
     .from('task_library')
@@ -241,8 +226,9 @@ export const updateTaskLibraryItem = async ({
       `Update successful, but failed to refetch: ${refetchError?.message || 'Not found'}`
     );
 
+  // MODIFIED: Map new property
   const updatedTask: TaskLibraryItem = {
-    /* map updatedData */ id: updatedData.id,
+    id: updatedData.id,
     title: updatedData.title,
     description: updatedData.description ?? null,
     baseTickets: updatedData.base_tickets,
@@ -251,16 +237,16 @@ export const updateTaskLibraryItem = async ({
     referenceUrl: updatedData.reference_url ?? null,
     instrumentIds:
       updatedData.task_library_instruments?.map((link: any) => link.instrument_id) ?? [],
+    canSelfAssign: updatedData.can_self_assign,
   };
   return updatedTask;
 };
 
+// This function remains unchanged
 export const deleteTaskLibraryItem = async (taskId: string): Promise<void> => {
   const client = getSupabase();
   const payload = { taskId };
-  const { error } = await client.functions.invoke('delete-task-library-item', {
-    body: payload,
-  });
+  const { error } = await client.functions.invoke('delete-task-library-item', { body: payload });
   if (error) {
     throw new Error(`Failed to delete task: ${error.message || 'EF error'}`);
   }

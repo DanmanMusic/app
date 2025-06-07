@@ -20,7 +20,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.danmans"
+      "package": "com.danmans.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"

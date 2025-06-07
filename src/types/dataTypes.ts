@@ -1,3 +1,5 @@
+// src/types/dataTypes.ts
+
 export type AnnouncementType = 'announcement' | 'challenge' | 'redemption_celebration';
 
 export interface Announcement {
@@ -7,6 +9,8 @@ export interface Announcement {
   message: string;
   date: string;
   relatedStudentId?: string;
+  relatedStudentName?: string; // NEW: For displaying names in celebration announcements
+  relatedStudentAvatarPath?: string | null; // NEW: For displaying avatars
 }
 
 export type TaskVerificationStatus = 'pending' | 'verified' | 'partial' | 'incomplete' | undefined;
@@ -44,6 +48,7 @@ export interface RewardItem {
   cost: number;
   imageUrl: string;
   description?: string;
+  isGoalEligible: boolean; // NEW: Determines if a reward can be a student's goal
 }
 
 export interface TaskLibraryItem {
@@ -55,9 +60,15 @@ export interface TaskLibraryItem {
   attachmentPath?: string | null;
   instrumentIds?: string[];
   createdById: string;
+  canSelfAssign: boolean; // NEW: Determines if students can assign this task to themselves
 }
 
-export type TransactionType = 'task_award' | 'manual_add' | 'manual_subtract' | 'redemption';
+export type TransactionType =
+  | 'task_award'
+  | 'manual_add'
+  | 'manual_subtract'
+  | 'redemption'
+  | 'streak_award';
 
 export interface TicketTransaction {
   id: string;
@@ -83,6 +94,7 @@ export interface User {
   linkedStudentIds?: string[];
   current_goal_reward_id?: string | null;
   status: UserStatus;
+  avatarPath?: string | null; // NEW: Path to the user's avatar in storage
 }
 
 export interface SimplifiedStudent {
@@ -91,4 +103,10 @@ export interface SimplifiedStudent {
   instrumentIds?: string[];
   balance: number;
   isActive: boolean;
+}
+
+// NEW: Add a new type for the practice streak feature
+export interface PracticeStreak {
+  currentStreak: number;
+  lastPracticeDate: string | null;
 }
