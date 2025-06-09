@@ -4,8 +4,11 @@ import { Platform } from 'react-native';
 
 import { decode } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system';
+
 import { getSupabase } from '../lib/supabaseClient';
+
 import { SimplifiedStudent, User, UserRole, UserStatus } from '../types/dataTypes';
+
 import { fileToBase64, getUserDisplayName, NativeFileObject } from '../utils/helpers';
 
 // Define the avatar storage bucket
@@ -117,34 +120,82 @@ interface FetchUsersParams {
   teacherId?: string;
 }
 
-const fetchProfilesByRole = async ({
+// Replace the existing fetchProfilesByRole function in src/api/users.ts with this one.
+
+export const fetchProfilesByRole = async ({
   page = 1,
   limit = 10,
   role,
+  filter = 'all',
+  searchTerm = '',
+  teacherId,
 }: FetchUsersParams): Promise<ProfilesApiResponse> => {
   const client = getSupabase();
+  console.log(
+    `[API] fetchProfilesByRole: role=${role}, page=${page}, search='${searchTerm}', filter=${filter}, teacherId=${teacherId}`
+  );
   const startIndex = (page - 1) * limit;
   const endIndex = startIndex + limit - 1;
 
-  const query = client
+  let query = client
     .from('profiles')
     .select(
       'id, role, first_name, last_name, nickname, status, avatar_path, current_goal_reward_id',
       { count: 'exact' }
     )
-    .eq('role', role)
+    .eq('role', role);
+
+  if (filter !== 'all') {
+    query = query.eq('status', filter);
+  }
+
+  if (searchTerm.trim()) {
+    const searchString = `%${searchTerm.trim()}%`;
+    query = query.or(
+      `first_name.ilike.${searchString},last_name.ilike.${searchString},nickname.ilike.${searchString}`
+    );
+  }
+
+  // This logic is specifically for fetching a teacher's students
+  if (teacherId && role === 'student') {
+    const { data: links, error: linkError } = await client
+      .from('student_teachers')
+      .select('student_id')
+      .eq('teacher_id', teacherId);
+
+    if (linkError) {
+      console.error(
+        `[API] Error fetching student links for teacher ${teacherId}:`,
+        linkError.message
+      );
+      throw new Error(`Failed to fetch student links for teacher: ${linkError.message}`);
+    }
+
+    const studentIds = links?.map(l => l.student_id) || [];
+    if (studentIds.length === 0) {
+      // If a teacher has no students, return an empty set immediately.
+      return { items: [], totalPages: 1, currentPage: 1, totalItems: 0 };
+    }
+    query = query.in('id', studentIds);
+  }
+
+  query = query
     .order('last_name', { ascending: true })
     .order('first_name', { ascending: true })
     .range(startIndex, endIndex);
 
   const { data, error, count } = await query;
-  if (error) throw new Error(`Failed to fetch ${role}s: ${error.message}`);
+  if (error) {
+    throw new Error(`Failed to fetch ${role}s: ${error.message}`);
+  }
 
   const totalItems = count ?? 0;
   const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
+  // The mapProfileToUser helper will fetch the necessary linked data for each profile
   const itemsWithLinks = await Promise.all(
     (data || []).map(profile => mapProfileToUser(profile, client))
   );
+
   return { items: itemsWithLinks, totalPages, currentPage: page, totalItems };
 };
 

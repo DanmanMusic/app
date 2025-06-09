@@ -1,20 +1,33 @@
 // src/components/common/EditUserModal.tsx
 import React, { useState, useEffect } from 'react';
 
-import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  Button,
+  TextInput,
+  ScrollView,
+  ActivityIndicator,
+  Image,
+  Platform,
+  Alert,
+} from 'react-native';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import * as ImagePicker from 'expo-image-picker';
 import Toast from 'react-native-toast-message';
 
 import { fetchInstruments } from '../../api/instruments';
 import { updateUser, fetchTeachers, fetchUserProfile } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
+import { getSupabase } from '../../lib/supabaseClient';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { EditUserModalProps } from '../../types/componentProps';
 import { User, Instrument } from '../../types/dataTypes';
-import { getUserDisplayName } from '../../utils/helpers';
+import { getUserDisplayName, NativeFileObject } from '../../utils/helpers';
 
 export const EditUserModal: React.FC<EditUserModalProps> = ({
   visible,
@@ -29,16 +42,12 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   const [nickname, setNickname] = useState('');
   const [selectedInstrumentIds, setSelectedInstrumentIds] = useState<string[]>([]);
   const [selectedTeacherIds, setSelectedTeacherIds] = useState<string[]>([]);
+  const [avatarFile, setAvatarFile] = useState<NativeFileObject | null | undefined>(undefined);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const userIdToEdit = userToEditProp?.id;
 
-  const {
-    data: userToEdit,
-    isLoading: isLoadingUserToEdit,
-    isSuccess: isSuccessUserToEdit,
-    isError: isErrorUserToEdit,
-    error: errorUserToEdit,
-  } = useQuery<User | null, Error>({
+  const { data: userToEdit, isLoading: isLoadingUserToEdit } = useQuery<User | null, Error>({
     queryKey: ['userProfile', userIdToEdit, { context: 'editUserModalFetch' }],
     queryFn: () => (userIdToEdit ? fetchUserProfile(userIdToEdit) : Promise.resolve(null)),
     enabled: visible && !!userIdToEdit,
@@ -52,7 +61,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     data: instruments = [],
     isLoading: isLoadingInstruments,
     isError: isErrorInstruments,
-    error: errorInstrumentsMsg,
   } = useQuery<Instrument[], Error>({
     queryKey: ['instruments'],
     queryFn: fetchInstruments,
@@ -64,7 +72,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     data: activeTeachers = [],
     isLoading: isLoadingTeachers,
     isError: isErrorTeachers,
-    error: errorTeachersMsg,
   } = useQuery<User[], Error>({
     queryKey: ['teachers', { status: 'active', context: 'editUserModal' }],
     queryFn: async () => {
@@ -79,20 +86,15 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     mutationFn: (vars: {
       userId: string;
       updates: Partial<Omit<User, 'id' | 'role' | 'status'>>;
-    }) => updateUser({ userId: vars.userId, updates: vars.updates }),
+      avatarFile?: NativeFileObject | null;
+    }) => updateUser(vars),
     onSuccess: updatedUser => {
-      console.log('[EditUserModal] User update successful via mutation.');
       queryClient.invalidateQueries({ queryKey: ['userProfile', updatedUser.id] });
-      if (updatedUser.role === 'student') queryClient.invalidateQueries({ queryKey: ['students'] });
-      if (updatedUser.role === 'teacher') queryClient.invalidateQueries({ queryKey: ['teachers'] });
-      if (updatedUser.role === 'parent') queryClient.invalidateQueries({ queryKey: ['parents'] });
-      if (updatedUser.role === 'admin') queryClient.invalidateQueries({ queryKey: ['admins'] });
-
+      queryClient.invalidateQueries({ queryKey: [`${updatedUser.role}s`] });
       Toast.show({ type: 'success', text1: 'User Updated', position: 'bottom' });
       onClose();
     },
     onError: (error: Error) => {
-      console.error('[EditUserModal] Error updating user:', error);
       Toast.show({
         type: 'error',
         text1: 'Update Failed',
@@ -103,44 +105,66 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   });
 
   useEffect(() => {
-    console.log(
-      `[EditUserModal useEffect] Running. Visible: ${visible}, User Loaded: ${isSuccessUserToEdit}, User Data ID: ${userToEdit?.id}`
-    );
     if (visible && userToEdit) {
-      console.log('[EditUserModal useEffect] Setting form state...');
       setFirstName(userToEdit.firstName || '');
       setLastName(userToEdit.lastName || '');
       setNickname(userToEdit.nickname || '');
-      if (userToEdit.role === 'student') {
-        const instrumentsToSet = userToEdit.instrumentIds || [];
-        const teachersToSet = userToEdit.linkedTeacherIds || [];
-        console.log(
-          '[EditUserModal useEffect] Setting student selections - Instruments:',
-          instrumentsToSet,
-          'Teachers:',
-          teachersToSet
-        );
-        setSelectedInstrumentIds(instrumentsToSet);
-        setSelectedTeacherIds(teachersToSet);
+      if (userToEdit.avatarPath) {
+        const supabase = getSupabase();
+        const { data: urlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(userToEdit.avatarPath);
+        setAvatarPreview(urlData.publicUrl);
       } else {
-        setSelectedInstrumentIds([]);
-        setSelectedTeacherIds([]);
+        setAvatarPreview(null);
+      }
+      setAvatarFile(undefined);
+
+      if (userToEdit.role === 'student') {
+        setSelectedInstrumentIds(userToEdit.instrumentIds || []);
+        setSelectedTeacherIds(userToEdit.linkedTeacherIds || []);
       }
       profileUpdateMutation.reset();
-    } else if (!visible) {
-      setFirstName('');
-      setLastName('');
-      setNickname('');
-      setSelectedInstrumentIds([]);
-      setSelectedTeacherIds([]);
     }
-  }, [visible, userToEdit, isSuccessUserToEdit]);
+  }, [visible, userToEdit]);
 
-  const toggleInstrumentSelection = (id: string) => {
-    setSelectedInstrumentIds(prev =>
-      prev.includes(id) ? prev.filter(instrumentId => instrumentId !== id) : [...prev, id]
-    );
+  const pickImage = async () => {
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Camera roll permissions are needed.');
+        return;
+      }
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: 'images',
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets && result.assets[0]) {
+      const asset = result.assets[0];
+      const fileName = asset.fileName ?? `avatar_${Date.now()}.${asset.uri.split('.').pop()}`;
+      setAvatarFile({
+        uri: asset.uri,
+        name: fileName,
+        mimeType: asset.mimeType,
+        type: asset.type,
+        size: asset.fileSize,
+      });
+      setAvatarPreview(asset.uri);
+    }
   };
+
+  const removeImage = () => {
+    setAvatarFile(null);
+    setAvatarPreview(null);
+  };
+
+  const toggleInstrumentSelection = (id: string) =>
+    setSelectedInstrumentIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
   const toggleTeacherSelection = (id: string) => {
     if (currentUserRole !== 'admin') {
       Toast.show({
@@ -151,27 +175,13 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       });
       return;
     }
-    setSelectedTeacherIds(prev =>
-      prev.includes(id) ? prev.filter(teacherId => teacherId !== id) : [...prev, id]
-    );
+    setSelectedTeacherIds(prev => (prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]));
   };
 
   const handleSaveChanges = () => {
-    if (!userToEdit) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'User data not loaded.',
-        position: 'bottom',
-      });
-      return;
-    }
-    if (profileUpdateMutation.isPending) return;
-
+    if (!userToEdit) return;
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
-    const trimmedNickname = nickname.trim();
-
     if (!trimmedFirstName || !trimmedLastName) {
       Toast.show({
         type: 'error',
@@ -181,10 +191,8 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       });
       return;
     }
-
     const updatesPayload: Partial<Omit<User, 'id' | 'role' | 'status'>> = {};
     let hasChanges = false;
-
     if (trimmedFirstName !== (userToEdit.firstName || '')) {
       updatesPayload.firstName = trimmedFirstName;
       hasChanges = true;
@@ -193,33 +201,30 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       updatesPayload.lastName = trimmedLastName;
       hasChanges = true;
     }
-    if (trimmedNickname !== (userToEdit.nickname || '')) {
-      updatesPayload.nickname = trimmedNickname || undefined;
+    if (nickname.trim() !== (userToEdit.nickname || '')) {
+      updatesPayload.nickname = nickname.trim() || undefined;
       hasChanges = true;
     }
-
+    if (avatarFile !== undefined) {
+      hasChanges = true;
+    }
     if (userToEdit.role === 'student') {
-      if (currentUserRole === 'admin' || currentUserRole === 'teacher') {
-        const initialInstrumentIds = (userToEdit.instrumentIds || []).sort();
-        const currentInstrumentIds = [...selectedInstrumentIds].sort();
-        if (JSON.stringify(currentInstrumentIds) !== JSON.stringify(initialInstrumentIds)) {
-          updatesPayload.instrumentIds = selectedInstrumentIds;
-          hasChanges = true;
-        }
+      const initialInstrumentIds = (userToEdit.instrumentIds || []).sort();
+      if (
+        JSON.stringify([...selectedInstrumentIds].sort()) !== JSON.stringify(initialInstrumentIds)
+      ) {
+        updatesPayload.instrumentIds = selectedInstrumentIds;
+        hasChanges = true;
       }
-
       if (currentUserRole === 'admin') {
         const initialTeacherIds = (userToEdit.linkedTeacherIds || []).sort();
-        const currentTeacherIds = [...selectedTeacherIds].sort();
-        if (JSON.stringify(currentTeacherIds) !== JSON.stringify(initialTeacherIds)) {
+        if (JSON.stringify([...selectedTeacherIds].sort()) !== JSON.stringify(initialTeacherIds)) {
           updatesPayload.linkedTeacherIds = selectedTeacherIds;
           hasChanges = true;
         }
       }
     }
-
     if (!hasChanges) {
-      console.log('[EditUserModal] No relevant changes detected or authorized to send.');
       Toast.show({
         type: 'info',
         text1: 'No Changes',
@@ -229,9 +234,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       onClose();
       return;
     }
-
-    console.log('[EditUserModal] Calling mutation with updatesPayload:', updatesPayload);
-    profileUpdateMutation.mutate({ userId: userToEdit.id, updates: updatesPayload });
+    profileUpdateMutation.mutate({ userId: userToEdit.id, updates: updatesPayload, avatarFile });
   };
 
   const isSaveDisabled =
@@ -240,77 +243,61 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     !firstName.trim() ||
     !lastName.trim() ||
     (isStudentRole && (isLoadingInstruments || isLoadingTeachers));
-
-  if (visible && isLoadingUserToEdit) {
-    return (
-      <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-        <View style={commonSharedStyles.centeredView}>
-          <View style={commonSharedStyles.modalView}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={commonSharedStyles.baseSecondaryText}>Loading user data...</Text>
-          </View>
-        </View>
-      </Modal>
-    );
-  }
-  if (visible && isErrorUserToEdit) {
-    console.error('Error fetching user to edit:', errorUserToEdit);
-    Toast.show({
-      type: 'error',
-      text1: 'Error Loading User',
-      text2: errorUserToEdit?.message || 'Could not load user details.',
-      position: 'bottom',
-      visibilityTime: 4000,
-    });
-    return (
-      <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-        <View style={commonSharedStyles.centeredView}>
-          <View style={commonSharedStyles.modalView}>
-            <Text style={commonSharedStyles.modalTitle}>Error</Text>
-            <Text style={commonSharedStyles.errorText}>Could not load user details to edit.</Text>
-            <Text style={commonSharedStyles.errorText}>{errorUserToEdit?.message}</Text>
-            <View style={[commonSharedStyles.full, { marginTop: 20 }]}>
-              <Button title="Close" onPress={onClose} color={colors.secondary} />
-            </View>
-          </View>
-        </View>
-      </Modal>
-    );
-  }
-  if (visible && !userToEdit && !isLoadingUserToEdit) {
-    console.error('[EditUserModal] Modal visible but user data is null after load attempt.');
-    Toast.show({
-      type: 'error',
-      text1: 'Error',
-      text2: 'User data unavailable.',
-      position: 'bottom',
-    });
-    return null;
-  }
-  if (!visible || !userToEdit) {
-    return null;
-  }
-
-  const currentUserDisplayName = getUserDisplayName(userToEdit);
+  if (!visible || !userToEdit) return null;
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
       <View style={[commonSharedStyles.centeredView]}>
         <View style={[commonSharedStyles.modalView]}>
-          <Text style={commonSharedStyles.modalTitle}>Edit User: {currentUserDisplayName}</Text>
-          <Text style={commonSharedStyles.modalSubTitle}>
-            Role: {userToEdit.role.toUpperCase()} (ID: {userToEdit.id})
+          <Text style={commonSharedStyles.modalTitle}>
+            Edit User: {getUserDisplayName(userToEdit)}
           </Text>
-
+          <Text style={commonSharedStyles.modalSubTitle}>
+            Role: {userToEdit.role.toUpperCase()}
+          </Text>
           <ScrollView style={[commonSharedStyles.modalScrollView, { paddingHorizontal: 2 }]}>
+            <Text style={commonSharedStyles.label}>Profile Picture:</Text>
+            <View style={commonSharedStyles.containerIconPreview}>
+              {avatarPreview ? (
+                <Image source={{ uri: avatarPreview }} style={commonSharedStyles.iconPreview} />
+              ) : (
+                <View
+                  style={[
+                    commonSharedStyles.iconPreview,
+                    {
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: colors.backgroundGrey,
+                    },
+                  ]}
+                >
+                  <Text style={{ color: colors.textLight }}>No Image</Text>
+                </View>
+              )}
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Button
+                  title="Choose Image"
+                  onPress={pickImage}
+                  disabled={profileUpdateMutation.isPending}
+                  color={colors.info}
+                />
+                {avatarPreview && (
+                  <Button
+                    title="Remove Image"
+                    onPress={removeImage}
+                    disabled={profileUpdateMutation.isPending}
+                    color={colors.warning}
+                  />
+                )}
+              </View>
+            </View>
+
             <Text style={commonSharedStyles.label}>First Name:</Text>
             <TextInput
               style={commonSharedStyles.input}
               value={firstName}
               onChangeText={setFirstName}
               editable={!profileUpdateMutation.isPending}
-              placeholder="Enter First Name"
-              placeholderTextColor={colors.textLight}
             />
             <Text style={commonSharedStyles.label}>Last Name:</Text>
             <TextInput
@@ -318,16 +305,12 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
               value={lastName}
               onChangeText={setLastName}
               editable={!profileUpdateMutation.isPending}
-              placeholder="Enter Last Name"
-              placeholderTextColor={colors.textLight}
             />
             <Text style={commonSharedStyles.label}>Nickname (Optional):</Text>
             <TextInput
               style={commonSharedStyles.input}
               value={nickname}
               onChangeText={setNickname}
-              placeholder="Optional Nickname"
-              placeholderTextColor={colors.textLight}
               editable={!profileUpdateMutation.isPending}
             />
 
@@ -335,32 +318,25 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
               <>
                 <View style={commonSharedStyles.roleSpecificSection}>
                   <Text style={commonSharedStyles.roleSectionTitle}>Instruments</Text>
-                  {isLoadingInstruments && <ActivityIndicator color={colors.primary} />}
-                  {isErrorInstruments && (
-                    <Text style={commonSharedStyles.errorText}>
-                      Error loading instruments: {errorInstrumentsMsg?.message}
-                    </Text>
-                  )}
-                  {!isLoadingInstruments && !isErrorInstruments && (
+                  {isLoadingInstruments ? (
+                    <ActivityIndicator color={colors.primary} />
+                  ) : isErrorInstruments ? (
+                    <Text style={commonSharedStyles.errorText}>Error loading instruments.</Text>
+                  ) : (
                     <View style={commonSharedStyles.baseRowCentered}>
-                      {instruments.length > 0 ? (
-                        instruments.map(inst => {
-                          const isSelected = selectedInstrumentIds.includes(inst.id);
-                          return (
-                            <Button
-                              key={inst.id}
-                              title={inst.name}
-                              onPress={() => toggleInstrumentSelection(inst.id)}
-                              color={isSelected ? colors.success : colors.secondary}
-                              disabled={profileUpdateMutation.isPending}
-                            />
-                          );
-                        })
-                      ) : (
-                        <Text style={commonSharedStyles.baseEmptyText}>
-                          No instruments available.
-                        </Text>
-                      )}
+                      {instruments.map(inst => (
+                        <Button
+                          key={inst.id}
+                          title={inst.name}
+                          onPress={() => toggleInstrumentSelection(inst.id)}
+                          color={
+                            selectedInstrumentIds.includes(inst.id)
+                              ? colors.success
+                              : colors.secondary
+                          }
+                          disabled={profileUpdateMutation.isPending}
+                        />
+                      ))}
                     </View>
                   )}
                 </View>
@@ -372,34 +348,25 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                       Only Admins can modify teacher links.
                     </Text>
                   )}
-                  {isLoadingTeachers && <ActivityIndicator color={colors.primary} />}
-                  {isErrorTeachers && (
-                    <Text style={commonSharedStyles.errorText}>
-                      Error loading teachers: {errorTeachersMsg?.message}
-                    </Text>
-                  )}
-                  {!isLoadingTeachers && !isErrorTeachers && (
+                  {isLoadingTeachers ? (
+                    <ActivityIndicator color={colors.primary} />
+                  ) : isErrorTeachers ? (
+                    <Text style={commonSharedStyles.errorText}>Error loading teachers.</Text>
+                  ) : (
                     <View style={commonSharedStyles.baseRowCentered}>
-                      {activeTeachers.length > 0 ? (
-                        activeTeachers.map(teacher => {
-                          const isSelected = selectedTeacherIds.includes(teacher.id);
-                          return (
-                            <Button
-                              key={teacher.id}
-                              title={getUserDisplayName(teacher)}
-                              onPress={() => toggleTeacherSelection(teacher.id)}
-                              color={isSelected ? colors.success : colors.secondary}
-                              disabled={
-                                profileUpdateMutation.isPending || currentUserRole !== 'admin'
-                              }
-                            />
-                          );
-                        })
-                      ) : (
-                        <Text style={commonSharedStyles.baseEmptyText}>
-                          No active teachers found.
-                        </Text>
-                      )}
+                      {activeTeachers.map(teacher => (
+                        <Button
+                          key={teacher.id}
+                          title={getUserDisplayName(teacher)}
+                          onPress={() => toggleTeacherSelection(teacher.id)}
+                          color={
+                            selectedTeacherIds.includes(teacher.id)
+                              ? colors.success
+                              : colors.secondary
+                          }
+                          disabled={profileUpdateMutation.isPending || currentUserRole !== 'admin'}
+                        />
+                      ))}
                     </View>
                   )}
                 </View>
@@ -409,16 +376,13 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
           {profileUpdateMutation.isPending && (
             <View style={commonSharedStyles.baseRowCentered}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={commonSharedStyles.baseSecondaryText}>Saving Changes...</Text>
+              <ActivityIndicator size="small" />
+              <Text> Saving...</Text>
             </View>
           )}
           {profileUpdateMutation.isError && (
             <Text style={commonSharedStyles.errorText}>
-              Error:{' '}
-              {profileUpdateMutation.error instanceof Error
-                ? profileUpdateMutation.error.message
-                : 'Failed to save changes'}
+              Error: {profileUpdateMutation.error.message}
             </Text>
           )}
           <View style={commonSharedStyles.full}>

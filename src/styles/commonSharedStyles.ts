@@ -715,4 +715,33 @@ export const commonSharedStyles = StyleSheet.create({
   toggleButtonTextActive: {
     color: colors.textWhite,
   },
+  avatarPlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundGrey,
+    borderRadius: 20, // Make it circular
+  },
+  avatarPlaceholderText: {
+    color: colors.textSecondary,
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  detailAvatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50, // Make it circular
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  avatarPlaceholderTextLarge: {
+    color: colors.textSecondary,
+    fontWeight: 'bold',
+    fontSize: 40,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: colors.borderPrimary,
+    borderRadius: 5,
+    marginBottom: 15,
+  },
 });

@@ -61,6 +61,7 @@ export interface TaskLibraryItem {
   instrumentIds?: string[];
   createdById: string;
   canSelfAssign: boolean; // NEW: Determines if students can assign this task to themselves
+  journeyLocationId?: string | null; // NEW: Add this optional property
 }
 
 export type TransactionType =

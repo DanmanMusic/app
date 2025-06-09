@@ -1,20 +1,32 @@
 // src/components/admin/modals/EditTaskLibraryModal.tsx
 import React, { useState, useEffect } from 'react';
 
-import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  Button,
+  TextInput,
+  ScrollView,
+  ActivityIndicator,
+  Switch,
+  TouchableOpacity,
+} from 'react-native';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
+import { Picker } from '@react-native-picker/picker';
 import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-toast-message';
 
 import { fetchInstruments } from '../../../api/instruments';
+import { fetchJourneyLocations, JourneyLocation } from '../../../api/journey';
 import { updateTaskLibraryItem } from '../../../api/taskLibrary';
 import { handleViewAttachment } from '../../../lib/supabaseClient';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { EditTaskLibraryModalProps } from '../../../types/componentProps';
 import { Instrument, TaskLibraryItem } from '../../../types/dataTypes';
+import { getInstrumentNames } from '../../../utils/helpers';
 
 const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
   visible,
@@ -26,6 +38,8 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
   const [baseTickets, setBaseTickets] = useState<number | ''>('');
   const [referenceUrl, setReferenceUrl] = useState('');
   const [selectedInstrumentIds, setSelectedInstrumentIds] = useState<string[]>([]);
+  const [canSelfAssign, setCanSelfAssign] = useState(false);
+  const [selectedJourneyLocationId, setSelectedJourneyLocationId] = useState<string | null>(null);
   const [currentAttachmentPath, setCurrentAttachmentPath] = useState<string | undefined>(undefined);
 
   type FileAction = 'keep' | 'replace' | 'remove';
@@ -36,37 +50,43 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
 
   const queryClient = useQueryClient();
 
-  const {
-    data: instruments = [],
-    isLoading: isLoadingInstruments,
-    isError: isErrorInstruments,
-  } = useQuery<Instrument[], Error>({
-    queryKey: ['instruments'],
-    queryFn: fetchInstruments,
-    staleTime: Infinity,
-    enabled: visible,
+  const { data: instruments = [], isLoading: isLoadingInstruments, isError: isErrorInstruments } = useQuery<Instrument[], Error>(
+    {
+      queryKey: ['instruments'],
+      queryFn: fetchInstruments,
+      staleTime: Infinity,
+      enabled: visible,
+    }
+  );
+
+  const { data: journeyLocations = [], isLoading: isLoadingJourney } = useQuery<
+    JourneyLocation[],
+    Error
+  >({
+    queryKey: ['journeyLocations'],
+    queryFn: fetchJourneyLocations,
+    staleTime: 5 * 60 * 1000,
+    enabled: visible && canSelfAssign,
   });
 
   const mutation = useMutation({
     mutationFn: updateTaskLibraryItem,
-    onSuccess: updatedTask => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task-library'] });
-      queryClient.setQueryData(['task-library', { id: updatedTask.id }], updatedTask);
-      onClose();
       Toast.show({
         type: 'success',
         text1: 'Success',
         text2: 'Task library item updated.',
         position: 'bottom',
       });
+      onClose();
     },
-    onError: error => {
+    onError: (error: Error) => {
       Toast.show({
         type: 'error',
         text1: 'Update Failed',
-        text2: error instanceof Error ? error.message : 'Could not update task.',
+        text2: error.message,
         position: 'bottom',
-        visibilityTime: 4000,
       });
     },
   });
@@ -78,46 +98,32 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       setBaseTickets(taskToEdit.baseTickets);
       setReferenceUrl(taskToEdit.referenceUrl || '');
       setSelectedInstrumentIds(taskToEdit.instrumentIds || []);
-      setCurrentAttachmentPath(taskToEdit.attachmentPath || '');
-
+      setCanSelfAssign(taskToEdit.canSelfAssign);
+      setSelectedJourneyLocationId(taskToEdit.journeyLocationId || null);
+      setCurrentAttachmentPath(taskToEdit.attachmentPath || undefined);
       setFileAction('keep');
       setNewPickedDocument(null);
       setFileError(null);
       mutation.reset();
-    } else {
-      setTitle('');
-      setDescription('');
-      setBaseTickets('');
-      setReferenceUrl('');
-      setSelectedInstrumentIds([]);
-      setCurrentAttachmentPath(undefined);
-      setFileAction('keep');
-      setNewPickedDocument(null);
-      setFileError(null);
     }
   }, [visible, taskToEdit]);
 
+  useEffect(() => {
+    if (!canSelfAssign) setSelectedJourneyLocationId(null);
+  }, [canSelfAssign]);
+
   const pickDocument = async () => {
-    setFileError(null);
     try {
-      const result: DocumentPicker.DocumentPickerResult = await DocumentPicker.getDocumentAsync({
+      const result = await DocumentPicker.getDocumentAsync({
         type: '*/*',
         copyToCacheDirectory: true,
       });
       if (!result.canceled) {
         setNewPickedDocument(result);
         setFileAction('replace');
-      } else {
-        if (fileAction === 'replace') {
-          setFileAction('keep');
-          setNewPickedDocument(null);
-        }
       }
     } catch (error) {
-      console.error('Error picking document:', error);
       setFileError('Failed to pick document.');
-      setNewPickedDocument(null);
-      setFileAction('keep');
     }
   };
 
@@ -125,52 +131,39 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     setFileAction('remove');
     setNewPickedDocument(null);
   };
-
-  const toggleInstrumentSelection = (id: string) => {
-    /* ... same as create modal ... */
+  const toggleInstrumentSelection = (id: string) =>
     setSelectedInstrumentIds(prev =>
-      prev.includes(id) ? prev.filter(instId => instId !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
-  };
 
   const handleSave = () => {
     if (!taskToEdit) return;
-
     const trimmedTitle = title.trim();
     const numericTickets =
-      typeof baseTickets === 'number' ? baseTickets : parseInt(String(baseTickets || '-1'), 10);
-
+      typeof baseTickets === 'number' ? baseTickets : parseInt(String(baseTickets || -1), 10);
     if (!trimmedTitle) {
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Task Title is required.' });
+      return;
+    }
+    if (isNaN(numericTickets) || numericTickets < 0) {
       Toast.show({
         type: 'error',
         text1: 'Validation Error',
-        text2: 'Task Title cannot be empty.',
-        position: 'bottom',
+        text2: 'Base Tickets must be a valid number.',
       });
       return;
     }
-    if (isNaN(numericTickets) || numericTickets < 0 || !Number.isInteger(numericTickets)) {
+    if (canSelfAssign && !selectedJourneyLocationId) {
       Toast.show({
         type: 'error',
         text1: 'Validation Error',
-        text2: 'Base Tickets must be a whole number (0 or greater).',
-        position: 'bottom',
-      });
-      return;
-    }
-    if (referenceUrl.trim() && !referenceUrl.trim().toLowerCase().startsWith('http')) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Reference URL must start with http or https.',
-        position: 'bottom',
+        text2: 'A Journey Location is required for self-assignable tasks.',
       });
       return;
     }
 
     const updates: Partial<Omit<TaskLibraryItem, 'id' | 'createdById'>> = {};
     let hasChanges = false;
-
     if (trimmedTitle !== taskToEdit.title) {
       updates.title = trimmedTitle;
       hasChanges = true;
@@ -183,47 +176,39 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       updates.baseTickets = numericTickets;
       hasChanges = true;
     }
-    const currentRefUrl = taskToEdit.referenceUrl || '';
-    const newRefUrl = referenceUrl.trim();
-
-    if (newRefUrl !== currentRefUrl) {
-      updates.referenceUrl = newRefUrl === '' ? null : newRefUrl;
+    if (referenceUrl.trim() !== (taskToEdit.referenceUrl || '')) {
+      updates.referenceUrl = referenceUrl.trim() === '' ? null : referenceUrl.trim();
       hasChanges = true;
     }
-
+    if (canSelfAssign !== taskToEdit.canSelfAssign) {
+      updates.canSelfAssign = canSelfAssign;
+      hasChanges = true;
+    }
+    if (selectedJourneyLocationId !== (taskToEdit.journeyLocationId || null)) {
+      updates.journeyLocationId = selectedJourneyLocationId;
+      hasChanges = true;
+    }
     const initialInstrumentIds = (taskToEdit.instrumentIds || []).sort();
-    const currentInstrumentIds = [...selectedInstrumentIds].sort();
-    if (JSON.stringify(initialInstrumentIds) !== JSON.stringify(currentInstrumentIds)) {
+    if (
+      JSON.stringify([...selectedInstrumentIds].sort()) !== JSON.stringify(initialInstrumentIds)
+    ) {
       updates.instrumentIds = selectedInstrumentIds;
       hasChanges = true;
     }
 
-    let fileApiPayload: {
-      file?: any;
-      mimeType?: string;
-      fileName?: string;
-      deleteAttachment?: boolean;
-    } = {};
-
-    if (fileAction === 'remove') {
-      fileApiPayload.file = null;
-
-      if (currentAttachmentPath) hasChanges = true;
+    let fileApiPayload: { file?: any; mimeType?: string; fileName?: string } = {};
+    if (fileAction === 'remove' && currentAttachmentPath) {
+      updates.attachmentPath = null;
+      hasChanges = true;
     } else if (
       fileAction === 'replace' &&
       newPickedDocument &&
       !newPickedDocument.canceled &&
-      newPickedDocument.assets &&
-      newPickedDocument.assets.length > 0
+      newPickedDocument.assets
     ) {
       const asset = newPickedDocument.assets[0];
       if (!asset.mimeType || !asset.name) {
-        Toast.show({
-          type: 'error',
-          text1: 'File Error',
-          text2: 'Selected file is missing required information (type or name).',
-          position: 'bottom',
-        });
+        Toast.show({ type: 'error', text1: 'File Error', text2: 'Selected file is missing info.' });
         return;
       }
       fileApiPayload = { file: asset, mimeType: asset.mimeType, fileName: asset.name };
@@ -231,21 +216,11 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     }
 
     if (!hasChanges) {
-      Toast.show({
-        type: 'info',
-        text1: 'No Changes',
-        text2: 'No changes detected to save.',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'info', text1: 'No Changes', text2: 'No information was modified.' });
       onClose();
       return;
     }
-
-    mutation.mutate({
-      taskId: taskToEdit.id,
-      updates: updates,
-      ...fileApiPayload,
-    });
+    mutation.mutate({ taskId: taskToEdit.id, updates, ...fileApiPayload });
   };
 
   const isSaveDisabled =
@@ -253,8 +228,8 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     isLoadingInstruments ||
     !title.trim() ||
     baseTickets === '' ||
-    baseTickets < 0;
-
+    baseTickets < 0 ||
+    (canSelfAssign && !selectedJourneyLocationId);
   const currentFileNameDisplay =
     fileAction === 'replace' &&
     newPickedDocument &&
@@ -265,7 +240,8 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
         ? currentAttachmentPath.split('/').pop()
         : 'None';
 
-  if (!taskToEdit && visible) {
+  if (!visible) return null;
+  if (!taskToEdit) {
     return (
       <Modal visible={true} transparent={true}>
         <View style={commonSharedStyles.centeredView}>
@@ -273,9 +249,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
         </View>
       </Modal>
     );
-  }
-  if (!visible) {
-    return null;
   }
 
   return (
@@ -321,32 +294,69 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
               editable={!mutation.isPending}
             />
 
+            <View
+              style={[
+                commonSharedStyles.baseRow,
+                commonSharedStyles.justifySpaceBetween,
+                commonSharedStyles.baseAlignCenter,
+                { marginBottom: 15 },
+              ]}
+            >
+              <Text style={commonSharedStyles.label}>Allow Student Self-Assignment?</Text>
+              <Switch
+                trackColor={{ false: colors.secondary, true: colors.success }}
+                thumbColor={colors.backgroundPrimary}
+                onValueChange={setCanSelfAssign}
+                value={canSelfAssign}
+                disabled={mutation.isPending}
+              />
+            </View>
+
+            {canSelfAssign && (
+              <View style={{ marginBottom: 15 }}>
+                <Text style={commonSharedStyles.label}>Journey Location (Required):</Text>
+                {isLoadingJourney ? (
+                  <ActivityIndicator />
+                ) : (
+                  <View style={commonSharedStyles.pickerContainer}>
+                    <Picker
+                      selectedValue={selectedJourneyLocationId}
+                      onValueChange={itemValue => setSelectedJourneyLocationId(itemValue)}
+                      enabled={!mutation.isPending}
+                    >
+                      <Picker.Item label="-- Select a Location --" value={null} />
+                      {journeyLocations.map(loc => (
+                        <Picker.Item key={loc.id} label={loc.name} value={loc.id} />
+                      ))}
+                    </Picker>
+                  </View>
+                )}
+              </View>
+            )}
+
             <Text style={commonSharedStyles.label}>Instruments (Optional):</Text>
             <View style={[commonSharedStyles.baseItem, { marginBottom: 15, padding: 10 }]}>
-              {isLoadingInstruments && <ActivityIndicator color={colors.primary} />}
-              {isErrorInstruments && (
+              {isLoadingInstruments ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : isErrorInstruments ? (
                 <Text style={commonSharedStyles.errorText}>Error loading instruments.</Text>
+              ) : instruments.length > 0 ? (
+                <View style={commonSharedStyles.baseRowCentered}>
+                  {instruments.map(inst => (
+                    <Button
+                      key={inst.id}
+                      title={inst.name}
+                      onPress={() => toggleInstrumentSelection(inst.id)}
+                      color={
+                        selectedInstrumentIds.includes(inst.id) ? colors.success : colors.secondary
+                      }
+                      disabled={mutation.isPending}
+                    />
+                  ))}
+                </View>
+              ) : (
+                <Text style={commonSharedStyles.baseEmptyText}>No instruments available.</Text>
               )}
-              {!isLoadingInstruments &&
-                !isErrorInstruments &&
-                (instruments.length > 0 ? (
-                  <View style={commonSharedStyles.baseRowCentered}>
-                    {instruments.map(inst => {
-                      const isSelected = selectedInstrumentIds.includes(inst.id);
-                      return (
-                        <Button
-                          key={inst.id}
-                          title={inst.name}
-                          onPress={() => toggleInstrumentSelection(inst.id)}
-                          color={isSelected ? colors.success : colors.secondary}
-                          disabled={mutation.isPending}
-                        />
-                      );
-                    })}
-                  </View>
-                ) : (
-                  <Text style={commonSharedStyles.baseEmptyText}>No instruments available.</Text>
-                ))}
             </View>
 
             <Text style={commonSharedStyles.label}>Attachment (Optional):</Text>

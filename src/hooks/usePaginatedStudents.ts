@@ -1,13 +1,15 @@
+// src/hooks/usePaginatedStudents.ts
 import { useState, useCallback, useEffect } from 'react';
 
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
-import { SimplifiedStudent, UserStatus } from '../types/dataTypes';
+import { User, UserStatus } from '../types/dataTypes'; // MODIFIED: Import full User type
 
-import { fetchStudents } from '../api/users';
+import { fetchProfilesByRole } from '../api/users'; // MODIFIED: Import the more powerful fetcher
 
+// MODIFIED: This interface now returns an array of the full User type
 export interface UsePaginatedStudentsReturn {
-  students: SimplifiedStudent[];
+  students: User[];
   currentPage: number;
   totalPages: number;
   totalItems: number;
@@ -32,12 +34,10 @@ export const usePaginatedStudents = (): UsePaginatedStudentsReturn => {
   const [searchTerm, setInternalSearchTerm] = useState('');
 
   const setFilter = useCallback((filter: UserStatus | 'all') => {
-    console.log(`[usePaginatedStudents] setFilter called with: ${filter}`);
     setInternalFilter(filter);
   }, []);
 
   const setSearchTerm = useCallback((term: string) => {
-    console.log(`[usePaginatedStudents] setSearchTerm called with: ${term}`);
     setInternalSearchTerm(term);
   }, []);
 
@@ -48,68 +48,57 @@ export const usePaginatedStudents = (): UsePaginatedStudentsReturn => {
 
   const queryResult = useQuery({
     queryKey: queryKey,
+    // MODIFIED: This now calls fetchProfilesByRole with the 'student' role
     queryFn: () =>
-      fetchStudents({
+      fetchProfilesByRole({
+        role: 'student',
         page: currentPage,
         limit: ITEMS_PER_PAGE,
         filter: currentFilter,
         searchTerm: searchTerm,
       }),
     placeholderData: keepPreviousData,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const { data, isLoading, isFetching, isError, error, isPlaceholderData } = queryResult;
 
-  const students = data?.students ?? [];
+  const students = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
   const totalItems = data?.totalItems ?? 0;
 
+  // When filters change, reset to page 1
   useEffect(() => {
     if (currentPage !== 1) {
-      console.log(`[usePaginatedStudents] Filter or Search changed, resetting page to 1.`);
       setCurrentPage(1);
     }
   }, [currentFilter, searchTerm]);
 
+  // Prefetching logic
   useEffect(() => {
     const effectiveTotalPages = totalPages >= 1 ? totalPages : 1;
+    const prefetchParams = {
+      role: 'student' as const,
+      limit: ITEMS_PER_PAGE,
+      filter: currentFilter,
+      searchTerm: searchTerm,
+    };
 
     if (!isPlaceholderData && currentPage < effectiveTotalPages && !isFetching) {
-      const nextQueryKey = [
-        'students',
-        { page: currentPage + 1, limit: ITEMS_PER_PAGE, filter: currentFilter, search: searchTerm },
-      ];
-      console.log(`[usePaginatedStudents] Prefetching next page: ${currentPage + 1}`);
+      const nextPage = currentPage + 1;
       queryClient.prefetchQuery({
-        queryKey: nextQueryKey,
-        queryFn: () =>
-          fetchStudents({
-            page: currentPage + 1,
-            limit: ITEMS_PER_PAGE,
-            filter: currentFilter,
-            searchTerm: searchTerm,
-          }),
+        queryKey: ['students', { ...prefetchParams, page: nextPage }],
+        queryFn: () => fetchProfilesByRole({ ...prefetchParams, page: nextPage }),
         staleTime: 5 * 60 * 1000,
       });
     }
 
     if (!isPlaceholderData && currentPage > 1 && !isFetching) {
-      const prevQueryKey = [
-        'students',
-        { page: currentPage - 1, limit: ITEMS_PER_PAGE, filter: currentFilter, search: searchTerm },
-      ];
-      console.log(`[usePaginatedStudents] Prefetching previous page: ${currentPage - 1}`);
+      const prevPage = currentPage - 1;
       queryClient.prefetchQuery({
-        queryKey: prevQueryKey,
-        queryFn: () =>
-          fetchStudents({
-            page: currentPage - 1,
-            limit: ITEMS_PER_PAGE,
-            filter: currentFilter,
-            searchTerm: searchTerm,
-          }),
+        queryKey: ['students', { ...prefetchParams, page: prevPage }],
+        queryFn: () => fetchProfilesByRole({ ...prefetchParams, page: prevPage }),
         staleTime: 5 * 60 * 1000,
       });
     }
@@ -125,20 +114,11 @@ export const usePaginatedStudents = (): UsePaginatedStudentsReturn => {
 
   const setPage = useCallback(
     (page: number) => {
-      console.log(`[usePaginatedStudents] setPage called with: ${page}`);
-      let targetPage = page;
       const effectiveTotalPages = totalPages >= 1 ? totalPages : 1;
-      if (page < 1) {
-        targetPage = 1;
-      } else if (page > effectiveTotalPages) {
-        targetPage = effectiveTotalPages;
-      }
-      if (targetPage !== currentPage) {
-        console.log(`[usePaginatedStudents] Setting current page to: ${targetPage}`);
-        setCurrentPage(targetPage);
-      } else {
-        console.log(`[usePaginatedStudents] Already on page ${targetPage}, not changing.`);
-      }
+      let targetPage = page;
+      if (page < 1) targetPage = 1;
+      else if (page > effectiveTotalPages) targetPage = effectiveTotalPages;
+      if (targetPage !== currentPage) setCurrentPage(targetPage);
     },
     [totalPages, currentPage]
   );

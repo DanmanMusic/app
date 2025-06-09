@@ -129,6 +129,7 @@ export type AdminSection =
   | 'tasks'
   | 'rewards'
   | 'history'
+  | 'journey'
   | 'announcements'
   | 'instruments';
 

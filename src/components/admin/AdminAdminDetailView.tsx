@@ -1,6 +1,14 @@
+// src/components/admin/AdminAdminDetailView.tsx
 import React, { useMemo } from 'react';
 
-import { View, Text, Button, ActivityIndicator, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  Button,
+  ActivityIndicator,
+  ScrollView,
+  Image, // NEW
+} from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -10,7 +18,7 @@ import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminAdminDetailViewProps } from '../../types/componentProps';
 import { User } from '../../types/dataTypes';
-import { getUserDisplayName } from '../../utils/helpers';
+import { getUserDisplayName, getUserAvatarSource } from '../../utils/helpers'; // MODIFIED
 
 export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
   viewingUserId,
@@ -35,7 +43,6 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
     data: adminAuthDetails,
     isLoading: authDetailsLoading,
     isError: authDetailsError,
-    error: authDetailsErrorMsg,
   } = useQuery<{ email: string | null } | null, Error>({
     queryKey: ['authUser', viewingUserId],
     queryFn: () => fetchAuthUser(viewingUserId),
@@ -49,52 +56,30 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
   );
   const isAdminActive = useMemo(() => adminProfile?.status === 'active', [adminProfile]);
 
-  const needsPinLogin = useMemo(() => {
-    if (
-      authDetailsLoading ||
-      authDetailsError ||
-      !adminAuthDetails ||
-      adminAuthDetails.email === null
-    ) {
-      console.log(
-        `[AdminAdminDetailView] needsPinLogin=false (loading: ${authDetailsLoading}, error: ${!!authDetailsError}, details: ${!!adminAuthDetails}, email: ${adminAuthDetails?.email})`
-      );
-      return false;
-    }
+  // NEW: Get avatar source for the admin
+  const avatarSource = useMemo(() => getUserAvatarSource(adminProfile), [adminProfile]);
 
-    const isPlaceholder = adminAuthDetails.email.endsWith('@placeholder.app');
-    console.log(
-      `[AdminAdminDetailView] needsPinLogin=${isPlaceholder} (email: ${adminAuthDetails.email})`
-    );
-    return isPlaceholder;
+  const needsPinLogin = useMemo(() => {
+    if (authDetailsLoading || authDetailsError || !adminAuthDetails?.email) return false;
+    return adminAuthDetails.email.endsWith('@placeholder.app');
   }, [adminAuthDetails, authDetailsLoading, authDetailsError]);
 
   const handleStatus = () => {
-    if (adminProfile && onInitiateStatusUser) {
-      onInitiateStatusUser(adminProfile);
-    } else {
-      console.warn('Cannot manage status: adminProfile or handler missing.');
-    }
+    if (adminProfile && onInitiateStatusUser) onInitiateStatusUser(adminProfile);
   };
   const handlePinGenerationClick = () => {
-    if (adminProfile && onInitiatePinGeneration) {
-      onInitiatePinGeneration(adminProfile);
-    } else {
-      console.warn('Cannot generate PIN: adminProfile or handler missing.');
-    }
+    if (adminProfile && onInitiatePinGeneration) onInitiatePinGeneration(adminProfile);
   };
 
   const isLoading = profileLoading || authDetailsLoading;
-
   if (isLoading) {
     return (
       <View style={[commonSharedStyles.baseCentered]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={commonSharedStyles.baseSecondaryText}>Loading Admin Details...</Text>
+        <Text>Loading Admin Details...</Text>
       </View>
     );
   }
-
   if (profileError || !adminProfile) {
     return (
       <View style={commonSharedStyles.flex1}>
@@ -104,18 +89,11 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
       </View>
     );
   }
-
   if (adminProfile.role !== 'admin') {
     return (
       <View style={commonSharedStyles.flex1}>
         <Text style={commonSharedStyles.errorText}>Error: User found but is not an admin.</Text>
       </View>
-    );
-  }
-
-  if (authDetailsError) {
-    console.warn(
-      `Could not fetch auth user details for ${viewingUserId}. Error: ${authDetailsErrorMsg?.message}`
     );
   }
 
@@ -132,6 +110,21 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
           Admin Details
         </Text>
       </View>
+
+      {/* NEW: Avatar Display Section */}
+      <View style={{ alignItems: 'center', marginBottom: 15 }}>
+        {avatarSource ? (
+          <Image source={avatarSource} style={commonSharedStyles.detailAvatar} />
+        ) : (
+          <View style={[commonSharedStyles.detailAvatar, commonSharedStyles.avatarPlaceholder]}>
+            <Text style={commonSharedStyles.avatarPlaceholderTextLarge}>
+              {adminProfile.firstName?.charAt(0)}
+              {adminProfile.lastName?.charAt(0)}
+            </Text>
+          </View>
+        )}
+      </View>
+
       <Text style={commonSharedStyles.baseSecondaryText}>
         Name: <Text style={commonSharedStyles.bold}>{adminDisplayName}</Text>
       </Text>
@@ -155,11 +148,13 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
             (authDetailsError ? '(Error Fetching)' : '(Not Found/No Email)')}
         </Text>
       </Text>
+
       {!needsPinLogin && !authDetailsError && adminAuthDetails?.email && (
         <Text style={commonSharedStyles.baseLightText}>
           (Email/Password login appears to be set up)
         </Text>
       )}
+
       <View
         style={[
           commonSharedStyles.baseRow,
@@ -181,17 +176,6 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
             disabled={!isAdminActive}
           />
         )}
-        {onInitiatePinGeneration && authDetailsError && (
-          <Text style={commonSharedStyles.errorText}>
-            PIN availability unknown (Auth fetch error)
-          </Text>
-        )}
-        {onInitiatePinGeneration &&
-          !needsPinLogin &&
-          !authDetailsError &&
-          adminAuthDetails?.email && (
-            <Text style={commonSharedStyles.baseLightText}>(PIN login not needed)</Text>
-          )}
       </View>
       <View style={{ height: 30 }} />
     </ScrollView>

@@ -1,6 +1,7 @@
+// src/components/admin/AdminParentDetailView.tsx
 import React, { useMemo, useState } from 'react';
 
-import { View, Text, Button, ActivityIndicator, FlatList, ScrollView } from 'react-native';
+import { View, Text, Button, ActivityIndicator, FlatList, ScrollView, Image } from 'react-native';
 
 import { useQuery, useQueries, useQueryClient, useMutation } from '@tanstack/react-query';
 
@@ -12,7 +13,7 @@ import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminParentDetailViewProps } from '../../types/componentProps';
 import { User } from '../../types/dataTypes';
-import { getUserDisplayName } from '../../utils/helpers';
+import { getUserDisplayName, getUserAvatarSource } from '../../utils/helpers';
 import ConfirmationModal from '../common/ConfirmationModal';
 
 export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
@@ -71,19 +72,15 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
     const students: User[] = [];
     let isLoading = false;
     let isError = false;
-
     if (linkedStudentsQueries.length > 0) {
       isLoading = linkedStudentsQueries.some(q => q.isLoading || q.isFetching);
       isError = linkedStudentsQueries.some(q => q.isError);
       linkedStudentsQueries.forEach(q => {
         if (q.isSuccess && q.data && q.data.role === 'student') {
           students.push(q.data);
-        } else if (q.isError) {
-          console.error(`[AdminParentDetailView] Error fetching linked student:`, q.error?.message);
         }
       });
     }
-
     return {
       linkedStudents: students,
       isLoadingLinkedStudents: isLoading,
@@ -103,9 +100,6 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
       });
       queryClient.invalidateQueries({ queryKey: ['userProfile', variables.parentId] });
       queryClient.invalidateQueries({ queryKey: ['userProfile', variables.studentId] });
-      queryClient.invalidateQueries({ queryKey: ['parents'] });
-      queryClient.invalidateQueries({ queryKey: ['students'] });
-
       closeUnlinkConfirmModal();
     },
     onError: (error: Error) => {
@@ -115,7 +109,6 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
         text2: error.message || 'Could not unlink student.',
         position: 'bottom',
       });
-
       closeUnlinkConfirmModal();
     },
   });
@@ -131,15 +124,11 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
     [parent]
   );
   const isParentActive = useMemo(() => parent?.status === 'active', [parent]);
+  const avatarSource = useMemo(() => getUserAvatarSource(parent), [parent]);
 
   const showPinButton = useMemo(() => {
-    if (!onInitiatePinGeneration || !isParentActive || isLoadingParentAuth) {
-      return false;
-    }
-    if (isErrorParentAuth) {
-      console.warn('Could not fetch student auth details to determine PIN button visibility.');
-      return true;
-    }
+    if (!onInitiatePinGeneration || !isParentActive || isLoadingParentAuth) return false;
+    if (isErrorParentAuth) return true;
     return !parentAuthData?.email || parentAuthData.email.endsWith('@placeholder.app');
   }, [
     onInitiatePinGeneration,
@@ -150,18 +139,12 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
   ]);
 
   const handleEdit = () => {
-    if (parent && onInitiateEditUser) {
-      onInitiateEditUser(parent);
-    }
+    if (parent && onInitiateEditUser) onInitiateEditUser(parent);
   };
   const handleStatus = () => {
-    if (parent && onInitiateStatusUser) {
-      onInitiateStatusUser(parent);
-    }
+    if (parent && onInitiateStatusUser) onInitiateStatusUser(parent);
   };
-
   const handleLinkStudent = () => setIsLinkStudentModalVisible(true);
-
   const handleInitiateUnlink = (studentToUnlink: User) => {
     if (!parent) return;
     setLinkToRemove({
@@ -171,13 +154,11 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
     });
     setIsUnlinkConfirmModalVisible(true);
   };
-
   const handleConfirmUnlink = () => {
     if (linkToRemove && !unlinkMutation.isPending) {
       unlinkMutation.mutate({ parentId: linkToRemove.parentId, studentId: linkToRemove.studentId });
     }
   };
-
   const handlePinGenerationClick = () => {
     if (parent && onInitiatePinGeneration) {
       onInitiatePinGeneration(parent);
@@ -192,7 +173,6 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
       </View>
     );
   }
-
   if (parentError || !parent) {
     return (
       <View style={commonSharedStyles.flex1}>
@@ -202,7 +182,6 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
       </View>
     );
   }
-
   if (parent.role !== 'parent') {
     return (
       <View style={commonSharedStyles.flex1}>
@@ -225,6 +204,20 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
             Parent Details
           </Text>
         </View>
+
+        <View style={{ alignItems: 'center', marginBottom: 15 }}>
+          {avatarSource ? (
+            <Image source={avatarSource} style={commonSharedStyles.detailAvatar} />
+          ) : (
+            <View style={[commonSharedStyles.detailAvatar, commonSharedStyles.avatarPlaceholder]}>
+              <Text style={commonSharedStyles.avatarPlaceholderTextLarge}>
+                {parent.firstName?.charAt(0)}
+                {parent.lastName?.charAt(0)}
+              </Text>
+            </View>
+          )}
+        </View>
+
         <Text style={commonSharedStyles.baseSecondaryText}>
           Name: <Text style={commonSharedStyles.bold}>{parentDisplayName}</Text>
         </Text>
@@ -241,6 +234,7 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
             {parent.status}
           </Text>
         </Text>
+
         <View
           style={[
             commonSharedStyles.baseRow,
@@ -260,18 +254,18 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
             />
           )}
         </View>
+
         <Text style={commonSharedStyles.baseSubTitleText}>
           Linked Students ({linkedStudents.length})
         </Text>
-        {isLoadingLinkedStudents && (
+
+        {isLoadingLinkedStudents ? (
           <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
-        )}
-        {isErrorLinkedStudents && !isLoadingLinkedStudents && (
+        ) : isErrorLinkedStudents ? (
           <Text style={commonSharedStyles.errorText}>
             Error loading details for one or more linked students.
           </Text>
-        )}
-        {!isLoadingLinkedStudents && !isErrorLinkedStudents && (
+        ) : (
           <FlatList
             data={linkedStudents.sort((a, b) =>
               getUserDisplayName(a).localeCompare(getUserDisplayName(b))
@@ -309,15 +303,16 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
             )}
             scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-            ListEmptyComponent={() => (
+            ListEmptyComponent={
               <Text style={commonSharedStyles.baseEmptyText}>
                 No students currently linked to this parent.
               </Text>
-            )}
+            }
           />
         )}
         <View style={{ height: 30 }} />
       </ScrollView>
+
       {parent && (
         <LinkStudentToParentModal
           visible={isLinkStudentModalVisible}

@@ -1,7 +1,9 @@
 // src/api/announcements.ts
 
 import { getSupabase } from '../lib/supabaseClient';
+
 import { Announcement, AnnouncementType } from '../types/dataTypes';
+
 import { getUserDisplayName } from '../utils/helpers';
 
 // Helper to map the raw DB row to our clean Announcement type
@@ -25,15 +27,21 @@ const mapDbRowToAnnouncement = (item: any): Announcement => {
 // MODIFIED: fetchAnnouncements to join with profiles
 export const fetchAnnouncements = async (): Promise<Announcement[]> => {
   const client = getSupabase();
-  console.log(`[Supabase] Fetching Announcements with profile data`);
+  console.log(`[Supabase] Fetching Announcements`);
 
-  const { data, error } = await client
+  // Check if there is an active session
+  const { data: { session } } = await client.auth.getSession();
+
+  let query = client
     .from('announcements')
-    // Select all fields from announcements, and specific fields from the related profile
-    .select(
-      'id, type, title, message, date, related_student_id, profiles ( first_name, last_name, nickname, avatar_path )'
+    // If we have a session, we can attempt the join. If not, just get announcements.
+    .select(session 
+      ? 'id, type, title, message, date, related_student_id, profiles ( first_name, last_name, nickname, avatar_path )'
+      : 'id, type, title, message, date, related_student_id'
     )
     .order('date', { ascending: false });
+
+  const { data, error } = await query;;
 
   if (error) {
     console.error(`[Supabase] Error fetching announcements:`, error.message);

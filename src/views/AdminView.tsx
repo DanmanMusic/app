@@ -13,6 +13,7 @@ import { AdminAnnouncementsSection } from '../components/admin/AdminAnnouncement
 import { AdminDashboardSection } from '../components/admin/AdminDashboardSection';
 import { AdminHistorySection } from '../components/admin/AdminHistorySection';
 import { AdminInstrumentsSection } from '../components/admin/AdminInstrumentsSection';
+import { AdminJourneySection } from '../components/admin/AdminJourneySection';
 import { AdminParentDetailView } from '../components/admin/AdminParentDetailView';
 import { AdminRewardsSection } from '../components/admin/AdminRewardsSection';
 import { AdminTasksSection } from '../components/admin/AdminTasksSection';
@@ -481,6 +482,11 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
                   }}
                   color={colors.primary}
                 />
+                <Button
+                  title="Journey"
+                  onPress={() => setViewingSection('journey')}
+                  color={colors.primary}
+                />
               </View>
             </View>
           </View>
@@ -530,6 +536,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             />
           </View>
         );
+      case 'journey':
+        return <AdminJourneySection />;
       case 'rewards':
         return <AdminRewardsSection />;
       case 'history':
