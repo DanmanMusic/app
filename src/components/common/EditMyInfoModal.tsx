@@ -26,7 +26,7 @@ import { getSupabase } from '../../lib/supabaseClient';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { User } from '../../types/dataTypes';
-import { getUserDisplayName, NativeFileObject } from '../../utils/helpers';
+import { getUserAvatarSource, getUserDisplayName, NativeFileObject } from '../../utils/helpers';
 
 interface EditMyInfoModalProps {
   visible: boolean;
@@ -108,29 +108,28 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
   });
 
   useEffect(() => {
-    if (visible && appUser) {
-      setFirstName(appUser.firstName || '');
-      setLastName(appUser.lastName || '');
-      setNickname(appUser.nickname || '');
-      const contextEmail = supabaseUser?.email ?? null;
-      setNewEmail(contextEmail && !contextEmail.endsWith('@placeholder.app') ? contextEmail : '');
+    const setup = async () => {
+      if (visible && appUser) {
+        // ... (setting firstName, lastName, etc. is the same)
+        setFirstName(appUser.firstName || '');
+        setLastName(appUser.lastName || '');
+        setNickname(appUser.nickname || '');
 
-      if (appUser.avatarPath) {
-        const supabase = getSupabase();
-        const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(appUser.avatarPath);
-        setAvatarPreview(urlData.publicUrl);
-      } else {
-        setAvatarPreview(null);
+        // THIS IS THE FIX:
+        // Use the async helper and await its result.
+        const source = await getUserAvatarSource(appUser);
+        setAvatarPreview(source ? source.uri : null);
+
+        // ... (rest of the state resets)
+        setAvatarFile(undefined);
+        setNewPassword('');
+        setConfirmPassword('');
+        profileUpdateMutation.reset();
+        setMode('profile');
       }
-      setAvatarFile(undefined);
-
-      setNewPassword('');
-      setConfirmPassword('');
-      profileUpdateMutation.reset();
-      credentialsUpdateMutation.reset();
-      setMode('profile');
-    }
-  }, [visible, appUser, supabaseUser]);
+    };
+    setup();
+  }, [visible, appUser]);
 
   const pickImage = async () => {
     if (Platform.OS !== 'web') {

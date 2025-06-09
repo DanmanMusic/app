@@ -30,18 +30,21 @@ export const fetchAnnouncements = async (): Promise<Announcement[]> => {
   console.log(`[Supabase] Fetching Announcements`);
 
   // Check if there is an active session
-  const { data: { session } } = await client.auth.getSession();
+  const {
+    data: { session },
+  } = await client.auth.getSession();
 
   let query = client
     .from('announcements')
     // If we have a session, we can attempt the join. If not, just get announcements.
-    .select(session 
-      ? 'id, type, title, message, date, related_student_id, profiles ( first_name, last_name, nickname, avatar_path )'
-      : 'id, type, title, message, date, related_student_id'
+    .select(
+      session
+        ? 'id, type, title, message, date, related_student_id, profiles ( first_name, last_name, nickname, avatar_path )'
+        : 'id, type, title, message, date, related_student_id'
     )
     .order('date', { ascending: false });
 
-  const { data, error } = await query;;
+  const { data, error } = await query;
 
   if (error) {
     console.error(`[Supabase] Error fetching announcements:`, error.message);

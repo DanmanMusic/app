@@ -50,14 +50,16 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
 
   const queryClient = useQueryClient();
 
-  const { data: instruments = [], isLoading: isLoadingInstruments, isError: isErrorInstruments } = useQuery<Instrument[], Error>(
-    {
-      queryKey: ['instruments'],
-      queryFn: fetchInstruments,
-      staleTime: Infinity,
-      enabled: visible,
-    }
-  );
+  const {
+    data: instruments = [],
+    isLoading: isLoadingInstruments,
+    isError: isErrorInstruments,
+  } = useQuery<Instrument[], Error>({
+    queryKey: ['instruments'],
+    queryFn: fetchInstruments,
+    staleTime: Infinity,
+    enabled: visible,
+  });
 
   const { data: journeyLocations = [], isLoading: isLoadingJourney } = useQuery<
     JourneyLocation[],

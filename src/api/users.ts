@@ -338,6 +338,8 @@ export const createUser = async (
   return data as User;
 };
 
+// The corrected updateUser function for src/api/users.ts
+
 export const updateUser = async ({
   userId,
   updates,
@@ -346,13 +348,13 @@ export const updateUser = async ({
 }: {
   userId: string;
   updates: Partial<Omit<User, 'id' | 'role' | 'status' | 'avatarPath'>>;
-  avatarFile?: NativeFileObject | null; // null means delete
+  avatarFile?: NativeFileObject | null;
   avatarMimeType?: string;
 }): Promise<User> => {
   const client = getSupabase();
   console.log(`[API updateUser] Preparing update for user ${userId}`);
 
-  let avatarPath: string | null | undefined = undefined; // undefined = no change, null = delete
+  let avatarPath: string | null | undefined = undefined;
 
   if (avatarFile) {
     console.log(`[API updateUser] New avatar provided. Uploading...`);
@@ -362,27 +364,33 @@ export const updateUser = async ({
     avatarPath = null;
   }
 
-  const payloadUpdates = { ...updates, ...(avatarPath !== undefined && { avatarPath }) };
-  const finalPayload = Object.fromEntries(
-    Object.entries(payloadUpdates).filter(([, v]) => v !== undefined)
-  );
-  const payload = { userIdToUpdate: userId, updates: finalPayload };
+  const finalUpdates: Partial<User> = { ...updates };
 
-  if (Object.keys(payload.updates).length === 0) {
+  if (avatarPath !== undefined) {
+    finalUpdates.avatarPath = avatarPath;
+  }
+
+  if (Object.keys(finalUpdates).length === 0) {
     console.warn('[API updateUser] No changes to apply.');
     const user = await fetchUserProfile(userId);
     if (!user) throw new Error('User not found after no-op update.');
     return user;
   }
 
+  const payload = {
+    userIdToUpdate: userId,
+    updates: finalUpdates,
+  };
+
   const { error } = await client.functions.invoke('updateUserWithLinks', { body: payload });
   if (error) {
-    const detailedError = error.context?.error || error.message;
+    const detailedError = (error as any).context?.error?.message || error.message;
     throw new Error(`User update failed: ${detailedError}`);
   }
 
   const updatedUser = await fetchUserProfile(userId);
   if (!updatedUser) throw new Error(`Update succeeded, but failed to re-fetch profile.`);
+
   return updatedUser;
 };
 

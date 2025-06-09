@@ -213,22 +213,32 @@ export const fileToBase64 = (file: File | NativeFileObject): Promise<string> => 
   });
 };
 
-export const getAvatarUrl = (avatarPath: string | null | undefined): string | null => {
+export const getAvatarUrl = async (
+  avatarPath: string | null | undefined
+): Promise<string | null> => {
   if (!avatarPath) {
     return null;
   }
   const supabase = getSupabase();
-  const { data } = supabase.storage.from('avatars').getPublicUrl(avatarPath);
 
-  // The publicUrl can be null if the object doesn't exist, handle that case.
-  return data.publicUrl;
+  // THIS IS THE FIX: We must 'await' the result of the async operation.
+  const { data, error } = await supabase.storage.from('avatars').createSignedUrl(avatarPath, 60); // 60 seconds validity
+
+  if (error) {
+    console.error('Error creating signed URL for avatar:', error.message);
+    return null;
+  }
+
+  return data.signedUrl;
 };
 
-export const getUserAvatarSource = (user: User | null | undefined): { uri: string } | null => {
+export const getUserAvatarSource = async (
+  user: User | null | undefined
+): Promise<{ uri: string } | null> => {
   if (!user?.avatarPath) {
     return null;
   }
-  const url = getAvatarUrl(user.avatarPath);
-  // Only return an object if the URL is valid
+  // Await the URL from the helper
+  const url = await getAvatarUrl(user.avatarPath);
   return url ? { uri: url } : null;
 };

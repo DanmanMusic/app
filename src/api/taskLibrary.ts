@@ -6,28 +6,47 @@ import { TaskLibraryItem } from '../types/dataTypes';
 
 import { fileToBase64, NativeFileObject } from '../utils/helpers';
 
+// in src/api/taskLibrary.ts
+
+// The interface for the result remains the same.
+interface TaskLibraryRpcResult {
+  id: string;
+  title: string;
+  description: string | null;
+  base_tickets: number;
+  created_by_id: string;
+  attachment_path: string | null;
+  reference_url: string | null;
+  can_self_assign: boolean;
+  journey_location_id: string | null;
+  instrument_ids: string[] | null;
+}
+
 export const fetchTaskLibrary = async (): Promise<TaskLibraryItem[]> => {
   const client = getSupabase();
-  console.log(`[API taskLibrary] Fetching Task Library`);
-  const { data, error } = await client
-    .from('task_library')
-    .select(
-      `
-        id, title, description, base_tickets, created_by_id,
-        attachment_path, reference_url, can_self_assign,
-        task_library_instruments ( instrument_id )
-        ` // MODIFIED: Added can_self_assign
-    )
-    .order('title', { ascending: true });
+  console.log(`[API taskLibrary] Fetching Task Library via RPC`);
+
+  // THIS IS THE FIX:
+  // The rpc method is generic over the Function Name (1st arg) and the arguments object (2nd arg).
+  // The return type is then inferred from this.
+  const { data, error } = await client.rpc(
+    'get_full_task_library', // The function name
+    {}, // An empty object for arguments, since our function takes none
+    { count: 'exact' } // Optional: if we needed to count, but not necessary here
+  );
 
   if (error) {
-    console.error(`[API taskLibrary] Error fetching task library:`, error.message);
+    console.error(`[API taskLibrary] Error fetching task library via RPC:`, error.message);
     throw new Error(`Failed to fetch task library: ${error.message}`);
   }
 
-  console.log(`[API taskLibrary] Received ${data?.length ?? 0} task library items.`);
+  // To fix the 'any' type error that still remains, we must cast the result.
+  // This tells TypeScript to trust us that the 'data' variable matches our interface.
+  const typedData = data as TaskLibraryRpcResult[];
 
-  const taskLibrary: TaskLibraryItem[] = (data || []).map(item => ({
+  console.log(`[API taskLibrary] Received ${typedData?.length ?? 0} task library items from RPC.`);
+
+  const taskLibrary: TaskLibraryItem[] = (typedData || []).map(item => ({
     id: item.id,
     title: item.title,
     description: item.description ?? null,
@@ -35,8 +54,9 @@ export const fetchTaskLibrary = async (): Promise<TaskLibraryItem[]> => {
     createdById: item.created_by_id,
     attachmentPath: item.attachment_path ?? undefined,
     referenceUrl: item.reference_url ?? null,
-    instrumentIds: item.task_library_instruments?.map((link: any) => link.instrument_id) ?? [],
-    canSelfAssign: item.can_self_assign, // MODIFIED: Map the new property
+    canSelfAssign: item.can_self_assign,
+    journeyLocationId: item.journey_location_id ?? null,
+    instrumentIds: item.instrument_ids || [],
   }));
 
   return taskLibrary;
