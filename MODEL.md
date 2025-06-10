@@ -1,193 +1,161 @@
-# Data Model Specification (Target: Supabase/PostgreSQL)
+# Data Model Specification (V2 - Multi-Tenant)
 
-This document provides the technical details of the database schema intended for use with Supabase/PostgreSQL. It outlines tables, columns, data types, relationships, and constraints based on the implemented features and decisions made during development.
+This document provides the technical details of the database schema intended for use with Supabase/PostgreSQL. It outlines tables, columns, data types, relationships, and constraints for the multi-tenant V2 application.
 
 **Conventions:**
 
-- Primary Keys (PK) are typically UUIDs unless otherwise noted (e.g., `BIGSERIAL` for `ticket_transactions`).
-- Foreign Keys (FK) enforce relationships between tables. `ON DELETE CASCADE` and `ON DELETE SET NULL` actions are specified based on desired data retention upon user deletion.
-- Timestamps (`created_at`, `updated_at`) use `TIMESTAMPTZ` with default values (`now()`). `updated_at` requires a trigger (e.g., `handle_updated_at()`) for automatic updates.
-- TEXT/ENUM types are used as appropriate.
-- Row Level Security (RLS) policies are essential and defined in the corresponding migration files or separate SQL files. Most write operations are handled via secured Edge Functions.
+-   All company-specific data tables now include a `company_id` foreign key.
+-   Primary Keys (PK) are UUIDs unless otherwise noted.
+-   Foreign Keys (FK) enforce relationships. `ON DELETE` actions (`CASCADE`, `SET NULL`) are specified based on desired data behavior.
+-   The `handle_updated_at()` trigger function is assumed to be applied to all tables with an `updated_at` column.
+-   Row Level Security (RLS) is enabled on all tables. Public read access is granted explicitly where needed; otherwise, access is restricted to authenticated users within their own company, with write operations often handled by secure Edge Functions.
 
-## Core Authentication & Profile Tables
+## Foundational Tables
+
+**`companies`** (New Core Table)
+
+-   `id` (UUID, PK)
+-   `name` (TEXT, NOT NULL, UNIQUE)
+-   `created_at` (TIMESTAMPTZ, NOT NULL)
 
 **`auth.users`** (Built-in Supabase Table)
 
-- `id` (UUID, PK): Core user identifier.
-- `email` (TEXT): User's email (used for email/password login, often placeholder for PIN-only users).
-- ... other standard Supabase auth columns (`encrypted_password`, etc.)
+-   `id` (UUID, PK)
+-   `email` (TEXT)
+-   `raw_app_meta_data` (JSONB): Now automatically populated by a trigger with `company_id` and `role` for use in JWT-based RLS policies.
+-   ... other standard Supabase auth columns.
 
-**`profiles`** (Stores public user data, linked 1-to-1 with `auth.users`)
+**`profiles`** (Stores public user data)
 
-- `id` (UUID, PK, FK -> `auth.users.id` ON DELETE CASCADE)
-- `role` (TEXT/ENUM('admin', 'teacher', 'student', 'parent'), NOT NULL)
-- `first_name` (TEXT, NOT NULL)
-- `last_name` (TEXT, NOT NULL)
-- `nickname` (TEXT, Nullable)
-- `status` (TEXT/ENUM('active', 'inactive'), NOT NULL, default 'active')
-- `current_goal_reward_id` (UUID, Nullable, FK -> `rewards.id` ON DELETE SET NULL)
-- `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-- `updated_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
+-   `id` (UUID, PK, FK -> `auth.users.id` ON DELETE CASCADE)
+-   `company_id` (UUID, NOT NULL, FK -> `companies.id` ON DELETE CASCADE)
+-   `role` (TEXT/ENUM('admin', 'teacher', 'student', 'parent'), NOT NULL)
+-   `first_name` (TEXT, NOT NULL)
+-   `last_name` (TEXT, NOT NULL)
+-   `nickname` (TEXT, Nullable)
+-   `avatar_path` (TEXT, Nullable): Path to the user's avatar in the `avatars` storage bucket.
+-   `status` (TEXT/ENUM('active', 'inactive'), NOT NULL, default 'active')
+-   `current_goal_reward_id` (UUID, Nullable, FK -> `rewards.id` ON DELETE SET NULL)
+-   `created_at` (TIMESTAMPTZ, NOT NULL)
+-   `updated_at` (TIMESTAMPTZ, NOT NULL)
 
-**`user_credentials`** (Stores specific credential info - Currently Legacy/Unused)
+## Custom Authentication Tables
 
-- `user_id` (UUID, PK, FK -> `profiles.id` ON DELETE CASCADE)
-- `pin_hash` (TEXT, Nullable): _Legacy field for storing hashed PINs. Not used by the current on-demand PIN flow._
+**`onetime_pins`**
 
-**`onetime_pins`** (Stores temporary PINs for login)
+-   `pin` (TEXT, PK)
+-   `company_id` (UUID, NOT NULL, FK -> `companies.id` ON DELETE CASCADE)
+-   `user_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE CASCADE)
+-   `target_role` (TEXT, NOT NULL)
+-   `expires_at` (TIMESTAMPTZ, NOT NULL)
+-   `claimed_at` (TIMESTAMPTZ, Nullable)
 
-- `pin` (TEXT, PK): The short-lived, plain-text PIN.
-- `user_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE CASCADE)
-- `target_role` (TEXT, NOT NULL, CHECK (`target_role` IN ('student', 'parent', 'teacher', 'admin')))
-- `expires_at` (TIMESTAMPTZ, NOT NULL)
-- `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-- `claimed_at` (TIMESTAMPTZ, Nullable)
+**`active_refresh_tokens`**
 
-**`active_refresh_tokens`** (Stores hashes for custom refresh tokens from PIN flow)
+-   `id` (BIGSERIAL, PK)
+-   `company_id` (UUID, NOT NULL, FK -> `companies.id` ON DELETE CASCADE)
+-   `user_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE CASCADE)
+-   `token_hash` (TEXT, NOT NULL, UNIQUE)
+-   `expires_at` (TIMESTAMPTZ, NOT NULL)
+-   `last_used_at` (TIMESTAMPTZ, Nullable)
 
-- `id` (BIGSERIAL, PK)
-- `user_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE CASCADE)
-- `token_hash` (TEXT, NOT NULL, UNIQUE)
-- `expires_at` (TIMESTAMPTZ, NOT NULL)
-- `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-- `last_used_at` (TIMESTAMPTZ, Nullable)
-- `metadata` (JSONB, Nullable)
-
-## Application Data Tables
+## Core Application Data Tables
 
 **`instruments`**
 
-- `id` (UUID, PK)
-- `name` (TEXT, NOT NULL, UNIQUE)
-- `image_path` (TEXT, Nullable): Path for icon in Supabase Storage (`instrument-icons` bucket).
-- `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-- `updated_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-
-**`task_library`**
-
-- `id` (UUID, PK)
-- `title` (TEXT, NOT NULL)
-- `description` (TEXT, Nullable)
-- `base_tickets` (INTEGER, NOT NULL, CHECK >= 0)
-- `created_by_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE SET NULL)
-- `attachment_path` (TEXT, Nullable): Path to file in `task-library-attachments` bucket.
-- `reference_url` (TEXT, Nullable): External URL associated with the task.
-- `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-- `updated_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-- _Removed:_ `is_public` (logic now derived from `created_by_id` role).
+-   `id` (UUID, PK)
+-   `company_id` (UUID, NOT NULL, FK -> `companies.id` ON DELETE CASCADE)
+-   `name` (TEXT, NOT NULL)
+-   `image_path` (TEXT, Nullable)
+-   `created_at` (TIMESTAMPTZ, NOT NULL)
+-   `updated_at` (TIMESTAMPTZ, NOT NULL)
 
 **`rewards`**
 
-- `id` (UUID, PK)
-- `name` (TEXT, NOT NULL)
-- `cost` (INTEGER, NOT NULL, CHECK >= 0)
-- `image_path` (TEXT, Nullable): Path for image in Supabase Storage (`reward-icons` bucket).
-- `description` (TEXT, Nullable)
-- `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-- `updated_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
+-   `id` (UUID, PK)
+-   `company_id` (UUID, NOT NULL, FK -> `companies.id` ON DELETE CASCADE)
+-   `name` (TEXT, NOT NULL)
+-   `cost` (INTEGER, NOT NULL, CHECK >= 0)
+-   `image_path` (TEXT, Nullable)
+-   `description` (TEXT, Nullable)
+-   `is_goal_eligible` (BOOLEAN, NOT NULL, default false): If `true`, students can set this as a goal.
+-   `created_at` (TIMESTAMPTZ, NOT NULL)
+-   `updated_at` (TIMESTAMPTZ, NOT NULL)
+
+**`journey_locations`** (New V2 Table)
+
+-   `id` (UUID, PK)
+-   `company_id` (UUID, NOT NULL, FK -> `companies.id` ON DELETE CASCADE)
+-   `name` (TEXT, NOT NULL)
+-   `description` (TEXT, Nullable)
+-   `created_at` (TIMESTAMPTZ, NOT NULL)
+-   `updated_at` (TIMESTAMPTZ, NOT NULL)
+-   UNIQUE constraint on `(company_id, name)`.
+
+**`task_library`**
+
+-   `id` (UUID, PK)
+-   `company_id` (UUID, NOT NULL, FK -> `companies.id` ON DELETE CASCADE)
+-   `title` (TEXT, NOT NULL)
+-   `description` (TEXT, Nullable)
+-   `base_tickets` (INTEGER, NOT NULL, CHECK >= 0)
+-   `created_by_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE SET NULL)
+-   `attachment_path` (TEXT, Nullable)
+-   `reference_url` (TEXT, Nullable)
+-   `can_self_assign` (BOOLEAN, NOT NULL, default false): If `true`, students can assign this to themselves.
+-   `journey_location_id` (UUID, Nullable, FK -> `journey_locations.id` ON DELETE SET NULL): The category for self-assignable tasks.
+-   `created_at` (TIMESTAMPTZ, NOT NULL)
+-   `updated_at` (TIMESTAMPTZ, NOT NULL)
 
 **`assigned_tasks`**
 
-- `id` (UUID, PK)
-- `student_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE CASCADE)
-- `assigned_by_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE SET NULL)
-- `assigned_date` (TIMESTAMPTZ, NOT NULL, default `now()`)
-- `task_title` (TEXT, NOT NULL)
-- `task_description` (TEXT, Nullable) -- _Note: Schema has NOT NULL, might need update if allowing blank from AdHoc_
-- `task_base_points` (INTEGER, NOT NULL, CHECK >= 0)
-- `is_complete` (BOOLEAN, NOT NULL, default false)
-- `completed_date` (TIMESTAMPTZ, Nullable)
-- `verification_status` (PUBLIC.verification_status ENUM('pending', 'verified', 'partial', 'incomplete'), Nullable)
-- `verified_by_id` (UUID, Nullable, FK -> `profiles.id` ON DELETE SET NULL)
-- `verified_date` (TIMESTAMPTZ, Nullable)
-- `actual_points_awarded` (INTEGER, Nullable, CHECK >= 0)
-- `task_link_url` (TEXT, Nullable): Copied from `task_library.reference_url` or added for ad-hoc.
-- `task_attachment_path` (TEXT, Nullable): Copied from `task_library.attachment_path`.
-- `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-- `updated_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-- _Removed:_ `task_link_url` (renamed from previous model version or consolidated - keeping `task_link_url`).
-- _Removed:_ `source_challenge_id` (Challenge feature TBD).
+-   `id` (UUID, PK)
+-   `company_id` (UUID, NOT NULL, FK -> `companies.id` ON DELETE CASCADE)
+-   `student_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE CASCADE)
+-   `assigned_by_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE SET NULL)
+-   `task_title` (TEXT, NOT NULL)
+-   `verification_status` (PUBLIC.verification_status ENUM, Nullable)
+-   ... other columns ...
 
 **`ticket_transactions`**
 
-- `id` (BIGSERIAL, PK)
-- `student_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE CASCADE)
-- `timestamp` (TIMESTAMPTZ, NOT NULL, default `now()`)
-- `amount` (INTEGER, NOT NULL)
-- `type` (PUBLIC.transaction_type ENUM('task_award', 'manual_add', 'manual_subtract', 'redemption'), NOT NULL)
-- `source_id` (TEXT, Nullable): ID of related record (e.g., `assigned_tasks.id`, `rewards.id`, `profiles.id` of adjustor).
-- `notes` (TEXT, Nullable)
+-   `id` (BIGSERIAL, PK)
+-   `company_id` (UUID, NOT NULL, FK -> `companies.id` ON DELETE CASCADE)
+-   `student_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE CASCADE)
+-   `type` (PUBLIC.transaction_type ENUM, NOT NULL): Now includes `streak_award`.
+-   ... other columns ...
 
 **`announcements`**
 
-- `id` (UUID, PK)
-- `type` (PUBLIC.announcement_type ENUM('announcement', 'challenge', 'redemption_celebration'), NOT NULL)
-- `title` (TEXT, NOT NULL)
-- `message` (TEXT, NOT NULL)
-- `date` (TIMESTAMPTZ, NOT NULL, default `now()`)
-- `related_student_id` (UUID, Nullable, FK -> `profiles.id` ON DELETE SET NULL)
-- `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-- `updated_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
+-   `id` (UUID, PK)
+-   `company_id` (UUID, NOT NULL, FK -> `companies.id` ON DELETE CASCADE)
+-   `related_student_id` (UUID, Nullable, FK -> `profiles.id` ON DELETE SET NULL)
+-   ... other columns ...
+
+## V2 Feature Tables
+
+**`practice_logs`** (New V2 Table)
+
+-   `id` (BIGSERIAL, PK)
+-   `company_id` (UUID, NOT NULL, FK -> `companies.id` ON DELETE CASCADE)
+-   `student_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE CASCADE)
+-   `log_date` (DATE, NOT NULL, default `now()`)
+-   `created_at` (TIMESTAMPTZ, NOT NULL)
+-   UNIQUE constraint on `(student_id, log_date)`.
+
+**`push_tokens`** (New V2 Table)
+
+-   `id` (BIGSERIAL, PK)
+-   `company_id` (UUID, NOT NULL, FK -> `companies.id` ON DELETE CASCADE)
+-   `user_id` (UUID, NOT NULL, FK -> `profiles.id` ON DELETE CASCADE)
+-   `token` (TEXT, NOT NULL, UNIQUE)
+-   `created_at` (TIMESTAMPTZ, NOT NULL)
 
 ## Link Tables (for Many-to-Many Relationships)
 
 **`student_instruments`**
-
-- `student_id` (UUID, PK, FK -> `profiles.id` ON DELETE CASCADE)
-- `instrument_id` (UUID, PK, FK -> `instruments.id` ON DELETE CASCADE)
-- `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-
 **`student_teachers`**
-
-- `student_id` (UUID, PK, FK -> `profiles.id` ON DELETE CASCADE)
-- `teacher_id` (UUID, PK, FK -> `profiles.id` ON DELETE CASCADE)
-- `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-
 **`parent_students`**
+**`task_library_instruments`**
 
-- `parent_id` (UUID, PK, FK -> `profiles.id` ON DELETE CASCADE)
-- `student_id` (UUID, PK, FK -> `profiles.id` ON DELETE CASCADE)
-- `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-
-**`task_library_instruments`** (New Table)
-
-- `task_library_id` (UUID, PK, FK -> `task_library.id` ON DELETE CASCADE)
-- `instrument_id` (UUID, PK, FK -> `instruments.id` ON DELETE CASCADE)
-- `created_at` (TIMESTAMPTZ, default `now()`, NOT NULL)
-
-## Relationships Summary (Including Foreign Key Actions)
-
-- `auth.users` 1-to-1 `profiles` (via `profiles.id` FK -> `auth.users.id` ON DELETE CASCADE)
-- `profiles` 1-to-many `assigned_tasks`
-  - `assigned_tasks.student_id` FK -> `profiles.id` ON DELETE CASCADE
-  - `assigned_tasks.assigned_by_id` FK -> `profiles.id` ON DELETE SET NULL
-  - `assigned_tasks.verified_by_id` FK -> `profiles.id` ON DELETE SET NULL
-- `profiles` 1-to-many `ticket_transactions`
-  - `ticket_transactions.student_id` FK -> `profiles.id` ON DELETE CASCADE
-- `profiles` 1-to-many `announcements`
-  - `announcements.related_student_id` FK -> `profiles.id` ON DELETE SET NULL
-- `profiles` 1-to-1 `user_credentials`
-  - `user_credentials.user_id` FK -> `profiles.id` ON DELETE CASCADE
-- `profiles` 1-to-many `onetime_pins`
-  - `onetime_pins.user_id` FK -> `profiles.id` ON DELETE CASCADE
-- `profiles` 1-to-many `active_refresh_tokens`
-  - `active_refresh_tokens.user_id` FK -> `profiles.id` ON DELETE CASCADE
-- `profiles` many-to-many `instruments` (via `student_instruments`)
-  - `student_instruments.student_id` FK -> `profiles.id` ON DELETE CASCADE
-  - `student_instruments.instrument_id` FK -> `instruments.id` ON DELETE CASCADE
-- `profiles` many-to-many `profiles` (Students <-> Teachers via `student_teachers`)
-  - `student_teachers.student_id` FK -> `profiles.id` ON DELETE CASCADE
-  - `student_teachers.teacher_id` FK -> `profiles.id` ON DELETE CASCADE
-- `profiles` many-to-many `profiles` (Parents <-> Students via `parent_students`)
-  - `parent_students.parent_id` FK -> `profiles.id` ON DELETE CASCADE
-  - `parent_students.student_id` FK -> `profiles.id` ON DELETE CASCADE
-- `rewards` 1-to-many `profiles` (for goals)
-  - `profiles.current_goal_reward_id` FK -> `rewards.id` ON DELETE SET NULL
-- `rewards` conceptually linked to `ticket_transactions` (via `source_id` when `type='redemption'`)
-- `assigned_tasks` conceptually linked to `ticket_transactions` (via `source_id` when `type='task_award'`)
-- `task_library` 1-to-many `profiles` (for creator)
-  - `task_library.created_by_id` FK -> `profiles.id` ON DELETE SET NULL
-- `task_library` many-to-many `instruments` (via `task_library_instruments`)
-  - `task_library_instruments.task_library_id` FK -> `task_library.id` ON DELETE CASCADE
-  - `task_library_instruments.instrument_id` FK -> `instruments.id` ON DELETE CASCADE
+-   These tables remain structurally the same but are now implicitly scoped by the `company_id` of the profiles they link. RLS policies enforce that links can only be made between users of the same company.

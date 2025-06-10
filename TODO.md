@@ -9,202 +9,78 @@
 
 Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 
-## Development Phase 1: Frontend Prototyping & TQ/MSW Migration
+## V1 & Backend Refactor (Phases 1-4)
 
-- [x] Refine User Data Model (firstName, lastName, links, status, etc.)
-- [x] Set up Mock Data (`src/mocks/`)
-- [x] Implement Development View Selector
-- [x] Build Core Views (Public, Student, Teacher, Parent, Admin shells)
-- [x] Refine UI/UX (Modals, Images, Styles, Components)
-- [x] Implement `AuthContext`
-- [x] Implement `DataContext` (Initial version, now minimal)
-- [x] Refactor Task Assignment (Ad-Hoc vs Library)
-- [x] Implement User Deactivate/Delete Flow Modals
-- [x] Implement Pagination Architecture (Hooks, Controls)
-- [x] Install & Configure TanStack Query and MSW
-- [x] Create API Client Layer (`src/api/`)
-- [x] Create MSW Handlers (`src/mocks/handlers.ts`)
-- [x] Implement TQ/MSW User List Queries (`usePaginated*`, `AdminUsersSection`)
-- [x] Implement TQ/MSW User Mutations (CRUD, Status Toggle in Modals)
-- [x] Implement Search Features (Student Select, Admin Student List)
-- [x] Refactor Other List Queries w/ TQ/MSW (Task Lib, Rewards, Anncs, Instruments, Assigned Tasks, History)
-- [x] Implement Other CRUD Mutations w/ TQ/MSW (Task Lib, Rewards, Anncs, Instruments)
-- [x] Implement Assigned Task Mutations (Mark Complete, Delete)
-- [x] Refactor Views (`PublicView`, `StudentView`, `ParentView`, `TeacherView`, `AdminView`) to use TQ Hooks/Mutations instead of `DataContext` (excluding DevSelector)
-- [x] Refactor Modals (`TaskVerificationModal`, `AssignTaskModal`, `CreateUserModal`, `EditUserModal`, `SetGoalModal`, etc.) to fetch own data/use internal mutations.
-- [x] Remove `DataContext` provider and most of its state/logic (Kept minimal `currentMockUsers` for Dev Selector).
-- [x] Implement Assigned Task: Task Verification (`PATCH /api/assigned-tasks/:id` via `TaskVerificationModal`).
-- [x] Implement Assigned Task: Re-assign (`POST /api/assigned-tasks` via `TaskVerificationModal`).
-- [x] Implement Assigned Task: Assign Task (`POST /api/assigned-tasks` via `AssignTaskModal`).
-- [x] Implement Tickets: Manual Adjustment (`POST /api/ticket-adjustments` via `ManualTicketAdjustmentModal`).
-- [x] Implement Rewards: Redeem Reward (`POST /api/reward-redemptions` via `RedeemRewardModal`).
-- [x] Role-Based Action Control (Teacher vs. Admin): Partially implemented via optional props in detail views.
-- [x] UI Feedback: Replaced `Alert.alert` with `react-native-toast-message`.
-- [x] Add basic scroll functionality to main views (`AdminView`, `TeacherView`, `StudentView`).
-
-## Development Phase 2: "Big Bang" Supabase Schema & Read/Basic-Write API Migration
-
-- [x] **Storage Buckets:** Create required public buckets (`instrument-icons`, `reward-icons`). Apply temporary permissive Storage RLS policies.
-- [x] **Remove MSW:** Delete `src/mocks/`, `handlers.ts`, update `App.tsx`, `metro.config.js`, `package.json`.
-- [x] **Refactor API Layer (`src/api/`)**:
-  - [x] `instruments.ts` (CRUD + Storage)
-  - [x] `rewards.ts` (CRUD + Storage)
-  - [x] `taskLibrary.ts` (CRUD - _See Phase 3 for EF migration_)
-  - [x] `announcements.ts` (CRUD)
-  - [x] `users.ts` (Reads for all roles, basic profile `updateUser`, `toggleUserStatus`. Deferred `createUser`, `deleteUser`, link table updates -> _Now handled by EFs_).
-  - [x] `stats.ts` (Read counts from DB).
-  - [x] `tickets.ts` (Read history/balance. Deferred `adjustTickets`, `redeemReward` -> _Now handled by EFs_).
-  - [x] `assignedTasks.ts` (Read tasks. Basic `createAssignedTask`. Deferred `updateAssignedTask` verification/points logic. Basic `deleteAssignedTask` -> _Now handled by EFs_).
-- [x] **Refactor Hook Layer (`src/hooks/`)**:
-  - [x] `usePaginatedStudents.ts` (_Filter bug needs re-verification_)
-  - [x] `usePaginatedTeachers.ts`
-  - [x] `usePaginatedParents.ts`
-  - [x] `usePaginatedAdmins.ts`
-  - [x] `usePaginatedAssignedTasks.ts`
-  - [x] `usePaginatedStudentHistory.ts`
-  - [x] `usePaginatedStudentTasks.ts`
-  - [x] `usePaginatedTicketHistory.ts`
-- [x] **Refactor Component Layer (`src/views/`, `src/components/`)**:
-  - [x] `AdminUsersSection.tsx` (Consume user hooks).
-  - [x] `AdminStudentDetailView.tsx` (Fetch profile, use task/history hooks, adjust handlers, removed delete confirmation).
-  - [x] `AdminTeacherDetailView.tsx` (Fetch profile, use student hook).
-  - [x] `AdminParentDetailView.tsx` (Fetch profile, use useQueries for students).
-  - [x] `AdminView.tsx` (Simplify state, use section components, added task deletion confirmation).
-  - [x] `TeacherView.tsx` (Fetch profile, use section components, added task deletion confirmation, added 'tasks-full' section, added create task lib handlers).
-  - [x] `ParentView.tsx` (Fetch profiles, use StudentView).
-  - [x] `StudentView.tsx` (Verified data flow, added Teacher display, enhanced task view).
-  - [x] `PublicView.tsx` (Verify data flow).
-  - [x] `Create*/Edit*` Modals for Instruments, Rewards, Announcements (Verified API usage).
-  - [x] `Task Library Modals/Items`: Updated for new fields (instruments, files, urls) and teacher creation/edit/delete capabilities.
-  - [x] `EditUserModal.tsx` (Uses EF).
-  - [x] `DeactivateOrDeleteUserModal.tsx` (Uses EFs).
-  - [x] `ManualTicketAdjustmentModal.tsx` (Uses EF).
-  - [x] `RedeemRewardModal.tsx` (Uses EF).
-  - [x] `AssignTaskModal.tsx` (Uses EF, updated for instrument filtering and copying task lib data).
-  - [x] `TaskVerificationModal.tsx` (Uses EF).
-  - [x] `PaginatedTasksList.tsx` (Updated for name lookups, handles delete initiation, **Fixed filtering via RPC**).
-  - [x] `TicketHistoryItem.tsx` (Updated layout).
-
-## Development Phase 3: Authentication & Server-Side Logic
-
-- [x] Implement Authentication (Backend, Frontend, Context)
-- [x] Implement Secure RLS (Storage, DB Tables, Helpers)
-- [x] Implement Edge Functions for Core Auth/User Management
-- [x] Implement Edge Functions for Core Workflow Actions
-- [x] Update API Layer to use Edge Functions/RPC
-- [x] Update UI Components/Views/Modals to use TQ/EFs
-- [x] Refactor Edge Functions to use Shared Helpers (_Completed_)
-
-- **[ ] Security Hardening:**
-  - [x] Implement proper salting for `hashToken` function used for refresh tokens. (_Completed_)
-  - [x] Consider implementing rolling refresh tokens in `refresh-pin-session`.
-  - [ ] Final review and potential tightening of all RLS policies (post-feature completion).
-
-* **[ ] Debugging & Known Issues:**
-  - [ ] **TESTING:** Thoroughly test the custom refresh token flow (`claim-onetime-pin` -> storage -> `refresh-pin-session`) on web (manual refresh needed after >1hr) and eventually native.
-  - [ ] **BLOCKER (Native Build/Runtime):** Native builds/runtime via Expo Go are blocked due to Node polyfill errors (`stream`, `events`, `https`, `net`) required by `ws`/`supabase-js`. **Awaiting official fix from Supabase.**
-
-## Development Phase 4: Features, Refinements & Testing
-
-- **[ ] Feature: Practice Streaks (#2):**
-  - [ ] Decide on tracking method (Button, Timer, Task Completion).
-  - [ ] Implement schema changes if needed (`practice_log` table?).
-  - [ ] Create backend DB function (`calculate_streak`).
-  - [ ] Add API endpoint (`fetchStudentStreak`).
-  - [ ] Add UI display in `StudentView`.
-- **[ ] Address Pending Decisions & Implement Chosen Features:** (Based on Dan Lefler's input from `SPECIFICATION.md` Section 10)
-  - [ ] Avatars?
-  - [ ] Mandatory Reward Images?
-  - [ ] Auto-Redemption Announcements?
-  - [ ] Parent Reminders?
-- **[ ] Refinements & Thorough Testing:**
-  - [x] Add Foreign Key constraints with appropriate ON DELETE actions (CASCADE/SET NULL). (_Completed via SQL Editor, needs migration file update before final deploy_)
-  - **[x] NEW:** Update original migration files (`..._create_assigned_tasks_table.sql`, `..._create_ticket_transactions_table.sql`, etc.) to include FKs and integrated helper functions before final deployment to new project.
-  - **[ ] NEW:** Test user deletion cascade logic thoroughly (Admin, Teacher, Student, Parent). Verify related data (profiles, tasks, transactions, links) is handled correctly per `ON DELETE` rules.
-  - **[ ] NEW:** Test user deactivation (`toggleUserStatus`) logic. Verify inactive users cannot log in. Check impact on linked data visibility (e.g., do inactive teachers still show as assigners/verifiers? Do inactive students appear in lists unless 'all' filter is used?). Specifically test Teacher deactivation impact on student linking/visibility.
-  - **[ ] NEW:** Populate with more realistic data volumes and test pagination across all relevant lists (Admin users, tasks; Teacher students, tasks; Student tasks, history). Verify performance and UI responsiveness.
-  - [x] Test all user role workflows end-to-end, especially Task Library features (including ad-hoc attachments) and Self-Edit.
-  - [x] Refine UI/UX (including button styles, modal layouts - e.g., AssignTaskModal Step 2).
-  - [x] Consider adding database-level checks (e.g., check constraints) for role consistency in link tables.
-  - [ ] Unit/integration tests (Optional).
-
-## Supporting Features (Post-MVP / Lower Priority)
-
-- [ ] Frontend: Design and implement `PublicView` welcome/landing page using provided store assets.
-- [ ] Frontend: Evaluate and potentially implement opaque background images using provided assets.
+- [x] All items from original Phase 1-4 are considered complete.
+- [x] The project has been successfully migrated to a multi-tenant architecture.
+- [x] All initial RLS and Edge Function bugs post-migration have been resolved.
+- [x] The application is in a stable, logged-in state.
 
 ---
 
 ## V2 Development Plan
 
-This plan outlines the major features and architectural changes for Version 2. It is structured in phases, starting with foundational work that enables all subsequent features.
+This plan outlines the major features and architectural changes for Version 2.
 
-### Phase 5: Foundational Architecture (Multi-Tenancy & Notifications)
+### Phase 5: Foundational Architecture (Multi-Tenancy & V2 Schema)
 
-- **[ ] Multi-Tenancy Implementation (Step Zero):**
+- **[x] Multi-Tenancy Implementation (Step Zero):**
+  - [x] **Schema:** Create `companies` table.
+  - [x] **Schema:** Add `company_id` FK to all company-scoped tables.
+  - [x] **RLS:** Refactor all RLS policies to enforce `company_id` isolation.
+  - [x] **Edge Functions:** Update all Edge Functions to be company-aware and secure against cross-tenant actions.
+- **[x] V2 Feature Schema Additions:**
+  - [x] **Schema:** Create `practice_logs` table for streak feature.
+  - [x] **Schema:** Create `push_tokens` table for notifications infrastructure.
+  - [x] **Schema:** Add `avatar_path` column to `profiles` table and create `avatars` storage bucket.
+  - [x] **Schema:** Add `is_goal_eligible` boolean to `rewards` table.
+  - [x] **Schema:** Add `can_self_assign` boolean to `task_library` table.
+  - [x] **Schema:** Create `journey_locations` table and add `journey_location_id` FK to `task_library`.
+- **[x] Client-Side API Alignment:**
+    - [x] **Types:** Update all TypeScript types in `dataTypes.ts` to match the V2 schema.
+    - [x] **API Layer:** Refactor all functions in `src/api/*.ts` to align with V2 schema and Edge Function payloads.
+    - [x] **API Layer:** Create new `src/api/journey.ts` for managing journey locations.
 
-  - [ ] **Schema:** Create `companies` table migration (`id`, `name`, `created_at`). Seed with "Danmans Music".
-  - [ ] **Schema:** Create migrations to add `company_id` FK to all company-scoped tables (`profiles`, `instruments`, `rewards`, `task_library`, `assigned_tasks`, `ticket_transactions`, etc.).
-  - [ ] **RLS:** Refactor all RLS policies to enforce `company_id` isolation on every query.
-  - [ ] **Edge Functions:** Update all Edge Functions to be company-aware (e.g., `createUser` must set `company_id`).
-  - [ ] **API Layer:** Update all API client functions (`src/api/*.ts`) to correctly query within the user's company context.
+### Phase 6: Core Engagement Features (Frontend Implementation)
 
-- **[ ] Notifications Infrastructure:**
-  - [ ] **Setup:** Install and configure `expo-notifications` library.
-  - [ ] **Schema:** Create `push_tokens` table migration (`user_id`, `token`, `created_at`).
-  - [ ] **Client:** Implement a `usePushNotifications` hook to handle permissions and token registration with the backend.
-  - [ ] **Backend:** Create the core `send-notification` Supabase Edge Function.
+- **[x] Feature: Avatars (Admin & Self-Editing):**
+  - [x] **UI:** Implement image picker and upload logic in `EditMyInfoModal.tsx`.
+  - [x] **UI:** Implement image picker and upload logic in `EditUserModal.tsx`.
+  - [x] **UI:** Display avatars in list views (`AdminUserItem.tsx`, `AdminStudentItem.tsx`).
+  - [x] **UI:** Display avatars in detail views (`AdminAdminDetailView.tsx`, `AdminTeacherDetailView.tsx`, `AdminParentDetailView.tsx`, `StudentDetailView.tsx`).
+- **[x] Feature: Journey Locations & Self-Assignable Tasks (Admin Side):**
+  - [x] **UI:** Add "Journey" section to `AdminView`.
+  - [x] **UI:** Create `AdminJourneySection.tsx` component for CRUD management.
+  - [x] **UI:** Create `CreateJourneyLocationModal.tsx` and `EditJourneyLocationModal.tsx`.
+  - [x] **UI:** Integrate Journey Location picker into `CreateTaskLibraryModal.tsx` and `EditTaskLibraryModal.tsx` when "self-assign" is enabled.
+
+- **[ ] Feature: Student-Facing UI & New Features:**
+  - [ ] **Practice Streaks:**
+    - [ ] Create `log-practice-and-check-streak` Edge Function.
+    - [ ] Create `get_student_streak` RPC function.
+    - [ ] Create `src/api/streaks.ts` API file.
+    - [ ] Create `PracticeStreakTracker.tsx` component.
+    - [ ] Add the `PracticeStreakTracker` component to the `StudentView` dashboard.
+  - [ ] **Self-Assignable Tasks (Student Side):**
+    - [ ] Add a new "Available Tasks" or "Journey" section to `StudentView`.
+    - [ ] Display a list of self-assignable tasks, categorized by Journey Location.
+    - [ ] Implement the "Assign to Me" button functionality, calling the `assignTask` Edge Function (may require minor EF update to allow student as caller).
+  - [ ] **Student Goals:**
+    - [ ] Update `SetGoalModal.tsx` to filter the rewards list using the `isGoalEligible` flag.
+  - [ ] **Enriched Announcements:**
+    - [ ] Update `AnnouncementListItem.tsx` to display the related student's avatar and name if they exist.
+
+- **[ ] Feature: Notifications Infrastructure:**
+  - [ ] **Setup:** Install and configure `expo-notifications`.
+  - [ ] **Client:** Implement a `usePushNotifications` hook to handle permissions and token registration.
+  - [ ] **Backend:** Create the core `send-notification` Edge Function.
   - [ ] **Pilot Feature (Daily Summary):**
-    - [ ] **DB Function:** Create `get_daily_activity_summary()` RPC function.
-    - [ ] **Cron Job:** Set up a `pg_cron` job to call the DB function and trigger the `send-notification` EF for all users, serving as an end-to-end test and system heartbeat.
+    - [ ] Create `get_daily_activity_summary()` RPC function.
+    - [ ] Set up a `pg_cron` job to call the function and trigger notifications.
 
-### Phase 6: Core Engagement Features
-
-- **[ ] Feature: Practice Streaks (Instant Gratification Model):**
-
-  - [ ] **Schema:** Create `practice_logs` table migration (`id`, `student_id`, `company_id`, `log_date`).
-  - [ ] **Backend:** Create the `log-practice-and-check-streak` Edge Function to handle logging, streak calculation, and immediate ticket awards on milestones.
-  - [ ] **Frontend:** Implement the "I Practiced Today!" button and streak display in `StudentView`.
-  - [ ] **Notifications:** Integrate `send-notification` calls within the `log-practice-and-check-streak` EF for milestone celebrations.
-
-- **[ ] Feature: Avatars:**
-
-  - [ ] **Storage:** Create a new `avatars` storage bucket with appropriate RLS.
-  - [ ] **Schema:** Add `avatar_path` column to `profiles` table via migration.
-  - [ ] **Frontend:** Implement an image upload component in the `EditMyInfoModal`.
-  - [ ] **UI:** Display avatars in user lists, detail views, and announcements.
-
-- **[ ] Feature: Enhanced Announcements:**
-
-  - [ ] **Backend:** Create system logic to auto-generate announcements for major reward redemptions and practice streak milestones.
-  - [ ] **Frontend:** Update the `AnnouncementListItem` component to display the user's avatar.
-  - [ ] **Frontend:** Create UI elements to display community summary data (e.g., "7 others want that ukulele").
-
-- **[ ] Feature: Student Goals & Self-Assignable Tasks:**
-
-  - [ ] **Schema:** Add `is_goal_eligible` boolean to `rewards` table via migration.
-  - [ ] **Schema:** Add `can_self_assign` boolean to `task_library` table via migration.
-  - [ ] **Frontend:** Update `SetGoalModal` to filter rewards based on the new flag.
-  - [ ] **Frontend:** Update the Student's task library view to allow self-assignment of tasks.
-
-- **[ ] Feature: The Music Journey:**
-  - [ ] **Schema:** Create `journey_locations` table migration (`id`, `company_id`, `name`, `description`, etc.).
-  - [ ] **Schema:** Add `journey_location_id` FK to `task_library` table via migration.
-  - [ ] **Backend:** Add logic/constraints to `assignTask` to handle the "1 active task per location" rule.
-  - [ ] **Frontend:** Design and implement the "Journey" view, overlaying locations on the poster image.
-
-### Phase 7: Notification Triggers & System Polish
-
-- **[ ] Implement Specific Notification Triggers:**
-
-  - [ ] **Teacher -> Student:** Update `assignTask` EF to notify students of new tasks.
-  - [ ] **System -> Student:** Update `verifyTask` EF to notify students of awarded tickets.
-  - [ ] **Student -> Teacher:** Update logic for marking a task complete to notify the teacher that verification is needed.
-  - [ ] **Parent Parallel Stream:** Update the `send-notification` EF to automatically send copies of student notifications to linked parents.
+### Phase 7: Final Polish & Testing
 
 - **[ ] V2 Refinements & Thorough Testing:**
-  - [ ] **Testing:** End-to-end test the multi-tenancy implementation. Create two test companies and ensure zero data crossover.
-  - [ ] **Testing:** Test all notification flows for all roles on a physical device.
-  - [ ] **Testing:** Verify edge cases for practice streaks (e.g., what happens if a user logs practice twice via different means).
-  - [ ] **UI/UX Review:** Conduct a full review of all new V2 features for usability and visual polish.
-  - [ ] **Data Policy:** Confirm and test `ON DELETE` cascade/set-null behavior for all new tables and relationships.
+  - [ ] **Testing:** End-to-end test the multi-tenancy implementation.
+  - [ ] **Testing:** Test all notification flows on a physical device.
+  - [ ] **UI/UX Review:** Conduct a full review of all new V2 features.
