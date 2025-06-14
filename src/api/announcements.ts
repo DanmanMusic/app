@@ -61,7 +61,7 @@ export const createAnnouncement = async (
   announcementData: Omit<
     Announcement,
     'id' | 'date' | 'relatedStudentName' | 'relatedStudentAvatarPath'
-  >
+  > & { companyId: string } // <-- Add companyId to the expected input
 ): Promise<Announcement> => {
   const client = getSupabase();
   console.log('[Supabase] Creating announcement:', announcementData.title);
@@ -72,20 +72,23 @@ export const createAnnouncement = async (
     throw new Error('Announcement title and message cannot be empty.');
   }
 
+  // --- THIS IS THE FIX ---
   const itemToInsert = {
     type: announcementData.type,
     title: trimmedTitle,
     message: trimmedMessage,
     related_student_id: announcementData.relatedStudentId ?? null,
+    company_id: announcementData.companyId, // <-- Include the company_id in the payload
   };
 
   const { data, error } = await client
     .from('announcements')
     .insert(itemToInsert)
-    .select('id') // Just get the ID back to confirm creation
+    .select('id')
     .single();
 
   if (error || !data) {
+    // The error message you saw comes from here
     throw new Error(`Failed to create announcement: ${error?.message || 'No data returned'}`);
   }
 

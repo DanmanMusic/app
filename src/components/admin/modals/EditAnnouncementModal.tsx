@@ -1,8 +1,8 @@
+// src/components/admin/modals/EditAnnouncementModal.tsx
+
 import React, { useState, useEffect } from 'react';
 
 import { Modal, View, Text, Button, TextInput, ActivityIndicator } from 'react-native';
-
-import { Picker } from '@react-native-picker/picker';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -12,13 +12,8 @@ import { updateAnnouncement } from '../../../api/announcements';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { EditAnnouncementModalProps } from '../../../types/componentProps';
-import { Announcement, AnnouncementType } from '../../../types/dataTypes';
-
-const ANNOUNCEMENT_TYPES: AnnouncementType[] = [
-  'announcement',
-  'challenge',
-  'redemption_celebration',
-];
+import { Announcement } from '../../../types/dataTypes';
+import { capitalizeFirstLetter } from '../../../utils/helpers';
 
 const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
   visible,
@@ -27,7 +22,6 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
 }) => {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [type, setType] = useState<AnnouncementType>('announcement');
 
   const queryClient = useQueryClient();
 
@@ -35,7 +29,6 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
     mutationFn: updateAnnouncement,
     onSuccess: updatedAnnouncement => {
       console.log('[EditAnnModal] Announcement updated successfully:', updatedAnnouncement);
-
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       onClose();
       Toast.show({
@@ -64,13 +57,10 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
     if (visible && announcementToEdit) {
       setTitle(announcementToEdit.title);
       setMessage(announcementToEdit.message);
-      setType(announcementToEdit.type);
-
       mutation.reset();
     } else {
       setTitle('');
       setMessage('');
-      setType('announcement');
     }
   }, [visible, announcementToEdit]);
 
@@ -80,26 +70,19 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
     const trimmedTitle = title.trim();
     const trimmedMessage = message.trim();
 
-    if (!trimmedTitle) {
+    if (!trimmedTitle || !trimmedMessage) {
       Toast.show({
         type: 'error',
         text1: 'Validation Error',
-        text2: 'Title cannot be empty.',
-        position: 'bottom',
-      });
-      return;
-    }
-    if (!trimmedMessage) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Message cannot be empty.',
+        text2: 'Title and Message cannot be empty.',
         position: 'bottom',
       });
       return;
     }
 
-    const updates: Partial<Omit<Announcement, 'id' | 'date'>> = {};
+    const updates: Partial<
+      Omit<Announcement, 'id' | 'date' | 'relatedStudentName' | 'relatedStudentAvatarPath'>
+    > = {};
     let hasChanges = false;
 
     if (trimmedTitle !== announcementToEdit.title) {
@@ -110,10 +93,7 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
       updates.message = trimmedMessage;
       hasChanges = true;
     }
-    if (type !== announcementToEdit.type) {
-      updates.type = type;
-      hasChanges = true;
-    }
+    // The 'type' is no longer editable, so it's not checked here.
 
     if (!hasChanges) {
       console.log('[EditAnnModal] No changes detected.');
@@ -122,7 +102,6 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
     }
 
     console.log('[EditAnnModal] Calling mutation with updates:', updates);
-
     mutation.mutate({ announcementId: announcementToEdit.id, updates });
   };
 
@@ -137,28 +116,19 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
           <Text style={commonSharedStyles.modalTitle}>Edit Announcement</Text>
           <Text style={commonSharedStyles.modalSubTitle}>ID: {announcementToEdit.id}</Text>
 
-          <Text style={commonSharedStyles.label}>Type:</Text>
-          <View>
-            <Picker
-              selectedValue={type}
-              onValueChange={itemValue => setType(itemValue as AnnouncementType)}
-              enabled={!mutation.isPending}
-              style={commonSharedStyles.picker}
-              itemStyle={commonSharedStyles.pickerItem}
-            >
-              {ANNOUNCEMENT_TYPES.map(typeValue => (
-                <Picker.Item
-                  key={typeValue}
-                  label={typeValue.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  value={typeValue}
-                />
-              ))}
-            </Picker>
-          </View>
+          <Text style={commonSharedStyles.label}>Type (Read-only):</Text>
+          <TextInput
+            style={[
+              commonSharedStyles.input,
+              { backgroundColor: colors.backgroundGrey, color: colors.textSecondary },
+            ]}
+            value={capitalizeFirstLetter(announcementToEdit.type.replace(/_/g, ' '))}
+            editable={false}
+          />
 
           <Text style={commonSharedStyles.label}>Title:</Text>
           <TextInput
-            style={commonSharedStyles.picker}
+            style={commonSharedStyles.input}
             value={title}
             onChangeText={setTitle}
             placeholder="Announcement Title"

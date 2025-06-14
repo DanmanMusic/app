@@ -28,6 +28,8 @@ const queryClient = new QueryClient();
 const AppContent = () => {
   const { isLoadingProfile, currentUserRole, error: authError, signOut } = useAuth();
 
+  console.log('currentUserRole:', currentUserRole);
+
   const [isVerificationModalVisible, setIsVerificationModalVisible] = useState(false);
   const [taskToVerify, setTaskToVerify] = useState<AssignedTask | null>(null);
   const [isLoginModalVisible, setIsLoginModalVisible] = useState(false);

@@ -1,6 +1,7 @@
 // supabase/functions/updateUserWithLinks/index.ts
 
 import { createClient, SupabaseClient } from 'supabase-js';
+
 import { isActiveAdmin, isTeacherLinked } from '../_shared/authHelpers.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 

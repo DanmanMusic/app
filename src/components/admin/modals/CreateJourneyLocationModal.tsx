@@ -1,5 +1,4 @@
-// src/components/admin/modals/CreateJourneyLocationModal.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 import { Modal, View, Text, Button, TextInput, ActivityIndicator, ScrollView } from 'react-native';
 
@@ -8,9 +7,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 
 import { createJourneyLocation } from '../../../api/journey';
+import { useAuth } from '../../../contexts/AuthContext'; // Using the auth context directly
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
+// The props interface is now simpler, as it doesn't need companyId
 interface CreateJourneyLocationModalProps {
   visible: boolean;
   onClose: () => void;
@@ -20,9 +21,16 @@ const CreateJourneyLocationModal: React.FC<CreateJourneyLocationModalProps> = ({
   visible,
   onClose,
 }) => {
+  // Get the authenticated user directly from the context
+  const { appUser, session } = useAuth();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const queryClient = useQueryClient();
+
+  // Derive companyId from the user context
+  const companyId = useMemo(() => {
+    return appUser?.companyId;
+  }, [appUser]);
 
   const mutation = useMutation({
     mutationFn: createJourneyLocation,
@@ -59,7 +67,24 @@ const CreateJourneyLocationModal: React.FC<CreateJourneyLocationModalProps> = ({
       Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Location name is required.' });
       return;
     }
-    mutation.mutate({ name: name.trim(), description: description.trim() || null });
+    // Add a check to ensure companyId was successfully retrieved from the context
+    if (!companyId) {
+      Toast.show({
+        type: 'error',
+        text1: 'Authentication Error',
+        text2: 'Company ID not found. Please try again.',
+      });
+      return;
+    }
+
+    // The payload for the mutation matches the API's requirements
+    mutation.mutate({
+      locationData: {
+        name: name.trim(),
+        description: description.trim() || null,
+      },
+      companyId: companyId,
+    });
   };
 
   const isCreateDisabled = mutation.isPending || !name.trim();

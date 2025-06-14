@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, Button } from 'react-native';
 
 import ConfirmationModal from './ConfirmationModal';
+import NotificationManager from './NotificationManager';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
@@ -62,6 +63,7 @@ export const SharedHeader: React.FC<SharedHeaderProps> = ({ onSetLoginPress, onE
         {displayName}
       </Text>
       <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
+        <NotificationManager />
         <Button title="Edit Info" onPress={onEditInfoPress} color={colors.warning} />
         {canSetLogin && <Button title="Set Login" onPress={onSetLoginPress} color={colors.info} />}
         <Button title="Logout" onPress={handleLogoutPress} color={colors.danger} />

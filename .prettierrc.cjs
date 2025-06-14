@@ -6,6 +6,5 @@ module.exports = {
   semi: true,
   arrowParens: 'avoid',
   bracketSpacing: true,
-  jsxBracketSameLine: false,
   endOfLine: 'lf',
 };

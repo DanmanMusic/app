@@ -36,7 +36,7 @@ export const AdminJourneySection = () => {
 
   const deleteMutation = useMutation({
     mutationFn: deleteJourneyLocation,
-    onSuccess: (_, deletedId) => {
+    onSuccess: (_, _deletedId) => {
       queryClient.invalidateQueries({ queryKey: ['journeyLocations'] });
       Toast.show({ type: 'success', text1: 'Success', text2: 'Journey Location deleted.' });
       closeDeleteModal();

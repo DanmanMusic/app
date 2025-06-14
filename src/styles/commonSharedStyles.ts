@@ -63,7 +63,6 @@ export const commonSharedStyles = StyleSheet.create({
     height: 40,
     width: 40,
     marginRight: 10,
-    resizeMode: 'contain',
   },
   baseItem: {
     padding: 8,
@@ -404,6 +403,7 @@ export const commonSharedStyles = StyleSheet.create({
     marginBottom: 15,
     width: '100%',
     flexGrow: 0,
+    paddingHorizontal: 2,
   },
   modalSectionTitle: {
     color: colors.textSecondary,
@@ -719,12 +719,19 @@ export const commonSharedStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.backgroundGrey,
-    borderRadius: 20, // Make it circular
+    borderRadius: 50, // Make it circular
+    borderWidth: 2,
   },
   avatarPlaceholderText: {
     color: colors.textSecondary,
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  iconAvatar: {
+    height: 40,
+    width: 40,
+    marginRight: 10,
+    borderRadius: 20,
   },
   detailAvatar: {
     width: 100,

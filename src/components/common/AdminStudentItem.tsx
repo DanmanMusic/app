@@ -1,7 +1,8 @@
 // src/components/common/AdminStudentItem.tsx
-import React from 'react';
 
-import { Button, Text, View, Image } from 'react-native';
+import React, { useState, useEffect } from 'react'; // MODIFIED: Import useState, useEffect
+
+import { Button, Text, View, Image, ActivityIndicator } from 'react-native'; // MODIFIED: Import ActivityIndicator
 
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
@@ -14,14 +15,34 @@ export const AdminStudentItem = ({
   onViewManage,
   onInitiateAssignTask,
 }: {
-  student: User; // MODIFIED: Expects the full User object now
+  student: User;
   instruments: Instrument[];
   onViewManage: (studentId: string, role: UserRole) => void;
   onInitiateAssignTask: (studentId: string) => void;
 }) => {
-  // NEW: Get the avatar source from our helper
-  const avatarSource = getUserAvatarSource(student);
+  // MODIFIED: State for the avatar URL and its loading state
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
+
+  // MODIFIED: useEffect to fetch the avatar URL when the student prop is available
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      if (student.avatarPath) {
+        setIsLoadingAvatar(true);
+        const source = await getUserAvatarSource(student);
+        setAvatarUrl(source ? source.uri : null);
+        setIsLoadingAvatar(false);
+      } else {
+        setAvatarUrl(null);
+      }
+    };
+
+    fetchAvatar();
+  }, [student]);
+
   const isActive = student.status === 'active';
+  // REMOVED: The incorrect synchronous call
+  // const avatarSource = getUserAvatarSource(student);
 
   return (
     <View
@@ -33,9 +54,11 @@ export const AdminStudentItem = ({
       ]}
     >
       <View style={[commonSharedStyles.baseRow, { alignItems: 'center' }]}>
-        {/* NEW: Avatar display logic */}
-        {avatarSource ? (
-          <Image source={avatarSource} style={commonSharedStyles.baseIcon} />
+        {/* MODIFIED: Avatar display logic now handles loading and uses state */}
+        {isLoadingAvatar ? (
+          <ActivityIndicator style={commonSharedStyles.baseIcon} color={colors.primary} />
+        ) : avatarUrl ? (
+          <Image source={{ uri: avatarUrl }} style={commonSharedStyles.baseIcon} />
         ) : (
           <View style={[commonSharedStyles.baseIcon, commonSharedStyles.avatarPlaceholder]}>
             <Text style={commonSharedStyles.avatarPlaceholderText}>

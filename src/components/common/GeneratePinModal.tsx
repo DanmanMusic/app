@@ -1,11 +1,16 @@
-// src/components/common/GeneratePinModal.tsx
+// File: src/components/common/GeneratePinModal.tsx (Refactored with Shared Styles)
+
 import React, { useState, useEffect } from 'react';
 
 import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
 
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import Toast from 'react-native-toast-message';
 
-import { generatePinForUser } from '../../api/users';
+import ConfirmationModal from './ConfirmationModal';
+import { generatePinForUser, hasActivePinSessions, forceUserLogout } from '../../api/auth';
+import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { User, UserRole } from '../../types/dataTypes';
@@ -18,121 +23,165 @@ interface GeneratePinModalProps {
 }
 
 export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, user, onClose }) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [generatedPin, setGeneratedPin] = useState<string | null>(null);
-  const [generatedForRole, setGeneratedForRole] = useState<UserRole | null>(null);
+  const [isConfirmLogoutVisible, setIsConfirmLogoutVisible] = useState(false);
+
+  const { currentUserRole } = useAuth();
+
+  const {
+    data: hasSession,
+    isLoading: isLoadingSessionCheck,
+    refetch: refetchSessionCheck,
+  } = useQuery({
+    queryKey: ['hasPinSession', user?.id],
+    queryFn: () => hasActivePinSessions(user!.id),
+    enabled: !!user && visible,
+    staleTime: 5 * 1000,
+  });
+
+  const forceLogoutMutation = useMutation({
+    mutationFn: forceUserLogout,
+    onSuccess: data => {
+      Toast.show({ type: 'success', text1: 'Success', text2: data.message });
+      queryClient.invalidateQueries({ queryKey: ['hasPinSession', user?.id] });
+      setIsConfirmLogoutVisible(false);
+    },
+    onError: (error: Error) => {
+      Toast.show({ type: 'error', text1: 'Error', text2: error.message });
+      setIsConfirmLogoutVisible(false);
+    },
+  });
+
+  const generatePinMutation = useMutation({
+    mutationFn: (role: UserRole) => generatePinForUser(user!.id, role),
+    onSuccess: pinFromApi => {
+      setGeneratedPin(pinFromApi);
+      Toast.show({
+        type: 'success',
+        text1: 'Generated PIN',
+        text2: `Tell the user to log in with: ${pinFromApi}`,
+        visibilityTime: 20000,
+        position: 'bottom',
+      });
+      refetchSessionCheck();
+    },
+    onError: (error: Error) => {
+      Toast.show({
+        type: 'error',
+        text1: 'PIN Generation Failed',
+        text2: error.message,
+        position: 'bottom',
+      });
+    },
+  });
 
   useEffect(() => {
     if (!visible) {
       setGeneratedPin(null);
-      setGeneratedForRole(null);
-      setIsLoading(false);
+      setIsConfirmLogoutVisible(false);
     }
   }, [visible]);
 
-  useEffect(() => {
+  const handleGeneratePin = (generateAsRole: UserRole) => {
+    if (!user || generatePinMutation.isPending) return;
     setGeneratedPin(null);
-    setGeneratedForRole(null);
-    setIsLoading(false);
-  }, [user]);
+    generatePinMutation.mutate(generateAsRole);
+  };
 
-  const handleGeneratePin = async (generateAsRole: UserRole) => {
-    if (!user || isLoading) return;
-
-    setGeneratedForRole(generateAsRole);
-    setIsLoading(true);
-    setGeneratedPin(null);
-
-    try {
-      console.log(
-        `[GeneratePinModal] Calling API to generate PIN for user ${user.id} (User Role: ${user.role}), intended login role: ${generateAsRole}`
-      );
-      const pinFromApi = await generatePinForUser(user.id, generateAsRole);
-
-      setGeneratedPin(pinFromApi);
-      Toast.show({
-        type: 'success',
-        text1: `Generated PIN for ${capitalizeFirstLetter(generateAsRole)}`,
-        text2: `Tell ${generateAsRole === 'parent' ? 'Parent' : getUserDisplayName(user)} to use: ${pinFromApi}`,
-        visibilityTime: 20000,
-        position: 'bottom',
-      });
-      console.log(`[GeneratePinModal] Received PIN from API: ${pinFromApi}`);
-    } catch (error: any) {
-      console.error('Error generating PIN via API:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'PIN Generation Failed',
-        text2: error.message || 'Could not generate PIN.',
-        position: 'bottom',
-        visibilityTime: 5000,
-      });
-      setGeneratedPin(null);
-      setGeneratedForRole(null);
-    } finally {
-      setIsLoading(false);
+  const handleForceLogout = () => {
+    if (user && !forceLogoutMutation.isPending) {
+      forceLogoutMutation.mutate(user.id);
     }
   };
 
   if (!user) return null;
 
   const displayName = getUserDisplayName(user);
-  const userActualRole = user.role;
-  const possibleTargetRoles: UserRole[] = [userActualRole];
+  const isActionPending =
+    generatePinMutation.isPending || forceLogoutMutation.isPending || isLoadingSessionCheck;
 
   return (
-    <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={commonSharedStyles.centeredView}>
-        <View style={commonSharedStyles.modalView}>
-          <Text style={commonSharedStyles.modalTitle}>Generate Login PIN</Text>
-          <Text style={commonSharedStyles.modalContextInfo}>
-            For User: {displayName} ({userActualRole})
-          </Text>
+    <>
+      <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
+        <View style={commonSharedStyles.centeredView}>
+          <View style={commonSharedStyles.modalView}>
+            <Text style={commonSharedStyles.modalTitle}>Session Management</Text>
+            <Text style={commonSharedStyles.modalContextInfo}>
+              For User: {displayName} ({user.role})
+            </Text>
 
-          {isLoading && (
-            <View style={commonSharedStyles.baseRowCentered}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={commonSharedStyles.baseSecondaryText}>Generating PIN...</Text>
+            {/* Active Session Management Section */}
+            <View style={commonSharedStyles.modalSubSection}>
+              <Text style={commonSharedStyles.roleSectionTitle}>Active PIN Sessions</Text>
+              {isLoadingSessionCheck ? (
+                <ActivityIndicator />
+              ) : hasSession ? (
+                <View style={{ alignItems: 'center', gap: 10 }}>
+                  <Text style={commonSharedStyles.infoText}>
+                    This user has one or more active PIN sessions.
+                  </Text>
+                  <Button
+                    title="Force Logout All Devices"
+                    onPress={() => setIsConfirmLogoutVisible(true)}
+                    color={colors.danger}
+                    disabled={isActionPending}
+                  />
+                </View>
+              ) : (
+                <Text style={commonSharedStyles.infoText}>
+                  No active PIN sessions found for this user.
+                </Text>
+              )}
             </View>
-          )}
 
-          {generatedPin && !isLoading && generatedForRole && (
-            <View style={commonSharedStyles.containerPinDisplay}>
-              <Text style={commonSharedStyles.pinLabel}>
-                Generated PIN for {capitalizeFirstLetter(generatedForRole)}:
-              </Text>
-              <Text style={commonSharedStyles.pinValue}>{generatedPin}</Text>
-              <Text style={commonSharedStyles.pinInstructions}>
-                Provide this PIN to the {generatedForRole === 'parent' ? 'Parent' : 'User'} for
-                login. It will expire shortly.
-              </Text>
+            {currentUserRole === 'admin' && (
+              <View style={commonSharedStyles.modalSubSection}>
+                <Text style={commonSharedStyles.roleSectionTitle}>Generate New Login PIN</Text>
+                {generatePinMutation.isPending ? (
+                  <ActivityIndicator />
+                ) : generatedPin ? (
+                  <View style={commonSharedStyles.containerPinDisplay}>
+                    <Text style={commonSharedStyles.pinValue}>{generatedPin}</Text>
+                    <Text style={commonSharedStyles.pinInstructions}>
+                      This PIN expires in 5 minutes.
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={{ alignItems: 'center' }}>
+                    <Button
+                      title={`Generate PIN for ${capitalizeFirstLetter(user.role)} Login`}
+                      onPress={() => handleGeneratePin(user.role)}
+                      disabled={isActionPending}
+                      color={colors.info}
+                    />
+                  </View>
+                )}
+              </View>
+            )}
+
+            <View style={[commonSharedStyles.full, { marginTop: 20 }]}>
+              <Button
+                title="Close"
+                onPress={onClose}
+                color={colors.secondary}
+                disabled={isActionPending}
+              />
             </View>
-          )}
-
-          {!generatedPin && !isLoading && (
-            <View style={commonSharedStyles.full}>
-              {possibleTargetRoles.map(targetRole => (
-                <Button
-                  key={targetRole}
-                  title={`Generate PIN for ${capitalizeFirstLetter(targetRole)} Login`}
-                  onPress={() => handleGeneratePin(targetRole)}
-                  disabled={isLoading}
-                  color={colors.info}
-                />
-              ))}
-            </View>
-          )}
-
-          <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
-              title={generatedPin ? 'Close' : 'Cancel'}
-              onPress={onClose}
-              color={colors.secondary}
-            />
           </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+
+      <ConfirmationModal
+        visible={isConfirmLogoutVisible}
+        title="Confirm Force Logout"
+        message={`This will invalidate all active PIN sessions for "${displayName}", forcing them to log in again. Are you sure?`}
+        confirmText={forceLogoutMutation.isPending ? 'Logging out...' : 'Yes, Force Logout'}
+        onConfirm={handleForceLogout}
+        onCancel={() => setIsConfirmLogoutVisible(false)}
+        confirmDisabled={forceLogoutMutation.isPending}
+      />
+    </>
   );
 };
 

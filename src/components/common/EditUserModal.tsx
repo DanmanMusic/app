@@ -1,5 +1,6 @@
 // src/components/common/EditUserModal.tsx
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo } from 'react';
 
 import {
   Modal,
@@ -22,12 +23,11 @@ import Toast from 'react-native-toast-message';
 import { fetchInstruments } from '../../api/instruments';
 import { updateUser, fetchTeachers, fetchUserProfile } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
-import { getSupabase } from '../../lib/supabaseClient';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { EditUserModalProps } from '../../types/componentProps';
 import { User, Instrument } from '../../types/dataTypes';
-import { getUserDisplayName, NativeFileObject } from '../../utils/helpers';
+import { getUserDisplayName, getUserAvatarSource, NativeFileObject } from '../../utils/helpers';
 
 export const EditUserModal: React.FC<EditUserModalProps> = ({
   visible,
@@ -43,7 +43,10 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   const [selectedInstrumentIds, setSelectedInstrumentIds] = useState<string[]>([]);
   const [selectedTeacherIds, setSelectedTeacherIds] = useState<string[]>([]);
   const [avatarFile, setAvatarFile] = useState<NativeFileObject | null | undefined>(undefined);
+
+  // LEARNING APPLIED: State for the resolved URL and a loading indicator for it.
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
 
   const userIdToEdit = userToEditProp?.id;
 
@@ -56,6 +59,8 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   });
 
   const isStudentRole = userToEdit?.role === 'student';
+
+  const canEditAvatar = useMemo(() => userToEdit?.role !== 'parent', [userToEdit]);
 
   const {
     data: instruments = [],
@@ -75,17 +80,19 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   } = useQuery<User[], Error>({
     queryKey: ['teachers', { status: 'active', context: 'editUserModal' }],
     queryFn: async () => {
-      const result = await fetchTeachers({ page: 1, limit: 1000 });
-      return (result?.items || []).filter(t => t.status === 'active');
+      const result = await fetchTeachers({ page: 1, limit: 1000, filter: 'active' });
+      return result?.items || [];
     },
     enabled: visible && isStudentRole,
     staleTime: 5 * 60 * 1000,
   });
 
   const profileUpdateMutation = useMutation({
+    // This mutation is already correct.
     mutationFn: (vars: {
       userId: string;
-      updates: Partial<Omit<User, 'id' | 'role' | 'status'>>;
+      companyId: string;
+      updates: Partial<Omit<User, 'id' | 'role' | 'status' | 'companyId'>>;
       avatarFile?: NativeFileObject | null;
     }) => updateUser(vars),
     onSuccess: updatedUser => {
@@ -104,31 +111,39 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     },
   });
 
+  // LEARNING APPLIED: useEffect now correctly handles the async call for the signed URL.
   useEffect(() => {
-    if (visible && userToEdit) {
-      setFirstName(userToEdit.firstName || '');
-      setLastName(userToEdit.lastName || '');
-      setNickname(userToEdit.nickname || '');
-      if (userToEdit.avatarPath) {
-        const supabase = getSupabase();
-        const { data: urlData } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(userToEdit.avatarPath);
-        setAvatarPreview(urlData.publicUrl);
-      } else {
-        setAvatarPreview(null);
-      }
-      setAvatarFile(undefined);
+    const loadData = async () => {
+      if (userToEdit) {
+        setFirstName(userToEdit.firstName || '');
+        setLastName(userToEdit.lastName || '');
+        setNickname(userToEdit.nickname || '');
+        setAvatarFile(undefined);
 
-      if (userToEdit.role === 'student') {
-        setSelectedInstrumentIds(userToEdit.instrumentIds || []);
-        setSelectedTeacherIds(userToEdit.linkedTeacherIds || []);
+        if (canEditAvatar && userToEdit.avatarPath) {
+          setIsLoadingAvatar(true);
+          const source = await getUserAvatarSource(userToEdit);
+          setAvatarPreview(source ? source.uri : null);
+          setIsLoadingAvatar(false);
+        } else {
+          setAvatarPreview(null);
+        }
+
+        if (userToEdit.role === 'student') {
+          setSelectedInstrumentIds(userToEdit.instrumentIds || []);
+          setSelectedTeacherIds(userToEdit.linkedTeacherIds || []);
+        }
       }
+    };
+
+    if (visible) {
+      loadData();
       profileUpdateMutation.reset();
     }
-  }, [visible, userToEdit]);
+  }, [visible, userToEdit, canEditAvatar]);
 
   const pickImage = async () => {
+    // This function is correct.
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
@@ -137,7 +152,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       }
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
@@ -157,6 +172,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   };
 
   const removeImage = () => {
+    // This function is correct.
     setAvatarFile(null);
     setAvatarPreview(null);
   };
@@ -165,6 +181,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     setSelectedInstrumentIds(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
+
   const toggleTeacherSelection = (id: string) => {
     if (currentUserRole !== 'admin') {
       Toast.show({
@@ -179,7 +196,16 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   };
 
   const handleSaveChanges = () => {
-    if (!userToEdit) return;
+    // This function is already correct.
+    if (!userToEdit?.companyId) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'User data or Company ID not found.',
+      });
+      return;
+    }
+
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
     if (!trimmedFirstName || !trimmedLastName) {
@@ -187,12 +213,13 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         type: 'error',
         text1: 'Validation Error',
         text2: 'First and Last Name cannot be empty.',
-        position: 'bottom',
       });
       return;
     }
-    const updatesPayload: Partial<Omit<User, 'id' | 'role' | 'status'>> = {};
+
+    const updatesPayload: Partial<Omit<User, 'id' | 'role' | 'status' | 'companyId'>> = {};
     let hasChanges = false;
+    // ... logic for building updatesPayload is correct ...
     if (trimmedFirstName !== (userToEdit.firstName || '')) {
       updatesPayload.firstName = trimmedFirstName;
       hasChanges = true;
@@ -201,7 +228,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       updatesPayload.lastName = trimmedLastName;
       hasChanges = true;
     }
-    if (nickname.trim() !== (userToEdit.nickname || '')) {
+    if ((nickname || '').trim() !== (userToEdit.nickname || '')) {
       updatesPayload.nickname = nickname.trim() || undefined;
       hasChanges = true;
     }
@@ -224,17 +251,19 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         }
       }
     }
+
     if (!hasChanges) {
-      Toast.show({
-        type: 'info',
-        text1: 'No Changes',
-        text2: 'No information was modified.',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'info', text1: 'No Changes' });
       onClose();
       return;
     }
-    profileUpdateMutation.mutate({ userId: userToEdit.id, updates: updatesPayload, avatarFile });
+
+    profileUpdateMutation.mutate({
+      userId: userToEdit.id,
+      companyId: userToEdit.companyId,
+      updates: updatesPayload,
+      avatarFile,
+    });
   };
 
   const isSaveDisabled =
@@ -247,8 +276,8 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={[commonSharedStyles.centeredView]}>
-        <View style={[commonSharedStyles.modalView]}>
+      <View style={commonSharedStyles.centeredView}>
+        <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>
             Edit User: {getUserDisplayName(userToEdit)}
           </Text>
@@ -256,41 +285,51 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             Role: {userToEdit.role.toUpperCase()}
           </Text>
           <ScrollView style={[commonSharedStyles.modalScrollView, { paddingHorizontal: 2 }]}>
-            <Text style={commonSharedStyles.label}>Profile Picture:</Text>
-            <View style={commonSharedStyles.containerIconPreview}>
-              {avatarPreview ? (
-                <Image source={{ uri: avatarPreview }} style={commonSharedStyles.iconPreview} />
-              ) : (
-                <View
-                  style={[
-                    commonSharedStyles.iconPreview,
-                    {
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      backgroundColor: colors.backgroundGrey,
-                    },
-                  ]}
-                >
-                  <Text style={{ color: colors.textLight }}>No Image</Text>
+            {canEditAvatar && (
+              <>
+                <Text style={commonSharedStyles.label}>Profile Picture:</Text>
+                <View style={commonSharedStyles.containerIconPreview}>
+                  {/* LEARNING APPLIED: Handle the loading state for the avatar */}
+                  {isLoadingAvatar ? (
+                    <ActivityIndicator
+                      style={commonSharedStyles.iconPreview}
+                      color={colors.primary}
+                    />
+                  ) : avatarPreview ? (
+                    <Image source={{ uri: avatarPreview }} style={commonSharedStyles.iconPreview} />
+                  ) : (
+                    <View
+                      style={[
+                        commonSharedStyles.iconPreview,
+                        {
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          backgroundColor: colors.backgroundGrey,
+                        },
+                      ]}
+                    >
+                      <Text style={{ color: colors.textLight }}>No Image</Text>
+                    </View>
+                  )}
+                  <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <Button
+                      title="Choose Image"
+                      onPress={pickImage}
+                      disabled={profileUpdateMutation.isPending}
+                      color={colors.info}
+                    />
+                    {avatarPreview && (
+                      <Button
+                        title="Remove Image"
+                        onPress={removeImage}
+                        disabled={profileUpdateMutation.isPending}
+                        color={colors.warning}
+                      />
+                    )}
+                  </View>
                 </View>
-              )}
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <Button
-                  title="Choose Image"
-                  onPress={pickImage}
-                  disabled={profileUpdateMutation.isPending}
-                  color={colors.info}
-                />
-                {avatarPreview && (
-                  <Button
-                    title="Remove Image"
-                    onPress={removeImage}
-                    disabled={profileUpdateMutation.isPending}
-                    color={colors.warning}
-                  />
-                )}
-              </View>
-            </View>
+              </>
+            )}
 
             <Text style={commonSharedStyles.label}>First Name:</Text>
             <TextInput

@@ -1,12 +1,13 @@
 // src/components/common/AdminUserItem.tsx
-import React from 'react';
 
-import { Button, Text, View, Image } from 'react-native';
+import React, { useState, useEffect } from 'react'; // MODIFIED: Import useState and useEffect
+
+import { Button, Text, View, Image, ActivityIndicator } from 'react-native'; // MODIFIED: Import ActivityIndicator
 
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { User, UserRole } from '../../types/dataTypes';
-import { getUserDisplayName, getUserAvatarSource } from '../../utils/helpers'; // MODIFIED: Import getUserAvatarSource
+import { getUserDisplayName, getUserAvatarSource } from '../../utils/helpers';
 
 export const AdminUserItem = ({
   user,
@@ -15,7 +16,34 @@ export const AdminUserItem = ({
   user: User;
   onViewManage: (userId: string, role: UserRole) => void;
 }) => {
-  const avatarSource = getUserAvatarSource(user); // NEW: Get the avatar source
+  // MODIFIED: State for the avatar URL and its loading state
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
+
+  // MODIFIED: useEffect to fetch the avatar URL when the user prop is available
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      // Don't show avatars for parents, as per the new requirement
+      if (user.role === 'parent') {
+        setAvatarUrl(null);
+        return;
+      }
+
+      if (user.avatarPath) {
+        setIsLoadingAvatar(true);
+        const source = await getUserAvatarSource(user);
+        setAvatarUrl(source ? source.uri : null);
+        setIsLoadingAvatar(false);
+      } else {
+        setAvatarUrl(null); // Ensure avatar is cleared if user has no path
+      }
+    };
+
+    fetchAvatar();
+  }, [user]); // Re-run this effect if the user object itself changes
+
+  // REMOVED: The incorrect synchronous call
+  // const avatarSource = getUserAvatarSource(user);
 
   return (
     <View
@@ -26,11 +54,12 @@ export const AdminUserItem = ({
         user.status === 'inactive' ? commonSharedStyles.inactiveItem : {},
       ]}
     >
-      {/* MODIFIED: Wrap text content and avatar in a View for better layout */}
       <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseAlignCenter]}>
-        {/* NEW: Avatar display logic */}
-        {avatarSource ? (
-          <Image source={avatarSource} style={commonSharedStyles.baseIcon} />
+        {/* MODIFIED: Avatar display logic now handles loading and uses state */}
+        {isLoadingAvatar ? (
+          <ActivityIndicator style={commonSharedStyles.baseIcon} color={colors.primary} />
+        ) : avatarUrl ? (
+          <Image source={{ uri: avatarUrl }} style={commonSharedStyles.iconAvatar} />
         ) : (
           <View style={[commonSharedStyles.baseIcon, commonSharedStyles.avatarPlaceholder]}>
             <Text style={commonSharedStyles.avatarPlaceholderText}>

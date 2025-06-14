@@ -1,7 +1,11 @@
+// src/api/auth.ts
+
 import { getSupabase } from '../lib/supabaseClient';
 
 import { UserRole } from '../types/dataTypes';
 
+// MODIFIED: Removed the optional `viewing_student_id` property.
+// This interface now accurately reflects the server's response.
 interface ClaimPinApiResponse {
   access_token: string;
   refresh_token: string;
@@ -9,7 +13,6 @@ interface ClaimPinApiResponse {
   token_type: 'bearer';
   user_id: string;
   role: UserRole;
-  viewing_student_id?: string;
 }
 
 /**
@@ -60,7 +63,7 @@ export const claimPin = async (pin: string): Promise<ClaimPinApiResponse> => {
     throw new Error(`PIN Claim Failed: ${detailedError}`);
   }
 
-  console.log('[API] claim-onetime-pin Edge Function returned:', data);
+  // MODIFIED: Updated the data validation check to match the new, simpler interface.
   if (
     !data ||
     typeof data !== 'object' ||
@@ -95,6 +98,7 @@ export const refreshPinSession = async (
 
   const { data, error } = await client.functions.invoke('refresh-pin-session', {
     body: payload,
+    headers: {},
   });
 
   if (error) {
@@ -130,6 +134,7 @@ export const refreshPinSession = async (
 
   console.log('[API] refresh-pin-session Edge Function returned:', data);
 
+  // This check is already correct as it omits refresh_token.
   if (
     !data ||
     typeof data !== 'object' ||
@@ -145,4 +150,50 @@ export const refreshPinSession = async (
   }
 
   return data as Omit<ClaimPinApiResponse, 'refresh_token'>;
+};
+
+export const hasActivePinSessions = async (userId: string): Promise<boolean> => {
+  const client = getSupabase();
+  const { count, error } = await client
+    .from('active_refresh_tokens')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error(`Error checking for active PIN sessions for user ${userId}:`, error);
+    // Don't throw, just return false so the UI doesn't break
+    return false;
+  }
+
+  return (count ?? 0) > 0;
+};
+
+// NEW: Function to call our new Edge Function
+export const forceUserLogout = async (targetUserId: string): Promise<{ message: string }> => {
+  const client = getSupabase();
+  const { data, error } = await client.functions.invoke('force-logout', {
+    body: { targetUserId },
+  });
+
+  if (error) {
+    console.error(`Error invoking force-logout for user ${targetUserId}:`, error);
+    throw new Error(error.message || 'Failed to force logout.');
+  }
+
+  return data;
+};
+
+export const generatePinForUser = async (
+  targetUserId: string,
+  targetRole: UserRole
+): Promise<string> => {
+  const client = getSupabase();
+  const { data, error } = await client.functions.invoke('generate-onetime-pin', {
+    body: { userId: targetUserId, targetRole: targetRole },
+  });
+  if (error) {
+    const detailedError = (error as any).context?.error || error.message;
+    throw new Error(`PIN generation failed: ${detailedError}`);
+  }
+  return data.pin;
 };

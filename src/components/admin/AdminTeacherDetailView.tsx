@@ -1,15 +1,8 @@
 // src/components/admin/AdminTeacherDetailView.tsx
-import React, { useMemo } from 'react';
 
-import {
-  View,
-  Text,
-  Button,
-  ActivityIndicator,
-  ScrollView,
-  FlatList,
-  Image, // NEW
-} from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react'; // MODIFIED: Import useState, useEffect
+
+import { View, Text, Button, ActivityIndicator, ScrollView, FlatList, Image } from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -18,7 +11,7 @@ import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminTeacherDetailViewProps } from '../../types/componentProps';
 import { User, SimplifiedStudent } from '../../types/dataTypes';
-import { getUserDisplayName, getUserAvatarSource } from '../../utils/helpers'; // MODIFIED
+import { getUserDisplayName, getUserAvatarSource } from '../../utils/helpers';
 
 export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
   viewingUserId,
@@ -27,6 +20,10 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
   onViewStudentProfile,
   onInitiatePinGeneration,
 }) => {
+  // MODIFIED: State for the avatar URL and its loading state
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
+
   const {
     data: teacher,
     isLoading: teacherLoading,
@@ -38,6 +35,21 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
     enabled: !!viewingUserId,
     staleTime: 5 * 60 * 1000,
   });
+
+  // MODIFIED: useEffect to fetch the avatar URL when the teacher data is available
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      if (teacher?.avatarPath) {
+        setIsLoadingAvatar(true);
+        const source = await getUserAvatarSource(teacher);
+        setAvatarUrl(source ? source.uri : null);
+        setIsLoadingAvatar(false);
+      } else {
+        setAvatarUrl(null);
+      }
+    };
+    fetchAvatar();
+  }, [teacher]);
 
   const {
     data: linkedStudentsResult,
@@ -64,8 +76,8 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
   );
   const isTeacherActive = useMemo(() => teacher?.status === 'active', [teacher]);
 
-  // NEW: Get avatar source for the teacher
-  const avatarSource = useMemo(() => getUserAvatarSource(teacher), [teacher]);
+  // REMOVED: The incorrect useMemo for avatarSource
+  // const avatarSource = useMemo(() => getUserAvatarSource(teacher), [teacher]);
 
   const handleEdit = () => {
     if (teacher) onInitiateEditUser(teacher);
@@ -117,10 +129,16 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
         </Text>
       </View>
 
-      {/* NEW: Avatar Display Section */}
+      {/* MODIFIED: Avatar Display Section now handles loading and uses state */}
       <View style={{ alignItems: 'center', marginBottom: 15 }}>
-        {avatarSource ? (
-          <Image source={avatarSource} style={commonSharedStyles.detailAvatar} />
+        {isLoadingAvatar ? (
+          <ActivityIndicator style={commonSharedStyles.detailAvatar} color={colors.primary} />
+        ) : avatarUrl ? (
+          <Image
+            source={{ uri: avatarUrl }}
+            style={commonSharedStyles.detailAvatar}
+            resizeMode="cover"
+          />
         ) : (
           <View style={[commonSharedStyles.detailAvatar, commonSharedStyles.avatarPlaceholder]}>
             <Text style={commonSharedStyles.avatarPlaceholderTextLarge}>

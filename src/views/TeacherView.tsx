@@ -15,6 +15,7 @@ import ConfirmationModal from '../components/common/ConfirmationModal';
 import EditMyInfoModal from '../components/common/EditMyInfoModal';
 import EditUserModal from '../components/common/EditUserModal';
 import GeneratePinModal from '../components/common/GeneratePinModal';
+import NotificationManager from '../components/common/NotificationManager';
 import { PaginatedTasksList } from '../components/common/PaginatedTasksList';
 import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
 import { SharedHeader } from '../components/common/SharedHeader';

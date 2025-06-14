@@ -1,14 +1,8 @@
 // src/components/admin/AdminAdminDetailView.tsx
-import React, { useMemo } from 'react';
 
-import {
-  View,
-  Text,
-  Button,
-  ActivityIndicator,
-  ScrollView,
-  Image, // NEW
-} from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react'; // MODIFIED: Import useState and useEffect
+
+import { View, Text, Button, ActivityIndicator, ScrollView, Image } from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -18,7 +12,7 @@ import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminAdminDetailViewProps } from '../../types/componentProps';
 import { User } from '../../types/dataTypes';
-import { getUserDisplayName, getUserAvatarSource } from '../../utils/helpers'; // MODIFIED
+import { getUserDisplayName, getUserAvatarSource } from '../../utils/helpers';
 
 export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
   viewingUserId,
@@ -26,6 +20,10 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
   onInitiatePinGeneration,
 }) => {
   const { currentUserId } = useAuth();
+
+  // MODIFIED: State to hold the resolved avatar URL and its loading state
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
 
   const {
     data: adminProfile,
@@ -38,6 +36,22 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
     enabled: !!viewingUserId,
     staleTime: 5 * 60 * 1000,
   });
+
+  // MODIFIED: useEffect to fetch the avatar URL when the profile data loads
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      if (adminProfile?.avatarPath) {
+        setIsLoadingAvatar(true);
+        const source = await getUserAvatarSource(adminProfile);
+        setAvatarUrl(source ? source.uri : null);
+        setIsLoadingAvatar(false);
+      } else {
+        setAvatarUrl(null);
+      }
+    };
+
+    fetchAvatar();
+  }, [adminProfile]); // This effect runs whenever adminProfile changes
 
   const {
     data: adminAuthDetails,
@@ -56,8 +70,8 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
   );
   const isAdminActive = useMemo(() => adminProfile?.status === 'active', [adminProfile]);
 
-  // NEW: Get avatar source for the admin
-  const avatarSource = useMemo(() => getUserAvatarSource(adminProfile), [adminProfile]);
+  // REMOVED: The incorrect useMemo for avatarSource
+  // const avatarSource = useMemo(() => getUserAvatarSource(adminProfile), [adminProfile]);
 
   const needsPinLogin = useMemo(() => {
     if (authDetailsLoading || authDetailsError || !adminAuthDetails?.email) return false;
@@ -111,10 +125,16 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
         </Text>
       </View>
 
-      {/* NEW: Avatar Display Section */}
+      {/* MODIFIED: Avatar Display Section now handles loading and uses the state variable */}
       <View style={{ alignItems: 'center', marginBottom: 15 }}>
-        {avatarSource ? (
-          <Image source={avatarSource} style={commonSharedStyles.detailAvatar} />
+        {isLoadingAvatar ? (
+          <ActivityIndicator style={commonSharedStyles.detailAvatar} color={colors.primary} />
+        ) : avatarUrl ? (
+          <Image
+            source={{ uri: avatarUrl }}
+            style={commonSharedStyles.detailAvatar}
+            resizeMode="cover"
+          />
         ) : (
           <View style={[commonSharedStyles.detailAvatar, commonSharedStyles.avatarPlaceholder]}>
             <Text style={commonSharedStyles.avatarPlaceholderTextLarge}>

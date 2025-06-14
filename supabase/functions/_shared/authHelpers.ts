@@ -125,3 +125,17 @@ export async function isTeacherLinked(
     return false;
   }
 }
+
+export async function hashTokenWithSalt(token: string): Promise<string> {
+  const salt = Deno.env.get('REFRESH_TOKEN_SALT');
+  if (!salt) {
+    console.error('CRITICAL: REFRESH_TOKEN_SALT environment variable is not set!');
+    throw new Error('Server configuration error [Salt Missing]');
+  }
+  const encoder = new TextEncoder();
+  const data = encoder.encode(salt + token); // Consistent order: salt first
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}

@@ -7,6 +7,7 @@ import { useQuery, useQueries, UseQueryResult } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import EditMyInfoModal from '../components/common/EditMyInfoModal';
+import NotificationManager from '../components/common/NotificationManager';
 import { ParentStudentListItem } from '../components/common/ParentStudentListItem';
 import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
 import { SharedHeader } from '../components/common/SharedHeader';

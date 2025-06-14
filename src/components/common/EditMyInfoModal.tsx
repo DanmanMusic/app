@@ -1,4 +1,5 @@
 // src/components/common/EditMyInfoModal.tsx
+
 import React, { useState, useEffect, useMemo } from 'react';
 
 import {
@@ -22,7 +23,6 @@ import Toast from 'react-native-toast-message';
 
 import { updateUser, updateAuthCredentials } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
-import { getSupabase } from '../../lib/supabaseClient';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { User } from '../../types/dataTypes';
@@ -48,7 +48,9 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [avatarFile, setAvatarFile] = useState<NativeFileObject | null | undefined>(undefined);
+  // State for the resolved URL and a loading indicator for it
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
 
   const currentAuthEmail = useMemo(() => supabaseUser?.email ?? null, [supabaseUser]);
   const hasSetUpCredentials = useMemo(
@@ -58,12 +60,14 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
 
   const profileUpdateMutation = useMutation({
     mutationFn: (vars: {
-      updates: Partial<Omit<User, 'id' | 'role' | 'status'>>;
+      companyId: string;
+      updates: Partial<Omit<User, 'id' | 'role' | 'status' | 'companyId'>>;
       avatarFile?: NativeFileObject | null;
     }) => {
       if (!currentUserId) throw new Error('User ID not found.');
       return updateUser({
         userId: currentUserId,
+        companyId: vars.companyId,
         updates: vars.updates,
         avatarFile: vars.avatarFile,
       });
@@ -107,50 +111,55 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
     },
   });
 
+  const canEditAvatar = useMemo(() => appUser?.role !== 'parent', [appUser]);
+
   useEffect(() => {
-    const setup = async () => {
-      if (visible && appUser) {
-        // ... (setting firstName, lastName, etc. is the same)
+    const loadData = async () => {
+      if (appUser) {
         setFirstName(appUser.firstName || '');
         setLastName(appUser.lastName || '');
         setNickname(appUser.nickname || '');
+        setAvatarFile(undefined); // Reset any staged file changes
 
-        // THIS IS THE FIX:
-        // Use the async helper and await its result.
-        const source = await getUserAvatarSource(appUser);
-        setAvatarPreview(source ? source.uri : null);
-
-        // ... (rest of the state resets)
-        setAvatarFile(undefined);
-        setNewPassword('');
-        setConfirmPassword('');
-        profileUpdateMutation.reset();
-        setMode('profile');
+        // Asynchronously fetch the secure, signed URL for the avatar
+        if (canEditAvatar && appUser.avatarPath) {
+          setIsLoadingAvatar(true);
+          const source = await getUserAvatarSource(appUser);
+          setAvatarPreview(source ? source.uri : null);
+          setIsLoadingAvatar(false);
+        } else {
+          setAvatarPreview(null);
+        }
       }
     };
-    setup();
-  }, [visible, appUser]);
+
+    if (visible) {
+      loadData();
+      // Reset other states when modal becomes visible
+      setMode('profile');
+      setNewPassword('');
+      setConfirmPassword('');
+      profileUpdateMutation.reset();
+      credentialsUpdateMutation.reset();
+    }
+  }, [visible, appUser, canEditAvatar]);
 
   const pickImage = async () => {
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'Sorry, we need camera roll permissions to make this work!'
-        );
+        Alert.alert('Permission Required', 'Camera roll permissions are needed.');
         return;
       }
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
     });
     if (!result.canceled && result.assets && result.assets[0]) {
       const asset = result.assets[0];
-      // CORRECTED: Handle potential null value for fileName
       const fileName = asset.fileName ?? `avatar_${Date.now()}.${asset.uri.split('.').pop()}`;
       setAvatarFile({
         uri: asset.uri,
@@ -170,21 +179,28 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
 
   const handleProfileSave = () => {
     if (!appUser || !currentUserId || profileUpdateMutation.isPending) return;
+    if (!appUser.companyId) {
+      Toast.show({
+        type: 'error',
+        text1: 'Session Error',
+        text2: 'User company could not be determined. Please log out and back in.',
+      });
+      console.error('Update failed: companyId is missing from appUser context.');
+      return;
+    }
 
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
-    const trimmedNickname = nickname.trim();
     if (!trimmedFirstName || !trimmedLastName) {
       Toast.show({
         type: 'error',
         text1: 'Validation Error',
         text2: 'First and Last Name are required.',
-        position: 'bottom',
       });
       return;
     }
 
-    const updates: Partial<Omit<User, 'id' | 'role' | 'status'>> = {};
+    const updates: Partial<Omit<User, 'id' | 'role' | 'status' | 'companyId'>> = {};
     let hasChanges = false;
     if (trimmedFirstName !== appUser.firstName) {
       updates.firstName = trimmedFirstName;
@@ -194,31 +210,28 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
       updates.lastName = trimmedLastName;
       hasChanges = true;
     }
-    if (trimmedNickname !== (appUser.nickname || '')) {
-      updates.nickname = trimmedNickname || undefined;
+    if ((nickname || '').trim() !== (appUser.nickname || '')) {
+      updates.nickname = nickname.trim() || undefined;
       hasChanges = true;
     }
-
     if (avatarFile !== undefined) {
       hasChanges = true;
     }
 
     if (!hasChanges) {
-      Toast.show({
-        type: 'info',
-        text1: 'No Changes',
-        text2: 'No profile information was modified.',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'info', text1: 'No Changes', text2: 'No info was modified.' });
       onClose();
       return;
     }
 
-    profileUpdateMutation.mutate({ updates, avatarFile });
+    profileUpdateMutation.mutate({
+      companyId: appUser.companyId,
+      updates,
+      avatarFile,
+    });
   };
 
   const handleCredentialsSave = () => {
-    // ... no changes to this function ...
     if (credentialsUpdateMutation.isPending) return;
     const trimmedEmail = newEmail.trim();
     const updatePayload: { email?: string; password?: string } = {};
@@ -228,7 +241,6 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
           type: 'error',
           text1: 'Invalid Email',
           text2: 'Please enter a valid email.',
-          position: 'bottom',
         });
         return;
       }
@@ -240,7 +252,6 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
           type: 'error',
           text1: 'Password Too Short',
           text2: 'Password must be at least 6 characters.',
-          position: 'bottom',
         });
         return;
       }
@@ -249,26 +260,19 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
           type: 'error',
           text1: "Passwords Don't Match",
           text2: 'Please re-enter matching passwords.',
-          position: 'bottom',
         });
         return;
       }
       updatePayload.password = newPassword;
     }
     if (Object.keys(updatePayload).length === 0) {
-      Toast.show({
-        type: 'info',
-        text1: 'No Changes',
-        text2: 'No login information was modified.',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'info', text1: 'No Changes', text2: 'No login info was modified.' });
       onClose();
       return;
     }
     credentialsUpdateMutation.mutate(updatePayload);
   };
 
-  // --- No changes to the JSX or the rest of the component logic ---
   const isOverallLoading = profileUpdateMutation.isPending || credentialsUpdateMutation.isPending;
   if (!visible) return null;
 
@@ -322,42 +326,53 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
           <ScrollView style={[commonSharedStyles.modalScrollView, { paddingHorizontal: 2 }]}>
             {mode === 'profile' && (
               <View>
-                <Text style={commonSharedStyles.label}>Profile Picture:</Text>
-                <View style={commonSharedStyles.containerIconPreview}>
-                  {avatarPreview ? (
-                    <Image source={{ uri: avatarPreview }} style={commonSharedStyles.iconPreview} />
-                  ) : (
-                    <View
-                      style={[
-                        commonSharedStyles.iconPreview,
-                        {
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          backgroundColor: colors.backgroundGrey,
-                        },
-                      ]}
-                    >
-                      <Text style={{ color: colors.textLight }}>No Image</Text>
+                {canEditAvatar && (
+                  <>
+                    <Text style={commonSharedStyles.label}>Profile Picture:</Text>
+                    <View style={commonSharedStyles.containerIconPreview}>
+                      {isLoadingAvatar ? (
+                        <ActivityIndicator
+                          style={commonSharedStyles.iconPreview}
+                          color={colors.primary}
+                        />
+                      ) : avatarPreview ? (
+                        <Image
+                          source={{ uri: avatarPreview }}
+                          style={commonSharedStyles.iconPreview}
+                        />
+                      ) : (
+                        <View
+                          style={[
+                            commonSharedStyles.iconPreview,
+                            {
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              backgroundColor: colors.backgroundGrey,
+                            },
+                          ]}
+                        >
+                          <Text style={{ color: colors.textLight }}>No Image</Text>
+                        </View>
+                      )}
+                      <View style={{ flexDirection: 'row', gap: 10 }}>
+                        <Button
+                          title="Choose Image"
+                          onPress={pickImage}
+                          disabled={isOverallLoading}
+                          color={colors.info}
+                        />
+                        {avatarPreview && (
+                          <Button
+                            title="Remove Image"
+                            onPress={removeImage}
+                            disabled={isOverallLoading}
+                            color={colors.warning}
+                          />
+                        )}
+                      </View>
                     </View>
-                  )}
-                  <View style={{ flexDirection: 'row', gap: 10 }}>
-                    <Button
-                      title="Choose Image"
-                      onPress={pickImage}
-                      disabled={isOverallLoading}
-                      color={colors.info}
-                    />
-                    {avatarPreview && (
-                      <Button
-                        title="Remove Image"
-                        onPress={removeImage}
-                        disabled={isOverallLoading}
-                        color={colors.warning}
-                      />
-                    )}
-                  </View>
-                </View>
-
+                  </>
+                )}
                 <Text style={commonSharedStyles.label}>First Name:</Text>
                 <TextInput
                   style={commonSharedStyles.input}

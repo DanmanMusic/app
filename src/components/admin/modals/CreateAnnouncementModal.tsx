@@ -1,37 +1,31 @@
+// src/components/admin/modals/CreateAnnouncementModal.tsx
+
 import React, { useState, useEffect } from 'react';
 
 import { Modal, View, Text, Button, TextInput, ActivityIndicator } from 'react-native';
-
-import { Picker } from '@react-native-picker/picker';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import Toast from 'react-native-toast-message';
 
 import { createAnnouncement } from '../../../api/announcements';
+import { useAuth } from '../../../contexts/AuthContext';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { CreateAnnouncementModalProps } from '../../../types/componentProps';
-import { Announcement, AnnouncementType } from '../../../types/dataTypes';
-
-const ANNOUNCEMENT_TYPES: AnnouncementType[] = [
-  'announcement',
-  'challenge',
-  'redemption_celebration',
-];
+import { Announcement } from '../../../types/dataTypes';
 
 const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visible, onClose }) => {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [type, setType] = useState<AnnouncementType>('announcement');
 
   const queryClient = useQueryClient();
+  const { appUser } = useAuth(); // Get the authenticated user from context
 
   const mutation = useMutation({
     mutationFn: createAnnouncement,
     onSuccess: createdAnnouncement => {
       console.log('[CreateAnnModal] Announcement created successfully:', createdAnnouncement);
-
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       onClose();
       Toast.show({
@@ -57,8 +51,6 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
     if (visible) {
       setTitle('');
       setMessage('');
-      setType('announcement');
-
       mutation.reset();
     }
   }, [visible]);
@@ -67,29 +59,33 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
     const trimmedTitle = title.trim();
     const trimmedMessage = message.trim();
 
-    if (!trimmedTitle) {
+    if (!trimmedTitle || !trimmedMessage) {
       Toast.show({
         type: 'error',
         text1: 'Validation Error',
-        text2: 'Title cannot be empty.',
-        position: 'bottom',
-      });
-      return;
-    }
-    if (!trimmedMessage) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Message cannot be empty.',
+        text2: 'Title and Message cannot be empty.',
         position: 'bottom',
       });
       return;
     }
 
-    const newAnnouncementData: Omit<Announcement, 'id' | 'date'> = {
+    if (!appUser?.companyId) {
+      Toast.show({
+        type: 'error',
+        text1: 'Authentication Error',
+        text2: 'Could not determine your company. Please re-login.',
+      });
+      return;
+    }
+
+    const newAnnouncementData: Omit<
+      Announcement,
+      'id' | 'date' | 'relatedStudentName' | 'relatedStudentAvatarPath'
+    > & { companyId: string } = {
       title: trimmedTitle,
       message: trimmedMessage,
-      type: type,
+      type: 'announcement', // Hardcoded type
+      companyId: appUser.companyId, // Pass the companyId from the authenticated user
     };
 
     console.log('[CreateAnnModal] Calling mutation with data:', newAnnouncementData);
@@ -103,25 +99,6 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
       <View style={commonSharedStyles.centeredView}>
         <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>Create New Announcement</Text>
-
-          <Text style={commonSharedStyles.label}>Type:</Text>
-          <View style={commonSharedStyles.input}>
-            <Picker
-              selectedValue={type}
-              onValueChange={itemValue => setType(itemValue as AnnouncementType)}
-              enabled={!mutation.isPending}
-              style={commonSharedStyles.picker}
-              itemStyle={commonSharedStyles.pickerItem}
-            >
-              {ANNOUNCEMENT_TYPES.map(typeValue => (
-                <Picker.Item
-                  key={typeValue}
-                  label={typeValue.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  value={typeValue}
-                />
-              ))}
-            </Picker>
-          </View>
 
           <Text style={commonSharedStyles.label}>Title:</Text>
           <TextInput

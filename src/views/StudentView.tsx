@@ -12,11 +12,14 @@ import PaginationControls from '../components/admin/PaginationControls';
 import { AnnouncementListItem } from '../components/common/AnnouncementListItem';
 import { AssignedTaskItem } from '../components/common/AssignedTaskItem';
 import EditMyInfoModal from '../components/common/EditMyInfoModal';
+import NotificationManager from '../components/common/NotificationManager';
 import { RewardItemStudent } from '../components/common/RewardItemStudent';
 import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
 import { SharedHeader } from '../components/common/SharedHeader';
 import { TicketHistoryItem } from '../components/common/TicketHistoryItem';
+import GoalTracker from '../components/student/GoalTracker';
 import SetGoalModal from '../components/student/modals/SetGoalModal';
+import PracticeStreakTracker from '../components/student/PracticeStreakTracker';
 
 import { usePaginatedStudentHistory } from '../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../hooks/usePaginatedStudentTasks';
@@ -418,82 +421,25 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
               >
                 My Goal
               </Text>
-              {rewardsLoading && <ActivityIndicator color={colors.primary} />}
-              {rewardsError && (
-                <Text style={commonSharedStyles.errorText}>Error loading rewards for goal.</Text>
-              )}
-              {!rewardsLoading &&
-                !rewardsError &&
-                (goalReward ? (
-                  <View style={commonSharedStyles.baseItem}>
-                    <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
-                      <Image
-                        source={{ uri: goalReward.imageUrl }}
-                        style={commonSharedStyles.goalImage}
-                        resizeMode="contain"
-                      />
-                      <View style={commonSharedStyles.flex1}>
-                        <Text style={commonSharedStyles.baseTitleText}>
-                          Saving for: {goalReward.name}
-                        </Text>
-                        <Text
-                          style={[commonSharedStyles.baseSecondaryText, { color: colors.gold }]}
-                        >
-                          {goalReward.cost} Tickets
-                        </Text>
-                      </View>
-                      <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
-                        <Button
-                          title="Change Goal"
-                          onPress={handleSetGoalPress}
-                          color={colors.primary}
-                        />
-                      </View>
-                    </View>
-                    <Text style={[commonSharedStyles.baseSecondaryText, { marginBottom: 5 }]}>
-                      Progress: {balance} / {goalReward.cost} ({clampedProgress.toFixed(1)}%){' '}
-                      {goalMet &&
-                        balance > goalReward.cost &&
-                        ` (+${balance - goalReward.cost} extra)`}
-                    </Text>
-                    <View style={commonSharedStyles.progressBarBackground}>
-                      <View
-                        style={[
-                          commonSharedStyles.progressBarFill,
-                          {
-                            width: `${clampedProgress}%`,
-                            backgroundColor: goalMet ? colors.success : colors.gold,
-                          },
-                        ]}
-                      />
-                    </View>
-                  </View>
-                ) : (
-                  <View
-                    style={[
-                      commonSharedStyles.baseItem,
-                      commonSharedStyles.baseRow,
-                      commonSharedStyles.justifySpaceBetween,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        commonSharedStyles.baseSubTitleText,
-                        commonSharedStyles.baseSelfAlignCenter,
-                      ]}
-                    >
-                      No goal set yet.
-                    </Text>
-                    <Button
-                      title="Set a Goal"
-                      onPress={handleSetGoalPress}
-                      color={colors.primary}
-                    />
-                  </View>
-                ))}
+
+              <GoalTracker
+                balance={balance}
+                goalReward={goalReward}
+                isLoading={rewardsLoading}
+                onSetGoalPress={handleSetGoalPress}
+              />
+
+              <Text
+                style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}
+              >
+                My Practice Streak
+              </Text>
+
+              <PracticeStreakTracker />
+
               <View style={commonSharedStyles.baseMarginTopBottom}>
                 <Text style={[commonSharedStyles.baseTitleText, { marginBottom: 5 }]}>
-                  Tasks ({totalTasksCount})
+                  My Tasks ({totalTasksCount})
                 </Text>
                 {totalTasksCount > 0 ? (
                   <View style={commonSharedStyles.baseRow}>

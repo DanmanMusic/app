@@ -1,7 +1,7 @@
 // src/components/admin/AdminParentDetailView.tsx
 import React, { useMemo, useState } from 'react';
 
-import { View, Text, Button, ActivityIndicator, FlatList, ScrollView, Image } from 'react-native';
+import { View, Text, Button, ActivityIndicator, FlatList, ScrollView } from 'react-native';
 
 import { useQuery, useQueries, useQueryClient, useMutation } from '@tanstack/react-query';
 
@@ -124,7 +124,6 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
     [parent]
   );
   const isParentActive = useMemo(() => parent?.status === 'active', [parent]);
-  const avatarSource = useMemo(() => getUserAvatarSource(parent), [parent]);
 
   const showPinButton = useMemo(() => {
     if (!onInitiatePinGeneration || !isParentActive || isLoadingParentAuth) return false;
@@ -203,19 +202,6 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
           >
             Parent Details
           </Text>
-        </View>
-
-        <View style={{ alignItems: 'center', marginBottom: 15 }}>
-          {avatarSource ? (
-            <Image source={avatarSource} style={commonSharedStyles.detailAvatar} />
-          ) : (
-            <View style={[commonSharedStyles.detailAvatar, commonSharedStyles.avatarPlaceholder]}>
-              <Text style={commonSharedStyles.avatarPlaceholderTextLarge}>
-                {parent.firstName?.charAt(0)}
-                {parent.lastName?.charAt(0)}
-              </Text>
-            </View>
-          )}
         </View>
 
         <Text style={commonSharedStyles.baseSecondaryText}>

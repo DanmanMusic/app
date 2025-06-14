@@ -1,3 +1,5 @@
+// src/utils/helpers.ts
+
 import { ImageSourcePropType, Platform } from 'react-native';
 
 import * as FileSystem from 'expo-file-system';
@@ -17,13 +19,11 @@ export interface NativeFileObject {
 
 export const getUserDisplayName = (
   userOrProfile:
-    | Pick<User, 'firstName' | 'lastName' | 'nickname' | 'avatarPath'>
+    | Pick<User, 'firstName' | 'lastName' | 'nickname'>
     | {
-        // MODIFIED: Add avatar_path to make the type compatible with our new query result
         first_name?: string | null;
         last_name?: string | null;
         nickname?: string | null;
-        avatar_path?: string | null;
       }
     | undefined
     | null
@@ -32,7 +32,6 @@ export const getUserDisplayName = (
     return 'Unknown User';
   }
 
-  // The logic inside the function doesn't need to change at all.
   const firstName =
     'firstName' in userOrProfile ? userOrProfile.firstName : userOrProfile.first_name;
   const lastName = 'lastName' in userOrProfile ? userOrProfile.lastName : userOrProfile.last_name;
@@ -187,12 +186,10 @@ export const fileToBase64 = (file: File | NativeFileObject): Promise<string> => 
       } else {
         if (typeof file === 'object' && file && 'uri' in file && typeof file.uri === 'string') {
           const nativeFile = file as NativeFileObject;
-          console.log(`[fileToBase64 Native] Reading file from URI: ${nativeFile.uri}`);
           try {
             const base64 = await FileSystem.readAsStringAsync(nativeFile.uri, {
               encoding: FileSystem.EncodingType.Base64,
             });
-            console.log(`[fileToBase64 Native] Read successful, base64 length: ${base64.length}`);
             resolve(base64);
           } catch (fsError: any) {
             console.error(
@@ -213,32 +210,19 @@ export const fileToBase64 = (file: File | NativeFileObject): Promise<string> => 
   });
 };
 
-export const getAvatarUrl = async (
-  avatarPath: string | null | undefined
-): Promise<string | null> => {
-  if (!avatarPath) {
+export const getUserAvatarSource = async (
+  user: Partial<User> | null | undefined
+): Promise<{ uri: string } | null> => {
+  if (!user?.avatarPath) {
     return null;
   }
-  const supabase = getSupabase();
 
-  // THIS IS THE FIX: We must 'await' the result of the async operation.
-  const { data, error } = await supabase.storage.from('avatars').createSignedUrl(avatarPath, 60); // 60 seconds validity
+  const client = getSupabase();
+  const { data, error } = await client.storage.from('avatars').createSignedUrl(user.avatarPath, 60);
 
   if (error) {
     console.error('Error creating signed URL for avatar:', error.message);
     return null;
   }
-
-  return data.signedUrl;
-};
-
-export const getUserAvatarSource = async (
-  user: User | null | undefined
-): Promise<{ uri: string } | null> => {
-  if (!user?.avatarPath) {
-    return null;
-  }
-  // Await the URL from the helper
-  const url = await getAvatarUrl(user.avatarPath);
-  return url ? { uri: url } : null;
+  return { uri: data.signedUrl };
 };

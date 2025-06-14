@@ -303,7 +303,7 @@ export const deleteReward = async (rewardId: string): Promise<void> => {
       .maybeSingle();
     if (rewardData?.image_path) imagePathToDelete = rewardData.image_path;
   } catch (e) {
-    /* ignore */
+    console.log('delete reward error:', e);
   }
 
   const { error: deleteDbError } = await client.from('rewards').delete().eq('id', rewardId);

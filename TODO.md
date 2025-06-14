@@ -37,9 +37,9 @@ This plan outlines the major features and architectural changes for Version 2.
   - [x] **Schema:** Add `can_self_assign` boolean to `task_library` table.
   - [x] **Schema:** Create `journey_locations` table and add `journey_location_id` FK to `task_library`.
 - **[x] Client-Side API Alignment:**
-    - [x] **Types:** Update all TypeScript types in `dataTypes.ts` to match the V2 schema.
-    - [x] **API Layer:** Refactor all functions in `src/api/*.ts` to align with V2 schema and Edge Function payloads.
-    - [x] **API Layer:** Create new `src/api/journey.ts` for managing journey locations.
+  - [x] **Types:** Update all TypeScript types in `dataTypes.ts` to match the V2 schema.
+  - [x] **API Layer:** Refactor all functions in `src/api/*.ts` to align with V2 schema and Edge Function payloads.
+  - [x] **API Layer:** Create new `src/api/journey.ts` for managing journey locations.
 
 ### Phase 6: Core Engagement Features (Frontend Implementation)
 
@@ -49,12 +49,14 @@ This plan outlines the major features and architectural changes for Version 2.
   - [x] **UI:** Display avatars in list views (`AdminUserItem.tsx`, `AdminStudentItem.tsx`).
   - [x] **UI:** Display avatars in detail views (`AdminAdminDetailView.tsx`, `AdminTeacherDetailView.tsx`, `AdminParentDetailView.tsx`, `StudentDetailView.tsx`).
 - **[x] Feature: Journey Locations & Self-Assignable Tasks (Admin Side):**
+
   - [x] **UI:** Add "Journey" section to `AdminView`.
   - [x] **UI:** Create `AdminJourneySection.tsx` component for CRUD management.
   - [x] **UI:** Create `CreateJourneyLocationModal.tsx` and `EditJourneyLocationModal.tsx`.
   - [x] **UI:** Integrate Journey Location picker into `CreateTaskLibraryModal.tsx` and `EditTaskLibraryModal.tsx` when "self-assign" is enabled.
 
 - **[ ] Feature: Student-Facing UI & New Features:**
+
   - [ ] **Practice Streaks:**
     - [ ] Create `log-practice-and-check-streak` Edge Function.
     - [ ] Create `get_student_streak` RPC function.
