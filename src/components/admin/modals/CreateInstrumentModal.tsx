@@ -1,3 +1,4 @@
+// src/components/admin/modals/CreateInstrumentModal.tsx
 import React, { useState, useEffect } from 'react';
 
 import {
@@ -18,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import Toast from 'react-native-toast-message';
 
 import { createInstrument } from '../../../api/instruments';
+import { useAuth } from '../../../contexts/AuthContext';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { CreateInstrumentModalProps } from '../../../types/componentProps';
@@ -27,6 +29,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [mimeType, setMimeType] = useState<string | undefined>(undefined);
   const queryClient = useQueryClient();
+  const { appUser } = useAuth();
 
   const mutation = useMutation({
     mutationFn: createInstrument,
@@ -80,15 +83,10 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
         quality: 0.8,
       });
 
-      console.log('ImagePicker Result:', result);
-
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const selectedAsset = result.assets[0];
         setImageUri(selectedAsset.uri);
         setMimeType(selectedAsset.mimeType);
-        console.log('Selected Image URI:', selectedAsset.uri, 'MIME Type:', selectedAsset.mimeType);
-      } else {
-        console.log('Image picking cancelled or failed.');
       }
     } catch (error) {
       console.error('Error picking image: ', error);
@@ -109,10 +107,20 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
       return;
     }
 
+    if (!appUser?.companyId) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Could not determine company. Please re-login.',
+      });
+      return;
+    }
+
     const instrumentData = {
       name: trimmedName,
       imageUri: imageUri,
       mimeType: mimeType,
+      companyId: appUser.companyId,
     };
 
     mutation.mutate(instrumentData);

@@ -1,3 +1,4 @@
+// src/api/instruments.ts
 import { Platform } from 'react-native';
 
 import { decode } from 'base64-arraybuffer';
@@ -10,13 +11,17 @@ import { Instrument } from '../types/dataTypes';
 const INSTRUMENT_ICONS_BUCKET = 'instrument-icons';
 
 const uploadInstrumentIcon = async (
+  companyId: string,
+  instrumentName: string,
   imageUri: string,
   mimeType?: string
 ): Promise<string | null> => {
   const client = getSupabase();
   try {
-    const fileExt = mimeType ? mimeType.split('/')[1] : 'jpg';
-    const filePath = `public/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const fileExt = mimeType ? mimeType.split('/')[1] || 'jpg' : 'jpg';
+    const safeName = instrumentName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    // FIX: Removed the "public/" prefix. The path should be relative to the bucket root.
+    const filePath = `${companyId}/${safeName}.${fileExt}`;
 
     console.log(
       `[Supabase Storage] Uploading to bucket '${INSTRUMENT_ICONS_BUCKET}' at path: ${filePath}`
@@ -32,14 +37,9 @@ const uploadInstrumentIcon = async (
       }
       const imageBlob = await response.blob();
       const effectiveMimeType = mimeType || imageBlob.type || 'image/jpeg';
-
-      console.log(
-        `[Supabase Storage] Uploading Blob (Web). Size: ${imageBlob.size}, Type: ${effectiveMimeType}`
-      );
-
       const { data, error } = await client.storage
         .from(INSTRUMENT_ICONS_BUCKET)
-        .upload(filePath, imageBlob, { contentType: effectiveMimeType, upsert: false });
+        .upload(filePath, imageBlob, { contentType: effectiveMimeType, upsert: true });
       uploadData = data;
       uploadError = error;
     } else {
@@ -47,12 +47,9 @@ const uploadInstrumentIcon = async (
         encoding: FileSystem.EncodingType.Base64,
       });
       const effectiveMimeType = mimeType || 'image/jpeg';
-
-      console.log(`[Supabase Storage] Uploading ArrayBuffer (Native). Type: ${effectiveMimeType}`);
-
       const { data, error } = await client.storage
         .from(INSTRUMENT_ICONS_BUCKET)
-        .upload(filePath, decode(base64), { contentType: effectiveMimeType, upsert: false });
+        .upload(filePath, decode(base64), { contentType: effectiveMimeType, upsert: true });
       uploadData = data;
       uploadError = error;
     }
@@ -63,7 +60,6 @@ const uploadInstrumentIcon = async (
     }
 
     console.log('[Supabase Storage] Upload successful:', uploadData);
-
     return uploadData?.path ?? null;
   } catch (e) {
     console.error('[Supabase Storage] Exception during upload:', e);
@@ -79,17 +75,16 @@ const deleteInstrumentIcon = async (imagePath: string | null): Promise<void> => 
   if (!imagePath) return;
   const client = getSupabase();
   try {
-    const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
-    console.log(`[Supabase Storage] Attempting to delete icon from Storage: ${cleanPath}`);
-    const { error } = await client.storage.from(INSTRUMENT_ICONS_BUCKET).remove([cleanPath]);
+    // FIX: The path from the database is now correct and doesn't need slicing.
+    const { error } = await client.storage.from(INSTRUMENT_ICONS_BUCKET).remove([imagePath]);
     if (error) {
       console.warn(
-        `[Supabase Storage] Failed to delete instrument icon '${cleanPath}' from Storage:`,
+        `[Supabase Storage] Failed to delete instrument icon '${imagePath}' from Storage:`,
         error.message
       );
     } else {
       console.log(
-        `[Supabase Storage] Successfully deleted instrument icon '${cleanPath}' from Storage.`
+        `[Supabase Storage] Successfully deleted instrument icon '${imagePath}' from Storage.`
       );
     }
   } catch (e) {
@@ -128,22 +123,34 @@ export const createInstrument = async ({
   name,
   imageUri,
   mimeType,
+  companyId,
 }: {
   name: string;
   imageUri?: string | null;
   mimeType?: string;
+  companyId: string;
 }): Promise<Instrument> => {
   const client = getSupabase();
   console.log('[Supabase] Creating instrument:', name);
-  const instrumentToInsert: { name: string; image_path?: string | null } = {
+  const instrumentToInsert: {
+    name: string;
+    image_path?: string | null;
+    company_id: string;
+  } = {
     name: name.trim(),
+    company_id: companyId,
   };
   if (!instrumentToInsert.name) {
     throw new Error('Instrument name cannot be empty.');
   }
 
   if (imageUri) {
-    instrumentToInsert.image_path = await uploadInstrumentIcon(imageUri, mimeType);
+    instrumentToInsert.image_path = await uploadInstrumentIcon(
+      companyId,
+      instrumentToInsert.name,
+      imageUri,
+      mimeType
+    );
   }
 
   const { data, error } = await client
@@ -151,6 +158,7 @@ export const createInstrument = async ({
     .insert(instrumentToInsert)
     .select('id, name, image_path')
     .single();
+
   if (error || !data) {
     console.error(`[Supabase] Error creating instrument:`, error?.message);
     if (instrumentToInsert.image_path) {
@@ -161,6 +169,7 @@ export const createInstrument = async ({
     }
     throw new Error(`Failed to create instrument: ${error?.message || 'No data returned'}`);
   }
+
   const createdInstrument: Instrument = {
     id: data.id,
     name: data.name,
@@ -195,19 +204,16 @@ export const updateInstrument = async ({
 
   const { data: currentData, error: currentFetchError } = await client
     .from('instruments')
-    .select('name, image_path')
+    .select('name, image_path, company_id')
     .eq('id', instrumentId)
     .single();
 
-  if (currentFetchError) {
-    console.error(
-      `[Supabase] Failed to fetch current instrument ${instrumentId} before update`,
-      currentFetchError
-    );
+  if (currentFetchError || !currentData) {
     throw new Error('Failed to fetch current instrument data before update.');
   }
 
   const oldImagePath = currentData.image_path;
+  const companyId = currentData.company_id;
 
   if (updates.name && updates.name.trim()) {
     if (updates.name.trim() !== currentData.name) {
@@ -225,19 +231,16 @@ export const updateInstrument = async ({
   let newImagePath: string | null | undefined = undefined;
 
   if (imageNeedsProcessing) {
+    const nameForPath = updatePayload.name || currentData.name;
     if (imageUri) {
-      console.log(`[Supabase] New image provided for instrument ${instrumentId}. Uploading...`);
-      newImagePath = await uploadInstrumentIcon(imageUri, mimeType);
+      newImagePath = await uploadInstrumentIcon(companyId, nameForPath, imageUri, mimeType);
       updatePayload.image_path = newImagePath;
-
-      if (oldImagePath && newImagePath !== oldImagePath) {
-        console.log(`[Supabase] Deleting old image: ${oldImagePath}`);
-        await deleteInstrumentIcon(oldImagePath);
-      }
-    } else if (imageUri === null && oldImagePath) {
-      console.log(`[Supabase] Request to remove image for instrument ${instrumentId}.`);
+    } else if (imageUri === null) {
       updatePayload.image_path = null;
       newImagePath = null;
+    }
+
+    if (oldImagePath && newImagePath !== oldImagePath) {
       await deleteInstrumentIcon(oldImagePath);
     }
   }
@@ -246,16 +249,13 @@ export const updateInstrument = async ({
     nameChanged || (imageNeedsProcessing && updatePayload.image_path !== undefined);
 
   if (!requiresDbUpdate) {
-    console.warn('[Supabase] updateInstrument called with no valid changes to apply.');
-
     return {
       id: instrumentId,
       name: currentData.name,
       image_path: currentData.image_path,
-    } as Instrument;
+    };
   }
 
-  console.log(`[Supabase] Performing DB update for ${instrumentId} with payload:`, updatePayload);
   const { data, error } = await client
     .from('instruments')
     .update(updatePayload)
@@ -264,12 +264,7 @@ export const updateInstrument = async ({
     .single();
 
   if (error || !data) {
-    console.error(`[Supabase] Error updating instrument ${instrumentId} in DB:`, error?.message);
-
     if (typeof newImagePath === 'string') {
-      console.warn(
-        `[Supabase] DB update failed for ${instrumentId}, attempting to clean up newly uploaded image: ${newImagePath}`
-      );
       await deleteInstrumentIcon(newImagePath);
     }
     throw new Error(
@@ -282,7 +277,6 @@ export const updateInstrument = async ({
     name: data.name,
     image_path: data.image_path,
   };
-  console.log(`[Supabase] Instrument ${instrumentId} updated successfully in DB`);
   return updatedInstrument;
 };
 
@@ -292,33 +286,21 @@ export const deleteInstrument = async (instrumentId: string): Promise<void> => {
 
   let imagePathToDelete: string | null = null;
   try {
-    const { data: instrumentData, error: fetchError } = await client
+    const { data: instrumentData } = await client
       .from('instruments')
       .select('image_path')
       .eq('id', instrumentId)
       .maybeSingle();
-
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      console.warn(
-        `[Supabase] Could not fetch image_path before deleting instrument ${instrumentId}:`,
-        fetchError.message
-      );
-    } else if (instrumentData?.image_path) {
+    if (instrumentData?.image_path) {
       imagePathToDelete = instrumentData.image_path;
-      console.log(`[Supabase] Found image path to delete: ${imagePathToDelete}`);
     }
   } catch (e) {
-    console.warn(`[Supabase] Error fetching image_path before delete:`, e);
+    /* ignore */
   }
 
   const { error: deleteDbError } = await client.from('instruments').delete().eq('id', instrumentId);
 
   if (deleteDbError) {
-    console.error(
-      `[Supabase] Error deleting instrument ${instrumentId} from DB:`,
-      deleteDbError.message
-    );
-
     throw new Error(
       `Failed to delete instrument ${instrumentId} from database: ${deleteDbError.message}`
     );

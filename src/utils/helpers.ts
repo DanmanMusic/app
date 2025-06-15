@@ -94,34 +94,7 @@ export const getInstrumentIconSource = (
   if (publicUrl) {
     return { uri: publicUrl };
   }
-  if (!instrument?.name) {
-    return defaultIcon;
-  }
-  const imageName = instrument.name.toLowerCase().trim();
-  try {
-    switch (imageName) {
-      case 'piano':
-        return require('../../assets/instruments/piano.jpg');
-      case 'guitar':
-        return require('../../assets/instruments/guitar.jpg');
-      case 'drums':
-        return require('../../assets/instruments/drums.jpg');
-      case 'violin':
-        return require('../../assets/instruments/violin.jpg');
-      case 'voice':
-        return require('../../assets/instruments/voice.jpg');
-      case 'flute':
-        return require('../../assets/instruments/flute.jpg');
-      case 'bass':
-      case 'bass guitar':
-        return require('../../assets/instruments/bass.jpg');
-      default:
-        return defaultIcon;
-    }
-  } catch (error) {
-    console.error(`Error loading local fallback image for ${imageName}:`, error);
-    return defaultIcon;
-  }
+  return defaultIcon;
 };
 
 export const capitalizeFirstLetter = (string: string) => {
