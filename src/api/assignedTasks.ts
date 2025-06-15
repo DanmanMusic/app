@@ -133,7 +133,7 @@ export const fetchAssignedTasks = async ({
   teacherId?: string;
 }): Promise<AssignedTasksListResponse> => {
   const client = getSupabase();
-  
+
   const rpcParams = {
     p_page: page,
     p_limit: limit,
@@ -143,7 +143,10 @@ export const fetchAssignedTasks = async ({
     p_teacher_id: teacherId ?? undefined,
   };
 
-  const { data: rpcData, error: rpcError } = await client.rpc('get_assigned_tasks_filtered', rpcParams);
+  const { data: rpcData, error: rpcError } = await client.rpc(
+    'get_assigned_tasks_filtered',
+    rpcParams
+  );
 
   if (rpcError) {
     throw new Error(`Failed to fetch assigned tasks via RPC: ${rpcError.message}`);
@@ -157,43 +160,119 @@ export const fetchAssignedTasks = async ({
 };
 
 export const createAssignedTask = async (
-  assignmentData: Omit<AssignedTask, 'id' | 'assignedById' | 'assignedDate' | 'isComplete' | 'verificationStatus' | 'completedDate' | 'verifiedById' | 'verifiedDate' | 'actualPointsAwarded' | 'assignerName' | 'verifierName' | 'studentStatus'> & { file?: NativeFileObject | File; mimeType?: string; fileName?: string }
+  assignmentData: Omit<
+    AssignedTask,
+    | 'id'
+    | 'assignedById'
+    | 'assignedDate'
+    | 'isComplete'
+    | 'verificationStatus'
+    | 'completedDate'
+    | 'verifiedById'
+    | 'verifiedDate'
+    | 'actualPointsAwarded'
+    | 'assignerName'
+    | 'verifierName'
+    | 'studentStatus'
+  > & { file?: NativeFileObject | File; mimeType?: string; fileName?: string }
 ): Promise<AssignedTask> => {
-    // This function remains unchanged as it calls an Edge Function
-    const client = getSupabase();
-    const { file, mimeType: providedMimeType, fileName: providedFileName, ...restAssignmentData } = assignmentData;
-    const payload: { studentId: string; taskTitle: string; taskDescription: string; taskBasePoints: number; taskLinkUrl: string | null; taskAttachmentPath?: string | null; file?: { base64: string; mimeType: string; fileName: string; }; } = { studentId: restAssignmentData.studentId, taskTitle: restAssignmentData.taskTitle, taskDescription: restAssignmentData.taskDescription || '', taskBasePoints: restAssignmentData.taskBasePoints, taskLinkUrl: restAssignmentData.taskLinkUrl || null, taskAttachmentPath: undefined, };
-    if (!payload.studentId || !payload.taskTitle || payload.taskBasePoints == null || payload.taskBasePoints < 0) { throw new Error('Missing required fields for task assignment (studentId, title, basePoints).'); }
-    if (file) {
-        let finalMimeType = providedMimeType;
-        let finalFileName = providedFileName;
-        if (file && !finalMimeType && file instanceof File) finalMimeType = file.type; else if (file && !finalMimeType && typeof file === 'object' && 'mimeType' in file) finalMimeType = file.mimeType; else if (file && !finalMimeType && typeof file === 'object' && 'type' in file) finalMimeType = file.type;
-        if (file && !finalFileName && file instanceof File) finalFileName = file.name; else if (file && !finalFileName && typeof file === 'object' && 'name' in file) finalFileName = file.name;
-        if (file && !finalFileName) finalFileName = `upload.${finalMimeType?.split('/')[1] || 'bin'}`;
-        if (file && finalMimeType && finalFileName) { try { const base64 = await fileToBase64(file); payload.file = { base64, mimeType: finalMimeType, fileName: finalFileName }; } catch (error: any) { throw new Error(`Failed to process file: ${error.message}`); } }
-    } else if (restAssignmentData.taskAttachmentPath) {
-        payload.taskAttachmentPath = restAssignmentData.taskAttachmentPath;
-    } else {
-        payload.taskAttachmentPath = null;
+  // This function remains unchanged as it calls an Edge Function
+  const client = getSupabase();
+  const {
+    file,
+    mimeType: providedMimeType,
+    fileName: providedFileName,
+    ...restAssignmentData
+  } = assignmentData;
+  const payload: {
+    studentId: string;
+    taskTitle: string;
+    taskDescription: string;
+    taskBasePoints: number;
+    taskLinkUrl: string | null;
+    taskAttachmentPath?: string | null;
+    file?: { base64: string; mimeType: string; fileName: string };
+  } = {
+    studentId: restAssignmentData.studentId,
+    taskTitle: restAssignmentData.taskTitle,
+    taskDescription: restAssignmentData.taskDescription || '',
+    taskBasePoints: restAssignmentData.taskBasePoints,
+    taskLinkUrl: restAssignmentData.taskLinkUrl || null,
+    taskAttachmentPath: undefined,
+  };
+  if (
+    !payload.studentId ||
+    !payload.taskTitle ||
+    payload.taskBasePoints == null ||
+    payload.taskBasePoints < 0
+  ) {
+    throw new Error('Missing required fields for task assignment (studentId, title, basePoints).');
+  }
+  if (file) {
+    let finalMimeType = providedMimeType;
+    let finalFileName = providedFileName;
+    if (file && !finalMimeType && file instanceof File) finalMimeType = file.type;
+    else if (file && !finalMimeType && typeof file === 'object' && 'mimeType' in file)
+      finalMimeType = file.mimeType;
+    else if (file && !finalMimeType && typeof file === 'object' && 'type' in file)
+      finalMimeType = file.type;
+    if (file && !finalFileName && file instanceof File) finalFileName = file.name;
+    else if (file && !finalFileName && typeof file === 'object' && 'name' in file)
+      finalFileName = file.name;
+    if (file && !finalFileName) finalFileName = `upload.${finalMimeType?.split('/')[1] || 'bin'}`;
+    if (file && finalMimeType && finalFileName) {
+      try {
+        const base64 = await fileToBase64(file);
+        payload.file = { base64, mimeType: finalMimeType, fileName: finalFileName };
+      } catch (error: any) {
+        throw new Error(`Failed to process file: ${error.message}`);
+      }
     }
-    const { data, error } = await client.functions.invoke('assign-task', { body: payload, });
-    if (error) { let detailedError = error.message || 'Unknown function error'; if (error.context?.message) { detailedError += ` (Context: ${error.context.message})`; } throw new Error(`Task assignment failed: ${detailedError}`); }
-    if (!data || typeof data !== 'object' || !data.id) { throw new Error('Task assignment function returned invalid data format.'); }
-    return data as AssignedTask;
+  } else if (restAssignmentData.taskAttachmentPath) {
+    payload.taskAttachmentPath = restAssignmentData.taskAttachmentPath;
+  } else {
+    payload.taskAttachmentPath = null;
+  }
+  const { data, error } = await client.functions.invoke('assign-task', { body: payload });
+  if (error) {
+    let detailedError = error.message || 'Unknown function error';
+    if (error.context?.message) {
+      detailedError += ` (Context: ${error.context.message})`;
+    }
+    throw new Error(`Task assignment failed: ${detailedError}`);
+  }
+  if (!data || typeof data !== 'object' || !data.id) {
+    throw new Error('Task assignment function returned invalid data format.');
+  }
+  return data as AssignedTask;
 };
 
 export const deleteAssignedTask = async (assignmentId: string): Promise<void> => {
-    // This function remains unchanged as it calls an Edge Function
-    const client = getSupabase();
-    const payload = { assignmentId };
-    if (!payload.assignmentId) throw new Error('Assignment ID missing.');
-    const { error } = await client.functions.invoke('delete-assigned-task', { body: payload });
-    if (error) {
-        let detailedError = error.message || 'Unknown function error';
-        if (error.context && typeof error.context === 'object' && error.context !== null && 'error' in error.context) { detailedError = String((error.context as any).error) || detailedError; } else { try { const parsed = JSON.parse(error.message); if (parsed && parsed.error) detailedError = String(parsed.error); } catch (_e) {} }
-        if (error.context?.message) { detailedError += ` (Context: ${error.context.message})`; }
-        throw new Error(`Failed to delete assigned task: ${detailedError}`);
+  // This function remains unchanged as it calls an Edge Function
+  const client = getSupabase();
+  const payload = { assignmentId };
+  if (!payload.assignmentId) throw new Error('Assignment ID missing.');
+  const { error } = await client.functions.invoke('delete-assigned-task', { body: payload });
+  if (error) {
+    let detailedError = error.message || 'Unknown function error';
+    if (
+      error.context &&
+      typeof error.context === 'object' &&
+      error.context !== null &&
+      'error' in error.context
+    ) {
+      detailedError = String((error.context as any).error) || detailedError;
+    } else {
+      try {
+        const parsed = JSON.parse(error.message);
+        if (parsed && parsed.error) detailedError = String(parsed.error);
+      } catch (_e) {}
     }
+    if (error.context?.message) {
+      detailedError += ` (Context: ${error.context.message})`;
+    }
+    throw new Error(`Failed to delete assigned task: ${detailedError}`);
+  }
 };
 
 export const updateAssignedTask = async ({
@@ -243,7 +322,6 @@ export const updateAssignedTask = async ({
       throw new Error(`Task verification failed: ${error.message || 'Unknown function error'}`);
     }
     return refetchViaRpc(assignmentId);
-
   } else if (updates.isComplete === true) {
     const updatePayload = {
       is_complete: true,
@@ -257,7 +335,6 @@ export const updateAssignedTask = async ({
     if (updateError) throw new Error(`Failed to mark task complete: ${updateError.message}`);
 
     return refetchViaRpc(assignmentId);
-
   } else if (updates.isComplete === false) {
     const updatePayload = {
       is_complete: false,

@@ -189,7 +189,10 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
       const profileQueryKey = ['userProfile', targetStudentId];
       const previousUserData = queryClient.getQueryData<User | null>(profileQueryKey);
       if (previousUserData) {
-        const updatedUserData: User = { ...previousUserData, current_goal_reward_id: updatedProfileSubset.current_goal_reward_id };
+        const updatedUserData: User = {
+          ...previousUserData,
+          current_goal_reward_id: updatedProfileSubset.current_goal_reward_id,
+        };
         queryClient.setQueryData(profileQueryKey, updatedUserData);
       } else {
         queryClient.invalidateQueries({ queryKey: profileQueryKey });
@@ -199,23 +202,53 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     },
     onError: (error: Error) => {
       console.error('[StudentView] Error updating goal:', error);
-      Toast.show({ type: 'error', text1: 'Update Failed', text2: error.message || 'Could not update goal.', position: 'bottom' });
+      Toast.show({
+        type: 'error',
+        text1: 'Update Failed',
+        text2: error.message || 'Could not update goal.',
+        position: 'bottom',
+      });
       setIsSetGoalModalVisible(false);
     },
   });
-  
+
   const handleCloseEditInfoModal = () => setIsEditInfoModalVisible(false);
   const studentGoalRewardId = useMemo(() => user?.current_goal_reward_id, [user]);
-  const goalReward = useMemo(() => rewardsCatalog.find(reward => reward.id === studentGoalRewardId), [rewardsCatalog, studentGoalRewardId]);
+  const goalReward = useMemo(
+    () => rewardsCatalog.find(reward => reward.id === studentGoalRewardId),
+    [rewardsCatalog, studentGoalRewardId]
+  );
   const studentAnnouncements = useMemo(() => [...allAnnouncements], [allAnnouncements]);
-  const canMarkComplete = useMemo(() => loggedInUserId === targetStudentId || currentUserRole === 'parent', [loggedInUserId, targetStudentId, currentUserRole]);
+  const canMarkComplete = useMemo(
+    () => loggedInUserId === targetStudentId || currentUserRole === 'parent',
+    [loggedInUserId, targetStudentId, currentUserRole]
+  );
   const handleSetGoalPress = () => setIsSetGoalModalVisible(true);
-  const handleGoalSelected = (newGoalId: string | null) => { if (!targetStudentId) { Toast.show({ type: 'error', text1: 'Error', text2: 'Student ID not found.', position: 'bottom' }); return; } if (updateGoalMutation.isPending) return; updateGoalMutation.mutate({ studentId: targetStudentId, rewardId: newGoalId }); };
-  const handleMarkTaskComplete = (assignmentId: string) => { if (!markCompleteMutation.isPending) { markCompleteMutation.mutate(assignmentId); } };
+  const handleGoalSelected = (newGoalId: string | null) => {
+    if (!targetStudentId) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Student ID not found.',
+        position: 'bottom',
+      });
+      return;
+    }
+    if (updateGoalMutation.isPending) return;
+    updateGoalMutation.mutate({ studentId: targetStudentId, rewardId: newGoalId });
+  };
+  const handleMarkTaskComplete = (assignmentId: string) => {
+    if (!markCompleteMutation.isPending) {
+      markCompleteMutation.mutate(assignmentId);
+    }
+  };
 
   const filteredTasksForDisplay = useMemo(() => {
     return paginatedTasks.filter(task => {
-      const isVerified = task.verificationStatus === 'verified' || task.verificationStatus === 'partial' || task.verificationStatus === 'incomplete';
+      const isVerified =
+        task.verificationStatus === 'verified' ||
+        task.verificationStatus === 'partial' ||
+        task.verificationStatus === 'incomplete';
       return !isVerified;
     });
   }, [paginatedTasks]);
@@ -223,16 +256,46 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
   const isLoadingCore = userLoading || instrumentsLoading;
 
   if (isLoadingCore) {
-    return <SafeAreaView style={commonSharedStyles.flex1}><View style={commonSharedStyles.baseCentered}><ActivityIndicator size="large" color={colors.primary} /><Text style={commonSharedStyles.baseSecondaryText}>Loading Student Data...</Text></View></SafeAreaView>;
+    return (
+      <SafeAreaView style={commonSharedStyles.flex1}>
+        <View style={commonSharedStyles.baseCentered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={commonSharedStyles.baseSecondaryText}>Loading Student Data...</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
   if (userError || !user) {
-    return <SafeAreaView style={commonSharedStyles.flex1}><View style={commonSharedStyles.baseCentered}><Text style={[commonSharedStyles.errorText, commonSharedStyles.textCenter]}>Error loading student data: {userErrorMsg?.message || 'Student not found.'}</Text></View></SafeAreaView>;
+    return (
+      <SafeAreaView style={commonSharedStyles.flex1}>
+        <View style={commonSharedStyles.baseCentered}>
+          <Text style={[commonSharedStyles.errorText, commonSharedStyles.textCenter]}>
+            Error loading student data: {userErrorMsg?.message || 'Student not found.'}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
   }
   if (user.role !== 'student') {
-    return <SafeAreaView style={commonSharedStyles.flex1}><View style={commonSharedStyles.baseCentered}><Text style={commonSharedStyles.errorText}>Error: User is not a student.</Text></View></SafeAreaView>;
+    return (
+      <SafeAreaView style={commonSharedStyles.flex1}>
+        <View style={commonSharedStyles.baseCentered}>
+          <Text style={commonSharedStyles.errorText}>Error: User is not a student.</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
   if (user.status === 'inactive') {
-    return <SafeAreaView style={commonSharedStyles.flex1}><View style={commonSharedStyles.baseCentered}><Text style={commonSharedStyles.baseHeaderText}>Account Inactive</Text><Text style={commonSharedStyles.textCenter}>This student account is currently inactive.</Text></View></SafeAreaView>;
+    return (
+      <SafeAreaView style={commonSharedStyles.flex1}>
+        <View style={commonSharedStyles.baseCentered}>
+          <Text style={commonSharedStyles.baseHeaderText}>Account Inactive</Text>
+          <Text style={commonSharedStyles.textCenter}>
+            This student account is currently inactive.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -240,7 +303,13 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
       <NotificationManager />
       <View style={[commonSharedStyles.flex1, commonSharedStyles.baseMargin]}>
         {!studentIdToView && (
-          <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseAlignCenter, commonSharedStyles.justifySpaceBetween]}>
+          <View
+            style={[
+              commonSharedStyles.baseRow,
+              commonSharedStyles.baseAlignCenter,
+              commonSharedStyles.justifySpaceBetween,
+            ]}
+          >
             <SharedHeader
               onSetLoginPress={() => setIsSetCredentialsModalVisible(true)}
               onEditInfoPress={() => setIsEditInfoModalVisible(true)}
@@ -250,60 +319,145 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
 
         <View style={commonSharedStyles.baseMarginTopBottom}>
           {balanceLoading ? (
-            <Text style={[commonSharedStyles.baseTitleText, { color: colors.gold }]}>Loading balance...</Text>
+            <Text style={[commonSharedStyles.baseTitleText, { color: colors.gold }]}>
+              Loading balance...
+            </Text>
           ) : balanceError ? (
-            <Text style={[commonSharedStyles.errorText]}>Error loading balance: {balanceErrorMsg?.message}</Text>
+            <Text style={[commonSharedStyles.errorText]}>
+              Error loading balance: {balanceErrorMsg?.message}
+            </Text>
           ) : (
-            <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap, { marginBottom: 2 }, commonSharedStyles.baseAlignCenter]}>
+            <View
+              style={[
+                commonSharedStyles.baseRow,
+                commonSharedStyles.baseGap,
+                { marginBottom: 2 },
+                commonSharedStyles.baseAlignCenter,
+              ]}
+            >
               <Text style={commonSharedStyles.baseTitleText}>Balance:</Text>
-              <Text style={[commonSharedStyles.baseTitleText, { fontSize: 22, color: colors.gold }]}>{balance} Tickets</Text>
+              <Text
+                style={[commonSharedStyles.baseTitleText, { fontSize: 22, color: colors.gold }]}
+              >
+                {balance} Tickets
+              </Text>
             </View>
           )}
-          <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap, { marginBottom: 2 }]}>
+          <View
+            style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap, { marginBottom: 2 }]}
+          >
             <Text style={commonSharedStyles.baseTitleText}>Instrument(s):</Text>
-            <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.bold]}>{instrumentsError ? 'Error' : getInstrumentNames(user.instrumentIds, instruments)}</Text>
+            <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.bold]}>
+              {instrumentsError ? 'Error' : getInstrumentNames(user.instrumentIds, instruments)}
+            </Text>
           </View>
-          <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap, { marginBottom: 2 }]}>
+          <View
+            style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap, { marginBottom: 2 }]}
+          >
             <Text style={commonSharedStyles.baseTitleText}>Teacher(s):</Text>
-            <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.bold]}>{teachersLoading ? 'Loading...' : teacherNames}</Text>
+            <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.bold]}>
+              {teachersLoading ? 'Loading...' : teacherNames}
+            </Text>
           </View>
         </View>
 
-        <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap, commonSharedStyles.baseMarginTopBottom, commonSharedStyles.justifyCenter]}>
-          <Button title="Dashboard" onPress={() => setActiveTab('dashboard')} color={activeTab === 'dashboard' ? colors.primary : colors.secondary} />
-          <Button title="Rewards" onPress={() => setActiveTab('rewards')} color={activeTab === 'rewards' ? colors.primary : colors.secondary} />
-          <Button title="Announcements" onPress={() => setActiveTab('announcements')} color={activeTab === 'announcements' ? colors.primary : colors.secondary} />
+        <View
+          style={[
+            commonSharedStyles.baseRow,
+            commonSharedStyles.baseGap,
+            commonSharedStyles.baseMarginTopBottom,
+            commonSharedStyles.justifyCenter,
+          ]}
+        >
+          <Button
+            title="Dashboard"
+            onPress={() => setActiveTab('dashboard')}
+            color={activeTab === 'dashboard' ? colors.primary : colors.secondary}
+          />
+          <Button
+            title="Rewards"
+            onPress={() => setActiveTab('rewards')}
+            color={activeTab === 'rewards' ? colors.primary : colors.secondary}
+          />
+          <Button
+            title="Announcements"
+            onPress={() => setActiveTab('announcements')}
+            color={activeTab === 'announcements' ? colors.primary : colors.secondary}
+          />
         </View>
 
         <View style={commonSharedStyles.flex1}>
           {activeTab === 'dashboard' && (
             <ScrollView>
-              <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>My Goal</Text>
-              <GoalTracker balance={balance} goalReward={goalReward} isLoading={rewardsLoading} onSetGoalPress={handleSetGoalPress} />
-              <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>My Practice Streak</Text>
+              <Text
+                style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}
+              >
+                My Goal
+              </Text>
+              <GoalTracker
+                balance={balance}
+                goalReward={goalReward}
+                isLoading={rewardsLoading}
+                onSetGoalPress={handleSetGoalPress}
+              />
+              <Text
+                style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}
+              >
+                My Practice Streak
+              </Text>
               <PracticeStreakTracker />
               <View style={commonSharedStyles.baseMarginTopBottom}>
-                <Text style={[commonSharedStyles.baseTitleText, { marginBottom: 5 }]}>My Tasks ({filteredTasksForDisplay.length})</Text>
+                <Text style={[commonSharedStyles.baseTitleText, { marginBottom: 5 }]}>
+                  My Tasks ({filteredTasksForDisplay.length})
+                </Text>
                 {filteredTasksForDisplay.length > 0 ? (
                   <View style={commonSharedStyles.baseRow}>
-                    <Button title="View My Tasks" onPress={() => setActiveTab('tasks')} color={colors.success} />
+                    <Button
+                      title="View My Tasks"
+                      onPress={() => setActiveTab('tasks')}
+                      color={colors.success}
+                    />
                   </View>
                 ) : (
                   <Text style={commonSharedStyles.baseEmptyText}>No active tasks.</Text>
                 )}
               </View>
-              <Text style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}>Recent History ({totalHistoryCount})</Text>
-              {historyLoading ? <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} /> : historyError ? <Text style={commonSharedStyles.errorText}>Error loading history: {historyErrorObject?.message}</Text> : (
+              <Text
+                style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}
+              >
+                Recent History ({totalHistoryCount})
+              </Text>
+              {historyLoading ? (
+                <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+              ) : historyError ? (
+                <Text style={commonSharedStyles.errorText}>
+                  Error loading history: {historyErrorObject?.message}
+                </Text>
+              ) : (
                 <FlatList
                   data={paginatedHistory}
                   keyExtractor={item => `history-${item.id}`}
                   renderItem={({ item }) => <TicketHistoryItem item={item} />}
                   ItemSeparatorComponent={() => <View style={{ height: 5 }} />}
-                  ListEmptyComponent={() => <Text style={commonSharedStyles.baseEmptyText}>No history yet.</Text>}
+                  ListEmptyComponent={() => (
+                    <Text style={commonSharedStyles.baseEmptyText}>No history yet.</Text>
+                  )}
                   scrollEnabled={false}
                   contentContainerStyle={{ paddingBottom: 5 }}
-                  ListHeaderComponent={historyFetching ? <ActivityIndicator size="small" color={colors.secondary} /> : null}
-                  ListFooterComponent={historyTotalPages > 1 ? <PaginationControls currentPage={historyCurrentPage} totalPages={historyTotalPages} onPageChange={setHistoryPage} /> : null}
+                  ListHeaderComponent={
+                    historyFetching ? (
+                      <ActivityIndicator size="small" color={colors.secondary} />
+                    ) : null
+                  }
+                  ListFooterComponent={
+                    historyTotalPages > 1 ? (
+                      <PaginationControls
+                        currentPage={historyCurrentPage}
+                        totalPages={historyTotalPages}
+                        onPageChange={setHistoryPage}
+                      />
+                    ) : null
+                  }
                 />
               )}
               <View style={{ height: 30 }} />
@@ -312,7 +466,13 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
 
           {activeTab === 'tasks' && (
             <>
-              {tasksLoading ? <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} /> : tasksError ? <Text style={commonSharedStyles.errorText}>Error loading tasks: {tasksErrorObject?.message}</Text> : (
+              {tasksLoading ? (
+                <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+              ) : tasksError ? (
+                <Text style={commonSharedStyles.errorText}>
+                  Error loading tasks: {tasksErrorObject?.message}
+                </Text>
+              ) : (
                 <FlatList
                   data={filteredTasksForDisplay}
                   keyExtractor={item => `task-${item.id}`}
@@ -321,13 +481,31 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                       task={item}
                       onMarkComplete={handleMarkTaskComplete}
                       canMark={canMarkComplete}
-                      isLoading={markCompleteMutation.isPending && markCompleteMutation.variables === item.id}
+                      isLoading={
+                        markCompleteMutation.isPending && markCompleteMutation.variables === item.id
+                      }
                     />
                   )}
                   ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-                  ListEmptyComponent={() => <Text style={commonSharedStyles.baseEmptyText}>No active tasks assigned.</Text>}
-                  ListHeaderComponent={tasksFetching ? <ActivityIndicator size="small" color={colors.secondary} /> : null}
-                  ListFooterComponent={tasksTotalPages > 1 ? <PaginationControls currentPage={tasksCurrentPage} totalPages={tasksTotalPages} onPageChange={setTasksPage} /> : <View style={{ height: 20 }} />}
+                  ListEmptyComponent={() => (
+                    <Text style={commonSharedStyles.baseEmptyText}>No active tasks assigned.</Text>
+                  )}
+                  ListHeaderComponent={
+                    tasksFetching ? (
+                      <ActivityIndicator size="small" color={colors.secondary} />
+                    ) : null
+                  }
+                  ListFooterComponent={
+                    tasksTotalPages > 1 ? (
+                      <PaginationControls
+                        currentPage={tasksCurrentPage}
+                        totalPages={tasksTotalPages}
+                        onPageChange={setTasksPage}
+                      />
+                    ) : (
+                      <View style={{ height: 20 }} />
+                    )
+                  }
                   contentContainerStyle={{ paddingBottom: 5 }}
                 />
               )}
@@ -336,13 +514,27 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
 
           {activeTab === 'rewards' && (
             <>
-              {rewardsLoading ? <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} /> : rewardsError ? <Text style={[commonSharedStyles.errorText, commonSharedStyles.textCenter]}>Error loading rewards: {rewardsErrorMsg?.message}</Text> : (
+              {rewardsLoading ? (
+                <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+              ) : rewardsError ? (
+                <Text style={[commonSharedStyles.errorText, commonSharedStyles.textCenter]}>
+                  Error loading rewards: {rewardsErrorMsg?.message}
+                </Text>
+              ) : (
                 <FlatList
                   data={rewardsCatalog}
                   keyExtractor={item => `reward-${item.id}`}
-                  renderItem={({ item }) => <RewardItemStudent item={item} currentBalance={balance} isGoal={item.id === studentGoalRewardId} />}
+                  renderItem={({ item }) => (
+                    <RewardItemStudent
+                      item={item}
+                      currentBalance={balance}
+                      isGoal={item.id === studentGoalRewardId}
+                    />
+                  )}
                   ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-                  ListEmptyComponent={() => <Text style={commonSharedStyles.baseEmptyText}>No rewards found.</Text>}
+                  ListEmptyComponent={() => (
+                    <Text style={commonSharedStyles.baseEmptyText}>No rewards found.</Text>
+                  )}
                   contentContainerStyle={{ paddingBottom: 5 }}
                   ListFooterComponent={<View style={{ height: 20 }} />}
                 />
@@ -352,13 +544,25 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
 
           {activeTab === 'announcements' && (
             <>
-              {announcementsLoading ? <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} /> : announcementsError ? <Text style={[commonSharedStyles.errorText, commonSharedStyles.textCenter]}>Error loading announcements: {announcementsErrorMsg?.message}</Text> : (
+              {announcementsLoading ? (
+                <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+              ) : announcementsError ? (
+                <Text style={[commonSharedStyles.errorText, commonSharedStyles.textCenter]}>
+                  Error loading announcements: {announcementsErrorMsg?.message}
+                </Text>
+              ) : (
                 <FlatList
                   data={studentAnnouncements}
                   keyExtractor={item => `announcement-${item.id}`}
-                  renderItem={({ item }) => <View style={commonSharedStyles.baseItem}><AnnouncementListItem item={item} /></View>}
+                  renderItem={({ item }) => (
+                    <View style={commonSharedStyles.baseItem}>
+                      <AnnouncementListItem item={item} />
+                    </View>
+                  )}
                   ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-                  ListEmptyComponent={() => <Text style={commonSharedStyles.baseEmptyText}>No announcements found.</Text>}
+                  ListEmptyComponent={() => (
+                    <Text style={commonSharedStyles.baseEmptyText}>No announcements found.</Text>
+                  )}
                   contentContainerStyle={{ paddingBottom: 5 }}
                   ListFooterComponent={<View style={{ height: 20 }} />}
                 />
@@ -368,8 +572,17 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
         </View>
       </View>
       <EditMyInfoModal visible={isEditInfoModalVisible} onClose={handleCloseEditInfoModal} />
-      <SetEmailPasswordModal visible={isSetCredentialsModalVisible} onClose={() => setIsSetCredentialsModalVisible(false)} />
-      <SetGoalModal visible={isSetGoalModalVisible} onClose={() => setIsSetGoalModalVisible(false)} currentBalance={balance} currentGoalId={studentGoalRewardId ?? null} onSetGoal={handleGoalSelected} />
+      <SetEmailPasswordModal
+        visible={isSetCredentialsModalVisible}
+        onClose={() => setIsSetCredentialsModalVisible(false)}
+      />
+      <SetGoalModal
+        visible={isSetGoalModalVisible}
+        onClose={() => setIsSetGoalModalVisible(false)}
+        currentBalance={balance}
+        currentGoalId={studentGoalRewardId ?? null}
+        onSetGoal={handleGoalSelected}
+      />
     </SafeAreaView>
   );
 };

@@ -30,7 +30,10 @@ Deno.serve(async (req: Request) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) throw new Error('Authentication required.');
 
-    const { data: { user: callerUser }, error: userError } = await supabaseAdminClient.auth.getUser(authHeader.replace('Bearer ', ''));
+    const {
+      data: { user: callerUser },
+      error: userError,
+    } = await supabaseAdminClient.auth.getUser(authHeader.replace('Bearer ', ''));
     if (userError || !callerUser) throw new Error('Invalid or expired token.');
     const verifierId = callerUser.id;
 
@@ -56,7 +59,11 @@ Deno.serve(async (req: Request) => {
     if (payload.verificationStatus === 'incomplete' && payload.actualPointsAwarded !== 0) {
       throw new Error('Points must be 0 for incomplete status.');
     }
-    const { assignmentId: assignmentIdToVerify, verificationStatus: newStatus, actualPointsAwarded: pointsToAward } = payload;
+    const {
+      assignmentId: assignmentIdToVerify,
+      verificationStatus: newStatus,
+      actualPointsAwarded: pointsToAward,
+    } = payload;
 
     const { data: taskData, error: fetchError } = await supabaseAdminClient
       .from('assigned_tasks')
@@ -65,7 +72,8 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (fetchError) throw new Error('Assigned task not found.');
-    if (taskData.company_id !== verifierCompanyId) throw new Error('Permission denied: Cannot verify a task from another company.');
+    if (taskData.company_id !== verifierCompanyId)
+      throw new Error('Permission denied: Cannot verify a task from another company.');
     if (taskData.is_complete !== true || taskData.verification_status !== 'pending') {
       throw new Error('Task is not marked complete or is already verified/processed.');
     }
@@ -75,7 +83,11 @@ Deno.serve(async (req: Request) => {
     let userIsLinkedActiveTeacher = false;
     if (!userIsActiveAdmin) {
       if (await isActiveTeacher(supabaseAdminClient, verifierId)) {
-        userIsLinkedActiveTeacher = await isTeacherLinked(supabaseAdminClient, verifierId, studentId);
+        userIsLinkedActiveTeacher = await isTeacherLinked(
+          supabaseAdminClient,
+          verifierId,
+          studentId
+        );
       }
     }
 
@@ -116,7 +128,9 @@ Deno.serve(async (req: Request) => {
         .insert(transactionData);
 
       if (insertTransactionError) {
-        throw new Error(`Task status updated, but failed to award points: ${insertTransactionError.message}`);
+        throw new Error(
+          `Task status updated, but failed to award points: ${insertTransactionError.message}`
+        );
       }
     }
 
@@ -127,9 +141,11 @@ Deno.serve(async (req: Request) => {
   } catch (error) {
     console.error('Unhandled Verify Task Function Error:', error);
     // Be more specific with status codes based on common error types
-    const status = error.message.includes('Permission denied') ? 403 
-                 : error.message.includes('not found') ? 404
-                 : 400;
+    const status = error.message.includes('Permission denied')
+      ? 403
+      : error.message.includes('not found')
+        ? 404
+        : 400;
     return new Response(JSON.stringify({ error: error.message }), {
       status: status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
