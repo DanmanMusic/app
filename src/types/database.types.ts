@@ -650,6 +650,7 @@ export type Database = {
         Row: {
           amount: number;
           company_id: string;
+          description: string | null;
           id: number;
           notes: string | null;
           source_id: string | null;
@@ -660,6 +661,7 @@ export type Database = {
         Insert: {
           amount: number;
           company_id: string;
+          description?: string | null;
           id?: number;
           notes?: string | null;
           source_id?: string | null;
@@ -670,6 +672,7 @@ export type Database = {
         Update: {
           amount?: number;
           company_id?: string;
+          description?: string | null;
           id?: number;
           notes?: string | null;
           source_id?: string | null;
@@ -858,7 +861,12 @@ export type Database = {
         | 'teacher_nudge'
         | 'task_assigned'
         | 'task_verified';
-      transaction_type: 'task_award' | 'manual_add' | 'manual_subtract' | 'redemption';
+      transaction_type:
+        | 'task_award'
+        | 'manual_add'
+        | 'manual_subtract'
+        | 'redemption'
+        | 'streak_award';
       verification_status: 'pending' | 'verified' | 'partial' | 'incomplete';
     };
     CompositeTypes: {
@@ -989,7 +997,13 @@ export const Constants = {
         'task_assigned',
         'task_verified',
       ],
-      transaction_type: ['task_award', 'manual_add', 'manual_subtract', 'redemption'],
+      transaction_type: [
+        'task_award',
+        'manual_add',
+        'manual_subtract',
+        'redemption',
+        'streak_award',
+      ],
       verification_status: ['pending', 'verified', 'partial', 'incomplete'],
     },
   },
