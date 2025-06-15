@@ -6,6 +6,8 @@ import { Modal, View, Text, Button, FlatList, ActivityIndicator } from 'react-na
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchRewards } from '../../../api/rewards';
+import { fetchGoalStats, GoalStat } from '../../../api/stats';
+import { useAuth } from '../../../contexts/AuthContext';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { SetGoalModalProps } from '../../../types/componentProps';
@@ -19,16 +21,25 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
   currentGoalId,
   onSetGoal,
 }) => {
+  const { appUser } = useAuth();
+
   const {
     data: rewardsCatalog = [],
-    isLoading,
-    isError,
-    error,
+    isLoading: isLoadingRewards,
+    isError: isErrorRewards,
+    error: errorRewards,
   } = useQuery<RewardItem[], Error>({
     queryKey: ['rewards'],
     queryFn: fetchRewards,
     staleTime: 10 * 60 * 1000,
     enabled: visible,
+  });
+
+  const { data: goalStats = [] } = useQuery<GoalStat[], Error>({
+    queryKey: ['goalStats', appUser?.companyId],
+    queryFn: () => fetchGoalStats(appUser!.companyId),
+    enabled: visible && !!appUser?.companyId,
+    staleTime: 5 * 60 * 1000,
   });
 
   const eligibleGoalRewards = useMemo(() => {
@@ -42,6 +53,10 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
   const handleClearGoal = () => {
     onSetGoal(null);
   };
+
+  const isLoading = isLoadingRewards;
+  const isError = isErrorRewards;
+  const error = errorRewards;
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -66,14 +81,31 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
               style={commonSharedStyles.listItemFull}
               data={eligibleGoalRewards.sort((a, b) => a.cost - b.cost)}
               keyExtractor={item => item.id}
-              renderItem={({ item }) => (
-                <RewardGoalItem
-                  item={item}
-                  isCurrentGoal={item.id === currentGoalId}
-                  canAfford={currentBalance >= item.cost}
-                  onSelect={handleSelectGoal}
-                />
-              )}
+              renderItem={({ item }) => {
+                const stat = goalStats.find(s => s.reward_id === item.id);
+                const count = stat ? stat.goal_count : 0;
+                let othersText: string | null = null;
+                if (count > 0) {
+                  if (item.id === currentGoalId) {
+                    if (count === 1) {
+                      othersText = `You are saving for this.`;
+                    } else {
+                      othersText = `You and ${count - 1} other${count - 1 > 1 ? 's are' : ' is'} saving for this.`;
+                    }
+                  } else {
+                    othersText = `${count} other${count > 1 ? 's are' : ' is'} saving for this.`;
+                  }
+                }
+                return (
+                  <RewardGoalItem
+                    item={item}
+                    isCurrentGoal={item.id === currentGoalId}
+                    canAfford={currentBalance >= item.cost}
+                    onSelect={handleSelectGoal}
+                    othersSavingText={othersText}
+                  />
+                );
+              }}
               ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
               ListEmptyComponent={
                 <Text style={commonSharedStyles.baseEmptyText}>

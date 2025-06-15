@@ -1,3 +1,4 @@
+// src/api/stats.ts
 import { getSupabase } from '../lib/supabaseClient';
 
 export interface UserCounts {
@@ -10,6 +11,12 @@ export interface UserCounts {
 
 export interface TaskStats {
   pendingVerificationCount: number;
+}
+
+// NEW: Type definition for the goal stats
+export interface GoalStat {
+  reward_id: string;
+  goal_count: number;
 }
 
 export const fetchUserCounts = async (): Promise<UserCounts> => {
@@ -87,4 +94,18 @@ export const fetchPendingTaskCount = async (): Promise<TaskStats> => {
 
   console.log(`[Supabase] Received task stats:`, taskStats);
   return taskStats;
+};
+
+// NEW: Function to call our RPC
+export const fetchGoalStats = async (companyId: string): Promise<GoalStat[]> => {
+  if (!companyId) return [];
+  const client = getSupabase();
+  const { data, error } = await client.rpc('get_company_goal_stats', {
+    p_company_id: companyId,
+  });
+  if (error) {
+    console.error('[API stats] Error fetching goal stats:', error.message);
+    throw new Error(`Failed to fetch goal stats: ${error.message}`);
+  }
+  return data || [];
 };

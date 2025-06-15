@@ -4,6 +4,7 @@
   "type": "module",
   "main": "index.ts",
   "scripts": {
+    "types": "npx supabase gen types typescript --project-id jwpdlxevbppqilhgapeg > src/types/database.types.ts",
     "start": "expo start  --tunnel",
     "android": "expo run:android",
     "ios": "expo run:ios",

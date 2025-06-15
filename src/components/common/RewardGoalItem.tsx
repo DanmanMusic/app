@@ -1,3 +1,4 @@
+// src/components/common/RewardGoalItem.tsx
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
@@ -8,11 +9,13 @@ export const RewardGoalItem = ({
   isCurrentGoal,
   canAfford,
   onSelect,
+  othersSavingText,
 }: {
   item: RewardItem;
   isCurrentGoal: boolean;
   canAfford: boolean;
   onSelect: (id: string) => void;
+  othersSavingText: string | null;
 }) => (
   <TouchableOpacity onPress={() => onSelect(item.id)}>
     <View
@@ -33,8 +36,11 @@ export const RewardGoalItem = ({
           <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textGold]}>
             {item.cost} Tickets
           </Text>
-          {!canAfford && (
+          {!canAfford && !isCurrentGoal && (
             <Text style={commonSharedStyles.cannotAffordText}>(Need more tickets)</Text>
+          )}
+          {othersSavingText && (
+            <Text style={commonSharedStyles.infoText}>{othersSavingText}</Text>
           )}
         </View>
         {isCurrentGoal && <Text style={commonSharedStyles.checkmark}>✓</Text>}

@@ -14,6 +14,8 @@ import { RewardItemStudent } from '../components/common/RewardItemStudent';
 import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
 import { SharedHeader } from '../components/common/SharedHeader';
 import { TicketHistoryItem } from '../components/common/TicketHistoryItem';
+import CommunityGoalsWidget from '../components/student/CommunityGoalsWidget';
+import CommunityStreaksWidget from '../components/student/CommunityStreaksWidget'; // Import the new widget
 import GoalTracker from '../components/student/GoalTracker';
 import SetGoalModal from '../components/student/modals/SetGoalModal';
 import PracticeStreakTracker from '../components/student/PracticeStreakTracker';
@@ -400,12 +402,18 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                 isLoading={rewardsLoading}
                 onSetGoalPress={handleSetGoalPress}
               />
+              <View style={{ marginTop: 15 }}>
+                <CommunityGoalsWidget />
+              </View>
               <Text
                 style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}
               >
                 My Practice Streak
               </Text>
               <PracticeStreakTracker />
+              <View style={{ marginTop: 15 }}>
+                <CommunityStreaksWidget />
+              </View>
               <View style={commonSharedStyles.baseMarginTopBottom}>
                 <Text style={[commonSharedStyles.baseTitleText, { marginBottom: 5 }]}>
                   My Tasks ({filteredTasksForDisplay.length})
