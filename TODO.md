@@ -22,67 +22,71 @@ Remember to replace placeholders like `[ ]` with `[x]` as tasks are completed.
 
 This plan outlines the major features and architectural changes for Version 2.
 
-### Phase 5: Foundational Architecture (Multi-Tenancy & V2 Schema)
+### Phase 5: Foundational Architecture & V2 Schema (Complete)
 
-- **[x] Multi-Tenancy Implementation (Step Zero):**
-  - [x] **Schema:** Create `companies` table.
-  - [x] **Schema:** Add `company_id` FK to all company-scoped tables.
-  - [x] **RLS:** Refactor all RLS policies to enforce `company_id` isolation.
-  - [x] **Edge Functions:** Update all Edge Functions to be company-aware and secure against cross-tenant actions.
-- **[x] V2 Feature Schema Additions:**
+- [x] **Multi-Tenancy Implementation (Step Zero):**
+  - [x] **Schema:** Create `companies` table. Add `company_id` to all relevant tables.
+  - [x] **RLS:** Refactor all RLS policies to enforce `company_id` isolation, including for Storage.
+  - [x] **Edge Functions:** Update all Edge Functions to be company-aware and secure.
+- [x] **V2 Feature Schema Additions:**
   - [x] **Schema:** Create `practice_logs` table for streak feature.
-  - [x] **Schema:** Create `push_tokens` table for notifications infrastructure.
-  - [x] **Schema:** Add `avatar_path` column to `profiles` table and create `avatars` storage bucket.
-  - [x] **Schema:** Add `is_goal_eligible` boolean to `rewards` table.
-  - [x] **Schema:** Add `can_self_assign` boolean to `task_library` table.
-  - [x] **Schema:** Create `journey_locations` table and add `journey_location_id` FK to `task_library`.
-- **[x] Client-Side API Alignment:**
-  - [x] **Types:** Update all TypeScript types in `dataTypes.ts` to match the V2 schema.
-  - [x] **API Layer:** Refactor all functions in `src/api/*.ts` to align with V2 schema and Edge Function payloads.
-  - [x] **API Layer:** Create new `src/api/journey.ts` for managing journey locations.
+  - [x] **Schema:** Add `timezone` to `companies` table for scheduled tasks.
+  - [x] **Schema:** Create `push_tokens` and `notification_log` tables for notifications.
+  - [x] **Schema:** Add `avatar_path` to `profiles` and create `avatars` storage bucket.
+  - [x] **Schema:** Add `is_goal_eligible` to `rewards` table.
+  - [x] **Schema:** Add `can_self_assign` & `journey_location_id` to `task_library` table.
+  - [x] **Schema:** Create `journey_locations` table.
+- [x] **Client-Side API & Type Safety:**
+  - [x] **Types:** Implement `supabase gen types` workflow for full type safety.
+  - [x] **API Layer:** Refactor all `src/api/*.ts` files to align with V2 schema and Edge Functions.
 
-### Phase 6: Core Engagement Features (Frontend Implementation)
+### Phase 6: Core Engagement Features (In Progress)
 
-- **[x] Feature: Avatars (Admin & Self-Editing):**
-  - [x] **UI:** Implement image picker and upload logic in `EditMyInfoModal.tsx`.
-  - [x] **UI:** Implement image picker and upload logic in `EditUserModal.tsx`.
-  - [x] **UI:** Display avatars in list views (`AdminUserItem.tsx`, `AdminStudentItem.tsx`).
-  - [x] **UI:** Display avatars in detail views (`AdminAdminDetailView.tsx`, `AdminTeacherDetailView.tsx`, `AdminParentDetailView.tsx`, `StudentDetailView.tsx`).
-- **[x] Feature: Journey Locations & Self-Assignable Tasks (Admin Side):**
-
+- [x] **Feature: Avatars (Admin & Self-Editing):**
+  - [x] **UI:** Implement image picker and upload logic in `EditMyInfoModal.tsx` and `EditUserModal.tsx`.
+  - [x] **UI:** Display avatars in list and detail views.
+- [x] **Feature: Journey Locations & Self-Assignable Tasks (Admin Side):**
   - [x] **UI:** Add "Journey" section to `AdminView`.
-  - [x] **UI:** Create `AdminJourneySection.tsx` component for CRUD management.
-  - [x] **UI:** Create `CreateJourneyLocationModal.tsx` and `EditJourneyLocationModal.tsx`.
-  - [x] **UI:** Integrate Journey Location picker into `CreateTaskLibraryModal.tsx` and `EditTaskLibraryModal.tsx` when "self-assign" is enabled.
-
-- **[ ] Feature: Student-Facing UI & New Features:**
-
-  - [ ] **Practice Streaks:**
-    - [ ] Create `log-practice-and-check-streak` Edge Function.
-    - [ ] Create `get_student_streak` RPC function.
-    - [ ] Create `src/api/streaks.ts` API file.
-    - [ ] Create `PracticeStreakTracker.tsx` component.
-    - [ ] Add the `PracticeStreakTracker` component to the `StudentView` dashboard.
-  - [ ] **Self-Assignable Tasks (Student Side):**
-    - [ ] Add a new "Available Tasks" or "Journey" section to `StudentView`.
-    - [ ] Display a list of self-assignable tasks, categorized by Journey Location.
-    - [ ] Implement the "Assign to Me" button functionality, calling the `assignTask` Edge Function (may require minor EF update to allow student as caller).
-  - [ ] **Student Goals:**
-    - [ ] Update `SetGoalModal.tsx` to filter the rewards list using the `isGoalEligible` flag.
-  - [ ] **Enriched Announcements:**
-    - [ ] Update `AnnouncementListItem.tsx` to display the related student's avatar and name if they exist.
-
-- **[ ] Feature: Notifications Infrastructure:**
-  - [ ] **Setup:** Install and configure `expo-notifications`.
-  - [ ] **Client:** Implement a `usePushNotifications` hook to handle permissions and token registration.
+  - [x] **UI:** Create `AdminJourneySection.tsx` for CRUD management.
+  - [x] **UI:** Integrate Journey Location picker into Task Library modals.
+- [x] **Feature: Student-Facing UI - Practice Streaks:**
+  - [x] **Backend:** Create `get_student_streak_details` and `get_company_streak_stats` RPCs.
+  - [x] **Backend:** Create `log-practice-and-check-streak` Edge Function with milestone trigger.
+  - [x] **UI:** Create `PracticeStreakTracker.tsx` component and `LogPracticeModal.tsx`.
+  - [x] **UI:** Integrate tracker into `StudentView`.
+- [x] **Feature: Student-Facing UI - Goal Setting:**
+  - [x] **UI:** Refactor goal display into `GoalTracker.tsx` component.
+  - [x] **UI:** Update `SetGoalModal.tsx` to filter rewards by `isGoalEligible`.
+- [ ] **Feature: Student-Facing UI - Community & Social Proof:**
+  - [ ] **Backend:** Create `get_company_goal_stats` RPC to count students aiming for each reward.
+  - [ ] **UI:** Update `SetGoalModal` to display "X others are saving for this!" text.
+  - [ ] **UI:** Create `CommunityGoalsWidget.tsx` to show trending goals on the student dashboard.
+  - [ ] **UI:** Create `CommunityStreaksWidget.tsx` to show active streak stats on the student dashboard.
+  - [ ] **UI:** Update `AnnouncementListItem.tsx` to properly display `streak_milestone` and `redemption_celebration` types with student avatar and name.
+- [ ] **Feature: Self-Assignable Tasks (Student Side):**
+  - [ ] **UI:** Add "Available Tasks" or "Journey" section to `StudentView`.
+  - [ ] **UI:** Display a list of self-assignable tasks, categorized by Journey Location.
+  - [ ] **UI:** Implement "Assign to Me" functionality.
+- [ ] **Feature: Enhanced Teacher/Admin Views:**
+  - [ ] **Backend:** Create performant RPC (`get_student_list_with_stats`) to fetch student list with balance, goal, and streak info included. Consider using a Materialized View for performance.
+  - [ ] **UI:** Update `AdminStudentItem.tsx` and `TeacherStudentsSection.tsx` to display the new stats.
+- [ ] **Feature: Notifications Infrastructure:**
+  - [ ] **Client:** Implement `usePushNotifications` hook (or similar) to handle token registration on native platforms.
   - [ ] **Backend:** Create the core `send-notification` Edge Function.
   - [ ] **Pilot Feature (Daily Summary):**
-    - [ ] Create `get_daily_activity_summary()` RPC function.
-    - [ ] Set up a `pg_cron` job to call the function and trigger notifications.
+    - [ ] Create RPC functions to get daily summary data.
+    - [ ] Set up `pg_cron` jobs to call the functions and trigger notifications via the Edge Function.
 
 ### Phase 7: Final Polish & Testing
 
-- **[ ] V2 Refinements & Thorough Testing:**
+- [ ] **V2 Refinements & Thorough Testing:**
   - [ ] **Testing:** End-to-end test the multi-tenancy implementation.
   - [ ] **Testing:** Test all notification flows on a physical device.
   - [ ] **UI/UX Review:** Conduct a full review of all new V2 features.
+
+### V3+ Ideas (Backlog)
+
+- [ ] **Streak Freeze:** Allow students to "pause" their streak for vacations.
+- [ ] **Teacher Nudges:** One-click, pre-written reminders from teachers to students.
+- [ ] **Visual Music Journey:** Interactive poster map with unlockable locations.
+- [ ] **Parent-initiated Reminders:** Let parents send custom reminders to their children.
