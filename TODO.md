@@ -57,11 +57,11 @@ This plan outlines the major features and architectural changes for Version 2.
 - [x] **Feature: Student-Facing UI - Goal Setting:**
   - [x] **UI:** Refactor goal display into `GoalTracker.tsx` component.
   - [x] **UI:** Update `SetGoalModal.tsx` to filter rewards by `isGoalEligible`.
-- [ ] **Feature: Student-Facing UI - Community & Social Proof:**
-  - [ ] **Backend:** Create `get_company_goal_stats` RPC to count students aiming for each reward.
-  - [ ] **UI:** Update `SetGoalModal` to display "X others are saving for this!" text.
-  - [ ] **UI:** Create `CommunityGoalsWidget.tsx` to show trending goals on the student dashboard.
-  - [ ] **UI:** Create `CommunityStreaksWidget.tsx` to show active streak stats on the student dashboard.
+- [x] **Feature: Student-Facing UI - Community & Social Proof:**
+  - [x] **Backend:** Create `get_company_goal_stats` RPC to count students aiming for each reward.
+  - [x] **UI:** Update `SetGoalModal` to display "X others are saving for this!" text.
+  - [x] **UI:** Create `CommunityGoalsWidget.tsx` to show trending goals on the student dashboard.
+  - [x] **UI:** Create `CommunityStreaksWidget.tsx` to show active streak stats on the student dashboard.
   - [ ] **UI:** Update `AnnouncementListItem.tsx` to properly display `streak_milestone` and `redemption_celebration` types with student avatar and name.
 - [ ] **Feature: Self-Assignable Tasks (Student Side):**
   - [ ] **UI:** Add "Available Tasks" or "Journey" section to `StudentView`.

@@ -39,9 +39,7 @@ export const RewardGoalItem = ({
           {!canAfford && !isCurrentGoal && (
             <Text style={commonSharedStyles.cannotAffordText}>(Need more tickets)</Text>
           )}
-          {othersSavingText && (
-            <Text style={commonSharedStyles.infoText}>{othersSavingText}</Text>
-          )}
+          {othersSavingText && <Text style={commonSharedStyles.infoText}>{othersSavingText}</Text>}
         </View>
         {isCurrentGoal && <Text style={commonSharedStyles.checkmark}>✓</Text>}
       </View>

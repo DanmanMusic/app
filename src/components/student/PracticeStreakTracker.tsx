@@ -1,30 +1,31 @@
-// File: src/components/student/PracticeStreakTracker.tsx (Refactored)
+// File: src/components/student/PracticeStreakTracker.tsx
 
 import React, { useState } from 'react';
-
 import { View, Text, ActivityIndicator, Button } from 'react-native';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import LogPracticeModal from './modals/LogPracticeModal';
 import { getStudentStreakDetails, logPracticeForToday } from '../../api/streaks';
-import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+
+// --- The Fix: Accept studentId as a prop ---
+interface PracticeStreakTrackerProps {
+  studentId: string;
+}
 
 const isToday = (someDate: string | null): boolean => {
   if (!someDate) return false;
   const today = new Date();
-  const date = new Date(`${someDate}T00:00:00Z`);
+  const date = new Date(`${someDate}T00:00:00Z`); // Treat date as UTC
   return (
-    date.getUTCDate() === today.getDate() &&
-    date.getUTCMonth() === today.getMonth() &&
-    date.getUTCFullYear() === today.getFullYear()
+    date.getUTCDate() === today.getUTCDate() &&
+    date.getUTCMonth() === today.getUTCMonth() &&
+    date.getUTCFullYear() === today.getUTCFullYear()
   );
 };
 
-const PracticeStreakTracker = () => {
-  const { appUser } = useAuth();
+const PracticeStreakTracker: React.FC<PracticeStreakTrackerProps> = ({ studentId }) => {
   const queryClient = useQueryClient();
   const [isModalVisible, setModalVisible] = useState(false);
 
@@ -33,18 +34,22 @@ const PracticeStreakTracker = () => {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ['streakDetails', appUser?.id],
-    queryFn: () => getStudentStreakDetails(appUser!.id),
-    enabled: !!appUser?.id,
+    // Use the passed-in studentId for the query
+    queryKey: ['streakDetails', studentId],
+    queryFn: () => getStudentStreakDetails(studentId),
+    enabled: !!studentId,
   });
 
   const logPracticeMutation = useMutation({
-    mutationFn: () => logPracticeForToday(appUser!.id),
+    // Use the passed-in studentId for the mutation
+    mutationFn: () => logPracticeForToday(studentId),
     onSuccess: _data => {
-      queryClient.invalidateQueries({ queryKey: ['streakDetails', appUser?.id] });
-      queryClient.invalidateQueries({ queryKey: ['balance', appUser?.id] });
+      // Invalidate queries using the correct studentId
+      queryClient.invalidateQueries({ queryKey: ['streakDetails', studentId] });
+      queryClient.invalidateQueries({ queryKey: ['balance', studentId] });
       queryClient.invalidateQueries({ queryKey: ['ticket-history'] });
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      queryClient.invalidateQueries({ queryKey: ['companyStreakStats'] }); // Invalidate company stats too
     },
     onError: error => {
       console.error('Error from logPracticeMutation:', error.message);

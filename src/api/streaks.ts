@@ -80,3 +80,17 @@ export const logPracticeForToday = async (
 
   return data;
 };
+
+export const debugFetchPracticeLogs = async (companyId: string): Promise<any> => {
+  if (!companyId) return [];
+  const client = getSupabase();
+  console.log(`[DEBUG] Calling debug_get_all_practice_logs_for_company for ${companyId}`);
+  const { data, error } = await client.rpc('debug_get_all_practice_logs_for_company', {
+    p_company_id: companyId,
+  });
+  if (error) {
+    console.error('[DEBUG] Error fetching raw practice logs:', error.message);
+    throw new Error(`Failed to fetch debug data: ${error.message}`);
+  }
+  return data;
+};

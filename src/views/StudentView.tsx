@@ -405,15 +405,24 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
               <View style={{ marginTop: 15 }}>
                 <CommunityGoalsWidget />
               </View>
-              <Text
-                style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}
-              >
-                My Practice Streak
-              </Text>
-              <PracticeStreakTracker />
-              <View style={{ marginTop: 15 }}>
-                <CommunityStreaksWidget />
-              </View>
+
+              {targetStudentId !== undefined && (
+                <>
+                  <Text
+                    style={[
+                      commonSharedStyles.baseTitleText,
+                      commonSharedStyles.baseMarginTopBottom,
+                    ]}
+                  >
+                    My Practice Streak
+                  </Text>
+                  <PracticeStreakTracker studentId={targetStudentId} />
+                  <View style={{ marginTop: 15 }}>
+                    <CommunityStreaksWidget />
+                  </View>
+                </>
+              )}
+
               <View style={commonSharedStyles.baseMarginTopBottom}>
                 <Text style={[commonSharedStyles.baseTitleText, { marginBottom: 5 }]}>
                   My Tasks ({filteredTasksForDisplay.length})

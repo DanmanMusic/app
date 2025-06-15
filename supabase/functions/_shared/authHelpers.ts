@@ -139,3 +139,31 @@ export async function hashTokenWithSalt(token: string): Promise<string> {
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   return hashHex;
 }
+
+export async function isParentOfStudent(
+  supabase: SupabaseClient,
+  parentId: string,
+  studentId: string
+): Promise<boolean> {
+  if (!parentId || !studentId || parentId === studentId) return false;
+  try {
+    const { count, error } = await supabase
+      .from('parent_students')
+      .select('*', { count: 'exact', head: true })
+      .eq('parent_id', parentId)
+      .eq('student_id', studentId);
+
+    if (error) {
+      console.error(
+        `[isParentOfStudent] Error checking link P:${parentId} S:${studentId}: ${error.message}`
+      );
+      return false;
+    }
+    return (count ?? 0) > 0;
+  } catch (err: any) {
+    console.error(
+      `[isParentOfStudent] Exception checking link P:${parentId} S:${studentId}: ${err.message}`
+    );
+    return false;
+  }
+}

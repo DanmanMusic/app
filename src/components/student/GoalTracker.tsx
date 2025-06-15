@@ -43,7 +43,11 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({
     return (
       <View style={commonSharedStyles.baseItem}>
         <View
-          style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap, { alignItems: 'flex-start' }]}
+          style={[
+            commonSharedStyles.baseRow,
+            commonSharedStyles.baseGap,
+            { alignItems: 'flex-start' },
+          ]}
         >
           <Image
             source={{ uri: goalReward.imageUrl }}

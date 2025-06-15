@@ -1,9 +1,9 @@
 // src/components/student/CommunityStreaksWidget.tsx
 import React from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { View, Text, ActivityIndicator, Button } from 'react-native';
+import { useQuery, useMutation } from '@tanstack/react-query'; // Import useMutation
 
-import { getCompanyStreakStats } from '../../api/streaks';
+import { getCompanyStreakStats, debugFetchPracticeLogs } from '../../api/streaks'; // Import debug function
 import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
@@ -16,12 +16,32 @@ const CommunityStreaksWidget = () => {
     data: streakStats,
     isLoading,
     isError,
+    refetch,
+    isRefetching,
   } = useQuery<CompanyStreakStats, Error>({
     queryKey: ['companyStreakStats', appUser?.companyId],
     queryFn: () => getCompanyStreakStats(appUser!.companyId),
     enabled: !!appUser?.companyId,
     staleTime: 5 * 60 * 1000,
   });
+
+  // New mutation for our debug function
+  const debugMutation = useMutation({
+    mutationFn: () => debugFetchPracticeLogs(appUser!.companyId),
+    onSuccess: data => {
+      console.log('--- DEBUG PRACTICE LOGS START ---');
+      console.log(JSON.stringify(data, null, 2));
+      console.log('--- DEBUG PRACTICE LOGS END ---');
+    },
+    onError: (error: Error) => {
+      console.error('--- DEBUG FAILED ---', error.message);
+    },
+  });
+
+  const handleRefetch = () => refetch();
+  const handleDebug = () => debugMutation.mutate();
+
+  // ... (keep the rest of the component the same)
 
   if (isLoading) {
     return (
@@ -31,56 +51,52 @@ const CommunityStreaksWidget = () => {
     );
   }
 
-  // Handle error case separately
+  // ... (keep isError block)
   if (isError) {
     return (
       <View style={[commonSharedStyles.baseItem, commonSharedStyles.errorContainer]}>
         <Text style={commonSharedStyles.errorText}>Could not load community stats.</Text>
+        <Button title="Retry" onPress={handleRefetch} color={colors.primary} />
       </View>
     );
   }
 
-  // This handles the case where the query succeeds but returns no data.
   if (!streakStats) {
     return null;
   }
 
-  // This is the new logic for the empty state.
-  if (streakStats.total_active_streaks === 0) {
-    return (
-      <View style={commonSharedStyles.baseItem}>
+  return (
+    <View style={commonSharedStyles.baseItem}>
+      <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifySpaceBetween]}>
         <Text style={[commonSharedStyles.baseSubTitleText, { marginBottom: 10 }]}>
           Community Streaks
         </Text>
+        <View style={{ flexDirection: 'row', gap: 5 }}>
+          <Button title="Debug" onPress={handleDebug} color={colors.warning} />
+          <Button title={isRefetching ? '...' : '⟳'} onPress={handleRefetch} />
+        </View>
+      </View>
+
+      {streakStats.total_active_streaks === 0 ? (
         <Text style={commonSharedStyles.baseEmptyText}>
           No one has an active streak yet. Be the first!
         </Text>
-      </View>
-    );
-  }
-
-  // This is the original view for when there *is* data.
-  return (
-    <View style={commonSharedStyles.baseItem}>
-      <Text style={[commonSharedStyles.baseSubTitleText, { marginBottom: 10 }]}>
-        Community Streaks
-      </Text>
-      <View style={{ gap: 5 }}>
-        <Text style={commonSharedStyles.baseSecondaryText}>
-          <Text style={commonSharedStyles.bold}>{streakStats.total_active_streaks}</Text> Students
-          with an Active Streak
-        </Text>
-        <Text style={commonSharedStyles.baseSecondaryText}>
-          <Text style={commonSharedStyles.bold}>{streakStats.streaks_over_7_days}</Text> Streaks
-          over a Week Long
-        </Text>
-        <Text style={commonSharedStyles.baseSecondaryText}>
-          <Text style={commonSharedStyles.bold}>
-            {streakStats.milestone_earners_this_month}
-          </Text>{' '}
-          Milestones Hit This Month
-        </Text>
-      </View>
+      ) : (
+        <View style={{ gap: 5 }}>
+          <Text style={commonSharedStyles.baseSecondaryText}>
+            <Text style={commonSharedStyles.bold}>{streakStats.total_active_streaks}</Text> Students
+            with an Active Streak
+          </Text>
+          <Text style={commonSharedStyles.baseSecondaryText}>
+            <Text style={commonSharedStyles.bold}>{streakStats.streaks_over_7_days}</Text> Streaks
+            over a Week Long
+          </Text>
+          <Text style={commonSharedStyles.baseSecondaryText}>
+            <Text style={commonSharedStyles.bold}>{streakStats.milestone_earners_this_month}</Text>{' '}
+            Milestones Hit This Month
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
