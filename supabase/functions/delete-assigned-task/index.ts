@@ -1,4 +1,4 @@
-// supabase/functions/deleteAssignedTask/index.ts
+// supabase/functions/delete-assigned-task/index.ts
 
 import { createClient, SupabaseClient } from 'supabase-js';
 
@@ -43,7 +43,7 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  console.log(`Received ${req.method} request for deleteAssignedTask`);
+  console.log(`Received ${req.method} request for delete-assigned-task`);
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');

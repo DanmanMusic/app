@@ -1,4 +1,4 @@
-// supabase/functions/deleteUser/index.ts
+// supabase/functions/delete-user/index.ts
 
 import { createClient } from 'supabase-js';
 
@@ -22,7 +22,7 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  console.log(`Received ${req.method} request for deleteUser`);
+  console.log(`Received ${req.method} request for delete-user`);
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');

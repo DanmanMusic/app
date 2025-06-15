@@ -1,4 +1,4 @@
-// supabase/functions/redeemReward/index.ts
+// supabase/functions/redeem-reward/index.ts
 
 import { createClient } from 'supabase-js';
 
@@ -18,7 +18,7 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  console.log(`Received ${req.method} request for redeemReward`);
+  console.log(`Received ${req.method} request for redeem-reward`);
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -205,5 +205,3 @@ Deno.serve(async (req: Request) => {
     );
   }
 });
-
-console.log('redeemReward function initialized (v3 - multi-tenant aware).');

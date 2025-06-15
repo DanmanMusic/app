@@ -288,7 +288,7 @@ export const createUser = async (
   userData: Omit<User, 'id' | 'status' | 'avatarPath' | 'companyId'>
 ): Promise<User> => {
   const client = getSupabase();
-  const { data, error } = await client.functions.invoke('createUser', { body: userData });
+  const { data, error } = await client.functions.invoke('create-user', { body: userData });
   if (error) {
     const detailedError = (error as any).context?.error || error.message;
     throw new Error(`User creation failed: ${detailedError}`);
@@ -341,7 +341,7 @@ export const updateUser = async ({
     updates: finalUpdates,
   };
 
-  const { error } = await client.functions.invoke('updateUserWithLinks', { body: payload });
+  const { error } = await client.functions.invoke('update-user-with-links', { body: payload });
   if (error) {
     const detailedError = (error as any).context?.error?.message || error.message;
     throw new Error(`User update failed: ${detailedError}`);
@@ -354,7 +354,7 @@ export const updateUser = async ({
 
 export const deleteUser = async (userId: string): Promise<void> => {
   const client = getSupabase();
-  const { error } = await client.functions.invoke('deleteUser', {
+  const { error } = await client.functions.invoke('delete-user', {
     body: { userIdToDelete: userId },
   });
   if (error) {
@@ -365,7 +365,7 @@ export const deleteUser = async (userId: string): Promise<void> => {
 
 export const toggleUserStatus = async (userId: string): Promise<User> => {
   const client = getSupabase();
-  const { data, error } = await client.functions.invoke('toggleUserStatus', {
+  const { data, error } = await client.functions.invoke('toggle-user-status', {
     body: { userIdToToggle: userId },
   });
   if (error) {

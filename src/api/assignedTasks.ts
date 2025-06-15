@@ -72,7 +72,6 @@ const mapRpcRowToAssignedTask = (row: any): AssignedTask => {
         nickname: row.assigner_nickname,
       });
     }
-
     return row.assigned_by_id ? `ID: ${row.assigned_by_id}` : 'Unknown Assigner';
   };
 
@@ -134,174 +133,67 @@ export const fetchAssignedTasks = async ({
   teacherId?: string;
 }): Promise<AssignedTasksListResponse> => {
   const client = getSupabase();
-  console.log(
-    `[fetchAssignedTasks RPC v2] Calling RPC: page=${page}, limit=${limit}, assignment=${assignmentStatus}, student=${studentStatus}, studentId=${studentId}, teacherId=${teacherId}`
-  );
-
+  
   const rpcParams = {
     p_page: page,
     p_limit: limit,
     p_assignment_status: assignmentStatus,
     p_student_status: studentStatus,
-    p_student_id: studentId || null,
-    p_teacher_id: teacherId || null,
+    p_student_id: studentId ?? undefined,
+    p_teacher_id: teacherId ?? undefined,
   };
 
-  const { data: rpcData, error: rpcError } = await client.rpc(
-    'get_assigned_tasks_filtered',
-    rpcParams
-  );
+  const { data: rpcData, error: rpcError } = await client.rpc('get_assigned_tasks_filtered', rpcParams);
 
   if (rpcError) {
-    console.error('[fetchAssignedTasks RPC v2] RPC execution error:', rpcError);
     throw new Error(`Failed to fetch assigned tasks via RPC: ${rpcError.message}`);
   }
 
   const totalItems = Number(rpcData?.[0]?.total_count ?? 0);
   const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
-
-  console.log(
-    `[fetchAssignedTasks RPC v2] Call successful. Total Count: ${totalItems}, Rows fetched: ${rpcData?.length ?? 0}`
-  );
-
   const tasks = (rpcData || []).map(mapRpcRowToAssignedTask);
 
   return { items: tasks, totalPages, currentPage: page, totalItems };
 };
 
 export const createAssignedTask = async (
-  assignmentData: Omit<
-    AssignedTask,
-    | 'id'
-    | 'assignedById'
-    | 'assignedDate'
-    | 'isComplete'
-    | 'verificationStatus'
-    | 'completedDate'
-    | 'verifiedById'
-    | 'verifiedDate'
-    | 'actualPointsAwarded'
-    | 'assignerName'
-    | 'verifierName'
-    | 'studentStatus'
-  > & { file?: NativeFileObject | File; mimeType?: string; fileName?: string }
+  assignmentData: Omit<AssignedTask, 'id' | 'assignedById' | 'assignedDate' | 'isComplete' | 'verificationStatus' | 'completedDate' | 'verifiedById' | 'verifiedDate' | 'actualPointsAwarded' | 'assignerName' | 'verifierName' | 'studentStatus'> & { file?: NativeFileObject | File; mimeType?: string; fileName?: string }
 ): Promise<AssignedTask> => {
-  const client = getSupabase();
-
-  const {
-    file,
-    mimeType: providedMimeType,
-    fileName: providedFileName,
-    ...restAssignmentData
-  } = assignmentData;
-
-  const payload: {
-    studentId: string;
-    taskTitle: string;
-    taskDescription: string;
-    taskBasePoints: number;
-    taskLinkUrl: string | null;
-    taskAttachmentPath?: string | null;
-    file?: { base64: string; mimeType: string; fileName: string };
-  } = {
-    studentId: restAssignmentData.studentId,
-    taskTitle: restAssignmentData.taskTitle,
-    taskDescription: restAssignmentData.taskDescription || '',
-    taskBasePoints: restAssignmentData.taskBasePoints,
-    taskLinkUrl: restAssignmentData.taskLinkUrl || null,
-    taskAttachmentPath: undefined,
-  };
-
-  if (
-    !payload.studentId ||
-    !payload.taskTitle ||
-    payload.taskBasePoints == null ||
-    payload.taskBasePoints < 0
-  ) {
-    throw new Error('Missing required fields for task assignment (studentId, title, basePoints).');
-  }
-
-  if (file) {
-    let finalMimeType = providedMimeType;
-    let finalFileName = providedFileName;
-
-    if (file && !finalMimeType && file instanceof File) finalMimeType = file.type;
-    else if (file && !finalMimeType && typeof file === 'object' && 'mimeType' in file)
-      finalMimeType = file.mimeType;
-    else if (file && !finalMimeType && typeof file === 'object' && 'type' in file)
-      finalMimeType = file.type;
-    if (file && !finalFileName && file instanceof File) finalFileName = file.name;
-    else if (file && !finalFileName && typeof file === 'object' && 'name' in file)
-      finalFileName = file.name;
-    if (file && !finalFileName) finalFileName = `upload.${finalMimeType?.split('/')[1] || 'bin'}`;
-
-    if (file && finalMimeType && finalFileName) {
-      try {
-        const base64 = await fileToBase64(file);
-        payload.file = { base64, mimeType: finalMimeType, fileName: finalFileName };
-      } catch (error: any) {
-        throw new Error(`Failed to process file: ${error.message}`);
-      }
+    // This function remains unchanged as it calls an Edge Function
+    const client = getSupabase();
+    const { file, mimeType: providedMimeType, fileName: providedFileName, ...restAssignmentData } = assignmentData;
+    const payload: { studentId: string; taskTitle: string; taskDescription: string; taskBasePoints: number; taskLinkUrl: string | null; taskAttachmentPath?: string | null; file?: { base64: string; mimeType: string; fileName: string; }; } = { studentId: restAssignmentData.studentId, taskTitle: restAssignmentData.taskTitle, taskDescription: restAssignmentData.taskDescription || '', taskBasePoints: restAssignmentData.taskBasePoints, taskLinkUrl: restAssignmentData.taskLinkUrl || null, taskAttachmentPath: undefined, };
+    if (!payload.studentId || !payload.taskTitle || payload.taskBasePoints == null || payload.taskBasePoints < 0) { throw new Error('Missing required fields for task assignment (studentId, title, basePoints).'); }
+    if (file) {
+        let finalMimeType = providedMimeType;
+        let finalFileName = providedFileName;
+        if (file && !finalMimeType && file instanceof File) finalMimeType = file.type; else if (file && !finalMimeType && typeof file === 'object' && 'mimeType' in file) finalMimeType = file.mimeType; else if (file && !finalMimeType && typeof file === 'object' && 'type' in file) finalMimeType = file.type;
+        if (file && !finalFileName && file instanceof File) finalFileName = file.name; else if (file && !finalFileName && typeof file === 'object' && 'name' in file) finalFileName = file.name;
+        if (file && !finalFileName) finalFileName = `upload.${finalMimeType?.split('/')[1] || 'bin'}`;
+        if (file && finalMimeType && finalFileName) { try { const base64 = await fileToBase64(file); payload.file = { base64, mimeType: finalMimeType, fileName: finalFileName }; } catch (error: any) { throw new Error(`Failed to process file: ${error.message}`); } }
+    } else if (restAssignmentData.taskAttachmentPath) {
+        payload.taskAttachmentPath = restAssignmentData.taskAttachmentPath;
+    } else {
+        payload.taskAttachmentPath = null;
     }
-  } else if (restAssignmentData.taskAttachmentPath) {
-    payload.taskAttachmentPath = restAssignmentData.taskAttachmentPath;
-    console.log(
-      '[createAssignedTask] No new file, using existing path from library:',
-      payload.taskAttachmentPath
-    );
-  } else {
-    payload.taskAttachmentPath = null; // No file, no library path
-  }
-
-  const { data, error } = await client.functions.invoke('assignTask', {
-    body: payload,
-  });
-
-  if (error) {
-    let detailedError = error.message || 'Unknown function error';
-    if (error.context?.message) {
-      detailedError += ` (Context: ${error.context.message})`;
-    }
-    console.error('[createAssignedTask] Edge Function error:', detailedError);
-    throw new Error(`Task assignment failed: ${detailedError}`);
-  }
-
-  if (!data || typeof data !== 'object' || !data.id) {
-    console.error('[createAssignedTask] Edge Function returned invalid data:', data);
-    throw new Error('Task assignment function returned invalid data format.');
-  }
-
-  console.log('[createAssignedTask] Edge Function successful, returning task:', data);
-  return data as AssignedTask;
+    const { data, error } = await client.functions.invoke('assign-task', { body: payload, });
+    if (error) { let detailedError = error.message || 'Unknown function error'; if (error.context?.message) { detailedError += ` (Context: ${error.context.message})`; } throw new Error(`Task assignment failed: ${detailedError}`); }
+    if (!data || typeof data !== 'object' || !data.id) { throw new Error('Task assignment function returned invalid data format.'); }
+    return data as AssignedTask;
 };
 
 export const deleteAssignedTask = async (assignmentId: string): Promise<void> => {
-  const client = getSupabase();
-
-  const payload = { assignmentId };
-  if (!payload.assignmentId) throw new Error('Assignment ID missing.');
-
-  const { error } = await client.functions.invoke('deleteAssignedTask', { body: payload });
-  if (error) {
-    let detailedError = error.message || 'Unknown function error';
-    if (
-      error.context &&
-      typeof error.context === 'object' &&
-      error.context !== null &&
-      'error' in error.context
-    ) {
-      detailedError = String((error.context as any).error) || detailedError;
-    } else {
-      try {
-        const parsed = JSON.parse(error.message);
-        if (parsed && parsed.error) detailedError = String(parsed.error);
-      } catch (_e) {}
+    // This function remains unchanged as it calls an Edge Function
+    const client = getSupabase();
+    const payload = { assignmentId };
+    if (!payload.assignmentId) throw new Error('Assignment ID missing.');
+    const { error } = await client.functions.invoke('delete-assigned-task', { body: payload });
+    if (error) {
+        let detailedError = error.message || 'Unknown function error';
+        if (error.context && typeof error.context === 'object' && error.context !== null && 'error' in error.context) { detailedError = String((error.context as any).error) || detailedError; } else { try { const parsed = JSON.parse(error.message); if (parsed && parsed.error) detailedError = String(parsed.error); } catch (_e) {} }
+        if (error.context?.message) { detailedError += ` (Context: ${error.context.message})`; }
+        throw new Error(`Failed to delete assigned task: ${detailedError}`);
     }
-    if (error.context?.message) {
-      detailedError += ` (Context: ${error.context.message})`;
-    }
-    throw new Error(`Failed to delete assigned task: ${detailedError}`);
-  }
 };
 
 export const updateAssignedTask = async ({
@@ -320,14 +212,18 @@ export const updateAssignedTask = async ({
 }): Promise<AssignedTask> => {
   const client = getSupabase();
 
-  const detailedSelectString = `
-       id, student_id, assigned_by_id, assigned_date, task_title, task_description,
-       task_base_points, is_complete, completed_date, verification_status, verified_by_id,
-       verified_date, actual_points_awarded,
-       student_profile:profiles!fk_assigned_tasks_student ( status ),
-       assigner_profile:profiles!fk_assigned_tasks_assigner ( first_name, last_name, nickname ),
-       verifier_profile:profiles!fk_assigned_tasks_verifier ( first_name, last_name, nickname )
-   `;
+  // Helper to call our new reliable RPC
+  const refetchViaRpc = async (id: string) => {
+    const { data: rpcData, error: rpcError } = await client
+      .rpc('get_assigned_task_details', { p_assignment_id: id })
+      .single();
+    if (rpcError) {
+      throw new Error(`Failed to refetch task details via RPC: ${rpcError.message}`);
+    }
+    // The RPC function is guaranteed to return a single row or throw an error,
+    // so we don't need to check for !rpcData here.
+    return mapRpcRowToAssignedTask(rpcData);
+  };
 
   if (updates.verificationStatus && updates.actualPointsAwarded !== undefined) {
     const payload = {
@@ -335,7 +231,6 @@ export const updateAssignedTask = async ({
       verificationStatus: updates.verificationStatus,
       actualPointsAwarded: updates.actualPointsAwarded,
     };
-
     if (payload.actualPointsAwarded < 0 || !Number.isInteger(payload.actualPointsAwarded)) {
       throw new Error('Invalid points awarded.');
     }
@@ -343,25 +238,12 @@ export const updateAssignedTask = async ({
       throw new Error("Points must be 0 for 'incomplete'.");
     }
 
-    const { data, error } = await client.functions.invoke('verifyTask', { body: payload });
-
+    const { error } = await client.functions.invoke('verify-task', { body: payload });
     if (error) {
       throw new Error(`Task verification failed: ${error.message || 'Unknown function error'}`);
     }
-    if (!data || typeof data !== 'object' || !data.id) {
-      throw new Error('Task verification function returned invalid data format.');
-    }
+    return refetchViaRpc(assignmentId);
 
-    const { data: refetchedData, error: fetchError } = await client
-      .from('assigned_tasks')
-      .select(detailedSelectString)
-      .eq('id', assignmentId)
-      .single();
-
-    if (fetchError || !refetchedData) {
-      return data as AssignedTask;
-    }
-    return mapDbRowToAssignedTaskWithNames(refetchedData);
   } else if (updates.isComplete === true) {
     const updatePayload = {
       is_complete: true,
@@ -374,16 +256,8 @@ export const updateAssignedTask = async ({
       .eq('id', assignmentId);
     if (updateError) throw new Error(`Failed to mark task complete: ${updateError.message}`);
 
-    const { data: refetchedData, error: fetchError } = await client
-      .from('assigned_tasks')
-      .select(detailedSelectString)
-      .eq('id', assignmentId)
-      .single();
-    if (fetchError || !refetchedData)
-      throw new Error(
-        `Task marked complete, but failed to refetch: ${fetchError?.message || 'Not Found'}`
-      );
-    return mapDbRowToAssignedTaskWithNames(refetchedData);
+    return refetchViaRpc(assignmentId);
+
   } else if (updates.isComplete === false) {
     const updatePayload = {
       is_complete: false,
@@ -399,26 +273,8 @@ export const updateAssignedTask = async ({
       .eq('id', assignmentId);
     if (unmarkError) throw new Error(`Failed to un-mark task complete: ${unmarkError.message}`);
 
-    const { data: refetchedData, error: fetchError } = await client
-      .from('assigned_tasks')
-      .select(detailedSelectString)
-      .eq('id', assignmentId)
-      .single();
-    if (fetchError || !refetchedData)
-      throw new Error(
-        `Task un-marked, but failed to refetch: ${fetchError?.message || 'Not Found'}`
-      );
-    return mapDbRowToAssignedTaskWithNames(refetchedData);
+    return refetchViaRpc(assignmentId);
   } else {
-    const { data: currentData, error: currentError } = await client
-      .from('assigned_tasks')
-      .select(detailedSelectString)
-      .eq('id', assignmentId)
-      .single();
-    if (currentError || !currentData)
-      throw new Error(
-        `Failed to fetch current task ${assignmentId}: ${currentError?.message || 'Not Found'}`
-      );
-    return mapDbRowToAssignedTaskWithNames(currentData);
+    throw new Error('Invalid update operation provided to updateAssignedTask.');
   }
 };

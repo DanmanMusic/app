@@ -1,4 +1,4 @@
-// supabase/functions/adjustTickets/index.ts
+// supabase/functions/adjust-tickets/index.ts
 
 import { createClient } from 'supabase-js';
 
@@ -19,7 +19,7 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  console.log(`Received ${req.method} request for adjustTickets`);
+  console.log(`Received ${req.method} request for adjust-tickets`);
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -234,5 +234,3 @@ Deno.serve(async (req: Request) => {
     );
   }
 });
-
-console.log('adjustTickets function initialized (v3 - multi-tenant aware).');

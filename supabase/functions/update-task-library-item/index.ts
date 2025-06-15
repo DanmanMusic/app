@@ -1,4 +1,4 @@
-// supabase/functions/update-task-library-item/index.ts
+// File: supabase/functions/update-task-library-item/index.ts
 
 import { createClient, SupabaseClient } from 'supabase-js';
 
@@ -8,10 +8,12 @@ import { uploadAttachment, deleteAttachment, FileUploadData } from '../_shared/s
 
 interface UpdatePayload {
   title?: string;
-  description?: string;
+  description?: string | null;
   baseTickets?: number;
   referenceUrl?: string | null;
   instrumentIds?: string[];
+  canSelfAssign?: boolean;
+  journeyLocationId?: string | null;
   file?: FileUploadData;
   deleteAttachment?: boolean;
 }
@@ -20,14 +22,14 @@ interface UpdateRequestBody {
   updates: UpdatePayload;
 }
 
+// syncInstrumentLinks helper remains the same
 async function syncInstrumentLinks(
   supabase: SupabaseClient,
   taskId: string,
   newInstrumentIds: string[]
 ): Promise<{ errors: string[] }> {
-  // This helper function remains unchanged
   const errors: string[] = [];
-  if (newInstrumentIds === undefined) return { errors }; // No change if undefined
+  if (newInstrumentIds === undefined) return { errors };
 
   const { data: currentLinksData, error: fetchError } = await supabase
     .from('task_library_instruments')
@@ -43,22 +45,20 @@ async function syncInstrumentLinks(
   const idsToInsert = newInstrumentIds.filter(id => !currentLinkIds.includes(id));
 
   if (idsToDelete.length > 0) {
-    const { error: deleteError } = await supabase
+    const { error } = await supabase
       .from('task_library_instruments')
       .delete()
       .eq('task_library_id', taskId)
       .in('instrument_id', idsToDelete);
-    if (deleteError) errors.push(`Failed deleting old instrument links: ${deleteError.message}`);
+    if (error) errors.push(`Failed deleting old instrument links: ${error.message}`);
   }
   if (idsToInsert.length > 0) {
     const rowsToInsert = idsToInsert.map(instId => ({
       task_library_id: taskId,
       instrument_id: instId,
     }));
-    const { error: insertError } = await supabase
-      .from('task_library_instruments')
-      .insert(rowsToInsert);
-    if (insertError) errors.push(`Failed inserting new instrument links: ${insertError.message}`);
+    const { error } = await supabase.from('task_library_instruments').insert(rowsToInsert);
+    if (error) errors.push(`Failed inserting new instrument links: ${error.message}`);
   }
   return { errors };
 }
@@ -71,183 +71,118 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders },
     });
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  if (!supabaseUrl || !serviceRoleKey)
-    return new Response(JSON.stringify({ error: 'Server config error' }), {
-      status: 500,
-      headers: { ...corsHeaders },
-    });
-
-  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+  const supabaseAdmin = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  );
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader)
-      return new Response(JSON.stringify({ error: 'Auth required' }), {
-        status: 401,
-        headers: { ...corsHeaders },
-      });
-    const token = authHeader.replace('Bearer ', '');
     const {
       data: { user: callerUser },
-      error: userError,
-    } = await supabaseAdmin.auth.getUser(token);
-    if (userError || !callerUser)
+    } = await supabaseAdmin.auth.getUser(req.headers.get('Authorization')!.replace('Bearer ', ''));
+    if (!callerUser) {
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
         status: 401,
-        headers: { ...corsHeaders },
+        headers: corsHeaders,
       });
+    }
     const callerId = callerUser.id;
 
-    // NEW: Get the Caller's Company ID for authorization
     const { data: callerProfile, error: callerProfileError } = await supabaseAdmin
       .from('profiles')
       .select('company_id')
       .eq('id', callerId)
       .single();
     if (callerProfileError || !callerProfile) {
-      return new Response(JSON.stringify({ error: 'Could not verify caller profile.' }), {
-        status: 500,
-        headers: { ...corsHeaders },
-      });
+      throw new Error('Could not verify caller profile.');
     }
     const callerCompanyId = callerProfile.company_id;
 
-    let requestBody: UpdateRequestBody;
-    try {
-      requestBody = await req.json();
-    } catch (_e) {
-      return new Response(JSON.stringify({ error: 'Invalid JSON payload' }), {
-        status: 400,
-        headers: { ...corsHeaders },
-      });
-    }
-    const { taskId, updates } = requestBody;
-    if (!taskId || !updates || typeof updates !== 'object')
-      return new Response(JSON.stringify({ error: 'Missing taskId or updates object' }), {
-        status: 400,
-        headers: { ...corsHeaders },
-      });
-
-    if (
-      updates.file &&
-      (!updates.file.base64 || !updates.file.fileName || !updates.file.mimeType)
-    ) {
-      return new Response(JSON.stringify({ error: 'Incomplete file data provided' }), {
-        status: 400,
-        headers: { ...corsHeaders },
-      });
+    const { taskId, updates }: UpdateRequestBody = await req.json();
+    if (!taskId || !updates) {
+      throw new Error('Missing taskId or updates object');
     }
 
     const { data: currentTask, error: fetchError } = await supabaseAdmin
       .from('task_library')
-      .select('id, created_by_id, attachment_path, company_id') // MODIFIED: fetch company_id
+      .select('id, created_by_id, attachment_path, company_id')
       .eq('id', taskId)
       .single();
 
-    if (fetchError || !currentTask)
-      return new Response(JSON.stringify({ error: 'Task not found' }), {
-        status: 404,
-        headers: { ...corsHeaders },
-      });
-
-    // NEW: Security Check - Ensure the task belongs to the caller's company
+    if (fetchError || !currentTask) {
+      throw new Error('Task not found');
+    }
     if (currentTask.company_id !== callerCompanyId) {
-      console.error(
-        `Company mismatch! Caller ${callerId} from ${callerCompanyId} attempted to update task ${taskId} from ${currentTask.company_id}.`
-      );
-      return new Response(
-        JSON.stringify({ error: 'Permission denied: Cannot update a task from another company.' }),
-        { status: 403, headers: { ...corsHeaders } }
-      );
+      throw new Error('Permission denied: Cannot update a task from another company.');
     }
 
-    const oldAttachmentPath = currentTask.attachment_path;
     const isAdminCaller = await isActiveAdmin(supabaseAdmin, callerId);
     const isOwnerTeacher =
       currentTask.created_by_id === callerId && (await isActiveTeacher(supabaseAdmin, callerId));
-
     if (!isAdminCaller && !isOwnerTeacher) {
-      return new Response(JSON.stringify({ error: 'Permission denied to update this task' }), {
-        status: 403,
-        headers: { ...corsHeaders },
-      });
+      throw new Error('Permission denied to update this task');
     }
 
+    const oldAttachmentPath = currentTask.attachment_path;
     const dbUpdates: Record<string, any> = {};
+
+    // Build the DB update payload
     if (updates.title !== undefined) dbUpdates.title = updates.title.trim();
-    if (updates.description !== undefined) dbUpdates.description = updates.description.trim();
-    if (
-      updates.baseTickets !== undefined &&
-      updates.baseTickets >= 0 &&
-      Number.isInteger(updates.baseTickets)
-    )
-      dbUpdates.base_tickets = updates.baseTickets;
+    if (updates.hasOwnProperty('description'))
+      dbUpdates.description = updates.description === null ? null : updates.description?.trim();
+    if (updates.baseTickets !== undefined) dbUpdates.base_tickets = updates.baseTickets;
     if (updates.hasOwnProperty('referenceUrl'))
       dbUpdates.reference_url = updates.referenceUrl === null ? null : updates.referenceUrl?.trim();
+    if (updates.canSelfAssign !== undefined) dbUpdates.can_self_assign = updates.canSelfAssign;
+    if (updates.hasOwnProperty('journeyLocationId'))
+      dbUpdates.journey_location_id = updates.journeyLocationId;
 
+    // Handle file changes
     let newAttachmentPath: string | null = null;
-    let shouldDeleteOldFile = false;
     if (updates.file) {
-      shouldDeleteOldFile = true;
-      newAttachmentPath = await uploadAttachment(supabaseAdmin, updates.file, callerId);
-      if (!newAttachmentPath)
-        return new Response(JSON.stringify({ error: 'New file upload failed' }), {
-          status: 500,
-          headers: { ...corsHeaders },
-        });
+      // --- THIS IS THE FIX ---
+      newAttachmentPath = await uploadAttachment(
+        supabaseAdmin,
+        updates.file,
+        callerCompanyId,
+        callerId
+      );
+      if (!newAttachmentPath) throw new Error('New file upload failed');
       dbUpdates.attachment_path = newAttachmentPath;
     } else if (updates.deleteAttachment === true) {
-      shouldDeleteOldFile = true;
       dbUpdates.attachment_path = null;
     }
 
+    // Update the database if there are changes
     if (Object.keys(dbUpdates).length > 0) {
       const { error: updateDbError } = await supabaseAdmin
         .from('task_library')
         .update(dbUpdates)
         .eq('id', taskId);
       if (updateDbError) {
-        if (newAttachmentPath) await deleteAttachment(supabaseAdmin, newAttachmentPath);
-        return new Response(
-          JSON.stringify({ error: `DB update failed: ${updateDbError.message}` }),
-          { status: 500, headers: { ...corsHeaders } }
-        );
+        if (newAttachmentPath) await deleteAttachment(supabaseAdmin, newAttachmentPath); // Clean up failed upload
+        throw new Error(`DB update failed: ${updateDbError.message}`);
       }
     }
 
-    let oldAttachmentDeleted = false;
-    if (shouldDeleteOldFile && oldAttachmentPath) {
-      const { count } = await supabaseAdmin
-        .from('assigned_tasks')
-        .select('*', { count: 'exact', head: true })
-        .eq('task_attachment_path', oldAttachmentPath);
-      if (count === 0) {
-        oldAttachmentDeleted = await deleteAttachment(supabaseAdmin, oldAttachmentPath);
-      }
+    // Clean up old attachment if it was replaced or removed
+    if ((newAttachmentPath || updates.deleteAttachment) && oldAttachmentPath) {
+      await deleteAttachment(supabaseAdmin, oldAttachmentPath);
     }
 
-    const syncErrors: string[] = [];
-    if (updates.instrumentIds !== undefined && Array.isArray(updates.instrumentIds)) {
-      const { errors } = await syncInstrumentLinks(supabaseAdmin, taskId, updates.instrumentIds);
-      syncErrors.push(...errors);
+    // Sync instrument links if provided
+    if (updates.instrumentIds !== undefined) {
+      await syncInstrumentLinks(supabaseAdmin, taskId, updates.instrumentIds);
     }
 
-    const message = `Task ${taskId} update processed.${syncErrors.length > 0 ? ' Warnings: ' + syncErrors.join('; ') : ''}${shouldDeleteOldFile && oldAttachmentPath && !oldAttachmentDeleted && syncErrors.length === 0 ? ' Note: Old attachment kept due to usage.' : ''}`;
-    return new Response(JSON.stringify({ message: message }), {
+    return new Response(JSON.stringify({ message: `Task ${taskId} updated successfully.` }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Unhandled Error in update-task-library-item:', error.message);
-    return new Response(JSON.stringify({ error: error.message || 'Internal Server Error' }), {
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { ...corsHeaders },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
-
-console.log('update-task-library-item function initialized (v3 - multi-tenant aware).');

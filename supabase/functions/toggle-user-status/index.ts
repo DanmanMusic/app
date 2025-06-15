@@ -1,4 +1,4 @@
-// supabase/functions/toggleUserStatus/index.ts
+// supabase/functions/toggle-user-status/index.ts
 
 import { createClient } from 'supabase-js';
 
@@ -16,7 +16,7 @@ const PROTECTED_IDS_STRING = Deno.env.get('PROTECTED_ADMIN_IDS') || '';
 const PROTECTED_ADMIN_IDS = PROTECTED_IDS_STRING.split(',')
   .map(id => id.trim())
   .filter(id => id.length > 0);
-console.log('[toggleUserStatus] Initialized. Protected Admin IDs:', PROTECTED_ADMIN_IDS);
+console.log('[toggle-user-status] Initialized. Protected Admin IDs:', PROTECTED_ADMIN_IDS);
 
 // Main Function Handler
 Deno.serve(async (req: Request) => {
@@ -28,7 +28,7 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  console.log(`Received ${req.method} request for toggleUserStatus`);
+  console.log(`Received ${req.method} request for toggle-user-status`);
 
   // 2. Initialize Supabase Admin Client
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -185,5 +185,3 @@ Deno.serve(async (req: Request) => {
     );
   }
 });
-
-console.log('toggleUserStatus function initialized (v2 - uses shared helpers).');

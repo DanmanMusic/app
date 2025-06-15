@@ -1,4 +1,4 @@
-// supabase/functions/createUser/index.ts
+// supabase/functions/create-user/index.ts
 
 import { createClient } from 'supabase-js';
 
@@ -22,7 +22,7 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  console.log(`Received ${req.method} request for createUser`);
+  console.log(`Received ${req.method} request for create-user`);
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');

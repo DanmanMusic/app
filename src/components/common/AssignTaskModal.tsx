@@ -12,9 +12,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
 import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-toast-message';
 
@@ -33,16 +31,7 @@ import {
   User,
   Instrument,
 } from '../../types/dataTypes';
-import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
-
-interface NativeFileObject {
-  uri: string;
-  name?: string;
-  mimeType?: string;
-  type?: string;
-  size?: number;
-  [key: string]: any;
-}
+import { getInstrumentNames, getUserDisplayName, NativeFileObject } from '../../utils/helpers';
 
 export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   visible,
@@ -76,6 +65,15 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     staleTime: 10 * 60 * 1000,
     enabled: visible && step >= 2 && !isAdHocMode,
   });
+
+  const assignableTaskLibrary = useMemo(() => {
+    return taskLibrary.filter(task => !task.canSelfAssign); // Filter out self-assignable tasks
+  }, [taskLibrary]);
+
+  const sortedTasks = useMemo(
+    () => [...assignableTaskLibrary].sort((a, b) => a.title.localeCompare(b.title)),
+    [assignableTaskLibrary]
+  );
 
   const filterTeacherId = currentUserRole === 'teacher' ? assignerId : undefined;
   const {
@@ -126,14 +124,11 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     enabled: visible && step === 2 && !isAdHocMode,
   });
 
-  const sortedTasks = useMemo(
-    () => [...taskLibrary].sort((a, b) => a.title.localeCompare(b.title)),
-    [taskLibrary]
-  );
   const availableStudents: SimplifiedStudent[] = useMemo(
     () => studentListResult?.students ?? [],
     [studentListResult]
   );
+
   const filteredStudents = useMemo(() => {
     const term = studentSearchTerm.toLowerCase().trim();
     if (!term) return [...availableStudents].sort((a, b) => a.name.localeCompare(b.name));
@@ -154,7 +149,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       isLoadingSelectedStudent ||
       !selectedStudentProfile ||
       !selectedStudentProfile.instrumentIds ||
-      taskLibrary.length === 0
+      sortedTasks.length === 0
     ) {
       return sortedTasks;
     }
@@ -164,7 +159,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       if (taskInstruments.length === 0) return true;
       return taskInstruments.some(taskInstId => studentInstruments.includes(taskInstId));
     });
-  }, [sortedTasks, selectedStudentProfile, isLoadingSelectedStudent, taskLibrary.length]);
+  }, [sortedTasks, selectedStudentProfile, isLoadingSelectedStudent]);
 
   const mutation = useMutation({
     mutationFn: (
@@ -223,18 +218,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         setSelectedStudentId(null);
         setStep(1);
       }
-    } else {
-      setStep(1);
-      setSelectedStudentId(null);
-      setSelectedLibraryTask(null);
-      setIsAdHocMode(false);
-      setAdHocTitle('');
-      setAdHocDescription('');
-      setAdHocBasePoints('');
-      setAdHocReferenceUrl('');
-      setStudentSearchTerm('');
-      setAdHocPickedDocument(null);
-      setAdHocFileError(null);
     }
   }, [visible, preselectedStudentId]);
 
@@ -274,21 +257,11 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         : parseInt(String(adHocBasePoints || '-1'), 10);
     const url = adHocReferenceUrl.trim();
     if (!adHocTitle.trim()) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Custom title required.',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Custom title required.' });
       return;
     }
     if (isNaN(numericPoints) || numericPoints < 0) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Valid points required.',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Valid points required.' });
       return;
     }
     if (url && !url.toLowerCase().startsWith('http')) {
@@ -296,7 +269,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         type: 'error',
         text1: 'Validation Error',
         text2: 'URL must start with http/https.',
-        position: 'bottom',
       });
       return;
     }
@@ -309,7 +281,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         type: 'error',
         text1: 'File Error',
         text2: adHocFileError || 'Selected file is invalid or inaccessible.',
-        position: 'bottom',
       });
       return;
     }
@@ -318,14 +289,10 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     setIsAdHocMode(true);
     setStep(3);
   };
+
   const handleConfirm = () => {
     if (!selectedStudentId || !assignerId) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Student or Assigner ID missing.',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Student or Assigner ID missing.' });
       return;
     }
 
@@ -352,17 +319,11 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           type: 'error',
           text1: 'Validation Error',
           text2: 'Invalid custom task details.',
-          position: 'bottom',
         });
         return;
       }
       if (url && !url.toLowerCase().startsWith('http')) {
-        Toast.show({
-          type: 'error',
-          text1: 'Validation Error',
-          text2: 'Invalid custom URL.',
-          position: 'bottom',
-        });
+        Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Invalid custom URL.' });
         return;
       }
 
@@ -379,7 +340,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             type: 'error',
             text1: 'File Error',
             text2: 'Selected file is missing required information.',
-            position: 'bottom',
           });
           return;
         }
@@ -408,7 +368,6 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
         type: 'error',
         text1: 'Validation Error',
         text2: 'No task selected or defined.',
-        position: 'bottom',
       });
       return;
     }
@@ -418,10 +377,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   const goBack = () => {
     if (step === 3) {
       setStep(2);
-      if (isAdHocMode) {
-      } else {
-        setSelectedLibraryTask(null);
-      }
+      setSelectedLibraryTask(null);
     } else if (step === 2 && !preselectedStudentId) {
       setSelectedStudentId(null);
       setStep(1);
@@ -633,6 +589,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                     Error loading student details: {errorSelectedStudent?.message}
                   </Text>
                 )}
+
                 {!isLoadingLibrary &&
                   !isLoadingSelectedStudent &&
                   !isLoadingInstruments &&
@@ -662,7 +619,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                         <Text style={commonSharedStyles.baseEmptyText}>
                           {taskLibrary.length === 0
                             ? 'Task library is empty.'
-                            : "No relevant tasks found for this student's instrument(s)."}
+                            : "No assignable tasks found for this student's instrument(s)."}
                         </Text>
                       }
                     />
@@ -732,9 +689,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                 disabled={mutation.isPending}
               />
             )}
-            {((step > 1 && !preselectedStudentId) ||
-              step === 3 ||
-              (step === 2 && preselectedStudentId)) && (
+            {((step > 1 && !preselectedStudentId) || step === 3) && (
               <Button
                 title="Back"
                 onPress={goBack}

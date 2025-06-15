@@ -131,12 +131,12 @@ export const adjustTickets = async ({
 
   console.log('[API adjustTickets] Payload being sent:', payload);
 
-  const { data, error } = await client.functions.invoke('adjustTickets', {
+  const { data, error } = await client.functions.invoke('adjust-tickets', {
     body: payload,
   });
 
   if (error) {
-    console.error('[API adjustTickets] Error invoking adjustTickets function:', error);
+    console.error('[API adjustTickets] Error invoking adjust-tickets function:', error);
     let detailedError = error.message || 'Unknown function error';
     if (
       error.context &&
@@ -203,12 +203,12 @@ export const redeemReward = async ({
 
   console.log('[API redeemReward] Payload being sent:', payload);
 
-  const { data, error } = await client.functions.invoke('redeemReward', {
+  const { data, error } = await client.functions.invoke('redeem-reward', {
     body: payload,
   });
 
   if (error) {
-    console.error('[API redeemReward] Error invoking redeemReward function:', error);
+    console.error('[API redeemReward] Error invoking redeem-reward function:', error);
     let detailedError = error.message || 'Unknown function error';
     if (
       error.context &&

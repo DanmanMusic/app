@@ -1,4 +1,4 @@
-// supabase/functions/updateUserWithLinks/index.ts
+// supabase/functions/update-user-with-links/index.ts
 
 import { createClient, SupabaseClient } from 'supabase-js';
 
