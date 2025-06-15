@@ -1,5 +1,5 @@
 // src/components/student/modals/SetGoalModal.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { Modal, View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 
@@ -31,6 +31,10 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
     enabled: visible,
   });
 
+  const eligibleGoalRewards = useMemo(() => {
+    return rewardsCatalog.filter(reward => reward.isGoalEligible);
+  }, [rewardsCatalog]);
+
   const handleSelectGoal = (id: string) => {
     onSetGoal(id);
   };
@@ -60,7 +64,7 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
           {!isLoading && !isError && (
             <FlatList
               style={commonSharedStyles.listItemFull}
-              data={rewardsCatalog.sort((a, b) => a.cost - b.cost)}
+              data={eligibleGoalRewards.sort((a, b) => a.cost - b.cost)}
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
                 <RewardGoalItem

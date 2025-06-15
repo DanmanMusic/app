@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+// File: src/components/admin/modals/EditRewardModal.tsx
 
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -11,10 +12,9 @@ import {
   Image,
   Platform,
   Alert,
+  Switch, // Import Switch
 } from 'react-native';
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-
 import * as ImagePicker from 'expo-image-picker';
 import Toast from 'react-native-toast-message';
 
@@ -28,6 +28,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
   const [name, setName] = useState('');
   const [cost, setCost] = useState<number | ''>('');
   const [description, setDescription] = useState('');
+  const [isGoalEligible, setIsGoalEligible] = useState(false); // State for the switch
 
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [mimeType, setMimeType] = useState<string | undefined>(undefined);
@@ -40,7 +41,6 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
     mutationFn: updateReward,
     onSuccess: updatedReward => {
       console.log('[EditRewardModal] Reward updated successfully via mutation:', updatedReward);
-
       queryClient.invalidateQueries({ queryKey: ['rewards'] });
       onClose();
       Toast.show({
@@ -70,6 +70,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
       setName(rewardToEdit.name);
       setCost(rewardToEdit.cost);
       setDescription(rewardToEdit.description || '');
+      setIsGoalEligible(rewardToEdit.isGoalEligible); // Set initial state from prop
 
       const initialUrl =
         rewardToEdit.imageUrl && rewardToEdit.imageUrl.startsWith('http')
@@ -81,14 +82,6 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
       setMimeType(undefined);
 
       mutation.reset();
-    } else {
-      setName('');
-      setCost('');
-      setDescription('');
-      setImageUri(null);
-      setInitialImageUrl(null);
-      setImageIntent('keep');
-      setMimeType(undefined);
     }
   }, [visible, rewardToEdit]);
 
@@ -113,12 +106,6 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
         setImageUri(selectedAsset.uri);
         setMimeType(selectedAsset.mimeType);
         setImageIntent('replace');
-        console.log(
-          'Selected New Reward Image URI:',
-          selectedAsset.uri,
-          'MIME Type:',
-          selectedAsset.mimeType
-        );
       }
     } catch (error) {
       console.error('Error picking reward image: ', error);
@@ -139,12 +126,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
     const numericCost = typeof cost === 'number' ? cost : parseInt(String(cost || '-1'), 10);
 
     if (!trimmedName) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Reward Name is required.',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Reward Name is required.' });
       return;
     }
     if (isNaN(numericCost) || numericCost < 0) {
@@ -152,7 +134,6 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
         type: 'error',
         text1: 'Validation Error',
         text2: 'Please enter a valid, non-negative Ticket Cost.',
-        position: 'bottom',
       });
       return;
     }
@@ -168,15 +149,16 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
       updates.cost = numericCost;
       needsUpdate = true;
     }
-    const currentDesc = rewardToEdit.description || '';
-    const newDesc = description.trim();
-    if (newDesc !== currentDesc) {
-      updates.description = newDesc || undefined;
+    if ((description.trim() || '') !== (rewardToEdit.description || '')) {
+      updates.description = description.trim() || undefined;
+      needsUpdate = true;
+    }
+    if (isGoalEligible !== rewardToEdit.isGoalEligible) {
+      updates.isGoalEligible = isGoalEligible;
       needsUpdate = true;
     }
 
     let apiImageUri: string | null | undefined = undefined;
-
     if (imageIntent === 'replace' && imageUri) {
       apiImageUri = imageUri;
       needsUpdate = true;
@@ -186,24 +168,22 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
     }
 
     if (!needsUpdate) {
-      console.log('[EditRewardModal] No changes detected.');
+      Toast.show({ type: 'info', text1: 'No Changes', text2: 'No information was modified.' });
       onClose();
       return;
     }
 
     const updateData = {
       rewardId: rewardToEdit.id,
-      updates: updates,
+      updates,
       imageUri: apiImageUri,
       mimeType: imageIntent === 'replace' ? mimeType : undefined,
     };
 
-    console.log('[EditRewardModal] Calling mutation with data:', updateData);
     mutation.mutate(updateData);
   };
 
   const isSaveDisabled = mutation.isPending || !name.trim() || cost === '' || cost < 0;
-
   const previewSource = imageUri ? { uri: imageUri } : null;
 
   if (!rewardToEdit) return null;
@@ -253,7 +233,6 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
                   disabled={mutation.isPending}
                   color={colors.info}
                 />
-
                 {(initialImageUrl || imageUri) && (
                   <Button
                     title="Remove Image"
@@ -275,6 +254,25 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
               numberOfLines={3}
               editable={!mutation.isPending}
             />
+
+            <View
+              style={[
+                commonSharedStyles.baseRow,
+                commonSharedStyles.justifySpaceBetween,
+                commonSharedStyles.baseAlignCenter,
+                { marginBottom: 15 },
+              ]}
+            >
+              <Text style={commonSharedStyles.label}>Can be set as a Goal?</Text>
+              <Switch
+                trackColor={{ false: colors.secondary, true: colors.success }}
+                thumbColor={colors.backgroundPrimary}
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={setIsGoalEligible}
+                value={isGoalEligible}
+                disabled={mutation.isPending}
+              />
+            </View>
           </ScrollView>
           {mutation.isPending && (
             <View style={commonSharedStyles.baseRowCentered}>
@@ -284,7 +282,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
           )}
           {mutation.isError && (
             <Text style={commonSharedStyles.errorText}>
-              Error:
+              Error:{' '}
               {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
             </Text>
           )}

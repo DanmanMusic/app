@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+// File: src/components/admin/modals/CreateRewardModal.tsx
 
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -11,10 +12,9 @@ import {
   Image,
   Platform,
   Alert,
+  Switch, // Import Switch
 } from 'react-native';
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-
 import * as ImagePicker from 'expo-image-picker';
 import Toast from 'react-native-toast-message';
 
@@ -22,15 +22,17 @@ import { createReward } from '../../../api/rewards';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { CreateRewardModalProps } from '../../../types/componentProps';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');
   const [cost, setCost] = useState<number | ''>('');
   const [description, setDescription] = useState('');
-
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [mimeType, setMimeType] = useState<string | undefined>(undefined);
+  const [isGoalEligible, setIsGoalEligible] = useState(false); // State for the switch
 
+  const { appUser } = useAuth();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -65,6 +67,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
       setDescription('');
       setImageUri(null);
       setMimeType(undefined);
+      setIsGoalEligible(false); // Reset on open
       mutation.reset();
     }
   }, [visible]);
@@ -82,7 +85,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
     }
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
@@ -92,30 +95,27 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
         const selectedAsset = result.assets[0];
         setImageUri(selectedAsset.uri);
         setMimeType(selectedAsset.mimeType);
-        console.log(
-          'Selected Reward Image URI:',
-          selectedAsset.uri,
-          'MIME Type:',
-          selectedAsset.mimeType
-        );
       }
     } catch (error) {
       console.error('Error picking reward image: ', error);
-      Alert.alert('Image Pick Error', 'An error occurred selecting the image.');
     }
   };
 
   const handleCreate = () => {
+    const companyId = appUser?.companyId;
+    if (companyId === undefined) {
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Reward company is required.',
+      });
+      return;
+    }
     const trimmedName = name.trim();
     const numericCost = typeof cost === 'number' ? cost : parseInt(String(cost || '-1'), 10);
 
     if (!trimmedName) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Reward Name is required.',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Reward Name is required.' });
       return;
     }
     if (isNaN(numericCost) || numericCost < 0) {
@@ -123,7 +123,6 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
         type: 'error',
         text1: 'Validation Error',
         text2: 'Please enter a valid, non-negative Ticket Cost.',
-        position: 'bottom',
       });
       return;
     }
@@ -134,9 +133,10 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
       description: description.trim() || undefined,
       imageUri: imageUri,
       mimeType: mimeType,
+      isGoalEligible: isGoalEligible, // Pass the switch state
+      companyId: companyId,
     };
 
-    console.log('[CreateRewardModal] Calling mutation with data:', newRewardData);
     mutation.mutate(newRewardData);
   };
 
@@ -203,6 +203,25 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
               numberOfLines={3}
               editable={!mutation.isPending}
             />
+
+            <View
+              style={[
+                commonSharedStyles.baseRow,
+                commonSharedStyles.justifySpaceBetween,
+                commonSharedStyles.baseAlignCenter,
+                { marginBottom: 15 },
+              ]}
+            >
+              <Text style={commonSharedStyles.label}>Can be set as a Goal?</Text>
+              <Switch
+                trackColor={{ false: colors.secondary, true: colors.success }}
+                thumbColor={colors.backgroundPrimary}
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={setIsGoalEligible}
+                value={isGoalEligible}
+                disabled={mutation.isPending}
+              />
+            </View>
           </ScrollView>
           {mutation.isPending && (
             <View style={commonSharedStyles.baseRowCentered}>
