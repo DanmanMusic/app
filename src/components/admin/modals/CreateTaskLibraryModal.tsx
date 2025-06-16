@@ -1,6 +1,5 @@
 // src/components/admin/modals/CreateTaskLibraryModal.tsx
 import React, { useState, useEffect } from 'react';
-
 import {
   Modal,
   View,
@@ -11,11 +10,8 @@ import {
   ActivityIndicator,
   Switch,
 } from 'react-native';
-
 import { Picker } from '@react-native-picker/picker';
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
 import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-toast-message';
 
@@ -166,15 +162,16 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
       filePayload = { file: asset, mimeType: asset.mimeType, fileName: asset.name };
     }
 
+    // --- THIS IS THE FIX ---
     const newTaskData: Omit<TaskLibraryItem, 'id'> & { file?: any } = {
       title: trimmedTitle,
       description: description.trim(),
       baseTickets: numericTickets,
       referenceUrl: referenceUrl.trim() || undefined,
       instrumentIds: selectedInstrumentIds,
-      createdById: '',
+      createdById: '', // This is set by the backend Edge Function
       canSelfAssign: canSelfAssign,
-      journeyLocationId: selectedJourneyLocationId,
+      journeyLocationId: canSelfAssign ? selectedJourneyLocationId : null, // Correctly include the ID
       ...filePayload,
     };
     mutation.mutate(newTaskData);
