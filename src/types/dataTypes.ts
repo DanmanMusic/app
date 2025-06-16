@@ -1,6 +1,6 @@
 // src/types/dataTypes.ts
 
-export type AnnouncementType = 'announcement' | 'challenge' | 'redemption_celebration';
+export type AnnouncementType = 'announcement' | 'redemption_celebration' | 'streak_milestone';
 
 export interface Announcement {
   id: string;

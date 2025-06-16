@@ -24,24 +24,24 @@ const mapDbRowToAnnouncement = (item: any): Announcement => {
   };
 };
 
-// MODIFIED: fetchAnnouncements to join with profiles
+type AnnouncementQueryResult = (Database['public']['Tables']['announcements']['Row'] & {
+  profiles: Pick<
+    Database['public']['Tables']['profiles']['Row'],
+    'first_name' | 'last_name' | 'nickname' | 'avatar_path'
+  > | null;
+})[];
+
 export const fetchAnnouncements = async (): Promise<Announcement[]> => {
   const client = getSupabase();
   console.log(`[Supabase] Fetching Announcements`);
 
-  // Check if there is an active session
   const {
     data: { session },
   } = await client.auth.getSession();
 
-  let query = client
+  const query = client
     .from('announcements')
-    // If we have a session, we can attempt the join. If not, just get announcements.
-    .select(
-      session
-        ? 'id, type, title, message, date, related_student_id, profiles ( first_name, last_name, nickname, avatar_path )'
-        : 'id, type, title, message, date, related_student_id'
-    )
+    .select(session ? '*, profiles ( first_name, last_name, nickname, avatar_path )' : '*')
     .order('date', { ascending: false });
 
   const { data, error } = await query;
@@ -51,17 +51,26 @@ export const fetchAnnouncements = async (): Promise<Announcement[]> => {
     throw new Error(`Failed to fetch announcements: ${error.message}`);
   }
 
-  console.log(`[Supabase] Received ${data?.length ?? 0} announcement items.`);
-  const announcements: Announcement[] = (data || []).map(mapDbRowToAnnouncement);
+  // Cast the data to our expected query result type AFTER the error check.
+  const typedData = data as AnnouncementQueryResult;
+
+  // Now, perform the filtering on the strongly-typed data.
+  const filteredData = session
+    ? typedData
+    : (typedData || []).filter(item => item.type === 'announcement');
+
+  console.log(
+    `[Supabase] Received ${typedData?.length ?? 0} total, returning ${filteredData?.length ?? 0} announcement items.`
+  );
+  const announcements: Announcement[] = (filteredData || []).map(mapDbRowToAnnouncement);
   return announcements;
 };
 
-// MODIFIED: createAnnouncement to re-fetch with profile data
 export const createAnnouncement = async (
   announcementData: Omit<
     Announcement,
     'id' | 'date' | 'relatedStudentName' | 'relatedStudentAvatarPath'
-  > & { companyId: string } // <-- Add companyId to the expected input
+  > & { companyId: string }
 ): Promise<Announcement> => {
   const client = getSupabase();
   console.log('[Supabase] Creating announcement:', announcementData.title);

@@ -67,9 +67,9 @@ This plan outlines the major features and architectural changes for Version 2.
   - [x] **UI:** Add "Available Tasks" or "Journey" section to `StudentView`.
   - [x] **UI:** Display a list of self-assignable tasks, categorized by Journey Location.
   - [x] **UI:** Implement "Assign to Me" functionality.
-- [ ] **Feature: Enhanced Teacher/Admin Views:**
-  - [ ] **Backend:** Create performant RPC (`get_student_list_with_stats`) to fetch student list with balance, goal, and streak info included. Consider using a Materialized View for performance.
-  - [ ] **UI:** Update `AdminStudentItem.tsx` and `TeacherStudentsSection.tsx` to display the new stats.
+- [x] **Feature: Enhanced Teacher/Admin Views:**
+  - [x] **Backend:** Create performant RPC (`get_student_list_with_stats`) to fetch student list with balance, goal, and streak info included. Consider using a Materialized View for performance.
+  - [x] **UI:** Update `AdminStudentItem.tsx` and `TeacherStudentsSection.tsx` to display the new stats.
 - [ ] **Feature: Notifications Infrastructure:**
   - [ ] **Client:** Implement `usePushNotifications` hook (or similar) to handle token registration on native platforms.
   - [ ] **Backend:** Create the core `send-notification` Edge Function.

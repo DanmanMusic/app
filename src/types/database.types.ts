@@ -921,11 +921,7 @@ export type Database = {
       };
     };
     Enums: {
-      announcement_type:
-        | 'announcement'
-        | 'challenge'
-        | 'redemption_celebration'
-        | 'streak_milestone';
+      announcement_type: 'announcement' | 'redemption_celebration' | 'streak_milestone';
       notification_status: 'pending' | 'sent' | 'error' | 'token_not_found';
       notification_trigger_event:
         | 'cron_staff_daily_briefing'
@@ -1055,12 +1051,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      announcement_type: [
-        'announcement',
-        'challenge',
-        'redemption_celebration',
-        'streak_milestone',
-      ],
+      announcement_type: ['announcement', 'redemption_celebration', 'streak_milestone'],
       notification_status: ['pending', 'sent', 'error', 'token_not_found'],
       notification_trigger_event: [
         'cron_staff_daily_briefing',
