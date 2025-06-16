@@ -1,17 +1,17 @@
 // src/components/admin/AdminTeacherDetailView.tsx
-
-import React, { useMemo, useState, useEffect } from 'react'; // MODIFIED: Import useState, useEffect
-
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, Button, ActivityIndicator, ScrollView, FlatList, Image } from 'react-native';
-
 import { useQuery } from '@tanstack/react-query';
 
-import { fetchStudents, fetchUserProfile } from '../../api/users';
+import { usePaginatedStudentsWithStats } from '../../hooks/usePaginatedStudentsWithStats';
+import { fetchInstruments } from '../../api/instruments'; // <<< THE FIX IS HERE
+import { fetchUserProfile } from '../../api/users';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminTeacherDetailViewProps } from '../../types/componentProps';
-import { User, SimplifiedStudent } from '../../types/dataTypes';
+import { User, Instrument } from '../../types/dataTypes';
 import { getUserDisplayName, getUserAvatarSource } from '../../utils/helpers';
+import { AdminStudentItem } from '../common/AdminStudentItem';
 
 export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
   viewingUserId,
@@ -20,7 +20,6 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
   onViewStudentProfile,
   onInitiatePinGeneration,
 }) => {
-  // MODIFIED: State for the avatar URL and its loading state
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
 
@@ -36,7 +35,12 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
     staleTime: 5 * 60 * 1000,
   });
 
-  // MODIFIED: useEffect to fetch the avatar URL when the teacher data is available
+  const { data: instruments = [] } = useQuery<Instrument[], Error>({
+    queryKey: ['instruments'],
+    queryFn: fetchInstruments,
+    staleTime: Infinity,
+  });
+
   useEffect(() => {
     const fetchAvatar = async () => {
       if (teacher?.avatarPath) {
@@ -52,32 +56,17 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
   }, [teacher]);
 
   const {
-    data: linkedStudentsResult,
+    students: linkedStudents,
     isLoading: isLoadingLinkedStudents,
     isError: isErrorLinkedStudents,
     error: errorLinkedStudents,
-  } = useQuery({
-    queryKey: [
-      'students',
-      { teacherId: viewingUserId, filter: 'all', context: 'teacherDetailView' },
-    ],
-    queryFn: () => fetchStudents({ teacherId: viewingUserId, filter: 'all', limit: 9999, page: 1 }),
-    enabled: !!teacher,
-    staleTime: 5 * 60 * 1000,
-  });
+  } = usePaginatedStudentsWithStats({ teacherId: viewingUserId });
 
-  const linkedStudents: SimplifiedStudent[] = useMemo(
-    () => linkedStudentsResult?.students ?? [],
-    [linkedStudentsResult]
-  );
   const teacherDisplayName = useMemo(
     () => (teacher ? getUserDisplayName(teacher) : 'Loading...'),
     [teacher]
   );
   const isTeacherActive = useMemo(() => teacher?.status === 'active', [teacher]);
-
-  // REMOVED: The incorrect useMemo for avatarSource
-  // const avatarSource = useMemo(() => getUserAvatarSource(teacher), [teacher]);
 
   const handleEdit = () => {
     if (teacher) onInitiateEditUser(teacher);
@@ -129,7 +118,6 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
         </Text>
       </View>
 
-      {/* MODIFIED: Avatar Display Section now handles loading and uses state */}
       <View style={{ alignItems: 'center', marginBottom: 15 }}>
         {isLoadingAvatar ? (
           <ActivityIndicator style={commonSharedStyles.detailAvatar} color={colors.primary} />
@@ -200,39 +188,17 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
 
       {!isLoadingLinkedStudents && !isErrorLinkedStudents && (
         <FlatList
-          data={linkedStudents.sort((a, b) => a.name.localeCompare(b.name))}
+          data={linkedStudents}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <View
-              style={[
-                commonSharedStyles.baseItem,
-                commonSharedStyles.baseRow,
-                commonSharedStyles.justifySpaceBetween,
-              ]}
-            >
-              <View>
-                <Text style={commonSharedStyles.itemTitle}>{item.name}</Text>
-                <Text style={commonSharedStyles.baseSecondaryText}>
-                  Status:{' '}
-                  <Text
-                    style={
-                      item.isActive
-                        ? commonSharedStyles.activeStatus
-                        : commonSharedStyles.inactiveStatus
-                    }
-                  >
-                    {item.isActive ? 'Active' : 'Inactive'}
-                  </Text>
-                </Text>
-              </View>
-              <View>
-                <Button
-                  title="View Profile"
-                  onPress={() => onViewStudentProfile(item.id)}
-                  color={colors.primary}
-                />
-              </View>
-            </View>
+            <AdminStudentItem
+              student={item}
+              instruments={instruments}
+              onViewManage={onViewStudentProfile}
+              // The "Assign Task" button on the list item isn't strictly necessary here,
+              // as the admin can view the profile to assign tasks. Passing an empty function.
+              onInitiateAssignTask={() => {}}
+            />
           )}
           scrollEnabled={false}
           ItemSeparatorComponent={() => <View style={{ height: 8 }} />}

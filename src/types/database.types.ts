@@ -727,10 +727,6 @@ export type Database = {
         Args: { profile_id: string };
         Returns: boolean;
       };
-      debug_get_all_practice_logs_for_company: {
-        Args: { p_company_id: string };
-        Returns: Json;
-      };
       get_assigned_task_details: {
         Args: { p_assignment_id: string };
         Returns: {
@@ -858,6 +854,32 @@ export type Database = {
       get_student_balance: {
         Args: { p_student_id: string };
         Returns: number;
+      };
+      get_student_list_with_stats: {
+        Args: {
+          p_company_id: string;
+          p_teacher_id?: string;
+          p_status?: string;
+          p_search_term?: string;
+          p_page?: number;
+          p_limit?: number;
+        };
+        Returns: {
+          id: string;
+          first_name: string;
+          last_name: string;
+          nickname: string;
+          status: string;
+          avatar_path: string;
+          company_id: string;
+          instrument_ids: string[];
+          balance: number;
+          current_streak: number;
+          goal_reward_name: string;
+          goal_reward_cost: number;
+          teacher_names: string[];
+          total_count: number;
+        }[];
       };
       get_student_streak_details: {
         Args: { p_student_id: string };

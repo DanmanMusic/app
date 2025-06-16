@@ -63,10 +63,10 @@ This plan outlines the major features and architectural changes for Version 2.
   - [x] **UI:** Create `CommunityGoalsWidget.tsx` to show trending goals on the student dashboard.
   - [x] **UI:** Create `CommunityStreaksWidget.tsx` to show active streak stats on the student dashboard.
   - [ ] **UI:** Update `AnnouncementListItem.tsx` to properly display `streak_milestone` and `redemption_celebration` types with student avatar and name.
-- [ ] **Feature: Self-Assignable Tasks (Student Side):**
-  - [ ] **UI:** Add "Available Tasks" or "Journey" section to `StudentView`.
-  - [ ] **UI:** Display a list of self-assignable tasks, categorized by Journey Location.
-  - [ ] **UI:** Implement "Assign to Me" functionality.
+- [x] **Feature: Self-Assignable Tasks (Student Side):**
+  - [x] **UI:** Add "Available Tasks" or "Journey" section to `StudentView`.
+  - [x] **UI:** Display a list of self-assignable tasks, categorized by Journey Location.
+  - [x] **UI:** Implement "Assign to Me" functionality.
 - [ ] **Feature: Enhanced Teacher/Admin Views:**
   - [ ] **Backend:** Create performant RPC (`get_student_list_with_stats`) to fetch student list with balance, goal, and streak info included. Consider using a Materialized View for performance.
   - [ ] **UI:** Update `AdminStudentItem.tsx` and `TeacherStudentsSection.tsx` to display the new stats.

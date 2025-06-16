@@ -460,3 +460,73 @@ export const updateStudentGoal = async (
   }
   return data;
 };
+
+export interface StudentWithStats {
+  id: string;
+  first_name: string;
+  last_name: string;
+  nickname: string | null;
+  status: UserStatus;
+  avatar_path: string | null;
+  companyId: string;
+  instrumentIds: string[];
+  balance: number;
+  current_streak: number;
+  goal_reward_name: string | null;
+  goal_reward_cost: number | null;
+  teacher_names: string[]; // NEW
+  total_count: number;
+}
+
+export const fetchStudentsWithStats = async ({
+  companyId,
+  teacherId,
+  page = 1,
+  limit = 20,
+  filter = 'all',
+  searchTerm = '',
+}: {
+  companyId: string;
+  teacherId?: string;
+  page?: number;
+  limit?: number;
+  filter?: UserStatus | 'all';
+  searchTerm?: string;
+}) => {
+  const client = getSupabase();
+  const { data, error } = await client.rpc('get_student_list_with_stats', {
+    p_company_id: companyId,
+    p_teacher_id: teacherId,
+    p_status: filter,
+    p_search_term: searchTerm,
+    p_page: page,
+    p_limit: limit,
+  });
+
+  if (error) {
+    console.error(`[API users] Error fetching students with stats:`, error.message);
+    throw new Error(`Failed to fetch student list: ${error.message}`);
+  }
+
+  const items: StudentWithStats[] = (data || []).map(item => ({
+    id: item.id,
+    first_name: item.first_name,
+    last_name: item.last_name,
+    nickname: item.nickname,
+    status: item.status as UserStatus,
+    avatar_path: item.avatar_path,
+    companyId: item.company_id,
+    instrumentIds: item.instrument_ids || [],
+    balance: item.balance,
+    current_streak: item.current_streak,
+    goal_reward_name: item.goal_reward_name,
+    goal_reward_cost: item.goal_reward_cost,
+    teacher_names: item.teacher_names || [], // NEW
+    total_count: item.total_count,
+  }));
+
+  const totalItems = data?.[0]?.total_count ?? 0;
+  const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
+
+  return { items, totalPages, currentPage: page, totalItems };
+};

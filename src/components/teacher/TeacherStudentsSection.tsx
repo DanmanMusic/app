@@ -1,16 +1,13 @@
+// src/components/teacher/TeacherStudentsSection.tsx
 import React from 'react';
-
 import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 
-import { useQuery } from '@tanstack/react-query';
-
-import { fetchStudents } from '../../api/users';
+import { usePaginatedStudentsWithStats } from '../../hooks/usePaginatedStudentsWithStats';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { TeacherStudentsSectionProps } from '../../types/componentProps';
-import { SimplifiedStudent } from '../../types/dataTypes';
-import { StudentListItem } from '../common/StudentListItem';
+import { AdminStudentItem } from '../common/AdminStudentItem';
 
 export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
   instruments,
@@ -19,19 +16,14 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
 }) => {
   const { currentUserId: teacherId } = useAuth();
 
+  // Use the new, more powerful hook, filtering by this teacher's ID
   const {
-    data: studentsResult,
+    students: studentsWithStats,
     isLoading,
     isError,
     error,
-  } = useQuery({
-    queryKey: ['students', { context: 'teacherStudents', teacherId }],
-    queryFn: () => fetchStudents({ page: 1, filter: 'all', teacherId: teacherId ?? undefined }),
-    enabled: !!teacherId,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const studentsLinkedToTeacher: SimplifiedStudent[] = studentsResult?.students ?? [];
+    // Note: We are not using pagination/filters in this specific view, but the hook supports it.
+  } = usePaginatedStudentsWithStats({ teacherId: teacherId ?? undefined });
 
   return (
     <View style={[commonSharedStyles.baseMargin]}>
@@ -43,25 +35,27 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
             commonSharedStyles.bold,
           ]}
         >
-          My Students ({studentsLinkedToTeacher.length})
+          My Students ({studentsWithStats.length})
         </Text>
       </View>
       {isLoading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />}
       {isError && (
-        <Text style={commonSharedStyles.textDanger}>Error loading students: {error?.message}</Text>
+        <Text style={commonSharedStyles.errorText}>Error loading students: {error?.message}</Text>
       )}
       {!isLoading &&
         !isError &&
-        (studentsLinkedToTeacher.length > 0 ? (
+        (studentsWithStats.length > 0 ? (
           <FlatList
-            data={studentsLinkedToTeacher.sort((a, b) => a.name.localeCompare(b.name))}
+            // The RPC sorts by last_name, so we don't need to sort here
+            data={studentsWithStats}
             keyExtractor={item => item.id}
             renderItem={({ item }) => (
-              <StudentListItem
+              // Use the enhanced AdminStudentItem to display the stats
+              <AdminStudentItem
                 student={item}
                 instruments={instruments}
-                onViewProfile={onViewProfile}
-                onAssignTask={onAssignTask}
+                onViewManage={onViewProfile}
+                onInitiateAssignTask={onAssignTask}
               />
             )}
             scrollEnabled={false}

@@ -1,20 +1,19 @@
 // src/components/admin/AdminUsersSection.tsx
 import React from 'react';
-
 import { View, Text, Button, FlatList, TextInput, ActivityIndicator } from 'react-native';
 
-import PaginationControls from './PaginationControls';
+import { usePaginatedStudentsWithStats } from '../../hooks/usePaginatedStudentsWithStats'; // NEW
 import { usePaginatedAdmins } from '../../hooks/usePaginatedAdmins';
 import { usePaginatedParents } from '../../hooks/usePaginatedParents';
-import { usePaginatedStudents } from '../../hooks/usePaginatedStudents';
 import { usePaginatedTeachers } from '../../hooks/usePaginatedTeachers';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminUsersSectionProps } from '../../types/componentProps';
-import { SimplifiedStudent, User, UserStatus } from '../../types/dataTypes';
+import { User, UserStatus } from '../../types/dataTypes';
 import { capitalizeFirstLetter } from '../../utils/helpers';
 import { AdminStudentItem } from '../common/AdminStudentItem';
 import { AdminUserItem } from '../common/AdminUserItem';
+import PaginationControls from './PaginationControls';
 
 export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   activeTab,
@@ -22,11 +21,11 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   onViewManageUser,
   onInitiateAssignTaskForStudent,
 }) => {
+  // Use the new hook for the 'students' tab
   const {
     students,
     currentPage: studentCurrentPage,
     totalPages: studentTotalPages,
-    totalItems: studentTotalItems,
     setPage: setStudentPage,
     isLoading: isStudentLoading,
     isFetching: isStudentFetching,
@@ -36,13 +35,13 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     setFilter: setStudentFilterState,
     searchTerm: studentSearchTermState,
     setSearchTerm: setStudentSearchTermState,
-  } = usePaginatedStudents();
+  } = usePaginatedStudentsWithStats({});
 
+  // Keep the old hooks for other user types
   const {
     teachers,
     currentPage: teacherCurrentPage,
     totalPages: teacherTotalPages,
-    totalItems: teacherTotalItems,
     setPage: setTeacherPage,
     isLoading: isTeacherLoading,
     isFetching: isTeacherFetching,
@@ -54,7 +53,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     parents,
     currentPage: parentCurrentPage,
     totalPages: parentTotalPages,
-    totalItems: parentTotalItems,
     setPage: setParentPage,
     isLoading: isParentLoading,
     isFetching: isParentFetching,
@@ -66,7 +64,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     admins,
     currentPage: adminCurrentPage,
     totalPages: adminTotalPages,
-    totalItems: adminTotalItems,
     setPage: setAdminPage,
     isLoading: isAdminLoading,
     isFetching: isAdminFetching,
@@ -74,10 +71,10 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     error: adminError,
   } = usePaginatedAdmins();
 
-  let displayData: Array<User | SimplifiedStudent>;
+  // The logic to switch between data sources remains largely the same
+  let displayData: any[];
   let currentPage: number;
   let totalPages: number;
-  let totalItems: number;
   let setPage: (page: number) => void;
   let isLoading: boolean;
   let isFetching: boolean;
@@ -89,7 +86,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
       displayData = students;
       currentPage = studentCurrentPage;
       totalPages = studentTotalPages;
-      totalItems = studentTotalItems;
       setPage = setStudentPage;
       isLoading = isStudentLoading;
       isFetching = isStudentFetching;
@@ -100,7 +96,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
       displayData = teachers;
       currentPage = teacherCurrentPage;
       totalPages = teacherTotalPages;
-      totalItems = teacherTotalItems;
       setPage = setTeacherPage;
       isLoading = isTeacherLoading;
       isFetching = isTeacherFetching;
@@ -111,7 +106,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
       displayData = parents;
       currentPage = parentCurrentPage;
       totalPages = parentTotalPages;
-      totalItems = parentTotalItems;
       setPage = setParentPage;
       isLoading = isParentLoading;
       isFetching = isParentFetching;
@@ -122,7 +116,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
       displayData = admins;
       currentPage = adminCurrentPage;
       totalPages = adminTotalPages;
-      totalItems = adminTotalItems;
       setPage = setAdminPage;
       isLoading = isAdminLoading;
       isFetching = isAdminFetching;
@@ -133,7 +126,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
       displayData = [];
       currentPage = 1;
       totalPages = 1;
-      totalItems = 0;
       setPage = () => {};
       isLoading = false;
       isFetching = false;
@@ -141,11 +133,11 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
       error = null;
   }
 
-  const renderUserItem = ({ item }: { item: User | SimplifiedStudent }) => {
+  const renderUserItem = ({ item }: { item: any }) => {
     if (activeTab === 'students') {
       return (
         <AdminStudentItem
-          student={item as SimplifiedStudent}
+          student={item} // Pass the item with stats directly
           instruments={instruments}
           onViewManage={onViewManageUser}
           onInitiateAssignTask={onInitiateAssignTaskForStudent}
