@@ -2,7 +2,7 @@
 
 import { getSupabase } from '../lib/supabaseClient';
 
-import { TaskLibraryItem } from '../types/dataTypes';
+import { AssignedTask, TaskLibraryItem } from '../types/dataTypes';
 
 import { fileToBase64, NativeFileObject } from '../utils/helpers';
 
@@ -144,7 +144,6 @@ export const createTaskLibraryItem = async (
   return createdTask;
 };
 
-// MODIFIED: Added canSelfAssign to parameters
 export const updateTaskLibraryItem = async ({
   taskId,
   updates,
@@ -162,7 +161,6 @@ export const updateTaskLibraryItem = async ({
   const updatePayload: any = {};
   let hasChanges = false;
 
-  // Logic for most fields remains the same...
   if (updates.hasOwnProperty('title')) {
     updatePayload.title = updates.title?.trim();
     hasChanges = true;
@@ -191,14 +189,16 @@ export const updateTaskLibraryItem = async ({
     updatePayload.instrumentIds = updates.instrumentIds || [];
     hasChanges = true;
   }
-
-  // MODIFIED: Check for canSelfAssign
   if (updates.hasOwnProperty('canSelfAssign')) {
     updatePayload.canSelfAssign = updates.canSelfAssign;
     hasChanges = true;
   }
+  if (updates.hasOwnProperty('journeyLocationId')) {
+    updatePayload.journeyLocationId = updates.journeyLocationId;
+    hasChanges = true;
+  }
 
-  // File handling logic remains the same...
+  // File handling logic
   if (file === null) {
     updatePayload.deleteAttachment = true;
     hasChanges = true;
@@ -239,16 +239,15 @@ export const updateTaskLibraryItem = async ({
   if (error) throw new Error(`Failed to update task: ${error.message || 'Unknown EF error'}`);
 
   const { data: updatedData, error: refetchError } = await client
-    .from('task_library')
-    .select(`*, task_library_instruments ( instrument_id )`)
-    .eq('id', taskId)
+    .rpc('get_single_task_library_item', { p_task_id: taskId })
     .single();
-  if (refetchError || !updatedData)
+
+  if (refetchError || !updatedData) {
     throw new Error(
       `Update successful, but failed to refetch: ${refetchError?.message || 'Not found'}`
     );
+  }
 
-  // MODIFIED: Map new property
   const updatedTask: TaskLibraryItem = {
     id: updatedData.id,
     title: updatedData.title,
@@ -257,14 +256,13 @@ export const updateTaskLibraryItem = async ({
     createdById: updatedData.created_by_id,
     attachmentPath: updatedData.attachment_path ?? undefined,
     referenceUrl: updatedData.reference_url ?? null,
-    instrumentIds:
-      updatedData.task_library_instruments?.map((link: any) => link.instrument_id) ?? [],
+    instrumentIds: updatedData.instrument_ids || [],
     canSelfAssign: updatedData.can_self_assign,
+    journeyLocationId: updatedData.journey_location_id ?? null,
   };
   return updatedTask;
 };
 
-// This function remains unchanged
 export const deleteTaskLibraryItem = async (taskId: string): Promise<void> => {
   const client = getSupabase();
   const payload = { taskId };
@@ -272,4 +270,62 @@ export const deleteTaskLibraryItem = async (taskId: string): Promise<void> => {
   if (error) {
     throw new Error(`Failed to delete task: ${error.message || 'EF error'}`);
   }
+};
+
+export interface SelfAssignableTask {
+  id: string;
+  title: string;
+  description: string | null;
+  base_tickets: number;
+  attachment_path: string | null;
+  reference_url: string | null;
+  journey_location_id: string;
+  journey_location_name: string;
+}
+
+export interface SelfAssignableTask {
+  id: string;
+  title: string;
+  description: string | null;
+  base_tickets: number;
+  attachment_path: string | null;
+  reference_url: string | null;
+  journey_location_id: string;
+  journey_location_name: string;
+}
+
+export const fetchSelfAssignableTasks = async (
+  studentId: string
+): Promise<SelfAssignableTask[]> => {
+  const client = getSupabase();
+  console.log(`[API taskLibrary] Fetching self-assignable tasks for student ${studentId}`);
+  const { data, error } = await client.rpc('get_self_assignable_tasks', {
+    p_student_id: studentId,
+  });
+
+  if (error) {
+    console.error(`[API taskLibrary] Error fetching self-assignable tasks:`, error.message);
+    throw new Error(`Failed to fetch available tasks: ${error.message}`);
+  }
+
+  return (data as SelfAssignableTask[]) || [];
+};
+
+export const selfAssignTask = async (taskLibraryId: string): Promise<AssignedTask> => {
+  const client = getSupabase();
+  console.log(`[API taskLibrary] Self-assigning task library item ${taskLibraryId}`);
+  const { data, error } = await client.functions.invoke('self-assign-task', {
+    body: { taskLibraryId },
+  });
+
+  if (error) {
+    let detailedError = error.message;
+    try {
+      const parsed = JSON.parse(error.message);
+      if (parsed && parsed.error) detailedError = parsed.error;
+    } catch (e) {}
+    throw new Error(detailedError);
+  }
+
+  return data as AssignedTask;
 };

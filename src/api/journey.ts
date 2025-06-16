@@ -6,6 +6,7 @@ export interface JourneyLocation {
   id: string;
   name: string;
   description: string | null;
+  can_reassign_tasks: boolean; // NEW
 }
 
 // Maps a raw DB row to our clean JourneyLocation type
@@ -13,6 +14,7 @@ const mapDbRowToJourneyLocation = (row: any): JourneyLocation => ({
   id: row.id,
   name: row.name,
   description: row.description ?? null,
+  can_reassign_tasks: row.can_reassign_tasks ?? false, // NEW
 });
 
 /**
@@ -22,9 +24,10 @@ const mapDbRowToJourneyLocation = (row: any): JourneyLocation => ({
 export const fetchJourneyLocations = async (): Promise<JourneyLocation[]> => {
   const client = getSupabase();
   console.log(`[API journey] Fetching Journey Locations`);
+  // Add can_reassign_tasks to the select list
   const { data, error } = await client
     .from('journey_locations')
-    .select('id, name, description')
+    .select('id, name, description, can_reassign_tasks')
     .order('name', { ascending: true });
 
   if (error) {
@@ -35,13 +38,9 @@ export const fetchJourneyLocations = async (): Promise<JourneyLocation[]> => {
   return (data || []).map(mapDbRowToJourneyLocation);
 };
 
-/**
- * MODIFIED: Creates a new journey location for a specific company.
- * Requires companyId to satisfy the RLS policy.
- */
 export const createJourneyLocation = async ({
   locationData,
-  companyId, // <-- The ID of the company this location belongs to.
+  companyId,
 }: {
   locationData: Omit<JourneyLocation, 'id'>;
   companyId: string;
@@ -60,12 +59,13 @@ export const createJourneyLocation = async ({
     name: trimmedName,
     description: locationData.description?.trim() || null,
     company_id: companyId,
+    can_reassign_tasks: locationData.can_reassign_tasks, // NEW
   };
 
   const { data, error } = await client
     .from('journey_locations')
     .insert(itemToInsert)
-    .select('id, name, description')
+    .select('id, name, description, can_reassign_tasks') // Select new column
     .single();
 
   if (error) {
@@ -83,7 +83,11 @@ export const updateJourneyLocation = async ({
   updates: Partial<Omit<JourneyLocation, 'id'>>;
 }): Promise<JourneyLocation> => {
   const client = getSupabase();
-  const updatePayload: { name?: string; description?: string | null } = {};
+  const updatePayload: {
+    name?: string;
+    description?: string | null;
+    can_reassign_tasks?: boolean;
+  } = {}; // NEW
 
   if (updates.hasOwnProperty('name')) {
     const trimmedName = updates.name?.trim();
@@ -92,6 +96,10 @@ export const updateJourneyLocation = async ({
   }
   if (updates.hasOwnProperty('description')) {
     updatePayload.description = updates.description?.trim() || null;
+  }
+  // NEW: Handle the boolean update
+  if (updates.hasOwnProperty('can_reassign_tasks')) {
+    updatePayload.can_reassign_tasks = updates.can_reassign_tasks;
   }
 
   if (Object.keys(updatePayload).length === 0) {
@@ -108,7 +116,7 @@ export const updateJourneyLocation = async ({
     .from('journey_locations')
     .update(updatePayload)
     .eq('id', locationId)
-    .select('id, name, description')
+    .select('id, name, description, can_reassign_tasks') // Select new column
     .single();
 
   if (error) {

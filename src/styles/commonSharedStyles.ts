@@ -36,9 +36,6 @@ export const commonSharedStyles = StyleSheet.create({
   baseEmptyText: {
     color: colors.textLight,
     fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 10,
   },
   baseFull: {
     width: '100%',

@@ -109,6 +109,7 @@ export interface SimplifiedStudent {
 
 // This REPLACES the old StreakData type.
 export interface StudentStreakDetails {
+  has_logged_practice_today: boolean; // NEW
   current_streak: number;
   longest_streak: number;
   last_log_date: string | null; // as YYYY-MM-DD

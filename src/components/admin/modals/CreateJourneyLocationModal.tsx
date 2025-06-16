@@ -1,17 +1,23 @@
+// src/components/admin/modals/CreateJourneyLocationModal.tsx
 import React, { useState, useEffect, useMemo } from 'react';
-
-import { Modal, View, Text, Button, TextInput, ActivityIndicator, ScrollView } from 'react-native';
-
+import {
+  Modal,
+  View,
+  Text,
+  Button,
+  TextInput,
+  ActivityIndicator,
+  ScrollView,
+  Switch,
+} from 'react-native'; // Import Switch
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-
 import Toast from 'react-native-toast-message';
 
 import { createJourneyLocation } from '../../../api/journey';
-import { useAuth } from '../../../contexts/AuthContext'; // Using the auth context directly
+import { useAuth } from '../../../contexts/AuthContext';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 
-// The props interface is now simpler, as it doesn't need companyId
 interface CreateJourneyLocationModalProps {
   visible: boolean;
   onClose: () => void;
@@ -21,16 +27,13 @@ const CreateJourneyLocationModal: React.FC<CreateJourneyLocationModalProps> = ({
   visible,
   onClose,
 }) => {
-  // Get the authenticated user directly from the context
-  const { appUser, session } = useAuth();
+  const { appUser } = useAuth();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [canReassign, setCanReassign] = useState(false); // State for the new switch
   const queryClient = useQueryClient();
 
-  // Derive companyId from the user context
-  const companyId = useMemo(() => {
-    return appUser?.companyId;
-  }, [appUser]);
+  const companyId = useMemo(() => appUser?.companyId, [appUser]);
 
   const mutation = useMutation({
     mutationFn: createJourneyLocation,
@@ -58,6 +61,7 @@ const CreateJourneyLocationModal: React.FC<CreateJourneyLocationModalProps> = ({
     if (visible) {
       setName('');
       setDescription('');
+      setCanReassign(false); // Reset on open
       mutation.reset();
     }
   }, [visible]);
@@ -67,7 +71,6 @@ const CreateJourneyLocationModal: React.FC<CreateJourneyLocationModalProps> = ({
       Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Location name is required.' });
       return;
     }
-    // Add a check to ensure companyId was successfully retrieved from the context
     if (!companyId) {
       Toast.show({
         type: 'error',
@@ -77,11 +80,11 @@ const CreateJourneyLocationModal: React.FC<CreateJourneyLocationModalProps> = ({
       return;
     }
 
-    // The payload for the mutation matches the API's requirements
     mutation.mutate({
       locationData: {
         name: name.trim(),
         description: description.trim() || null,
+        can_reassign_tasks: canReassign, // Pass the switch value
       },
       companyId: companyId,
     });
@@ -116,6 +119,29 @@ const CreateJourneyLocationModal: React.FC<CreateJourneyLocationModalProps> = ({
               numberOfLines={3}
               editable={!mutation.isPending}
             />
+            {/* New Switch for can_reassign_tasks */}
+            <View
+              style={[
+                commonSharedStyles.baseRow,
+                commonSharedStyles.justifySpaceBetween,
+                commonSharedStyles.baseAlignCenter,
+                { marginBottom: 15 },
+              ]}
+            >
+              <Text style={commonSharedStyles.label}>Allow repeatable tasks?</Text>
+              <Switch
+                trackColor={{ false: colors.secondary, true: colors.success }}
+                thumbColor={colors.backgroundPrimary}
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={setCanReassign}
+                value={canReassign}
+                disabled={mutation.isPending}
+              />
+            </View>
+            <Text style={commonSharedStyles.infoText}>
+              Enable this for locations like "Song Factory" where students can do tasks more than
+              once. Leave disabled for one-time progression paths like "Circle of 5ths".
+            </Text>
           </ScrollView>
 
           {mutation.isPending && (

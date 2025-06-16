@@ -1,10 +1,16 @@
 // src/components/admin/modals/EditJourneyLocationModal.tsx
 import React, { useState, useEffect } from 'react';
-
-import { Modal, View, Text, Button, TextInput, ActivityIndicator, ScrollView } from 'react-native';
-
+import {
+  Modal,
+  View,
+  Text,
+  Button,
+  TextInput,
+  ActivityIndicator,
+  ScrollView,
+  Switch,
+} from 'react-native'; // Import Switch
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-
 import Toast from 'react-native-toast-message';
 
 import { JourneyLocation, updateJourneyLocation } from '../../../api/journey';
@@ -24,6 +30,7 @@ const EditJourneyLocationModal: React.FC<EditJourneyLocationModalProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [canReassign, setCanReassign] = useState(false); // State for the new switch
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -52,6 +59,7 @@ const EditJourneyLocationModal: React.FC<EditJourneyLocationModalProps> = ({
     if (visible && locationToEdit) {
       setName(locationToEdit.name);
       setDescription(locationToEdit.description || '');
+      setCanReassign(locationToEdit.can_reassign_tasks); // Set initial state
       mutation.reset();
     }
   }, [visible, locationToEdit]);
@@ -73,6 +81,10 @@ const EditJourneyLocationModal: React.FC<EditJourneyLocationModalProps> = ({
     }
     if ((description.trim() || null) !== (locationToEdit.description || null)) {
       updates.description = description.trim() || null;
+      hasChanges = true;
+    }
+    if (canReassign !== locationToEdit.can_reassign_tasks) {
+      updates.can_reassign_tasks = canReassign;
       hasChanges = true;
     }
 
@@ -117,6 +129,29 @@ const EditJourneyLocationModal: React.FC<EditJourneyLocationModalProps> = ({
               numberOfLines={3}
               editable={!mutation.isPending}
             />
+            {/* New Switch for can_reassign_tasks */}
+            <View
+              style={[
+                commonSharedStyles.baseRow,
+                commonSharedStyles.justifySpaceBetween,
+                commonSharedStyles.baseAlignCenter,
+                { marginBottom: 15 },
+              ]}
+            >
+              <Text style={commonSharedStyles.label}>Allow repeatable tasks?</Text>
+              <Switch
+                trackColor={{ false: colors.secondary, true: colors.success }}
+                thumbColor={colors.backgroundPrimary}
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={setCanReassign}
+                value={canReassign}
+                disabled={mutation.isPending}
+              />
+            </View>
+            <Text style={commonSharedStyles.infoText}>
+              Enable this for locations where students can do tasks more than once. Leave disabled
+              for one-time progression paths.
+            </Text>
           </ScrollView>
 
           {mutation.isPending && (

@@ -33,6 +33,7 @@ import { fetchInstruments } from '../api/instruments';
 import { fetchRewards } from '../api/rewards';
 import { fetchStudentBalance } from '../api/tickets';
 import { fetchTeachers, fetchUserProfile, updateStudentGoal } from '../api/users';
+import AvailableTasks from '../components/student/AvailableTasks';
 
 type StudentTab = 'dashboard' | 'tasks' | 'rewards' | 'announcements';
 
@@ -439,6 +440,14 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                   <Text style={commonSharedStyles.baseEmptyText}>No active tasks.</Text>
                 )}
               </View>
+
+              <View style={commonSharedStyles.baseMarginTopBottom}>
+                <Text style={[commonSharedStyles.baseTitleText, { marginBottom: 10 }]}>
+                  The Journey (Available Tasks)
+                </Text>
+                {targetStudentId && <AvailableTasks studentId={targetStudentId} />}
+              </View>
+
               <Text
                 style={[commonSharedStyles.baseTitleText, commonSharedStyles.baseMarginTopBottom]}
               >

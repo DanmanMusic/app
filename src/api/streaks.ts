@@ -8,7 +8,7 @@ import { StudentStreakDetails, CompanyStreakStats } from '../types/dataTypes';
 /**
  * Fetches detailed streak statistics for a single student.
  * @param studentId The UUID of the student.
- * @returns An object with current_streak, longest_streak, and last_log_date.
+ * @returns An object with has_logged_practice_today, current_streak, longest_streak, and last_log_date.
  */
 export const getStudentStreakDetails = async (studentId: string): Promise<StudentStreakDetails> => {
   const client = getSupabase();
@@ -16,7 +16,6 @@ export const getStudentStreakDetails = async (studentId: string): Promise<Studen
     throw new Error('A student ID must be provided to fetch streak details.');
   }
 
-  // TypeScript now knows the exact shape of `data` from our generated types.
   const { data, error } = await client
     .rpc('get_student_streak_details', { p_student_id: studentId })
     .single();
@@ -26,11 +25,12 @@ export const getStudentStreakDetails = async (studentId: string): Promise<Studen
     throw new Error(error.message);
   }
 
-  // The errors are gone! `data` is now correctly typed.
+  // The RPC now guarantees a row, so we don't need to check for !data
   return {
-    current_streak: data?.current_streak ?? 0,
-    longest_streak: data?.longest_streak ?? 0,
-    last_log_date: data?.last_log_date ?? null,
+    has_logged_practice_today: data.has_logged_practice_today,
+    current_streak: data.current_streak,
+    longest_streak: data.longest_streak,
+    last_log_date: data.last_log_date,
   };
 };
 
@@ -78,19 +78,5 @@ export const logPracticeForToday = async (
     throw new Error(errorMessage);
   }
 
-  return data;
-};
-
-export const debugFetchPracticeLogs = async (companyId: string): Promise<any> => {
-  if (!companyId) return [];
-  const client = getSupabase();
-  console.log(`[DEBUG] Calling debug_get_all_practice_logs_for_company for ${companyId}`);
-  const { data, error } = await client.rpc('debug_get_all_practice_logs_for_company', {
-    p_company_id: companyId,
-  });
-  if (error) {
-    console.error('[DEBUG] Error fetching raw practice logs:', error.message);
-    throw new Error(`Failed to fetch debug data: ${error.message}`);
-  }
   return data;
 };

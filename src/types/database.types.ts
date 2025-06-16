@@ -101,6 +101,7 @@ export type Database = {
           task_attachment_path: string | null;
           task_base_points: number;
           task_description: string;
+          task_library_id: string | null;
           task_link_url: string | null;
           task_title: string;
           updated_at: string;
@@ -121,6 +122,7 @@ export type Database = {
           task_attachment_path?: string | null;
           task_base_points: number;
           task_description: string;
+          task_library_id?: string | null;
           task_link_url?: string | null;
           task_title: string;
           updated_at?: string;
@@ -141,6 +143,7 @@ export type Database = {
           task_attachment_path?: string | null;
           task_base_points?: number;
           task_description?: string;
+          task_library_id?: string | null;
           task_link_url?: string | null;
           task_title?: string;
           updated_at?: string;
@@ -148,7 +151,15 @@ export type Database = {
           verified_by_id?: string | null;
           verified_date?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'assigned_tasks_task_library_id_fkey';
+            columns: ['task_library_id'];
+            isOneToOne: false;
+            referencedRelation: 'task_library';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       companies: {
         Row: {
@@ -208,6 +219,7 @@ export type Database = {
       };
       journey_locations: {
         Row: {
+          can_reassign_tasks: boolean;
           company_id: string;
           created_at: string;
           description: string | null;
@@ -216,6 +228,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          can_reassign_tasks?: boolean;
           company_id: string;
           created_at?: string;
           description?: string | null;
@@ -224,6 +237,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          can_reassign_tasks?: boolean;
           company_id?: string;
           created_at?: string;
           description?: string | null;
@@ -813,6 +827,34 @@ export type Database = {
           instrument_ids: string[];
         }[];
       };
+      get_self_assignable_tasks: {
+        Args: { p_student_id: string };
+        Returns: {
+          id: string;
+          title: string;
+          description: string;
+          base_tickets: number;
+          attachment_path: string;
+          reference_url: string;
+          journey_location_id: string;
+          journey_location_name: string;
+        }[];
+      };
+      get_single_task_library_item: {
+        Args: { p_task_id: string };
+        Returns: {
+          id: string;
+          title: string;
+          description: string;
+          base_tickets: number;
+          created_by_id: string;
+          attachment_path: string;
+          reference_url: string;
+          can_self_assign: boolean;
+          journey_location_id: string;
+          instrument_ids: string[];
+        }[];
+      };
       get_student_balance: {
         Args: { p_student_id: string };
         Returns: number;
@@ -820,6 +862,7 @@ export type Database = {
       get_student_streak_details: {
         Args: { p_student_id: string };
         Returns: {
+          has_logged_practice_today: boolean;
           current_streak: number;
           longest_streak: number;
           last_log_date: string;

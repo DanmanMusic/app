@@ -1,18 +1,15 @@
 // src/components/admin/AdminJourneySection.tsx
 import React, { useState } from 'react';
-
 import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
 import Toast from 'react-native-toast-message';
 
 import { fetchJourneyLocations, deleteJourneyLocation, JourneyLocation } from '../../api/journey';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import ConfirmationModal from '../common/ConfirmationModal';
-import CreateJourneyLocationModal from './modals/CreateJourneyLocationModal'; // Will create next
-import EditJourneyLocationModal from './modals/EditJourneyLocationModal'; // Will create next
+import CreateJourneyLocationModal from './modals/CreateJourneyLocationModal';
+import EditJourneyLocationModal from './modals/EditJourneyLocationModal';
 
 export const AdminJourneySection = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -105,10 +102,24 @@ export const AdminJourneySection = () => {
                 { alignItems: 'center' },
               ]}
             >
-              <View>
+              <View style={commonSharedStyles.flex1}>
                 <Text style={commonSharedStyles.itemTitle}>{item.name}</Text>
                 <Text style={commonSharedStyles.baseSecondaryText}>
                   {item.description || '(No description)'}
+                </Text>
+                {/* NEW: Display the repeatable status */}
+                <Text
+                  style={[
+                    commonSharedStyles.infoText,
+                    {
+                      textAlign: 'left',
+                      marginLeft: 0,
+                      color: item.can_reassign_tasks ? colors.success : colors.textLight,
+                      fontWeight: 'bold',
+                    },
+                  ]}
+                >
+                  {item.can_reassign_tasks ? 'Repeatable Tasks' : 'One-Time Completion'}
                 </Text>
               </View>
               <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>

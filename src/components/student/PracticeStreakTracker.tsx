@@ -9,21 +9,11 @@ import { getStudentStreakDetails, logPracticeForToday } from '../../api/streaks'
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 
-// --- The Fix: Accept studentId as a prop ---
 interface PracticeStreakTrackerProps {
   studentId: string;
 }
 
-const isToday = (someDate: string | null): boolean => {
-  if (!someDate) return false;
-  const today = new Date();
-  const date = new Date(`${someDate}T00:00:00Z`); // Treat date as UTC
-  return (
-    date.getUTCDate() === today.getUTCDate() &&
-    date.getUTCMonth() === today.getUTCMonth() &&
-    date.getUTCFullYear() === today.getUTCFullYear()
-  );
-};
+// The flawed isToday helper function is now completely removed.
 
 const PracticeStreakTracker: React.FC<PracticeStreakTrackerProps> = ({ studentId }) => {
   const queryClient = useQueryClient();
@@ -34,22 +24,19 @@ const PracticeStreakTracker: React.FC<PracticeStreakTrackerProps> = ({ studentId
     isLoading,
     isError,
   } = useQuery({
-    // Use the passed-in studentId for the query
     queryKey: ['streakDetails', studentId],
     queryFn: () => getStudentStreakDetails(studentId),
     enabled: !!studentId,
   });
 
   const logPracticeMutation = useMutation({
-    // Use the passed-in studentId for the mutation
     mutationFn: () => logPracticeForToday(studentId),
     onSuccess: _data => {
-      // Invalidate queries using the correct studentId
       queryClient.invalidateQueries({ queryKey: ['streakDetails', studentId] });
       queryClient.invalidateQueries({ queryKey: ['balance', studentId] });
       queryClient.invalidateQueries({ queryKey: ['ticket-history'] });
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
-      queryClient.invalidateQueries({ queryKey: ['companyStreakStats'] }); // Invalidate company stats too
+      queryClient.invalidateQueries({ queryKey: ['companyStreakStats'] });
     },
     onError: error => {
       console.error('Error from logPracticeMutation:', error.message);
@@ -79,8 +66,8 @@ const PracticeStreakTracker: React.FC<PracticeStreakTrackerProps> = ({ studentId
     );
   }
 
-  const { current_streak, longest_streak, last_log_date } = streakDetails;
-  const alreadyLoggedToday = isToday(last_log_date);
+  // Use the new boolean directly from the API response
+  const { has_logged_practice_today, current_streak, longest_streak } = streakDetails;
   const nextMilestone = 7 - (current_streak % 7);
 
   let buttonText = 'I Practiced Today!';
@@ -88,7 +75,7 @@ const PracticeStreakTracker: React.FC<PracticeStreakTrackerProps> = ({ studentId
   else if (longest_streak > 0) buttonText = 'Restart your streak!';
   else buttonText = 'Start a practice streak!';
 
-  const handlePress = () => !alreadyLoggedToday && setModalVisible(true);
+  const handlePress = () => !has_logged_practice_today && setModalVisible(true);
 
   return (
     <>
@@ -111,10 +98,10 @@ const PracticeStreakTracker: React.FC<PracticeStreakTrackerProps> = ({ studentId
           </View>
           <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
             <Button
-              title={alreadyLoggedToday ? 'Practice Logged For Today!' : buttonText}
+              title={has_logged_practice_today ? 'Practice Logged For Today!' : buttonText}
               onPress={handlePress}
-              disabled={alreadyLoggedToday}
-              color={alreadyLoggedToday ? colors.secondary : colors.success}
+              disabled={has_logged_practice_today}
+              color={has_logged_practice_today ? colors.secondary : colors.success}
             />
           </View>
         </View>
@@ -132,7 +119,7 @@ const PracticeStreakTracker: React.FC<PracticeStreakTrackerProps> = ({ studentId
           <Text style={commonSharedStyles.baseSecondaryText}>
             Personal Best: {longest_streak} days
           </Text>
-          {!alreadyLoggedToday && current_streak > 0 && nextMilestone !== 7 && (
+          {!has_logged_practice_today && current_streak > 0 && nextMilestone !== 7 && (
             <Text style={commonSharedStyles.baseSecondaryText}>
               Next Reward: {nextMilestone} day(s)
             </Text>
