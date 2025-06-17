@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Text, View, Image, ActivityIndicator } from 'react-native';
 
 import { StudentWithStats } from '../../api/users';
-import { useAuth } from '../../contexts/AuthContext'; // Import useAuth
+import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { Instrument, UserRole } from '../../types/dataTypes';
@@ -21,7 +21,7 @@ export const AdminStudentItem = ({
   onViewManage: (studentId: string, role: UserRole) => void;
   onInitiateAssignTask: (studentId: string) => void;
 }) => {
-  const { currentUserRole } = useAuth(); // Get the role of the viewing user
+  const { currentUserRole } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
 

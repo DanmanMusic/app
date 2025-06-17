@@ -12,14 +12,13 @@ export const AnnouncementListItem = ({ item }: { item: Announcement }) => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
 
-  // Check for the special types that can show PII
   const isSpecialType = item.type === 'streak_milestone' || item.type === 'redemption_celebration';
 
   useEffect(() => {
     const fetchAvatar = async () => {
       if (isSpecialType && item.relatedStudentAvatarPath) {
         setIsLoadingAvatar(true);
-        // The getUserAvatarSource helper only needs a partial User object
+
         const source = await getUserAvatarSource({
           avatarPath: item.relatedStudentAvatarPath,
         });
@@ -34,7 +33,6 @@ export const AnnouncementListItem = ({ item }: { item: Announcement }) => {
     fetchAvatar();
   }, [item.relatedStudentAvatarPath, isSpecialType]);
 
-  // Render the enhanced view for special types
   if (isSpecialType) {
     return (
       <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseAlignCenter]}>
@@ -58,7 +56,6 @@ export const AnnouncementListItem = ({ item }: { item: Announcement }) => {
     );
   }
 
-  // Render the original, simple view for standard 'announcement' types
   return (
     <View>
       <Text style={commonSharedStyles.itemTitle}>{item.title}</Text>

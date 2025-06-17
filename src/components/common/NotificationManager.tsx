@@ -18,12 +18,10 @@ const NotificationManager = () => {
   );
   const [isLoading, setIsLoading] = useState(true);
 
-  // If we are not on the web, this component does nothing and returns null immediately.
   if (Platform.OS !== 'web') {
     return null;
   }
 
-  // Check the current permission status when the component mounts (web-only)
   useEffect(() => {
     const checkPermissions = async () => {
       const { status } = await Notifications.getPermissionsAsync();
@@ -38,7 +36,7 @@ const NotificationManager = () => {
   const handleEnableNotifications = async () => {
     if (!appUser) return;
     setIsLoading(true);
-    // This now runs inside a user-generated event handler (onPress)
+
     const token = await registerForPushNotificationsAsync();
     if (token) {
       await savePushToken(token, appUser);

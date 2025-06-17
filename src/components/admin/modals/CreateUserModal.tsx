@@ -118,7 +118,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
     const trimmedNickname = nickname.trim();
-    const adminCompanyId = appUser?.companyId; // Get the admin's company ID
+    const adminCompanyId = appUser?.companyId;
 
     if (!trimmedFirstName || !trimmedLastName || !role) {
       Toast.show({
@@ -130,7 +130,6 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
       return;
     }
 
-    // --- THE FIX: Ensure companyId is available ---
     if (!adminCompanyId) {
       Toast.show({
         type: 'error',

@@ -2,7 +2,6 @@
 
 import { getSupabase } from '../lib/supabaseClient';
 
-// We still import our clean frontend types for the function's return signature.
 import { StudentStreakDetails, CompanyStreakStats } from '../types/dataTypes';
 
 /**
@@ -25,7 +24,6 @@ export const getStudentStreakDetails = async (studentId: string): Promise<Studen
     throw new Error(error.message);
   }
 
-  // The RPC now guarantees a row, so we don't need to check for !data
   return {
     has_logged_practice_today: data.has_logged_practice_today,
     current_streak: data.current_streak,
@@ -45,7 +43,6 @@ export const getCompanyStreakStats = async (companyId: string): Promise<CompanyS
     throw new Error('A company ID must be provided to fetch streak stats.');
   }
 
-  // TypeScript also knows the shape of this RPC's return data.
   const { data, error } = await client
     .rpc('get_company_streak_stats', { p_company_id: companyId })
     .single();
@@ -55,7 +52,6 @@ export const getCompanyStreakStats = async (companyId: string): Promise<CompanyS
     throw new Error(error.message);
   }
 
-  // The errors are gone!
   return {
     total_active_streaks: data?.total_active_streaks ?? 0,
     streaks_over_7_days: data?.streaks_over_7_days ?? 0,
@@ -63,7 +59,6 @@ export const getCompanyStreakStats = async (companyId: string): Promise<CompanyS
   };
 };
 
-// This function remains the same as it doesn't rely on RPC return types.
 export const logPracticeForToday = async (
   studentId: string
 ): Promise<{ success: boolean; newStreak: number }> => {

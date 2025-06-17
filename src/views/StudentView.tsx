@@ -19,7 +19,7 @@ import { SharedHeader } from '../components/common/SharedHeader';
 import { TicketHistoryItem } from '../components/common/TicketHistoryItem';
 import AvailableTasks from '../components/student/AvailableTasks';
 import CommunityGoalsWidget from '../components/student/CommunityGoalsWidget';
-import CommunityStreaksWidget from '../components/student/CommunityStreaksWidget'; // Import the new widget
+import CommunityStreaksWidget from '../components/student/CommunityStreaksWidget';
 import GoalTracker from '../components/student/GoalTracker';
 import SetGoalModal from '../components/student/modals/SetGoalModal';
 import PracticeStreakTracker from '../components/student/PracticeStreakTracker';

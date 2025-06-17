@@ -3,11 +3,10 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
-import { User, UserStatus } from '../types/dataTypes'; // MODIFIED: Import full User type
+import { User, UserStatus } from '../types/dataTypes';
 
-import { fetchProfilesByRole } from '../api/users'; // MODIFIED: Import the more powerful fetcher
+import { fetchProfilesByRole } from '../api/users';
 
-// MODIFIED: This interface now returns an array of the full User type
 export interface UsePaginatedStudentsReturn {
   students: User[];
   currentPage: number;
@@ -48,7 +47,7 @@ export const usePaginatedStudents = (): UsePaginatedStudentsReturn => {
 
   const queryResult = useQuery({
     queryKey: queryKey,
-    // MODIFIED: This now calls fetchProfilesByRole with the 'student' role
+
     queryFn: () =>
       fetchProfilesByRole({
         role: 'student',
@@ -58,8 +57,8 @@ export const usePaginatedStudents = (): UsePaginatedStudentsReturn => {
         searchTerm: searchTerm,
       }),
     placeholderData: keepPreviousData,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const { data, isLoading, isFetching, isError, error, isPlaceholderData } = queryResult;
@@ -68,14 +67,12 @@ export const usePaginatedStudents = (): UsePaginatedStudentsReturn => {
   const totalPages = data?.totalPages ?? 1;
   const totalItems = data?.totalItems ?? 0;
 
-  // When filters change, reset to page 1
   useEffect(() => {
     if (currentPage !== 1) {
       setCurrentPage(1);
     }
   }, [currentFilter, searchTerm]);
 
-  // Prefetching logic
   useEffect(() => {
     const effectiveTotalPages = totalPages >= 1 ? totalPages : 1;
     const prefetchParams = {

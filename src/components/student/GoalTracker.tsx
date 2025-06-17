@@ -83,7 +83,6 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({
     );
   }
 
-  // Fallback view if there is no goal set
   return (
     <View
       style={[

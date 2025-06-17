@@ -17,13 +17,11 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
 }) => {
   const { currentUserId: teacherId } = useAuth();
 
-  // Use the new, more powerful hook, filtering by this teacher's ID
   const {
     students: studentsWithStats,
     isLoading,
     isError,
     error,
-    // Note: We are not using pagination/filters in this specific view, but the hook supports it.
   } = usePaginatedStudentsWithStats({ teacherId: teacherId ?? undefined });
 
   return (
@@ -47,11 +45,9 @@ export const TeacherStudentsSection: React.FC<TeacherStudentsSectionProps> = ({
         !isError &&
         (studentsWithStats.length > 0 ? (
           <FlatList
-            // The RPC sorts by last_name, so we don't need to sort here
             data={studentsWithStats}
             keyExtractor={item => item.id}
             renderItem={({ item }) => (
-              // Use the enhanced AdminStudentItem to display the stats
               <AdminStudentItem
                 student={item}
                 instruments={instruments}

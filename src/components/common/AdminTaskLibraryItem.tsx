@@ -49,9 +49,6 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
           Instruments: <Text style={styles.detailValue}>{instrumentNames}</Text>
         </Text>
 
-        {/* --- MODIFICATION START --- */}
-
-        {/* Render URLs */}
         {item.urls && item.urls.length > 0 ? (
           item.urls.map(url => (
             <TouchableOpacity key={url.id} onPress={() => handleOpenUrl(url.url)}>
@@ -67,7 +64,6 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
           </Text>
         )}
 
-        {/* Render Attachments */}
         {item.attachments && item.attachments.length > 0 ? (
           item.attachments.map(att => (
             <TouchableOpacity key={att.id} onPress={() => handleViewAttachment(att.path)}>
@@ -81,8 +77,6 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
             Attachments: <Text style={styles.detailValue}>None</Text>
           </Text>
         )}
-
-        {/* --- MODIFICATION END --- */}
       </View>
 
       <View

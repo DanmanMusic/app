@@ -44,7 +44,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   const [selectedTeacherIds, setSelectedTeacherIds] = useState<string[]>([]);
   const [avatarFile, setAvatarFile] = useState<NativeFileObject | null | undefined>(undefined);
 
-  // LEARNING APPLIED: State for the resolved URL and a loading indicator for it.
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
 
@@ -88,7 +87,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   });
 
   const profileUpdateMutation = useMutation({
-    // This mutation is already correct.
     mutationFn: (vars: {
       userId: string;
       companyId: string;
@@ -111,7 +109,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     },
   });
 
-  // LEARNING APPLIED: useEffect now correctly handles the async call for the signed URL.
   useEffect(() => {
     const loadData = async () => {
       if (userToEdit) {
@@ -143,7 +140,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   }, [visible, userToEdit, canEditAvatar]);
 
   const pickImage = async () => {
-    // This function is correct.
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
@@ -172,7 +168,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   };
 
   const removeImage = () => {
-    // This function is correct.
     setAvatarFile(null);
     setAvatarPreview(null);
   };
@@ -196,7 +191,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   };
 
   const handleSaveChanges = () => {
-    // This function is already correct.
     if (!userToEdit?.companyId) {
       Toast.show({
         type: 'error',
@@ -219,7 +213,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
     const updatesPayload: Partial<Omit<User, 'id' | 'role' | 'status' | 'companyId'>> = {};
     let hasChanges = false;
-    // ... logic for building updatesPayload is correct ...
+
     if (trimmedFirstName !== (userToEdit.firstName || '')) {
       updatesPayload.firstName = trimmedFirstName;
       hasChanges = true;
@@ -289,7 +283,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
               <>
                 <Text style={commonSharedStyles.label}>Profile Picture:</Text>
                 <View style={commonSharedStyles.containerIconPreview}>
-                  {/* LEARNING APPLIED: Handle the loading state for the avatar */}
                   {isLoadingAvatar ? (
                     <ActivityIndicator
                       style={commonSharedStyles.iconPreview}

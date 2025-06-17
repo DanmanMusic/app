@@ -48,7 +48,7 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [avatarFile, setAvatarFile] = useState<NativeFileObject | null | undefined>(undefined);
-  // State for the resolved URL and a loading indicator for it
+
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
 
@@ -119,9 +119,8 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
         setFirstName(appUser.firstName || '');
         setLastName(appUser.lastName || '');
         setNickname(appUser.nickname || '');
-        setAvatarFile(undefined); // Reset any staged file changes
+        setAvatarFile(undefined);
 
-        // Asynchronously fetch the secure, signed URL for the avatar
         if (canEditAvatar && appUser.avatarPath) {
           setIsLoadingAvatar(true);
           const source = await getUserAvatarSource(appUser);
@@ -135,7 +134,7 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
 
     if (visible) {
       loadData();
-      // Reset other states when modal becomes visible
+
       setMode('profile');
       setNewPassword('');
       setConfirmPassword('');

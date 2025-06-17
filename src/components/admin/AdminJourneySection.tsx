@@ -110,7 +110,6 @@ export const AdminJourneySection = () => {
                 <Text style={commonSharedStyles.baseSecondaryText}>
                   {item.description || '(No description)'}
                 </Text>
-                {/* NEW: Display the repeatable status */}
                 <Text
                   style={[
                     commonSharedStyles.infoText,

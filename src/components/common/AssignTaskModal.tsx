@@ -36,7 +36,6 @@ import {
 } from '../../types/dataTypes';
 import { getInstrumentNames, getUserDisplayName, NativeFileObject } from '../../utils/helpers';
 
-// Define types for our local state
 interface UrlInput {
   id: string;
   url: string;
@@ -55,21 +54,18 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   const { currentUserId: assignerId, currentUserRole } = useAuth();
   const queryClient = useQueryClient();
 
-  // Step/flow control state
   const [step, setStep] = useState(1);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedLibraryTask, setSelectedLibraryTask] = useState<TaskLibraryItem | null>(null);
   const [isAdHocMode, setIsAdHocMode] = useState(false);
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
 
-  // State for ad-hoc task creation
   const [adHocTitle, setAdHocTitle] = useState('');
   const [adHocDescription, setAdHocDescription] = useState('');
   const [adHocBasePoints, setAdHocBasePoints] = useState<number | ''>('');
   const [adHocUrls, setAdHocUrls] = useState<UrlInput[]>([]);
   const [adHocFiles, setAdHocFiles] = useState<FileInput[]>([]);
 
-  // React Query hooks for data fetching
   const {
     data: taskLibrary = [],
     isLoading: isLoadingLibrary,

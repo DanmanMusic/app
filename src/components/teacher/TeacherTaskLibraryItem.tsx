@@ -1,4 +1,4 @@
-// src/components/common/TaskLibraryItemTeacher.tsx
+// src/components/common/TeacherTaskLibraryItem.tsx
 import React from 'react';
 
 import { Text, View, StyleSheet, TouchableOpacity, Button } from 'react-native';
@@ -13,14 +13,14 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { TaskLibraryItem, Instrument } from '../../types/dataTypes';
 import { getInstrumentNames } from '../../utils/helpers';
 
-interface TaskLibraryItemTeacherProps {
+interface TeacherTaskLibraryItemProps {
   item: TaskLibraryItem;
   onEdit?: (task: TaskLibraryItem) => void;
   onDelete?: (task: TaskLibraryItem) => void;
   disabled?: boolean;
 }
 
-export const TaskLibraryItemTeacher: React.FC<TaskLibraryItemTeacherProps> = ({
+export const TeacherTaskLibraryItem: React.FC<TeacherTaskLibraryItemProps> = ({
   item,
   onEdit,
   onDelete,
@@ -54,9 +54,6 @@ export const TaskLibraryItemTeacher: React.FC<TaskLibraryItemTeacherProps> = ({
             Instruments: <Text style={styles.detailValue}>{instrumentNames}</Text>
           </Text>
 
-          {/* --- MODIFICATION START --- */}
-
-          {/* Render URLs */}
           {item.urls && item.urls.length > 0 ? (
             item.urls.map(url => (
               <TouchableOpacity key={url.id} onPress={() => handleOpenUrl(url.url)}>
@@ -72,7 +69,6 @@ export const TaskLibraryItemTeacher: React.FC<TaskLibraryItemTeacherProps> = ({
             </Text>
           )}
 
-          {/* Render Attachments */}
           {item.attachments && item.attachments.length > 0 ? (
             item.attachments.map(att => (
               <TouchableOpacity key={att.id} onPress={() => handleViewAttachment(att.path)}>
@@ -86,8 +82,6 @@ export const TaskLibraryItemTeacher: React.FC<TaskLibraryItemTeacherProps> = ({
               Attachments: <Text style={styles.detailValue}>None</Text>
             </Text>
           )}
-
-          {/* --- MODIFICATION END --- */}
 
           {isOwner && <Text style={styles.privateIndicator}>(My Private Task)</Text>}
         </View>

@@ -4,8 +4,6 @@ import { getSupabase } from '../lib/supabaseClient';
 
 import { UserRole } from '../types/dataTypes';
 
-// MODIFIED: Removed the optional `viewing_student_id` property.
-// This interface now accurately reflects the server's response.
 interface ClaimPinApiResponse {
   access_token: string;
   refresh_token: string;
@@ -63,7 +61,6 @@ export const claimPin = async (pin: string): Promise<ClaimPinApiResponse> => {
     throw new Error(`PIN Claim Failed: ${detailedError}`);
   }
 
-  // MODIFIED: Updated the data validation check to match the new, simpler interface.
   if (
     !data ||
     typeof data !== 'object' ||
@@ -134,7 +131,6 @@ export const refreshPinSession = async (
 
   console.log('[API] refresh-pin-session Edge Function returned:', data);
 
-  // This check is already correct as it omits refresh_token.
   if (
     !data ||
     typeof data !== 'object' ||
@@ -161,14 +157,13 @@ export const hasActivePinSessions = async (userId: string): Promise<boolean> => 
 
   if (error) {
     console.error(`Error checking for active PIN sessions for user ${userId}:`, error);
-    // Don't throw, just return false so the UI doesn't break
+
     return false;
   }
 
   return (count ?? 0) > 0;
 };
 
-// NEW: Function to call our new Edge Function
 export const forceUserLogout = async (targetUserId: string): Promise<{ message: string }> => {
   const client = getSupabase();
   const { data, error } = await client.functions.invoke('force-logout', {

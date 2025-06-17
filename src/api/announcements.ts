@@ -37,13 +37,11 @@ export const fetchAnnouncements = async (): Promise<Announcement[]> => {
   let query;
 
   if (session) {
-    // For authenticated users, fetch with profile data
     query = client
       .from('announcements')
       .select('*, profiles ( first_name, last_name, nickname, avatar_path )')
       .order('date', { ascending: false });
   } else {
-    // For public users, fetch only the base announcement fields
     query = client
       .from('announcements')
       .select('*, profiles ( first_name, last_name, nickname, avatar_path )')
@@ -57,11 +55,8 @@ export const fetchAnnouncements = async (): Promise<Announcement[]> => {
     throw new Error(`Failed to fetch announcements: ${error.message}`);
   }
 
-  // Safely cast the data to the expected type *after* the error check.
   const typedData = data as any as AnnouncementWithProfile[];
 
-  // If there is no session, we are in the public view. Filter out any
-  // announcements that are not of the generic 'announcement' type to protect PII.
   const filteredData = session
     ? typedData
     : (typedData || []).filter(item => item.type === 'announcement');
@@ -73,7 +68,6 @@ export const fetchAnnouncements = async (): Promise<Announcement[]> => {
   return announcements;
 };
 
-// createAnnouncement is now aligned with the multi-tenant schema
 export const createAnnouncement = async (
   announcementData: Omit<
     Announcement,
@@ -121,7 +115,6 @@ export const createAnnouncement = async (
   return mapDbRowToAnnouncement(createdAnnouncementData as any as AnnouncementWithProfile);
 };
 
-// updateAnnouncement is also aligned
 export const updateAnnouncement = async ({
   announcementId,
   updates,
@@ -197,7 +190,6 @@ export const updateAnnouncement = async ({
   return mapDbRowToAnnouncement(updatedAnnouncementData as any as AnnouncementWithProfile);
 };
 
-// deleteAnnouncement is unchanged
 export const deleteAnnouncement = async (announcementId: string): Promise<void> => {
   const client = getSupabase();
   console.log(`[Supabase] Deleting announcement ${announcementId}`);

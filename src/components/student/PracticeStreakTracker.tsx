@@ -15,8 +15,6 @@ interface PracticeStreakTrackerProps {
   studentId: string;
 }
 
-// The flawed isToday helper function is now completely removed.
-
 const PracticeStreakTracker: React.FC<PracticeStreakTrackerProps> = ({ studentId }) => {
   const queryClient = useQueryClient();
   const [isModalVisible, setModalVisible] = useState(false);
@@ -68,7 +66,6 @@ const PracticeStreakTracker: React.FC<PracticeStreakTrackerProps> = ({ studentId
     );
   }
 
-  // Use the new boolean directly from the API response
   const { has_logged_practice_today, current_streak, longest_streak } = streakDetails;
   const nextMilestone = 7 - (current_streak % 7);
 

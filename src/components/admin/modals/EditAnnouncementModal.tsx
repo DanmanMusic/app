@@ -93,7 +93,6 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
       updates.message = trimmedMessage;
       hasChanges = true;
     }
-    // The 'type' is no longer editable, so it's not checked here.
 
     if (!hasChanges) {
       console.log('[EditAnnModal] No changes detected.');

@@ -13,7 +13,6 @@ export interface TaskStats {
   pendingVerificationCount: number;
 }
 
-// NEW: Type definition for the goal stats
 export interface GoalStat {
   reward_id: string;
   goal_count: number;
@@ -96,7 +95,6 @@ export const fetchPendingTaskCount = async (): Promise<TaskStats> => {
   return taskStats;
 };
 
-// NEW: Function to call our RPC
 export const fetchGoalStats = async (companyId: string): Promise<GoalStat[]> => {
   if (!companyId) return [];
   const client = getSupabase();

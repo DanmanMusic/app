@@ -716,7 +716,7 @@ export const commonSharedStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.backgroundGrey,
-    borderRadius: 50, // Make it circular
+    borderRadius: 50,
     borderWidth: 2,
   },
   avatarPlaceholderText: {
@@ -733,7 +733,7 @@ export const commonSharedStyles = StyleSheet.create({
   detailAvatar: {
     width: 100,
     height: 100,
-    borderRadius: 50, // Make it circular
+    borderRadius: 50,
     borderWidth: 2,
     borderColor: colors.primary,
   },

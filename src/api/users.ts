@@ -11,20 +11,18 @@ import { SimplifiedStudent, User, UserRole, UserStatus } from '../types/dataType
 
 import { getUserDisplayName, NativeFileObject } from '../utils/helpers';
 
-// Define the avatar storage bucket
 const AVATARS_BUCKET = 'avatars';
 
-// MODIFIED: Helper function to upload an avatar using the multi-tenant path
 const uploadAvatar = async (
   userId: string,
-  companyId: string, // NEW: The company ID is required to build the correct path
+  companyId: string,
   imageUri: string,
   mimeType?: string
 ): Promise<string | null> => {
   const client = getSupabase();
   try {
     const fileExt = mimeType ? mimeType.split('/')[1] : 'jpg';
-    // THE GOAL: Use the new {company_id}/{user_id}/{filename} path structure for RLS
+
     const filePath = `${companyId}/${userId}/avatar.${fileExt}`;
 
     let uploadData: { path: string } | null = null;
@@ -37,7 +35,7 @@ const uploadAvatar = async (
         .from(AVATARS_BUCKET)
         .upload(filePath, imageBlob, {
           contentType: mimeType || imageBlob.type || 'image/jpeg',
-          upsert: true, // Use upsert to overwrite existing avatar
+          upsert: true,
         });
       if (error) throw error;
       uploadData = data;
@@ -47,7 +45,7 @@ const uploadAvatar = async (
         .from(AVATARS_BUCKET)
         .upload(filePath, decode(base64), {
           contentType: mimeType || 'image/jpeg',
-          upsert: true, // Use upsert to overwrite existing avatar
+          upsert: true,
         });
       if (error) throw error;
       uploadData = data;
@@ -95,7 +93,7 @@ const mapProfileToUser = async (
     lastName: profile.last_name,
     nickname: profile.nickname ?? undefined,
     status: profile.status as UserStatus,
-    companyId: profile.company_id, // NEW: Map the company_id from the database
+    companyId: profile.company_id,
     avatarPath: profile.avatar_path ?? null,
     current_goal_reward_id: profile.current_goal_reward_id ?? null,
     ...(instrumentIds !== undefined && { instrumentIds }),
@@ -121,7 +119,6 @@ interface FetchUsersParams {
   teacherId?: string;
 }
 
-// MODIFIED: Ensure company_id is selected from the database
 export const fetchProfilesByRole = async ({
   page = 1,
   limit = 10,
@@ -134,13 +131,7 @@ export const fetchProfilesByRole = async ({
   const startIndex = (page - 1) * limit;
   const endIndex = startIndex + limit - 1;
 
-  let query = client
-    .from('profiles')
-    .select(
-      '*, company_id', // Ensure company_id is always fetched
-      { count: 'exact' }
-    )
-    .eq('role', role);
+  let query = client.from('profiles').select('*, company_id', { count: 'exact' }).eq('role', role);
 
   if (filter !== 'all') {
     query = query.eq('status', filter);
@@ -213,8 +204,6 @@ export const fetchStudents = async ({
   searchTerm?: string;
   teacherId?: string;
 }): Promise<FetchStudentsResult> => {
-  // This function returns a simplified student object, so it doesn't need company_id.
-  // No changes are needed here.
   const client = getSupabase();
   const startIndex = (page - 1) * limit;
   const endIndex = startIndex + limit - 1;
@@ -259,7 +248,7 @@ export const fetchStudents = async ({
   const simplifiedStudents = (studentProfiles || []).map(profile => ({
     id: profile.id,
     name: getUserDisplayName(profile),
-    balance: 0, // Note: Balance is fetched separately
+    balance: 0,
     isActive: profile.status === 'active',
   }));
 
@@ -284,16 +273,15 @@ export const fetchAdmins = async (
   return fetchProfilesByRole({ ...params, role: 'admin' });
 };
 
-// MODIFIED: Ensure company_id is selected from the database
 export const fetchUserProfile = async (userId: string): Promise<User | null> => {
   const client = getSupabase();
   const { data, error } = await client
     .from('profiles')
-    .select('*, company_id') // Explicitly select all columns including company_id
+    .select('*, company_id')
     .eq('id', userId)
     .single();
   if (error) {
-    if (error.code === 'PGRST116') return null; // Not found, which is a valid result
+    if (error.code === 'PGRST116') return null;
     throw new Error(`Failed to fetch profile: ${error.message}`);
   }
   if (!data) return null;
@@ -309,14 +297,13 @@ export const createUser = async (
     const detailedError = (error as any).context?.error || error.message;
     throw new Error(`User creation failed: ${detailedError}`);
   }
-  // The backend function now returns companyId, so this should map correctly
+
   return data as User;
 };
 
-// MODIFIED: The main update function, now requires companyId for avatar uploads
 export const updateUser = async ({
   userId,
-  companyId, // NEW: The companyId of the user being updated is now required
+  companyId,
   updates,
   avatarFile,
   avatarMimeType,
@@ -331,16 +318,13 @@ export const updateUser = async ({
   let avatarPath: string | null | undefined = undefined;
 
   if (avatarFile) {
-    // Pass the companyId to the uploader helper
     avatarPath = await uploadAvatar(userId, companyId, avatarFile.uri, avatarMimeType);
   } else if (avatarFile === null) {
-    // This case handles explicitly removing an avatar
     avatarPath = null;
   }
 
   const finalUpdates: Partial<User> & { avatarPath?: string | null } = { ...updates };
 
-  // Only add avatarPath to the payload if it has changed (it's not undefined)
   if (avatarPath !== undefined) {
     finalUpdates.avatarPath = avatarPath;
   }
@@ -392,8 +376,6 @@ export const toggleUserStatus = async (userId: string): Promise<User> => {
   if (!updatedUser) throw new Error(`Status updated, but failed to re-fetch profile.`);
   return updatedUser;
 };
-
-// --- Other functions below this line do not need changes ---
 
 interface UpdateAuthPayload {
   email?: string;
@@ -490,7 +472,7 @@ export interface StudentWithStats {
   current_streak: number;
   goal_reward_name: string | null;
   goal_reward_cost: number | null;
-  teacher_names: string[]; // NEW
+  teacher_names: string[];
   total_count: number;
 }
 
@@ -537,7 +519,7 @@ export const fetchStudentsWithStats = async ({
     current_streak: item.current_streak,
     goal_reward_name: item.goal_reward_name,
     goal_reward_cost: item.goal_reward_cost,
-    teacher_names: item.teacher_names || [], // NEW
+    teacher_names: item.teacher_names || [],
     total_count: item.total_count,
   }));
 

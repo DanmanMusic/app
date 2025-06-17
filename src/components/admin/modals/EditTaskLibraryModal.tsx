@@ -24,7 +24,7 @@ import Toast from 'react-native-toast-message';
 import { fetchInstruments } from '../../../api/instruments';
 import { fetchJourneyLocations, JourneyLocation } from '../../../api/journey';
 import { updateTaskLibraryItem, UpdateTaskApiPayload } from '../../../api/taskLibrary';
-import { handleViewAttachment } from '../../../lib/supabaseClient'; // Make sure this is imported
+import { handleViewAttachment } from '../../../lib/supabaseClient';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { EditTaskLibraryModalProps } from '../../../types/componentProps';
@@ -284,7 +284,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
                   {att.name}
                 </Text>
                 <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
-                  {/* --- THE FIX IS HERE --- */}
                   {!att.isNew && (
                     <Button
                       title="View"

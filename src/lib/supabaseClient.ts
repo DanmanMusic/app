@@ -6,7 +6,6 @@ import { createClient, SupabaseClientOptions } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import Toast from 'react-native-toast-message';
 
-// --- NEW: IMPORT THE GENERATED TYPES ---
 import { Database } from '../types/database.types';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -83,7 +82,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('*********************************************************************');
 }
 
-// --- MODIFIED: USE THE GENERATED 'Database' TYPE ---
 export const supabase =
   supabaseUrl && supabaseAnonKey
     ? createClient<Database>(supabaseUrl, supabaseAnonKey, {
@@ -91,7 +89,6 @@ export const supabase =
       })
     : null;
 
-// --- MODIFIED: UPDATE THE GETTER FUNCTION'S RETURN TYPE ---
 export const getSupabase = (): NonNullable<typeof supabase> => {
   if (!supabase) {
     const errorMsg =

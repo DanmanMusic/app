@@ -216,7 +216,6 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
               editable={!mutation.isPending}
             />
 
-            {/* --- RESTORED LOGIC --- */}
             <View
               style={[
                 commonSharedStyles.baseRow,
@@ -256,7 +255,6 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
                 )}
               </View>
             )}
-            {/* --- END RESTORED LOGIC --- */}
 
             <View style={styles.listHeader}>
               <Text style={commonSharedStyles.label}>Reference URLs</Text>

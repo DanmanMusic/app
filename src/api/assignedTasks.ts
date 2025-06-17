@@ -48,12 +48,6 @@ const mapRpcRowToAssignedTask = (row: any): AssignedTask => {
     return 'unknown';
   };
 
-  const mappedAttachments = (row.task_attachments || []).map((att: any) => ({
-    id: att.id,
-    path: att.file_path, // Map from file_path
-    name: att.file_name, // Map from file_name
-  }));
-
   return {
     id: row.id,
     studentId: row.student_id,
@@ -70,7 +64,7 @@ const mapRpcRowToAssignedTask = (row: any): AssignedTask => {
     actualPointsAwarded: row.actual_points_awarded ?? undefined,
 
     task_links: row.task_links || [],
-    task_attachments: mappedAttachments, // Use the mapped array
+    task_attachments: row.task_attachments || [],
 
     assignerName: getAssignerName(),
     verifierName: getVerifierName(),
@@ -133,11 +127,9 @@ export const createAssignedTask = async (
 ): Promise<AssignedTask> => {
   const client = getSupabase();
 
-  // This is a much simpler and more direct way to handle the payload
   let finalPayload: any;
 
   if ('taskLibraryId' in payload) {
-    // Case 1: Assigning from the library
     console.log(
       `[API] Assigning task from library ${payload.taskLibraryId} to student ${payload.studentId}`
     );
@@ -146,12 +138,10 @@ export const createAssignedTask = async (
       taskLibraryId: payload.taskLibraryId,
     };
   } else {
-    // Case 2: Assigning an ad-hoc task
     console.log(
       `[API] Assigning ad-hoc task "${payload.taskTitle}" to student ${payload.studentId}`
     );
 
-    // Process files into base64 for the Edge Function
     const filesForUpload = await Promise.all(
       (payload.files || []).map(async file => {
         const base64 = await fileToBase64(file._nativeFile);
@@ -159,7 +149,6 @@ export const createAssignedTask = async (
       })
     );
 
-    // Construct the payload directly from the incoming ad-hoc data
     finalPayload = {
       studentId: payload.studentId,
       taskTitle: payload.taskTitle,
@@ -190,7 +179,6 @@ export const createAssignedTask = async (
 };
 
 export const deleteAssignedTask = async (assignmentId: string): Promise<void> => {
-  // This function remains unchanged as it calls an Edge Function
   const client = getSupabase();
   const payload = { assignmentId };
   if (!payload.assignmentId) throw new Error('Assignment ID missing.');
@@ -233,7 +221,6 @@ export const updateAssignedTask = async ({
 }): Promise<AssignedTask> => {
   const client = getSupabase();
 
-  // Helper to call our new reliable RPC
   const refetchViaRpc = async (id: string) => {
     const { data: rpcData, error: rpcError } = await client
       .rpc('get_assigned_task_details', { p_assignment_id: id })
@@ -241,8 +228,7 @@ export const updateAssignedTask = async ({
     if (rpcError) {
       throw new Error(`Failed to refetch task details via RPC: ${rpcError.message}`);
     }
-    // The RPC function is guaranteed to return a single row or throw an error,
-    // so we don't need to check for !rpcData here.
+
     return mapRpcRowToAssignedTask(rpcData);
   };
 

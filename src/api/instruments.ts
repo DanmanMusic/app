@@ -20,7 +20,7 @@ const uploadInstrumentIcon = async (
   try {
     const fileExt = mimeType ? mimeType.split('/')[1] || 'jpg' : 'jpg';
     const safeName = instrumentName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    // FIX: Removed the "public/" prefix. The path should be relative to the bucket root.
+
     const filePath = `${companyId}/${safeName}.${fileExt}`;
 
     console.log(
@@ -75,7 +75,6 @@ const deleteInstrumentIcon = async (imagePath: string | null): Promise<void> => 
   if (!imagePath) return;
   const client = getSupabase();
   try {
-    // FIX: The path from the database is now correct and doesn't need slicing.
     const { error } = await client.storage.from(INSTRUMENT_ICONS_BUCKET).remove([imagePath]);
     if (error) {
       console.warn(

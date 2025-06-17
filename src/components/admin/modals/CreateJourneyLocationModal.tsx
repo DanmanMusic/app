@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Switch,
-} from 'react-native'; // Import Switch
+} from 'react-native';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -33,7 +33,7 @@ const CreateJourneyLocationModal: React.FC<CreateJourneyLocationModalProps> = ({
   const { appUser } = useAuth();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [canReassign, setCanReassign] = useState(false); // State for the new switch
+  const [canReassign, setCanReassign] = useState(false);
   const queryClient = useQueryClient();
 
   const companyId = useMemo(() => appUser?.companyId, [appUser]);
@@ -64,7 +64,7 @@ const CreateJourneyLocationModal: React.FC<CreateJourneyLocationModalProps> = ({
     if (visible) {
       setName('');
       setDescription('');
-      setCanReassign(false); // Reset on open
+      setCanReassign(false);
       mutation.reset();
     }
   }, [visible]);
@@ -87,7 +87,7 @@ const CreateJourneyLocationModal: React.FC<CreateJourneyLocationModalProps> = ({
       locationData: {
         name: name.trim(),
         description: description.trim() || null,
-        can_reassign_tasks: canReassign, // Pass the switch value
+        can_reassign_tasks: canReassign,
       },
       companyId: companyId,
     });
@@ -122,7 +122,6 @@ const CreateJourneyLocationModal: React.FC<CreateJourneyLocationModalProps> = ({
               numberOfLines={3}
               editable={!mutation.isPending}
             />
-            {/* New Switch for can_reassign_tasks */}
             <View
               style={[
                 commonSharedStyles.baseRow,

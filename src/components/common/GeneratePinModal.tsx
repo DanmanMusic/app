@@ -111,7 +111,6 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
               For User: {displayName} ({user.role})
             </Text>
 
-            {/* Active Session Management Section */}
             <View style={commonSharedStyles.modalSubSection}>
               <Text style={commonSharedStyles.roleSectionTitle}>Active PIN Sessions</Text>
               {isLoadingSessionCheck ? (

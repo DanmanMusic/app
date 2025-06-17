@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Switch,
-} from 'react-native'; // Import Switch
+} from 'react-native';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -33,7 +33,7 @@ const EditJourneyLocationModal: React.FC<EditJourneyLocationModalProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [canReassign, setCanReassign] = useState(false); // State for the new switch
+  const [canReassign, setCanReassign] = useState(false);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -62,7 +62,7 @@ const EditJourneyLocationModal: React.FC<EditJourneyLocationModalProps> = ({
     if (visible && locationToEdit) {
       setName(locationToEdit.name);
       setDescription(locationToEdit.description || '');
-      setCanReassign(locationToEdit.can_reassign_tasks); // Set initial state
+      setCanReassign(locationToEdit.can_reassign_tasks);
       mutation.reset();
     }
   }, [visible, locationToEdit]);
@@ -132,7 +132,6 @@ const EditJourneyLocationModal: React.FC<EditJourneyLocationModalProps> = ({
               numberOfLines={3}
               editable={!mutation.isPending}
             />
-            {/* New Switch for can_reassign_tasks */}
             <View
               style={[
                 commonSharedStyles.baseRow,

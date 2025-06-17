@@ -10,7 +10,7 @@ import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { TeacherTasksSectionProps } from '../../types/componentProps';
 import { TaskLibraryItem } from '../../types/dataTypes';
-import { TaskLibraryItemTeacher } from '../common/TaskLibraryItemTeacher';
+import { TeacherTaskLibraryItem } from './TeacherTaskLibraryItem';
 
 export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
   onInitiateAssignTaskGeneral,
@@ -79,7 +79,7 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
             data={[...taskLibrary].sort((a, b) => a.title.localeCompare(b.title))}
             keyExtractor={item => item.id}
             renderItem={({ item }) => (
-              <TaskLibraryItemTeacher
+              <TeacherTaskLibraryItem
                 item={item}
                 onEdit={onInitiateEditTask}
                 onDelete={onInitiateDeleteTask}

@@ -10,7 +10,7 @@ import Toast from 'react-native-toast-message';
 import {
   fetchSelfAssignableTasks,
   selfAssignTask,
-  SelfAssignableTask, // --- THE FIX: Import the type from the API file ---
+  SelfAssignableTask,
 } from '../../api/taskLibrary';
 import { handleOpenUrl, handleViewAttachment } from '../../lib/supabaseClient';
 import { colors } from '../../styles/colors';
@@ -19,8 +19,6 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 interface AvailableTasksProps {
   studentId: string;
 }
-
-// REMOVED: The incorrect local re-declaration of SelfAssignableTask
 
 interface GroupedTasks {
   [locationName: string]: SelfAssignableTask[];

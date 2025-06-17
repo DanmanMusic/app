@@ -13,7 +13,7 @@ import {
   Image,
   Platform,
   Alert,
-  Switch, // Import Switch
+  Switch,
 } from 'react-native';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -31,7 +31,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
   const [name, setName] = useState('');
   const [cost, setCost] = useState<number | ''>('');
   const [description, setDescription] = useState('');
-  const [isGoalEligible, setIsGoalEligible] = useState(false); // State for the switch
+  const [isGoalEligible, setIsGoalEligible] = useState(false);
 
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [mimeType, setMimeType] = useState<string | undefined>(undefined);
@@ -73,7 +73,7 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
       setName(rewardToEdit.name);
       setCost(rewardToEdit.cost);
       setDescription(rewardToEdit.description || '');
-      setIsGoalEligible(rewardToEdit.isGoalEligible); // Set initial state from prop
+      setIsGoalEligible(rewardToEdit.isGoalEligible);
 
       const initialUrl =
         rewardToEdit.imageUrl && rewardToEdit.imageUrl.startsWith('http')

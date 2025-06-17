@@ -10,7 +10,6 @@ import { RewardItem } from '../types/dataTypes';
 
 const REWARD_ICONS_BUCKET = 'reward-icons';
 
-// --- MODIFIED: uploadRewardIcon to be company/reward specific ---
 const uploadRewardIcon = async (
   companyId: string,
   rewardId: string,
@@ -20,7 +19,7 @@ const uploadRewardIcon = async (
   const client = getSupabase();
   try {
     const fileExt = mimeType ? mimeType.split('/')[1] : 'jpg';
-    // NEW PATH STRUCTURE: {company_id}/{reward_id}/icon.{ext}
+
     const filePath = `${companyId}/${rewardId}/icon.${fileExt}`;
     let uploadData: { path: string } | null = null;
 
@@ -32,7 +31,7 @@ const uploadRewardIcon = async (
         .from(REWARD_ICONS_BUCKET)
         .upload(filePath, imageBlob, {
           contentType: mimeType || imageBlob.type || 'image/jpeg',
-          upsert: true, // Use upsert because the path is now predictable
+          upsert: true,
         });
       if (error) throw error;
       uploadData = data;
@@ -44,7 +43,7 @@ const uploadRewardIcon = async (
         .from(REWARD_ICONS_BUCKET)
         .upload(filePath, decode(base64), {
           contentType: mimeType || 'image/jpeg',
-          upsert: true, // Use upsert
+          upsert: true,
         });
       if (error) throw error;
       uploadData = data;
@@ -58,7 +57,6 @@ const uploadRewardIcon = async (
   }
 };
 
-// --- MODIFIED: deleteRewardIcon to handle potential folder deletion ---
 const deleteRewardIcon = async (imagePath: string | null): Promise<void> => {
   if (!imagePath) return;
   const client = getSupabase();
@@ -80,7 +78,6 @@ const deleteRewardIcon = async (imagePath: string | null): Promise<void> => {
   }
 };
 
-// fetchRewards is unchanged and correct.
 export const fetchRewards = async (): Promise<RewardItem[]> => {
   const client = getSupabase();
   console.log(`[Supabase] Fetching Rewards Catalog`);
@@ -116,7 +113,6 @@ export const fetchRewards = async (): Promise<RewardItem[]> => {
   return rewards;
 };
 
-// --- REWRITTEN: createReward to handle the two-step process ---
 export const createReward = async ({
   name,
   cost,
@@ -142,7 +138,6 @@ export const createReward = async ({
     throw new Error('Company ID is required to create a reward.');
   }
 
-  // Step 1: Insert reward data WITHOUT the image path first to get an ID.
   const initialRewardData = {
     name: name.trim(),
     cost,
@@ -161,7 +156,6 @@ export const createReward = async ({
     throw new Error(`Failed to create reward item: ${insertError?.message || 'No data returned'}`);
   }
 
-  // If no image was provided, we are done.
   if (!imageUri) {
     return {
       id: createdRewardRow.id,
@@ -173,7 +167,6 @@ export const createReward = async ({
     };
   }
 
-  // Step 2: Now that we have an ID, upload the image to the correct path.
   const rewardId = createdRewardRow.id;
   let finalImagePath: string | null = null;
   try {
@@ -183,7 +176,6 @@ export const createReward = async ({
       throw new Error('Image uploaded, but no path was returned.');
     }
 
-    // Step 3: Update the reward row with the new image_path.
     const { data: updatedRewardRow, error: updateError } = await client
       .from('rewards')
       .update({ image_path: finalImagePath })
@@ -195,7 +187,6 @@ export const createReward = async ({
       throw new Error(`Reward created, but failed to link image: ${updateError?.message}`);
     }
 
-    // Success! Return the fully formed reward item.
     const { data: urlData } = client.storage.from(REWARD_ICONS_BUCKET).getPublicUrl(finalImagePath);
     return {
       id: updatedRewardRow.id,
@@ -212,13 +203,12 @@ export const createReward = async ({
     );
     await client.from('rewards').delete().eq('id', rewardId);
     if (finalImagePath) {
-      await deleteRewardIcon(finalImagePath); // Also attempt to clean up the orphaned storage object
+      await deleteRewardIcon(finalImagePath);
     }
     throw uploadOrUpdateError;
   }
 };
 
-// --- MODIFIED: updateReward to use the new path structure ---
 export const updateReward = async ({
   rewardId,
   updates,
@@ -234,7 +224,7 @@ export const updateReward = async ({
 
   const { data: currentData, error: currentFetchError } = await client
     .from('rewards')
-    .select('name, cost, description, image_path, is_goal_eligible, company_id') // Get company_id
+    .select('name, cost, description, image_path, is_goal_eligible, company_id')
     .eq('id', rewardId)
     .single();
 
@@ -330,7 +320,6 @@ export const updateReward = async ({
   };
 };
 
-// deleteReward is unchanged and correct.
 export const deleteReward = async (rewardId: string): Promise<void> => {
   const client = getSupabase();
   let imagePathToDelete: string | null = null;

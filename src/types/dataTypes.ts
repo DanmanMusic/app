@@ -107,7 +107,7 @@ export interface User {
   linkedStudentIds?: string[];
   current_goal_reward_id?: string | null;
   status: UserStatus;
-  avatarPath?: string | null; // NEW: Path to the user's avatar in storage
+  avatarPath?: string | null;
   companyId: string;
 }
 
@@ -119,15 +119,13 @@ export interface SimplifiedStudent {
   isActive: boolean;
 }
 
-// This REPLACES the old StreakData type.
 export interface StudentStreakDetails {
-  has_logged_practice_today: boolean; // NEW
+  has_logged_practice_today: boolean;
   current_streak: number;
   longest_streak: number;
-  last_log_date: string | null; // as YYYY-MM-DD
+  last_log_date: string | null;
 }
 
-// This is a NEW type for the company-wide stats.
 export interface CompanyStreakStats {
   total_active_streaks: number;
   streaks_over_7_days: number;

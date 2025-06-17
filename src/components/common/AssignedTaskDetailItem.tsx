@@ -28,6 +28,7 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
   onDelete,
   disabled,
 }) => {
+  console.log('item:', item);
   const assignerNameDisplay = item.assignerName || `ID: ${item.assignedById}`;
   const verifierNameDisplay =
     item.verifierName || (item.verifiedById ? `ID: ${item.verifiedById}` : 'Unknown');
@@ -74,7 +75,6 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
           </Text>
         )}
 
-        {/* --- MODIFICATION START --- */}
         {item.task_links?.map((link, index) => (
           <TouchableOpacity key={`link-${index}`} onPress={() => handleOpenUrl(link.url)}>
             <Text style={commonSharedStyles.baseSecondaryText}>
@@ -90,7 +90,6 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
             </Text>
           </TouchableOpacity>
         ))}
-        {/* --- MODIFICATION END --- */}
 
         {item.verificationStatus !== 'verified' && (
           <Text

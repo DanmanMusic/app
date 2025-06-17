@@ -1,20 +1,18 @@
 // src/api/journey.ts
 import { getSupabase } from '../lib/supabaseClient';
 
-// Define the type for a Journey Location
 export interface JourneyLocation {
   id: string;
   name: string;
   description: string | null;
-  can_reassign_tasks: boolean; // NEW
+  can_reassign_tasks: boolean;
 }
 
-// Maps a raw DB row to our clean JourneyLocation type
 const mapDbRowToJourneyLocation = (row: any): JourneyLocation => ({
   id: row.id,
   name: row.name,
   description: row.description ?? null,
-  can_reassign_tasks: row.can_reassign_tasks ?? false, // NEW
+  can_reassign_tasks: row.can_reassign_tasks ?? false,
 });
 
 /**
@@ -24,7 +22,7 @@ const mapDbRowToJourneyLocation = (row: any): JourneyLocation => ({
 export const fetchJourneyLocations = async (): Promise<JourneyLocation[]> => {
   const client = getSupabase();
   console.log(`[API journey] Fetching Journey Locations`);
-  // Add can_reassign_tasks to the select list
+
   const { data, error } = await client
     .from('journey_locations')
     .select('id, name, description, can_reassign_tasks')
@@ -59,13 +57,13 @@ export const createJourneyLocation = async ({
     name: trimmedName,
     description: locationData.description?.trim() || null,
     company_id: companyId,
-    can_reassign_tasks: locationData.can_reassign_tasks, // NEW
+    can_reassign_tasks: locationData.can_reassign_tasks,
   };
 
   const { data, error } = await client
     .from('journey_locations')
     .insert(itemToInsert)
-    .select('id, name, description, can_reassign_tasks') // Select new column
+    .select('id, name, description, can_reassign_tasks')
     .single();
 
   if (error) {
@@ -87,7 +85,7 @@ export const updateJourneyLocation = async ({
     name?: string;
     description?: string | null;
     can_reassign_tasks?: boolean;
-  } = {}; // NEW
+  } = {};
 
   if (updates.hasOwnProperty('name')) {
     const trimmedName = updates.name?.trim();
@@ -97,7 +95,7 @@ export const updateJourneyLocation = async ({
   if (updates.hasOwnProperty('description')) {
     updatePayload.description = updates.description?.trim() || null;
   }
-  // NEW: Handle the boolean update
+
   if (updates.hasOwnProperty('can_reassign_tasks')) {
     updatePayload.can_reassign_tasks = updates.can_reassign_tasks;
   }
@@ -116,7 +114,7 @@ export const updateJourneyLocation = async ({
     .from('journey_locations')
     .update(updatePayload)
     .eq('id', locationId)
-    .select('id, name, description, can_reassign_tasks') // Select new column
+    .select('id, name, description, can_reassign_tasks')
     .single();
 
   if (error) {

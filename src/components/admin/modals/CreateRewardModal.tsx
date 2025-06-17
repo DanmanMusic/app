@@ -13,7 +13,7 @@ import {
   Image,
   Platform,
   Alert,
-  Switch, // Import Switch
+  Switch,
 } from 'react-native';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -33,7 +33,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
   const [description, setDescription] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [mimeType, setMimeType] = useState<string | undefined>(undefined);
-  const [isGoalEligible, setIsGoalEligible] = useState(false); // State for the switch
+  const [isGoalEligible, setIsGoalEligible] = useState(false);
 
   const { appUser } = useAuth();
   const queryClient = useQueryClient();
@@ -70,7 +70,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
       setDescription('');
       setImageUri(null);
       setMimeType(undefined);
-      setIsGoalEligible(false); // Reset on open
+      setIsGoalEligible(false);
       mutation.reset();
     }
   }, [visible]);
@@ -136,7 +136,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
       description: description.trim() || undefined,
       imageUri: imageUri,
       mimeType: mimeType,
-      isGoalEligible: isGoalEligible, // Pass the switch state
+      isGoalEligible: isGoalEligible,
       companyId: companyId,
     };
 

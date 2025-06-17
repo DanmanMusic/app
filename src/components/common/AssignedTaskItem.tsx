@@ -46,7 +46,6 @@ export const AssignedTaskItem = ({
           <Text style={[commonSharedStyles.baseSecondaryText]}>{task.taskDescription}</Text>
         )}
 
-        {/* --- MODIFICATION START --- */}
         {task.task_links?.map((link, index) => (
           <TouchableOpacity key={`link-${index}`} onPress={() => handleOpenUrl(link.url)}>
             <Text style={commonSharedStyles.baseSecondaryText}>
@@ -62,7 +61,6 @@ export const AssignedTaskItem = ({
             </Text>
           </TouchableOpacity>
         ))}
-        {/* --- MODIFICATION END --- */}
 
         {(taskStatus === 'Assigned' || task.verificationStatus === 'pending') && (
           <Text
@@ -75,7 +73,25 @@ export const AssignedTaskItem = ({
             Available: {task.taskBasePoints ?? 0} {task.taskBasePoints === 1 ? 'Ticket' : 'Tickets'}
           </Text>
         )}
-        {/* ... rest of the component is the same ... */}
+        <Text style={commonSharedStyles.baseSecondaryText}>Status: {taskStatus}</Text>
+        {task.actualPointsAwarded !== undefined && task.verificationStatus !== 'pending' && (
+          <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.textSuccess]}>
+            Awarded: {task.actualPointsAwarded ?? 0} Tickets
+          </Text>
+        )}
+        {task.completedDate && (
+          <Text style={commonSharedStyles.baseSecondaryText}>
+            Completed: {timestampDisplay(task.completedDate)}
+          </Text>
+        )}
+        {task.verifiedDate && task.verificationStatus !== 'pending' && (
+          <Text style={commonSharedStyles.baseSecondaryText}>
+            Verified: {timestampDisplay(task.verifiedDate)}
+          </Text>
+        )}
+        {task.isComplete && task.verificationStatus === 'pending' && (
+          <Text style={commonSharedStyles.pendingNote}>Awaiting teacher verification...</Text>
+        )}
       </View>
       <View>
         {showMarkCompleteButton && (

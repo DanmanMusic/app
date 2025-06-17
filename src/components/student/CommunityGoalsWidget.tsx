@@ -44,7 +44,7 @@ const CommunityGoalsWidget = () => {
       })
       .filter((g): g is TrendingGoal => g !== null)
       .sort((a, b) => b.goal_count - a.goal_count)
-      .slice(0, 3); // Show top 3 trending goals
+      .slice(0, 3);
 
     return trending;
   }, [goalStats, rewardsCatalog]);
@@ -60,7 +60,6 @@ const CommunityGoalsWidget = () => {
   }
 
   if (trendingGoals.length === 0) {
-    // Don't show the widget if no one has set any goals yet
     return null;
   }
 

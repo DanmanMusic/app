@@ -20,7 +20,7 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
   const [message, setMessage] = useState('');
 
   const queryClient = useQueryClient();
-  const { appUser } = useAuth(); // Get the authenticated user from context
+  const { appUser } = useAuth();
 
   const mutation = useMutation({
     mutationFn: createAnnouncement,
@@ -84,8 +84,8 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
     > & { companyId: string } = {
       title: trimmedTitle,
       message: trimmedMessage,
-      type: 'announcement', // Hardcoded type
-      companyId: appUser.companyId, // Pass the companyId from the authenticated user
+      type: 'announcement',
+      companyId: appUser.companyId,
     };
 
     console.log('[CreateAnnModal] Calling mutation with data:', newAnnouncementData);

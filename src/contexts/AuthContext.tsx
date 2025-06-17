@@ -20,7 +20,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Notifications from 'expo-notifications';
 import Toast from 'react-native-toast-message';
 
-// --- RESTORE THESE IMPORTS ---
 import { registerForPushNotificationsAsync, savePushToken } from '../lib/notifications';
 import { getItem, removeItem, storeItem, CUSTOM_REFRESH_TOKEN_KEY } from '../lib/storageHelper';
 import { getSupabase } from '../lib/supabaseClient';
@@ -57,7 +56,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isPinSession, setIsPinSession] = useState(false);
   const [authError, setAuthError] = useState<Error | null>(null);
 
-  // --- RESTORE THESE REFS ---
   const notificationListener = useRef<Notifications.Subscription | undefined>(undefined);
   const responseListener = useRef<Notifications.Subscription | undefined>(undefined);
 
@@ -162,10 +160,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [session, appUser]
   );
 
-  // --- RESTORED and CORRECTED useEffect for notifications ---
   useEffect(() => {
     if (isAuthenticated && appUser) {
-      // On native platforms, we can and should register automatically on login.
+
       if (Platform.OS !== 'web') {
         registerForPushNotificationsAsync()
           .then(token => {
@@ -177,9 +174,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.error('Error during NATIVE push notification registration:', error);
           });
       }
-      // On web, the NotificationManager component handles this interaction.
 
-      // These listeners are safe to add on all platforms. They just listen for incoming messages.
       notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
         console.log('Notification received while app is open:', notification);
         Toast.show({

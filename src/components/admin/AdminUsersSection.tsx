@@ -6,7 +6,7 @@ import { View, Text, Button, FlatList, TextInput, ActivityIndicator } from 'reac
 import PaginationControls from './PaginationControls';
 import { usePaginatedAdmins } from '../../hooks/usePaginatedAdmins';
 import { usePaginatedParents } from '../../hooks/usePaginatedParents';
-import { usePaginatedStudentsWithStats } from '../../hooks/usePaginatedStudentsWithStats'; // NEW
+import { usePaginatedStudentsWithStats } from '../../hooks/usePaginatedStudentsWithStats';
 import { usePaginatedTeachers } from '../../hooks/usePaginatedTeachers';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
@@ -22,7 +22,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   onViewManageUser,
   onInitiateAssignTaskForStudent,
 }) => {
-  // Use the new hook for the 'students' tab
   const {
     students,
     currentPage: studentCurrentPage,
@@ -38,7 +37,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     setSearchTerm: setStudentSearchTermState,
   } = usePaginatedStudentsWithStats({});
 
-  // Keep the old hooks for other user types
   const {
     teachers,
     currentPage: teacherCurrentPage,
@@ -72,7 +70,6 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     error: adminError,
   } = usePaginatedAdmins();
 
-  // The logic to switch between data sources remains largely the same
   let displayData: any[];
   let currentPage: number;
   let totalPages: number;
@@ -138,7 +135,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
     if (activeTab === 'students') {
       return (
         <AdminStudentItem
-          student={item} // Pass the item with stats directly
+          student={item}
           instruments={instruments}
           onViewManage={onViewManageUser}
           onInitiateAssignTask={onInitiateAssignTaskForStudent}

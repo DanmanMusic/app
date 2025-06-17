@@ -6,7 +6,6 @@ import { AssignedTask, TaskLibraryItem, Url, Attachment } from '../types/dataTyp
 
 import { fileToBase64, NativeFileObject } from '../utils/helpers';
 
-// NEW: A type for the raw RPC result
 interface TaskLibraryRpcResult {
   id: string;
   title: string;
@@ -20,7 +19,6 @@ interface TaskLibraryRpcResult {
   attachments: Attachment[] | null;
 }
 
-// NEW: A mapper function to ensure clean data
 const mapRpcResultToTaskLibraryItem = (item: TaskLibraryRpcResult): TaskLibraryItem => ({
   id: item.id,
   title: item.title,
@@ -34,7 +32,6 @@ const mapRpcResultToTaskLibraryItem = (item: TaskLibraryRpcResult): TaskLibraryI
   attachments: item.attachments || [],
 });
 
-// MODIFIED: fetchTaskLibrary now calls the new RPC and uses the mapper
 export const fetchTaskLibrary = async (): Promise<TaskLibraryItem[]> => {
   const client = getSupabase();
   console.log(`[API taskLibrary] Fetching Task Library via RPC`);
@@ -50,12 +47,10 @@ export const fetchTaskLibrary = async (): Promise<TaskLibraryItem[]> => {
   return (typedData || []).map(mapRpcResultToTaskLibraryItem);
 };
 
-// Types for the create/update functions
 export type UrlPayload = Omit<Url, 'id'>;
 export type FilePayload = { _nativeFile: NativeFileObject; fileName: string; mimeType: string };
 export type AttachmentPayload = Omit<Attachment, 'id'>;
 
-// MODIFIED: createTaskLibraryItem sends the correct payload structure
 export const createTaskLibraryItem = async (
   taskData: Omit<TaskLibraryItem, 'id' | 'createdById' | 'urls' | 'attachments'> & {
     urls: UrlPayload[];
@@ -95,7 +90,6 @@ export const createTaskLibraryItem = async (
   return mapRpcResultToTaskLibraryItem(refetchedData as TaskLibraryRpcResult);
 };
 
-// Types for the complex update operation
 export interface UpdateTaskApiPayload {
   taskId: string;
   updates: {
@@ -112,7 +106,6 @@ export interface UpdateTaskApiPayload {
   };
 }
 
-// MODIFIED: updateTaskLibraryItem sends the correct payload structure
 export const updateTaskLibraryItem = async ({
   taskId,
   updates,
@@ -155,7 +148,6 @@ export const updateTaskLibraryItem = async ({
   return mapRpcResultToTaskLibraryItem(updatedData as TaskLibraryRpcResult);
 };
 
-// deleteTaskLibraryItem remains the same, as it just needs the ID
 export const deleteTaskLibraryItem = async (taskId: string): Promise<void> => {
   const client = getSupabase();
   const payload = { taskId };
@@ -165,7 +157,6 @@ export const deleteTaskLibraryItem = async (taskId: string): Promise<void> => {
   }
 };
 
-// Self-assign functions remain unchanged for now
 export interface SelfAssignableTask {
   id: string;
   title: string;
@@ -189,7 +180,6 @@ export const fetchSelfAssignableTasks = async (
     throw new Error(`Failed to fetch available tasks: ${error.message}`);
   }
 
-  // Safely cast and map the data, providing default empty arrays if the JSONB columns are null.
   return ((data as any[]) || []).map(task => ({
     ...task,
     urls: task.urls || [],
@@ -204,7 +194,6 @@ export const selfAssignTask = async (
   const client = getSupabase();
   console.log(`[API taskLibrary] Self-assigning task ${taskLibraryId} for student ${studentId}`);
 
-  // MODIFIED: Payload now includes studentId
   const payload = { taskLibraryId, studentId };
 
   const { data, error } = await client.functions.invoke('self-assign-task', { body: payload });

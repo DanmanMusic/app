@@ -5,7 +5,7 @@ import { View, Text, Button, ActivityIndicator, ScrollView, FlatList, Image } fr
 
 import { useQuery } from '@tanstack/react-query';
 
-import { fetchInstruments } from '../../api/instruments'; // <<< THE FIX IS HERE
+import { fetchInstruments } from '../../api/instruments';
 import { fetchUserProfile } from '../../api/users';
 import { usePaginatedStudentsWithStats } from '../../hooks/usePaginatedStudentsWithStats';
 import { colors } from '../../styles/colors';
@@ -197,8 +197,6 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
               student={item}
               instruments={instruments}
               onViewManage={onViewStudentProfile}
-              // The "Assign Task" button on the list item isn't strictly necessary here,
-              // as the admin can view the profile to assign tasks. Passing an empty function.
               onInitiateAssignTask={() => {}}
             />
           )}
