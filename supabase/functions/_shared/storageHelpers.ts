@@ -59,17 +59,29 @@ export async function uploadAttachment(
 
 export async function deleteAttachment(
   supabase: SupabaseClient,
-  path: string | null
+  paths: string | string[] | null
 ): Promise<boolean> {
-  if (!path) return true;
-  console.log(`[Shared Delete] Attempting: ${path}`);
+  if (!paths || (Array.isArray(paths) && paths.length === 0)) {
+    return true; // Nothing to delete
+  }
+
+  // Ensure we have an array of paths
+  const pathsToDelete = Array.isArray(paths) ? paths : [paths];
+
+  console.log(`[Shared Delete] Attempting to remove paths:`, pathsToDelete);
   try {
-    const { error } = await supabase.storage.from(TASK_ATTACHMENT_BUCKET).remove([path]);
-    if (error) throw error;
-    console.log(`[Shared Delete] Success: ${path}`);
+    const { error } = await supabase.storage.from(TASK_ATTACHMENT_BUCKET).remove(pathsToDelete);
+    if (error) {
+        // Log the error but don't throw, as the function might be used for cleanup
+        // where a file might already be gone. The function's goal is to ensure
+        // the file *is not* in storage, so an error here isn't always critical.
+        console.error(`[Shared Delete] Failed to remove some paths:`, error.message);
+        return false; // Indicate that an error occurred
+    }
+    console.log(`[Shared Delete] Success for paths:`, pathsToDelete);
     return true;
   } catch (error) {
-    console.error(`[Shared Delete] Failed: ${path}:`, error.message);
+    console.error(`[Shared Delete] Exception during batch deletion:`, error.message);
     return false;
   }
 }

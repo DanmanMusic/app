@@ -1,66 +1,38 @@
-// File: supabase/functions/update-task-library-item/index.ts
+// supabase/functions/update-task-library-item/index.ts
 
-import { createClient, SupabaseClient } from 'supabase-js';
-
-import { isActiveAdmin, isActiveTeacher } from '../_shared/authHelpers.ts';
+import { createClient } from 'supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
+import { isActiveAdmin, isActiveTeacher } from '../_shared/authHelpers.ts';
 import { uploadAttachment, deleteAttachment, FileUploadData } from '../_shared/storageHelpers.ts';
 
-interface UpdatePayload {
-  title?: string;
-  description?: string | null;
-  baseTickets?: number;
-  referenceUrl?: string | null;
-  instrumentIds?: string[];
-  canSelfAssign?: boolean;
-  journeyLocationId?: string | null;
-  file?: FileUploadData;
-  deleteAttachment?: boolean;
+interface UrlData {
+  id?: string;
+  url: string;
+  label: string | null;
 }
+
+interface AttachmentData {
+  id?: string;
+  file_path: string; // This is what comes from the client for existing files
+  file_name: string;
+}
+
+interface UpdatePayload {
+  title: string;
+  description: string | null;
+  baseTickets: number;
+  instrumentIds: string[];
+  canSelfAssign: boolean;
+  journeyLocationId: string | null;
+  urls: UrlData[];
+  attachments: AttachmentData[]; // The desired state of existing attachments
+  newFiles: FileUploadData[];
+  attachmentPathsToDelete: string[];
+}
+
 interface UpdateRequestBody {
   taskId: string;
   updates: UpdatePayload;
-}
-
-// syncInstrumentLinks helper remains the same
-async function syncInstrumentLinks(
-  supabase: SupabaseClient,
-  taskId: string,
-  newInstrumentIds: string[]
-): Promise<{ errors: string[] }> {
-  const errors: string[] = [];
-  if (newInstrumentIds === undefined) return { errors };
-
-  const { data: currentLinksData, error: fetchError } = await supabase
-    .from('task_library_instruments')
-    .select('instrument_id')
-    .eq('task_library_id', taskId);
-  if (fetchError) {
-    errors.push(`Failed fetching current instruments: ${fetchError.message}`);
-    return { errors };
-  }
-
-  const currentLinkIds = currentLinksData?.map(link => link.instrument_id) || [];
-  const idsToDelete = currentLinkIds.filter(id => !newInstrumentIds.includes(id));
-  const idsToInsert = newInstrumentIds.filter(id => !currentLinkIds.includes(id));
-
-  if (idsToDelete.length > 0) {
-    const { error } = await supabase
-      .from('task_library_instruments')
-      .delete()
-      .eq('task_library_id', taskId)
-      .in('instrument_id', idsToDelete);
-    if (error) errors.push(`Failed deleting old instrument links: ${error.message}`);
-  }
-  if (idsToInsert.length > 0) {
-    const rowsToInsert = idsToInsert.map(instId => ({
-      task_library_id: taskId,
-      instrument_id: instId,
-    }));
-    const { error } = await supabase.from('task_library_instruments').insert(rowsToInsert);
-    if (error) errors.push(`Failed inserting new instrument links: ${error.message}`);
-  }
-  return { errors };
 }
 
 Deno.serve(async (req: Request) => {
@@ -76,24 +48,22 @@ Deno.serve(async (req: Request) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
 
+  let uploadedFilePaths: string[] = [];
+
   try {
     const {
       data: { user: callerUser },
     } = await supabaseAdmin.auth.getUser(req.headers.get('Authorization')!.replace('Bearer ', ''));
     if (!callerUser) {
-      return new Response(JSON.stringify({ error: 'Invalid token' }), {
-        status: 401,
-        headers: corsHeaders,
-      });
+      throw new Error('Invalid token');
     }
     const callerId = callerUser.id;
-
-    const { data: callerProfile, error: callerProfileError } = await supabaseAdmin
+    const { data: callerProfile } = await supabaseAdmin
       .from('profiles')
       .select('company_id')
       .eq('id', callerId)
       .single();
-    if (callerProfileError || !callerProfile) {
+    if (!callerProfile) {
       throw new Error('Could not verify caller profile.');
     }
     const callerCompanyId = callerProfile.company_id;
@@ -103,76 +73,68 @@ Deno.serve(async (req: Request) => {
       throw new Error('Missing taskId or updates object');
     }
 
-    const { data: currentTask, error: fetchError } = await supabaseAdmin
+    const { data: currentTask } = await supabaseAdmin
       .from('task_library')
-      .select('id, created_by_id, attachment_path, company_id')
+      .select('id, created_by_id, company_id')
       .eq('id', taskId)
       .single();
 
-    if (fetchError || !currentTask) {
-      throw new Error('Task not found');
-    }
-    if (currentTask.company_id !== callerCompanyId) {
+    if (!currentTask) throw new Error('Task not found');
+    if (currentTask.company_id !== callerCompanyId)
       throw new Error('Permission denied: Cannot update a task from another company.');
-    }
 
     const isAdminCaller = await isActiveAdmin(supabaseAdmin, callerId);
     const isOwnerTeacher =
       currentTask.created_by_id === callerId && (await isActiveTeacher(supabaseAdmin, callerId));
-    if (!isAdminCaller && !isOwnerTeacher) {
-      throw new Error('Permission denied to update this task');
+    if (!isAdminCaller && !isOwnerTeacher) throw new Error('Permission denied to update this task');
+
+    if (updates.attachmentPathsToDelete && updates.attachmentPathsToDelete.length > 0) {
+      await deleteAttachment(supabaseAdmin, updates.attachmentPathsToDelete);
     }
 
-    const oldAttachmentPath = currentTask.attachment_path;
-    const dbUpdates: Record<string, any> = {};
+    const uploadPromises = (updates.newFiles || []).map(file =>
+      uploadAttachment(supabaseAdmin, file, callerCompanyId, callerId)
+    );
+    const newUploadedPaths = await Promise.all(uploadPromises);
+    uploadedFilePaths = newUploadedPaths.filter((p): p is string => p !== null);
 
-    // Build the DB update payload
-    if (updates.title !== undefined) dbUpdates.title = updates.title.trim();
-    if (updates.hasOwnProperty('description'))
-      dbUpdates.description = updates.description === null ? null : updates.description?.trim();
-    if (updates.baseTickets !== undefined) dbUpdates.base_tickets = updates.baseTickets;
-    if (updates.hasOwnProperty('referenceUrl'))
-      dbUpdates.reference_url = updates.referenceUrl === null ? null : updates.referenceUrl?.trim();
-    if (updates.canSelfAssign !== undefined) dbUpdates.can_self_assign = updates.canSelfAssign;
-    if (updates.hasOwnProperty('journeyLocationId'))
-      dbUpdates.journey_location_id = updates.journeyLocationId;
-
-    // Handle file changes
-    let newAttachmentPath: string | null = null;
-    if (updates.file) {
-      // --- THIS IS THE FIX ---
-      newAttachmentPath = await uploadAttachment(
-        supabaseAdmin,
-        updates.file,
-        callerCompanyId,
-        callerId
-      );
-      if (!newAttachmentPath) throw new Error('New file upload failed');
-      dbUpdates.attachment_path = newAttachmentPath;
-    } else if (updates.deleteAttachment === true) {
-      dbUpdates.attachment_path = null;
+    if (newUploadedPaths.some(p => p === null)) {
+      throw new Error('One or more file uploads failed.');
     }
 
-    // Update the database if there are changes
-    if (Object.keys(dbUpdates).length > 0) {
-      const { error: updateDbError } = await supabaseAdmin
-        .from('task_library')
-        .update(dbUpdates)
-        .eq('id', taskId);
-      if (updateDbError) {
-        if (newAttachmentPath) await deleteAttachment(supabaseAdmin, newAttachmentPath); // Clean up failed upload
-        throw new Error(`DB update failed: ${updateDbError.message}`);
-      }
-    }
+    // --- THIS IS THE FIX ---
+    // Normalize the attachment data before sending it to the RPC.
+    // The RPC expects objects with keys `path` and `name`.
 
-    // Clean up old attachment if it was replaced or removed
-    if ((newAttachmentPath || updates.deleteAttachment) && oldAttachmentPath) {
-      await deleteAttachment(supabaseAdmin, oldAttachmentPath);
-    }
+    // Map existing attachments to the correct format.
+    const existingAttachmentsForDb = updates.attachments.map(att => ({
+        path: att.file_path,
+        name: att.file_name,
+    }));
 
-    // Sync instrument links if provided
-    if (updates.instrumentIds !== undefined) {
-      await syncInstrumentLinks(supabaseAdmin, taskId, updates.instrumentIds);
+    // Map newly uploaded attachments to the correct format.
+    const newAttachmentsForDb = uploadedFilePaths.map((path, i) => ({
+        path: path,
+        name: updates.newFiles[i].fileName,
+    }));
+
+    // Combine them into the final array for the database.
+    const finalAttachmentsForDb = [...existingAttachmentsForDb, ...newAttachmentsForDb];
+
+    const { error: rpcError } = await supabaseAdmin.rpc('update_task_with_details', {
+      p_task_id: taskId,
+      p_title: updates.title,
+      p_description: updates.description,
+      p_base_tickets: updates.baseTickets,
+      p_can_self_assign: updates.canSelfAssign,
+      p_journey_location_id: updates.journeyLocationId,
+      p_instrument_ids: updates.instrumentIds,
+      p_urls: updates.urls.map(u => ({ url: u.url, label: u.label })), // Also clean up URLs
+      p_attachments: finalAttachmentsForDb,
+    });
+
+    if (rpcError) {
+      throw new Error(`DB update transaction failed: ${rpcError.message}`);
     }
 
     return new Response(JSON.stringify({ message: `Task ${taskId} updated successfully.` }), {
@@ -180,6 +142,9 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    if (uploadedFilePaths.length > 0) {
+      await deleteAttachment(supabaseAdmin, uploadedFilePaths);
+    }
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1,268 +1,167 @@
 // src/api/taskLibrary.ts
 
 import { getSupabase } from '../lib/supabaseClient';
-
-import { AssignedTask, TaskLibraryItem } from '../types/dataTypes';
-
+import {
+  AssignedTask,
+  TaskLibraryItem,
+  Url,
+  Attachment,
+} from '../types/dataTypes';
 import { fileToBase64, NativeFileObject } from '../utils/helpers';
 
-// in src/api/taskLibrary.ts
-
-// The interface for the result remains the same.
+// NEW: A type for the raw RPC result
 interface TaskLibraryRpcResult {
   id: string;
   title: string;
   description: string | null;
   base_tickets: number;
   created_by_id: string;
-  attachment_path: string | null;
-  reference_url: string | null;
   can_self_assign: boolean;
   journey_location_id: string | null;
   instrument_ids: string[] | null;
+  urls: Url[] | null;
+  attachments: Attachment[] | null;
 }
 
+// NEW: A mapper function to ensure clean data
+const mapRpcResultToTaskLibraryItem = (
+  item: TaskLibraryRpcResult
+): TaskLibraryItem => ({
+  id: item.id,
+  title: item.title,
+  description: item.description ?? null,
+  baseTickets: item.base_tickets,
+  createdById: item.created_by_id,
+  canSelfAssign: item.can_self_assign,
+  journeyLocationId: item.journey_location_id ?? null,
+  instrumentIds: item.instrument_ids || [],
+  urls: item.urls || [],
+  attachments: item.attachments || [],
+});
+
+// MODIFIED: fetchTaskLibrary now calls the new RPC and uses the mapper
 export const fetchTaskLibrary = async (): Promise<TaskLibraryItem[]> => {
   const client = getSupabase();
   console.log(`[API taskLibrary] Fetching Task Library via RPC`);
 
-  // THIS IS THE FIX:
-  // The rpc method is generic over the Function Name (1st arg) and the arguments object (2nd arg).
-  // The return type is then inferred from this.
-  const { data, error } = await client.rpc(
-    'get_full_task_library', // The function name
-    {}, // An empty object for arguments, since our function takes none
-    { count: 'exact' } // Optional: if we needed to count, but not necessary here
-  );
+  const { data, error } = await client.rpc('get_full_task_library');
 
   if (error) {
     console.error(`[API taskLibrary] Error fetching task library via RPC:`, error.message);
     throw new Error(`Failed to fetch task library: ${error.message}`);
   }
 
-  // To fix the 'any' type error that still remains, we must cast the result.
-  // This tells TypeScript to trust us that the 'data' variable matches our interface.
   const typedData = data as TaskLibraryRpcResult[];
-
-  console.log(`[API taskLibrary] Received ${typedData?.length ?? 0} task library items from RPC.`);
-
-  const taskLibrary: TaskLibraryItem[] = (typedData || []).map(item => ({
-    id: item.id,
-    title: item.title,
-    description: item.description ?? null,
-    baseTickets: item.base_tickets,
-    createdById: item.created_by_id,
-    attachmentPath: item.attachment_path ?? undefined,
-    referenceUrl: item.reference_url ?? null,
-    canSelfAssign: item.can_self_assign,
-    journeyLocationId: item.journey_location_id ?? null,
-    instrumentIds: item.instrument_ids || [],
-  }));
-
-  return taskLibrary;
+  return (typedData || []).map(mapRpcResultToTaskLibraryItem);
 };
 
-// MODIFIED: Added canSelfAssign to parameters
+// Types for the create/update functions
+export type UrlPayload = Omit<Url, 'id'>;
+export type FilePayload = { _nativeFile: NativeFileObject; fileName: string; mimeType: string };
+export type AttachmentPayload = Omit<Attachment, 'id'>;
+
+// MODIFIED: createTaskLibraryItem sends the correct payload structure
 export const createTaskLibraryItem = async (
-  taskData: Omit<TaskLibraryItem, 'id'> & {
-    file?: File | NativeFileObject;
-    mimeType?: string;
-    fileName?: string;
+  taskData: Omit<TaskLibraryItem, 'id' | 'createdById' | 'urls' | 'attachments'> & {
+    urls: UrlPayload[];
+    files: FilePayload[];
   }
 ): Promise<TaskLibraryItem> => {
   const client = getSupabase();
-  const {
-    file,
-    mimeType: providedMimeType,
-    fileName: providedFileName,
-    ...restTaskData
-  } = taskData;
-  const payload: any = {};
-  payload.title = restTaskData.title?.trim();
-  payload.description =
-    restTaskData.description === null ? null : restTaskData.description?.trim() || undefined;
-  payload.baseTickets = restTaskData.baseTickets;
-  payload.referenceUrl =
-    restTaskData.referenceUrl === null ? null : restTaskData.referenceUrl?.trim() || undefined;
-  payload.instrumentIds = restTaskData.instrumentIds || [];
-  payload.canSelfAssign = restTaskData.canSelfAssign ?? false; // MODIFIED: Add to payload
+  const { urls, files, ...restTaskData } = taskData;
 
-  if (!payload.title) throw new Error('Task title cannot be empty.');
-  if (
-    payload.baseTickets == null ||
-    payload.baseTickets < 0 ||
-    !Number.isInteger(payload.baseTickets)
-  ) {
-    throw new Error('Base tickets must be a non-negative integer.');
-  }
+  const filesForUpload = await Promise.all(
+    (files || []).map(async file => {
+      const base64 = await fileToBase64(file._nativeFile);
+      return { base64, mimeType: file.mimeType, fileName: file.fileName };
+    })
+  );
 
-  let finalMimeType = providedMimeType;
-  let finalFileName = providedFileName;
+  const payload = {
+    ...restTaskData,
+    urls,
+    files: filesForUpload,
+  };
 
-  // File handling logic remains the same...
-  if (file && !finalMimeType && file instanceof File) finalMimeType = file.type;
-  else if (file && !finalMimeType && typeof file === 'object' && 'mimeType' in file)
-    finalMimeType = file.mimeType;
-  else if (file && !finalMimeType && typeof file === 'object' && 'type' in file)
-    finalMimeType = file.type;
-  if (file && !finalFileName && file instanceof File) finalFileName = file.name;
-  else if (file && !finalFileName && typeof file === 'object' && 'name' in file)
-    finalFileName = file.name;
-  if (file && !finalFileName) finalFileName = `upload.${finalMimeType?.split('/')[1] || 'bin'}`;
-
-  if (file && finalMimeType && finalFileName) {
-    try {
-      const base64 = await fileToBase64(file);
-      payload.file = { base64, mimeType: finalMimeType, fileName: finalFileName };
-    } catch (error: any) {
-      throw new Error(`Failed to process file: ${error.message}`);
-    }
-  }
-
-  const { data: createdTaskRaw, error } = await client.functions.invoke(
+  const { data: newTaskId, error } = await client.functions.invoke(
     'create-task-library-item',
     { body: payload }
   );
 
   if (error) throw new Error(`Failed to create task: ${error.message || 'EF error'}`);
-  if (!createdTaskRaw || typeof createdTaskRaw !== 'object' || !createdTaskRaw.id) {
-    throw new Error('Invalid EF response');
+
+  const { data: refetchedData, error: refetchError } = await client
+    .rpc('get_single_task_library_item', { p_task_id: newTaskId.id })
+    .single();
+
+  if (refetchError || !refetchedData) {
+    throw new Error(`Task created (ID: ${newTaskId.id}), but failed to refetch details.`);
   }
 
-  // MODIFIED: Map new property in the returned object
-  const createdTask: TaskLibraryItem = {
-    id: createdTaskRaw.id,
-    title: createdTaskRaw.title,
-    description: createdTaskRaw.description ?? null,
-    baseTickets: createdTaskRaw.base_tickets,
-    createdById: createdTaskRaw.created_by_id,
-    attachmentPath: createdTaskRaw.attachment_path ?? undefined,
-    referenceUrl: createdTaskRaw.reference_url ?? null,
-    instrumentIds: payload.instrumentIds || [],
-    canSelfAssign: createdTaskRaw.can_self_assign,
-  };
-  return createdTask;
+  return mapRpcResultToTaskLibraryItem(refetchedData as TaskLibraryRpcResult);
 };
 
+
+// Types for the complex update operation
+export interface UpdateTaskApiPayload {
+  taskId: string;
+  updates: {
+    title: string;
+    description: string | null;
+    baseTickets: number;
+    canSelfAssign: boolean;
+    journeyLocationId: string | null;
+    instrumentIds: string[];
+    urls: Url[];
+    attachments: Attachment[];
+    newFiles: FilePayload[];
+    attachmentPathsToDelete: string[];
+  };
+}
+
+// MODIFIED: updateTaskLibraryItem sends the correct payload structure
 export const updateTaskLibraryItem = async ({
   taskId,
   updates,
-  file,
-  mimeType: providedMimeType,
-  fileName: providedFileName,
-}: {
-  taskId: string;
-  updates: Partial<Omit<TaskLibraryItem, 'id' | 'createdById'>>;
-  file?: File | NativeFileObject | null;
-  mimeType?: string;
-  fileName?: string;
-}): Promise<TaskLibraryItem> => {
+}: UpdateTaskApiPayload): Promise<TaskLibraryItem> => {
   const client = getSupabase();
-  const updatePayload: any = {};
-  let hasChanges = false;
 
-  if (updates.hasOwnProperty('title')) {
-    updatePayload.title = updates.title?.trim();
-    hasChanges = true;
-  }
-  if (updates.hasOwnProperty('description')) {
-    updatePayload.description = updates.description === null ? null : updates.description?.trim();
-    hasChanges = true;
-  }
-  if (updates.hasOwnProperty('baseTickets')) {
-    if (
-      updates.baseTickets == null ||
-      updates.baseTickets < 0 ||
-      !Number.isInteger(updates.baseTickets)
-    ) {
-      throw new Error('Base tickets must be a non-negative integer.');
-    }
-    updatePayload.baseTickets = updates.baseTickets;
-    hasChanges = true;
-  }
-  if (updates.hasOwnProperty('referenceUrl')) {
-    updatePayload.referenceUrl =
-      updates.referenceUrl === null ? null : updates.referenceUrl?.trim();
-    hasChanges = true;
-  }
-  if (updates.hasOwnProperty('instrumentIds')) {
-    updatePayload.instrumentIds = updates.instrumentIds || [];
-    hasChanges = true;
-  }
-  if (updates.hasOwnProperty('canSelfAssign')) {
-    updatePayload.canSelfAssign = updates.canSelfAssign;
-    hasChanges = true;
-  }
-  if (updates.hasOwnProperty('journeyLocationId')) {
-    updatePayload.journeyLocationId = updates.journeyLocationId;
-    hasChanges = true;
-  }
+  const newFilesForUpload = await Promise.all(
+    (updates.newFiles || []).map(async file => {
+      const base64 = await fileToBase64(file._nativeFile);
+      return { base64, mimeType: file.mimeType, fileName: file.fileName };
+    })
+  );
 
-  // File handling logic
-  if (file === null) {
-    updatePayload.deleteAttachment = true;
-    hasChanges = true;
-  } else if (file) {
-    let finalMimeType = providedMimeType;
-    let finalFileName = providedFileName;
-    if (!finalMimeType && file instanceof File) finalMimeType = file.type;
-    else if (file && !finalMimeType && typeof file === 'object' && 'mimeType' in file)
-      finalMimeType = file.mimeType;
-    else if (file && !finalMimeType && typeof file === 'object' && 'type' in file)
-      finalMimeType = file.type;
-    if (!finalFileName && file instanceof File) finalFileName = file.name;
-    else if (file && !finalFileName && typeof file === 'object' && 'name' in file)
-      finalFileName = file.name;
-    if (!finalFileName) finalFileName = `update.${finalMimeType?.split('/')[1] || 'bin'}`;
+  const payload = {
+    taskId,
+    updates: {
+      ...updates,
+      newFiles: newFilesForUpload,
+    },
+  };
 
-    if (finalMimeType && finalFileName) {
-      try {
-        const base64 = await fileToBase64(file);
-        updatePayload.file = { base64, mimeType: finalMimeType, fileName: finalFileName };
-        hasChanges = true;
-      } catch (error: any) {
-        throw new Error(`Failed to process file for update: ${error.message}`);
-      }
-    }
-  }
-
-  if (!hasChanges) {
-    return fetchTaskLibrary().then(tasks => tasks.find(t => t.id === taskId)!);
-  }
-  if (updatePayload.title !== undefined && !updatePayload.title)
-    throw new Error('Task title cannot be empty.');
-
-  const requestBody = { taskId, updates: updatePayload };
   const { error } = await client.functions.invoke('update-task-library-item', {
-    body: requestBody,
+    body: payload,
   });
-  if (error) throw new Error(`Failed to update task: ${error.message || 'Unknown EF error'}`);
+
+  if (error) {
+    throw new Error(`Failed to update task: ${error.message || 'Unknown EF error'}`);
+  }
 
   const { data: updatedData, error: refetchError } = await client
     .rpc('get_single_task_library_item', { p_task_id: taskId })
     .single();
 
   if (refetchError || !updatedData) {
-    throw new Error(
-      `Update successful, but failed to refetch: ${refetchError?.message || 'Not found'}`
-    );
+    throw new Error(`Update successful, but failed to refetch: ${refetchError?.message || 'Not found'}`);
   }
 
-  const updatedTask: TaskLibraryItem = {
-    id: updatedData.id,
-    title: updatedData.title,
-    description: updatedData.description ?? null,
-    baseTickets: updatedData.base_tickets,
-    createdById: updatedData.created_by_id,
-    attachmentPath: updatedData.attachment_path ?? undefined,
-    referenceUrl: updatedData.reference_url ?? null,
-    instrumentIds: updatedData.instrument_ids || [],
-    canSelfAssign: updatedData.can_self_assign,
-    journeyLocationId: updatedData.journey_location_id ?? null,
-  };
-  return updatedTask;
+  return mapRpcResultToTaskLibraryItem(updatedData as TaskLibraryRpcResult);
 };
 
+
+// deleteTaskLibraryItem remains the same, as it just needs the ID
 export const deleteTaskLibraryItem = async (taskId: string): Promise<void> => {
   const client = getSupabase();
   const payload = { taskId };
@@ -272,60 +171,50 @@ export const deleteTaskLibraryItem = async (taskId: string): Promise<void> => {
   }
 };
 
+
+// Self-assign functions remain unchanged for now
 export interface SelfAssignableTask {
   id: string;
   title: string;
   description: string | null;
   base_tickets: number;
-  attachment_path: string | null;
-  reference_url: string | null;
   journey_location_id: string;
   journey_location_name: string;
+  urls: Url[];
+  attachments: Attachment[];  
 }
 
-export interface SelfAssignableTask {
-  id: string;
-  title: string;
-  description: string | null;
-  base_tickets: number;
-  attachment_path: string | null;
-  reference_url: string | null;
-  journey_location_id: string;
-  journey_location_name: string;
-}
-
-export const fetchSelfAssignableTasks = async (
-  studentId: string
-): Promise<SelfAssignableTask[]> => {
+export const fetchSelfAssignableTasks = async (studentId: string): Promise<SelfAssignableTask[]> => {
   const client = getSupabase();
-  console.log(`[API taskLibrary] Fetching self-assignable tasks for student ${studentId}`);
-  const { data, error } = await client.rpc('get_self_assignable_tasks', {
-    p_student_id: studentId,
-  });
+  const { data, error } = await client.rpc('get_self_assignable_tasks', { p_student_id: studentId });
 
   if (error) {
-    console.error(`[API taskLibrary] Error fetching self-assignable tasks:`, error.message);
     throw new Error(`Failed to fetch available tasks: ${error.message}`);
   }
 
-  return (data as SelfAssignableTask[]) || [];
+  // Safely cast and map the data, providing default empty arrays if the JSONB columns are null.
+  return ((data as any[]) || []).map(task => ({
+    ...task,
+    urls: task.urls || [],
+    attachments: task.attachments || [],
+  }));
 };
 
-export const selfAssignTask = async (taskLibraryId: string): Promise<AssignedTask> => {
-  const client = getSupabase();
-  console.log(`[API taskLibrary] Self-assigning task library item ${taskLibraryId}`);
-  const { data, error } = await client.functions.invoke('self-assign-task', {
-    body: { taskLibraryId },
-  });
+export const selfAssignTask = async (taskLibraryId: string, studentId: string): Promise<AssignedTask> => {
+    const client = getSupabase();
+    console.log(`[API taskLibrary] Self-assigning task ${taskLibraryId} for student ${studentId}`);
 
-  if (error) {
-    let detailedError = error.message;
-    try {
-      const parsed = JSON.parse(error.message);
-      if (parsed && parsed.error) detailedError = parsed.error;
-    } catch (e) {}
-    throw new Error(detailedError);
-  }
-
-  return data as AssignedTask;
-};
+    // MODIFIED: Payload now includes studentId
+    const payload = { taskLibraryId, studentId };
+    
+    const { data, error } = await client.functions.invoke('self-assign-task', { body: payload });
+    if (error) {
+      let detailedError = error.message;
+      try {
+        const parsed = JSON.parse(error.message);
+        if (parsed && parsed.error) detailedError = parsed.error;
+      } catch (e) {}
+      throw new Error(detailedError);
+    }
+    return data as AssignedTask;
+}

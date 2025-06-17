@@ -1,6 +1,9 @@
--- Migration: Create an RPC function to reliably fetch full details for a single assigned task.
--- File: supabase/migrations/20250614060000_create_rpc_for_task_details.sql
+-- Migration: Upgrade the get_assigned_task_details RPC to use the new JSONB columns
 
+-- First, drop the old function since we are changing its return signature
+DROP FUNCTION IF EXISTS public.get_assigned_task_details(uuid);
+
+-- Create the new, corrected version of the function
 CREATE OR REPLACE FUNCTION public.get_assigned_task_details(p_assignment_id uuid)
 RETURNS TABLE (
     id uuid,
@@ -16,9 +19,10 @@ RETURNS TABLE (
     verified_by_id uuid,
     verified_date timestamptz,
     actual_points_awarded integer,
-    task_link_url text,
-    task_attachment_path text,
-    -- Joined Data
+    -- MODIFIED: REMOVED OLD COLUMNS, ADDED NEW JSONB COLUMNS
+    task_links jsonb,
+    task_attachments jsonb,
+    -- Joined Data remains the same
     assigner_first_name text,
     assigner_last_name text,
     assigner_nickname text,
@@ -44,8 +48,9 @@ BEGIN
         at.verified_by_id,
         at.verified_date,
         at.actual_points_awarded,
-        at.task_link_url,
-        at.task_attachment_path,
+        -- MODIFIED: Select the new JSONB columns
+        at.task_links,
+        at.task_attachments,
         -- Joins to profiles table
         p_assigner.first_name as assigner_first_name,
         p_assigner.last_name as assigner_last_name,
@@ -56,7 +61,6 @@ BEGIN
         p_student.status as student_profile_status
     FROM
         public.assigned_tasks at
-    -- Explicit LEFT JOINs are unambiguous and guaranteed to work
     LEFT JOIN public.profiles p_student ON at.student_id = p_student.id
     LEFT JOIN public.profiles p_assigner ON at.assigned_by_id = p_assigner.id
     LEFT JOIN public.profiles p_verifier ON at.verified_by_id = p_verifier.id
@@ -65,5 +69,5 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Grant permission for authenticated users to call this new function.
+-- Re-grant permission to the new function.
 GRANT EXECUTE ON FUNCTION public.get_assigned_task_details(uuid) TO authenticated;

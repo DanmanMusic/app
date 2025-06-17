@@ -9,8 +9,8 @@ export interface Announcement {
   message: string;
   date: string;
   relatedStudentId?: string;
-  relatedStudentName?: string; // NEW: For displaying names in celebration announcements
-  relatedStudentAvatarPath?: string | null; // NEW: For displaying avatars
+  relatedStudentName?: string;
+  relatedStudentAvatarPath?: string | null;
 }
 
 export type TaskVerificationStatus = 'pending' | 'verified' | 'partial' | 'incomplete' | undefined;
@@ -32,8 +32,8 @@ export interface AssignedTask {
   assignerName?: string;
   verifierName?: string;
   studentStatus?: UserStatus | 'unknown';
-  taskLinkUrl?: string | null;
-  taskAttachmentPath?: string | null;
+  task_links: Url[];
+  task_attachments: Attachment[];
 }
 
 export interface Instrument {
@@ -48,7 +48,19 @@ export interface RewardItem {
   cost: number;
   imageUrl: string;
   description?: string;
-  isGoalEligible: boolean; // NEW: Determines if a reward can be a student's goal
+  isGoalEligible: boolean;
+}
+
+export interface Url {
+  id: string;
+  url: string;
+  label: string | null;
+}
+
+export interface Attachment {
+  id: string;
+  file_path: string;
+  file_name: string;
 }
 
 export interface TaskLibraryItem {
@@ -56,12 +68,12 @@ export interface TaskLibraryItem {
   title: string;
   description: string | null;
   baseTickets: number;
-  referenceUrl?: string | null;
-  attachmentPath?: string | null;
   instrumentIds?: string[];
   createdById: string;
-  canSelfAssign: boolean; // NEW: Determines if students can assign this task to themselves
-  journeyLocationId?: string | null; // NEW: Add this optional property
+  canSelfAssign: boolean;
+  journeyLocationId?: string | null;
+  urls: Url[];
+  attachments: Attachment[];
 }
 
 export type TransactionType =

@@ -1,43 +1,44 @@
-// File: supabase/functions/create-task-library-item/index.ts
-
+// supabase/functions/create-task-library-item/index.ts
 import { createClient, SupabaseClient } from 'supabase-js';
-
-import { isActiveAdminOrTeacher } from '../_shared/authHelpers.ts';
 import { corsHeaders } from '../_shared/cors.ts';
+import { isActiveAdminOrTeacher } from '../_shared/authHelpers.ts';
 import { uploadAttachment, deleteAttachment, FileUploadData } from '../_shared/storageHelpers.ts';
+
+interface UrlData {
+  url: string;
+  label: string;
+}
 
 interface CreateTaskPayload {
   title: string;
   description?: string;
   baseTickets: number;
-  referenceUrl?: string;
   instrumentIds?: string[];
-  file?: FileUploadData;
   canSelfAssign: boolean;
   journeyLocationId?: string | null;
+  urls: UrlData[];
+  files: FileUploadData[];
 }
 
-// syncInstrumentLinks helper remains the same
-async function syncInstrumentLinks(
+async function handleFileUploads(
   supabase: SupabaseClient,
-  taskId: string,
-  newInstrumentIds: string[]
-): Promise<{ errors: string[] }> {
-  const errors: string[] = [];
-  if (!newInstrumentIds || newInstrumentIds.length === 0) {
-    return { errors };
-  }
-  const rowsToInsert = newInstrumentIds.map(instId => ({
-    task_library_id: taskId,
-    instrument_id: instId,
-  }));
-  const { error: insertError } = await supabase
-    .from('task_library_instruments')
-    .insert(rowsToInsert);
-  if (insertError) {
-    errors.push(`Failed inserting new instrument links: ${insertError.message}`);
-  }
-  return { errors };
+  files: FileUploadData[],
+  companyId: string,
+  userId: string
+): Promise<{ path: string; name: string }[]> {
+  if (!files || files.length === 0) return [];
+
+  const uploadPromises = files.map(async file => {
+    const filePath = await uploadAttachment(supabase, file, companyId, userId);
+    if (!filePath) {
+      // In a real scenario, you might want more robust error handling,
+      // like cleaning up already-uploaded files from this batch.
+      throw new Error(`Upload failed for file: ${file.fileName}`);
+    }
+    return { path: filePath, name: file.fileName };
+  });
+
+  return await Promise.all(uploadPromises);
 }
 
 Deno.serve(async (req: Request) => {
@@ -52,6 +53,8 @@ Deno.serve(async (req: Request) => {
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
+
+  let uploadedFilePaths: string[] = [];
 
   try {
     const {
@@ -86,56 +89,44 @@ Deno.serve(async (req: Request) => {
 
     const payload: CreateTaskPayload = await req.json();
 
-    // --- THIS IS THE FIX ---
-    let attachmentPath: string | null = null;
-    if (payload.file) {
-      // Pass the creatorCompanyId to the helper function
-      attachmentPath = await uploadAttachment(
-        supabaseAdmin,
-        payload.file,
-        creatorCompanyId,
-        callerId
-      );
-      if (!attachmentPath) {
-        throw new Error('File upload to storage failed');
+    const uploadedFiles = await handleFileUploads(
+      supabaseAdmin,
+      payload.files,
+      creatorCompanyId,
+      callerId
+    );
+    uploadedFilePaths = uploadedFiles.map(f => f.path);
+
+    // Use a transaction to ensure all or nothing is created
+    const { data: createdTaskData, error: transactionError } = await supabaseAdmin.rpc(
+      'create_task_with_details', // We will create this RPC function next
+      {
+        p_title: payload.title.trim(),
+        p_description: payload.description?.trim() || null,
+        p_base_tickets: payload.baseTickets,
+        p_created_by_id: callerId,
+        p_company_id: creatorCompanyId,
+        p_can_self_assign: payload.canSelfAssign ?? false,
+        p_journey_location_id: payload.journeyLocationId || null,
+        p_instrument_ids: payload.instrumentIds || [],
+        p_urls: payload.urls.map(u => ({ url: u.url.trim(), label: u.label.trim() })) || [],
+        p_attachments: uploadedFiles,
       }
+    );
+
+    if (transactionError) {
+      throw new Error(`Database transaction failed: ${transactionError.message}`);
     }
 
-    const taskToInsert = {
-      title: payload.title.trim(),
-      description: payload.description?.trim() || null,
-      base_tickets: payload.baseTickets,
-      reference_url: payload.referenceUrl?.trim() || null,
-      created_by_id: callerId,
-      attachment_path: attachmentPath,
-      company_id: creatorCompanyId,
-      can_self_assign: payload.canSelfAssign ?? false,
-      journey_location_id: payload.journeyLocationId || null,
-    };
-
-    const { data: createdTaskData, error: insertTaskError } = await supabaseAdmin
-      .from('task_library')
-      .insert(taskToInsert)
-      .select()
-      .single();
-
-    if (insertTaskError) {
-      if (attachmentPath) {
-        await deleteAttachment(supabaseAdmin, attachmentPath);
-      }
-      throw new Error(`Database insert failed: ${insertTaskError.message}`);
-    }
-
-    const createdTaskId = createdTaskData.id;
-    if (payload.instrumentIds && payload.instrumentIds.length > 0) {
-      await syncInstrumentLinks(supabaseAdmin, createdTaskId, payload.instrumentIds);
-    }
-
-    return new Response(JSON.stringify(createdTaskData), {
+    return new Response(JSON.stringify({ id: createdTaskData }), {
       status: 201,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    if (uploadedFilePaths.length > 0) {
+      console.warn('Error occurred, cleaning up uploaded files...', uploadedFilePaths);
+      await supabaseAdmin.storage.from('task-library-attachments').remove(uploadedFilePaths);
+    }
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

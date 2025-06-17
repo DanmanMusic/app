@@ -60,7 +60,6 @@ const uploadAvatar = async (
   }
 };
 
-// MODIFIED: maps a raw database profile row to the rich User type, now including companyId
 const mapProfileToUser = async (
   profile: any,
   client: ReturnType<typeof getSupabase>
@@ -155,7 +154,24 @@ export const fetchProfilesByRole = async ({
   }
 
   if (teacherId && role === 'student') {
-    // ... (logic for fetching teacher's students remains the same)
+    const { data: links, error: linkError } = await client
+      .from('student_teachers')
+      .select('student_id')
+      .eq('teacher_id', teacherId);
+
+    if (linkError) {
+      console.error(
+        `[API] Error fetching student links for teacher ${teacherId}:`,
+        linkError.message
+      );
+      throw new Error(`Failed to fetch student links for teacher: ${linkError.message}`);
+    }
+
+    const studentIds = links?.map(l => l.student_id) || [];
+    if (studentIds.length === 0) {
+      return { items: [], totalPages: 1, currentPage: 1, totalItems: 0 };
+    }
+    query = query.in('id', studentIds);
   }
 
   query = query

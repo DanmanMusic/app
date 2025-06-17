@@ -1,6 +1,5 @@
 // src/components/common/AssignTaskModal.tsx
 import React, { useState, useMemo, useEffect } from 'react';
-
 import {
   Modal,
   View,
@@ -11,6 +10,7 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
+  StyleSheet,
 } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
@@ -33,6 +33,17 @@ import {
 } from '../../types/dataTypes';
 import { getInstrumentNames, getUserDisplayName, NativeFileObject } from '../../utils/helpers';
 
+// Define types for our local state
+interface UrlInput {
+  id: string;
+  url: string;
+  label: string;
+}
+interface FileInput {
+  id: string;
+  asset: NativeFileObject;
+}
+
 export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   visible,
   onClose,
@@ -41,19 +52,21 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   const { currentUserId: assignerId, currentUserRole } = useAuth();
   const queryClient = useQueryClient();
 
+  // Step/flow control state
   const [step, setStep] = useState(1);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedLibraryTask, setSelectedLibraryTask] = useState<TaskLibraryItem | null>(null);
   const [isAdHocMode, setIsAdHocMode] = useState(false);
+  const [studentSearchTerm, setStudentSearchTerm] = useState('');
+
+  // State for ad-hoc task creation
   const [adHocTitle, setAdHocTitle] = useState('');
   const [adHocDescription, setAdHocDescription] = useState('');
   const [adHocBasePoints, setAdHocBasePoints] = useState<number | ''>('');
-  const [adHocReferenceUrl, setAdHocReferenceUrl] = useState('');
-  const [studentSearchTerm, setStudentSearchTerm] = useState('');
-  const [adHocPickedDocument, setAdHocPickedDocument] =
-    useState<DocumentPicker.DocumentPickerResult | null>(null);
-  const [adHocFileError, setAdHocFileError] = useState<string | null>(null);
+  const [adHocUrls, setAdHocUrls] = useState<UrlInput[]>([]);
+  const [adHocFiles, setAdHocFiles] = useState<FileInput[]>([]);
 
+  // React Query hooks for data fetching
   const {
     data: taskLibrary = [],
     isLoading: isLoadingLibrary,
@@ -67,7 +80,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   });
 
   const assignableTaskLibrary = useMemo(() => {
-    return taskLibrary.filter(task => !task.canSelfAssign); // Filter out self-assignable tasks
+    return taskLibrary.filter(task => !task.canSelfAssign);
   }, [taskLibrary]);
 
   const sortedTasks = useMemo(
@@ -162,40 +175,17 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   }, [sortedTasks, selectedStudentProfile, isLoadingSelectedStudent]);
 
   const mutation = useMutation({
-    mutationFn: (
-      payload: Omit<
-        AssignedTask,
-        | 'id'
-        | 'assignedById'
-        | 'assignedDate'
-        | 'isComplete'
-        | 'verificationStatus'
-        | 'studentStatus'
-        | 'assignerName'
-        | 'verifierName'
-      > & { file?: NativeFileObject | File }
-    ) => createAssignedTask(payload),
+    mutationFn: (payload: any) => createAssignedTask(payload),
     onSuccess: createdAssignment => {
       queryClient.invalidateQueries({ queryKey: ['assigned-tasks'] });
       queryClient.invalidateQueries({
         queryKey: ['assigned-tasks', { studentId: createdAssignment.studentId }],
       });
       onClose();
-      Toast.show({
-        type: 'success',
-        text1: 'Success',
-        text2: 'Task assigned successfully.',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'success', text1: 'Success', text2: 'Task assigned successfully.' });
     },
     onError: (error: Error) => {
-      Toast.show({
-        type: 'error',
-        text1: 'Assignment Failed',
-        text2: error.message || 'Could not assign task.',
-        position: 'bottom',
-        visibilityTime: 5000,
-      });
+      Toast.show({ type: 'error', text1: 'Assignment Failed', text2: error.message });
     },
   });
 
@@ -206,10 +196,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       setAdHocTitle('');
       setAdHocDescription('');
       setAdHocBasePoints('');
-      setAdHocReferenceUrl('');
+      setAdHocUrls([]);
+      setAdHocFiles([]);
       setStudentSearchTerm('');
-      setAdHocPickedDocument(null);
-      setAdHocFileError(null);
       mutation.reset();
       if (preselectedStudentId) {
         setSelectedStudentId(preselectedStudentId);
@@ -221,23 +210,23 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     }
   }, [visible, preselectedStudentId]);
 
-  const pickAdHocDocument = async () => {
-    setAdHocFileError(null);
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
-        copyToCacheDirectory: true,
-      });
-      setAdHocPickedDocument(result.canceled ? null : result);
-      if (!result.canceled && (!result.assets || result.assets.length === 0)) {
-        setAdHocFileError('Failed to access selected file.');
-      }
-    } catch (error) {
-      console.error('Error picking ad-hoc document:', error);
-      setAdHocFileError('Failed to pick document.');
-      setAdHocPickedDocument(null);
+  const handleAddAdHocUrl = () => setAdHocUrls(p => [...p, { id: Date.now().toString(), url: '', label: '' }]);
+  const handleUpdateAdHocUrl = (id: string, field: 'url' | 'label', value: string) => {
+    setAdHocUrls(p => p.map(u => (u.id === id ? { ...u, [field]: value } : u)));
+  };
+  const handleRemoveAdHocUrl = (id: string) => setAdHocUrls(p => p.filter(u => u.id !== id));
+
+  const handlePickAdHocFiles = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ type: '*/*', multiple: true });
+    if (!result.canceled) {
+      const newFiles: FileInput[] = result.assets.map(asset => ({
+        id: `${asset.name}-${asset.size}`,
+        asset,
+      }));
+      setAdHocFiles(prev => [...prev, ...newFiles]);
     }
   };
+  const handleRemoveAdHocFile = (id: string) => setAdHocFiles(p => p.filter(f => f.id !== id));
 
   const handleStudentSelect = (studentId: string) => {
     setSelectedStudentId(studentId);
@@ -246,129 +235,46 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   const handleLibraryTaskSelect = (task: TaskLibraryItem) => {
     setSelectedLibraryTask(task);
     setIsAdHocMode(false);
-    setAdHocPickedDocument(null);
-    setAdHocFileError(null);
+    setAdHocFiles([]);
+    setAdHocUrls([]);
     setStep(3);
   };
   const handleAdHocSubmit = () => {
-    const numericPoints =
-      typeof adHocBasePoints === 'number'
-        ? adHocBasePoints
-        : parseInt(String(adHocBasePoints || '-1'), 10);
-    const url = adHocReferenceUrl.trim();
-    if (!adHocTitle.trim()) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Custom title required.' });
+    const numericPoints = Number(adHocBasePoints);
+    if (!adHocTitle.trim() || isNaN(numericPoints) || numericPoints < 0) {
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Title and valid points are required.' });
       return;
     }
-    if (isNaN(numericPoints) || numericPoints < 0) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Valid points required.' });
-      return;
-    }
-    if (url && !url.toLowerCase().startsWith('http')) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'URL must start with http/https.',
-      });
-      return;
-    }
-    if (
-      adHocPickedDocument &&
-      !adHocPickedDocument.canceled &&
-      (!adHocPickedDocument.assets || adHocPickedDocument.assets.length === 0)
-    ) {
-      Toast.show({
-        type: 'error',
-        text1: 'File Error',
-        text2: adHocFileError || 'Selected file is invalid or inaccessible.',
-      });
-      return;
-    }
-
     setSelectedLibraryTask(null);
     setIsAdHocMode(true);
     setStep(3);
   };
 
   const handleConfirm = () => {
-    if (!selectedStudentId || !assignerId) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Student or Assigner ID missing.' });
-      return;
-    }
+    if (!selectedStudentId || !assignerId) return;
 
-    let assignmentPayload: Omit<
-      AssignedTask,
-      | 'id'
-      | 'assignedById'
-      | 'assignedDate'
-      | 'isComplete'
-      | 'verificationStatus'
-      | 'studentStatus'
-      | 'assignerName'
-      | 'verifierName'
-    > & { file?: NativeFileObject | File };
+    let assignmentPayload: any;
 
     if (isAdHocMode) {
-      const numericPoints =
-        typeof adHocBasePoints === 'number'
-          ? adHocBasePoints
-          : parseInt(String(adHocBasePoints || '-1'), 10);
-      const url = adHocReferenceUrl.trim();
-      if (!adHocTitle.trim() || isNaN(numericPoints) || numericPoints < 0) {
-        Toast.show({
-          type: 'error',
-          text1: 'Validation Error',
-          text2: 'Invalid custom task details.',
-        });
-        return;
-      }
-      if (url && !url.toLowerCase().startsWith('http')) {
-        Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Invalid custom URL.' });
-        return;
-      }
-
-      let fileToUpload: NativeFileObject | File | undefined = undefined;
-      if (
-        adHocPickedDocument &&
-        !adHocPickedDocument.canceled &&
-        adHocPickedDocument.assets &&
-        adHocPickedDocument.assets.length > 0
-      ) {
-        fileToUpload = adHocPickedDocument.assets[0];
-        if (!fileToUpload?.uri || !fileToUpload?.name || !fileToUpload?.mimeType) {
-          Toast.show({
-            type: 'error',
-            text1: 'File Error',
-            text2: 'Selected file is missing required information.',
-          });
-          return;
-        }
-      }
-
       assignmentPayload = {
         studentId: selectedStudentId,
         taskTitle: adHocTitle.trim(),
         taskDescription: adHocDescription.trim(),
-        taskBasePoints: numericPoints,
-        taskLinkUrl: url || null,
-        taskAttachmentPath: null,
-        ...(fileToUpload && { file: fileToUpload }),
+        taskBasePoints: Number(adHocBasePoints),
+        urls: adHocUrls.map(({ url, label }) => ({ url: url.trim(), label: label.trim() })),
+        files: adHocFiles.map(f => ({
+          _nativeFile: f.asset,
+          fileName: f.asset.name,
+          mimeType: f.asset.mimeType!,
+        })),
       };
     } else if (selectedLibraryTask) {
       assignmentPayload = {
         studentId: selectedStudentId,
-        taskTitle: selectedLibraryTask.title,
-        taskDescription: selectedLibraryTask.description || '',
-        taskBasePoints: selectedLibraryTask.baseTickets,
-        taskLinkUrl: selectedLibraryTask.referenceUrl || null,
-        taskAttachmentPath: selectedLibraryTask.attachmentPath || null,
+        taskLibraryId: selectedLibraryTask.id,
       };
     } else {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'No task selected or defined.',
-      });
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'No task selected.' });
       return;
     }
     mutation.mutate(assignmentPayload);
@@ -393,22 +299,18 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           <Text style={commonSharedStyles.modalStepTitle}>Step 1: Select Student</Text>
           <TextInput
             style={commonSharedStyles.searchInput}
-            placeholder={
-              filterTeacherId ? 'Search Your Students...' : 'Search All Active Students...'
-            }
+            placeholder={filterTeacherId ? 'Search Your Students...' : 'Search All Active Students...'}
             value={studentSearchTerm}
             onChangeText={setStudentSearchTerm}
             placeholderTextColor={colors.textLight}
             autoCapitalize="none"
             autoCorrect={false}
           />
-          {isLoadingStudentsList && <ActivityIndicator color={colors.primary} />}
-          {isErrorStudentsList && (
-            <Text style={commonSharedStyles.errorText}>
-              Error loading students: {errorStudentsList?.message}
-            </Text>
-          )}
-          {!isLoadingStudentsList && !isErrorStudentsList && (
+          {isLoadingStudentsList ? (
+            <ActivityIndicator color={colors.primary} />
+          ) : isErrorStudentsList ? (
+            <Text style={commonSharedStyles.errorText}>Error loading students: {errorStudentsList?.message}</Text>
+          ) : (
             <FlatList
               style={commonSharedStyles.modalScrollView}
               data={filteredStudents}
@@ -420,11 +322,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                   </View>
                 </TouchableOpacity>
               )}
-              ListEmptyComponent={
-                <Text style={commonSharedStyles.baseEmptyText}>
-                  {studentSearchTerm ? 'No students match search.' : 'No active students found.'}
-                </Text>
-              }
+              ListEmptyComponent={<Text style={commonSharedStyles.baseEmptyText}>{studentSearchTerm ? 'No students match search.' : 'No active students found.'}</Text>}
             />
           )}
         </>
@@ -439,45 +337,18 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           </Text>
           <View style={[commonSharedStyles.containerToggle, { marginBottom: 15 }]}>
             <TouchableOpacity
-              style={[
-                commonSharedStyles.toggleButton,
-                !isAdHocMode && commonSharedStyles.toggleButtonActive,
-              ]}
-              onPress={() => {
-                setIsAdHocMode(false);
-                setAdHocPickedDocument(null);
-                setAdHocFileError(null);
-              }}
+              style={[commonSharedStyles.toggleButton, !isAdHocMode && commonSharedStyles.toggleButtonActive]}
+              onPress={() => setIsAdHocMode(false)}
               disabled={mutation.isPending}
             >
-              <Text
-                style={[
-                  commonSharedStyles.toggleButtonText,
-                  !isAdHocMode && commonSharedStyles.toggleButtonTextActive,
-                ]}
-              >
-                Select from Library
-              </Text>
+              <Text style={[commonSharedStyles.toggleButtonText, !isAdHocMode && commonSharedStyles.toggleButtonTextActive]}>From Library</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                commonSharedStyles.toggleButton,
-                isAdHocMode && commonSharedStyles.toggleButtonActive,
-              ]}
-              onPress={() => {
-                setIsAdHocMode(true);
-                setSelectedLibraryTask(null);
-              }}
+              style={[commonSharedStyles.toggleButton, isAdHocMode && commonSharedStyles.toggleButtonActive]}
+              onPress={() => setIsAdHocMode(true)}
               disabled={mutation.isPending}
             >
-              <Text
-                style={[
-                  commonSharedStyles.toggleButtonText,
-                  isAdHocMode && commonSharedStyles.toggleButtonTextActive,
-                ]}
-              >
-                Create Custom Task
-              </Text>
+              <Text style={[commonSharedStyles.toggleButtonText, isAdHocMode && commonSharedStyles.toggleButtonTextActive]}>Custom Task</Text>
             </TouchableOpacity>
           </View>
 
@@ -485,143 +356,58 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             {isAdHocMode ? (
               <View>
                 <Text style={commonSharedStyles.label}>Custom Task Title:</Text>
-                <TextInput
-                  style={commonSharedStyles.input}
-                  value={adHocTitle}
-                  onChangeText={setAdHocTitle}
-                  placeholder="e.g., Help setup for recital"
-                  placeholderTextColor={colors.textLight}
-                  editable={!mutation.isPending}
-                />
+                <TextInput style={commonSharedStyles.input} value={adHocTitle} onChangeText={setAdHocTitle} placeholder="e.g., Help setup for recital" editable={!mutation.isPending} />
                 <Text style={commonSharedStyles.label}>Custom Task Description:</Text>
-                <TextInput
-                  style={commonSharedStyles.textArea}
-                  value={adHocDescription}
-                  onChangeText={setAdHocDescription}
-                  placeholder="Describe the task briefly"
-                  placeholderTextColor={colors.textLight}
-                  multiline={true}
-                  editable={!mutation.isPending}
-                />
+                <TextInput style={commonSharedStyles.textArea} value={adHocDescription} onChangeText={setAdHocDescription} placeholder="Describe the task briefly" multiline editable={!mutation.isPending} />
                 <Text style={commonSharedStyles.label}>Base Points:</Text>
-                <TextInput
-                  style={commonSharedStyles.input}
-                  value={String(adHocBasePoints)}
-                  onChangeText={text =>
-                    setAdHocBasePoints(
-                      text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0
-                    )
-                  }
-                  placeholder="e.g., 50"
-                  placeholderTextColor={colors.textLight}
-                  keyboardType="numeric"
-                  editable={!mutation.isPending}
-                />
-                <Text style={commonSharedStyles.label}>Reference URL (Optional):</Text>
-                <TextInput
-                  style={commonSharedStyles.input}
-                  value={adHocReferenceUrl}
-                  onChangeText={setAdHocReferenceUrl}
-                  placeholder="https://example.com/resource"
-                  placeholderTextColor={colors.textLight}
-                  keyboardType="url"
-                  autoCapitalize="none"
-                  editable={!mutation.isPending}
-                />
-                <Text style={commonSharedStyles.label}>Attachment (Optional):</Text>
-                <View
-                  style={[
-                    commonSharedStyles.baseRow,
-                    { alignItems: 'center', marginBottom: 5, gap: 10 },
-                  ]}
-                >
-                  <Button
-                    title={
-                      adHocPickedDocument && !adHocPickedDocument.canceled
-                        ? 'Change File'
-                        : 'Attach File'
-                    }
-                    onPress={pickAdHocDocument}
-                    disabled={mutation.isPending}
-                    color={colors.info}
-                  />
-                  {adHocPickedDocument &&
-                    !adHocPickedDocument.canceled &&
-                    adHocPickedDocument.assets && (
-                      <Text
-                        style={commonSharedStyles.baseSecondaryText}
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                      >
-                        Selected: {adHocPickedDocument.assets[0].name}
-                      </Text>
-                    )}
+                <TextInput style={commonSharedStyles.input} value={String(adHocBasePoints)} onChangeText={text => setAdHocBasePoints(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)} keyboardType="numeric" editable={!mutation.isPending} />
+                
+                <View style={styles.listHeader}>
+                  <Text style={commonSharedStyles.label}>Reference URLs</Text>
+                  <Button title="+ Add URL" onPress={handleAddAdHocUrl} disabled={mutation.isPending} />
                 </View>
-                {adHocFileError && (
-                  <Text style={[commonSharedStyles.errorText, { marginBottom: 15 }]}>
-                    {adHocFileError}
-                  </Text>
-                )}
-                <Button
-                  title="Use This Custom Task"
-                  onPress={handleAdHocSubmit}
-                  color={colors.primary}
-                  disabled={
-                    mutation.isPending ||
-                    !adHocTitle.trim() ||
-                    adHocBasePoints === '' ||
-                    adHocBasePoints < 0
-                  }
-                />
+                {adHocUrls.map(urlItem => (
+                  <View key={urlItem.id} style={styles.urlItemContainer}>
+                    <TextInput style={styles.urlInput} value={urlItem.url} onChangeText={text => handleUpdateAdHocUrl(urlItem.id, 'url', text)} placeholder="https://example.com" />
+                    <TextInput style={styles.labelInput} value={urlItem.label} onChangeText={text => handleUpdateAdHocUrl(urlItem.id, 'label', text)} placeholder="Optional Label" />
+                    <Button title="Remove" onPress={() => handleRemoveAdHocUrl(urlItem.id)} color={colors.danger} />
+                  </View>
+                ))}
+
+                <View style={styles.listHeader}>
+                  <Text style={commonSharedStyles.label}>Attachments</Text>
+                  <Button title="+ Attach Files" onPress={handlePickAdHocFiles} disabled={mutation.isPending} />
+                </View>
+                {adHocFiles.map(fileItem => (
+                  <View key={fileItem.id} style={styles.fileItemContainer}>
+                    <Text style={styles.fileName} numberOfLines={1}>{fileItem.asset.name}</Text>
+                    <Button title="Remove" onPress={() => handleRemoveAdHocFile(fileItem.id)} color={colors.danger} />
+                  </View>
+                ))}
+                
+                <View style={{ marginTop: 15 }} >
+                  <Button title="Use This Custom Task" onPress={handleAdHocSubmit} color={colors.primary} disabled={mutation.isPending || !adHocTitle.trim() || adHocBasePoints === '' || adHocBasePoints < 0} />
+                </View>
               </View>
             ) : (
               <>
-                {(isLoadingLibrary || isLoadingSelectedStudent || isLoadingInstruments) && (
-                  <ActivityIndicator />
-                )}
-                {isErrorLibrary && (
-                  <Text style={commonSharedStyles.errorText}>
-                    Error loading task library: {errorLibrary?.message}
-                  </Text>
-                )}
-                {isErrorSelectedStudent && (
-                  <Text style={commonSharedStyles.errorText}>
-                    Error loading student details: {errorSelectedStudent?.message}
-                  </Text>
-                )}
-
-                {!isLoadingLibrary &&
-                  !isLoadingSelectedStudent &&
-                  !isLoadingInstruments &&
-                  !isErrorLibrary &&
-                  !isErrorSelectedStudent && (
+                {(isLoadingLibrary || isLoadingSelectedStudent || isLoadingInstruments) && <ActivityIndicator />}
+                {isErrorLibrary && <Text style={commonSharedStyles.errorText}>Error loading task library: {errorLibrary?.message}</Text>}
+                {isErrorSelectedStudent && <Text style={commonSharedStyles.errorText}>Error loading student details: {errorSelectedStudent?.message}</Text>}
+                {!isLoadingLibrary && !isLoadingSelectedStudent && !isLoadingInstruments && !isErrorLibrary && !isErrorSelectedStudent && (
                     <FlatList
                       data={filteredTaskLibraryForStudent}
                       keyExtractor={item => item.id}
                       renderItem={({ item }) => (
                         <TouchableOpacity onPress={() => handleLibraryTaskSelect(item)}>
                           <View style={commonSharedStyles.listItem}>
-                            <Text style={commonSharedStyles.itemTitle}>
-                              {item.title} ({item.baseTickets} pts)
-                            </Text>
-                            {item.instrumentIds && item.instrumentIds.length > 0 && (
-                              <Text style={commonSharedStyles.baseLightText}>
-                                (Instruments: {getInstrumentNames(item.instrumentIds, instruments)})
-                              </Text>
-                            )}
-                            <Text style={commonSharedStyles.baseSecondaryText}>
-                              {item.description || '(No description)'}
-                            </Text>
+                            <Text style={commonSharedStyles.itemTitle}>{item.title} ({item.baseTickets} pts)</Text>
+                            {item.instrumentIds && item.instrumentIds.length > 0 && <Text style={commonSharedStyles.baseLightText}>(Instruments: {getInstrumentNames(item.instrumentIds, instruments)})</Text>}
+                            <Text style={commonSharedStyles.baseSecondaryText}>{item.description || '(No description)'}</Text>
                           </View>
                         </TouchableOpacity>
                       )}
-                      ListEmptyComponent={
-                        <Text style={commonSharedStyles.baseEmptyText}>
-                          {taskLibrary.length === 0
-                            ? 'Task library is empty.'
-                            : "No assignable tasks found for this student's instrument(s)."}
-                        </Text>
-                      }
+                      ListEmptyComponent={<Text style={commonSharedStyles.baseEmptyText}>{taskLibrary.length === 0 ? 'Task library is empty.' : "No assignable tasks found for this student's instrument(s)."}</Text>}
                     />
                   )}
               </>
@@ -634,28 +420,15 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     if (step === 3) {
       const taskTitle = isAdHocMode ? adHocTitle : selectedLibraryTask?.title;
       const taskPoints = isAdHocMode ? adHocBasePoints : selectedLibraryTask?.baseTickets;
-      const taskUrl = isAdHocMode ? adHocReferenceUrl : selectedLibraryTask?.referenceUrl;
-      const taskAttachmentName = isAdHocMode
-        ? adHocPickedDocument && !adHocPickedDocument.canceled && adHocPickedDocument.assets
-          ? adHocPickedDocument.assets[0].name
-          : null
-        : selectedLibraryTask?.attachmentPath
-          ? selectedLibraryTask.attachmentPath.split('/').pop()
-          : null;
+      const taskUrls = isAdHocMode ? adHocUrls : selectedLibraryTask?.urls;
+      const taskAttachments = isAdHocMode ? adHocFiles.map(f => f.asset) : selectedLibraryTask?.attachments;
 
       return (
         <>
-          <Text style={commonSharedStyles.modalStepTitle}>
-            Step {preselectedStudentId ? 2 : 3}: Confirm Assignment
-          </Text>
-          <Text style={commonSharedStyles.confirmationText}>
-            Assign task "{taskTitle || 'N/A'}" ({taskPoints ?? '?'} points) to "
-            {selectedStudentName}"?
-          </Text>
-          {taskUrl && <Text style={commonSharedStyles.baseLightText}>Link: {taskUrl}</Text>}
-          {taskAttachmentName && (
-            <Text style={commonSharedStyles.baseLightText}>Attachment: {taskAttachmentName}</Text>
-          )}
+          <Text style={commonSharedStyles.modalStepTitle}>Step {preselectedStudentId ? 2 : 3}: Confirm Assignment</Text>
+          <Text style={commonSharedStyles.confirmationText}>Assign task "{taskTitle || 'N/A'}" ({taskPoints ?? '?'} points) to "{selectedStudentName}"?</Text>
+          {taskUrls && taskUrls.length > 0 && <Text style={commonSharedStyles.baseLightText}>URLs: {taskUrls.length}</Text>}
+          {taskAttachments && taskAttachments.length > 0 && <Text style={commonSharedStyles.baseLightText}>Attachments: {taskAttachments.length}</Text>}
         </>
       );
     }
@@ -674,40 +447,59 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
               <Text style={commonSharedStyles.baseSecondaryText}>Assigning Task...</Text>
             </View>
           )}
-          {mutation.isError && (
-            <Text style={[commonSharedStyles.errorText, { marginTop: 10 }]}>
-              Error:{' '}
-              {mutation.error instanceof Error ? mutation.error.message : 'Failed to assign task'}
-            </Text>
-          )}
+          {mutation.isError && <Text style={[commonSharedStyles.errorText, { marginTop: 10 }]}>Error: {mutation.error.message}</Text>}
           <View style={commonSharedStyles.modalFooter}>
-            {step === 3 && (
-              <Button
-                title={mutation.isPending ? 'Assigning...' : 'Confirm & Assign'}
-                onPress={handleConfirm}
-                color={colors.primary}
-                disabled={mutation.isPending}
-              />
-            )}
-            {((step > 1 && !preselectedStudentId) || step === 3) && (
-              <Button
-                title="Back"
-                onPress={goBack}
-                color={colors.secondary}
-                disabled={mutation.isPending}
-              />
-            )}
-            <Button
-              title="Cancel"
-              onPress={onClose}
-              color={colors.secondary}
-              disabled={mutation.isPending}
-            />
+            {step === 3 && <Button title={mutation.isPending ? 'Assigning...' : 'Confirm & Assign'} onPress={handleConfirm} color={colors.primary} disabled={mutation.isPending} />}
+            {((step > 1 && !preselectedStudentId) || step === 3) && <Button title="Back" onPress={goBack} color={colors.secondary} disabled={mutation.isPending} />}
+            <Button title="Cancel" onPress={onClose} color={colors.secondary} disabled={mutation.isPending} />
           </View>
         </View>
       </View>
     </Modal>
   );
 };
+
+const styles = StyleSheet.create({
+  listHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  urlItemContainer: {
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+    borderRadius: 5,
+    padding: 8,
+    marginBottom: 8,
+    gap: 5,
+  },
+  urlInput: {
+    ...commonSharedStyles.input,
+    marginBottom: 5,
+  },
+  labelInput: {
+    ...commonSharedStyles.input,
+    marginBottom: 5,
+    fontSize: 14,
+    minHeight: 35
+  },
+  fileItemContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundGrey,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 5,
+  },
+  fileName: {
+    flex: 1,
+    marginRight: 10,
+    color: colors.textSecondary,
+  },
+});
 
 export default AssignTaskModal;

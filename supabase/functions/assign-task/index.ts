@@ -1,19 +1,31 @@
-// File: supabase/functions/assign-task/index.ts
+// supabase/functions/assign-task/index.ts
 
 import { createClient } from 'supabase-js';
-
-import { isActiveAdmin, isTeacherLinked } from '../_shared/authHelpers.ts';
 import { corsHeaders } from '../_shared/cors.ts';
+import { isTeacherLinked } from '../_shared/authHelpers.ts';
 import { uploadAttachment, deleteAttachment, FileUploadData } from '../_shared/storageHelpers.ts';
+
+// NEW: Interfaces for the new data structures
+interface UrlData {
+  url: string;
+  label: string;
+}
+
+interface AttachmentData {
+  path: string;
+  name: string;
+}
 
 interface AssignTaskPayload {
   studentId: string;
-  taskTitle: string;
-  taskDescription: string;
-  taskBasePoints: number;
-  taskLinkUrl?: string | null;
-  taskAttachmentPath?: string | null; // For re-using a library attachment
-  file?: FileUploadData; // For uploading a new, unique attachment
+  // For ad-hoc tasks
+  taskTitle?: string;
+  taskDescription?: string;
+  taskBasePoints?: number;
+  urls?: UrlData[];
+  files?: FileUploadData[];
+  // For library tasks
+  taskLibraryId?: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -29,6 +41,8 @@ Deno.serve(async (req: Request) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
 
+  let uploadedFilePaths: string[] = [];
+
   try {
     const {
       data: { user: callerUser },
@@ -36,10 +50,7 @@ Deno.serve(async (req: Request) => {
       req.headers.get('Authorization')!.replace('Bearer ', '')
     );
     if (!callerUser) {
-      return new Response(JSON.stringify({ error: 'Invalid or expired token.' }), {
-        status: 401,
-        headers: corsHeaders,
-      });
+      throw new Error('Invalid or expired token.');
     }
     const assignerId = callerUser.id;
 
@@ -57,8 +68,8 @@ Deno.serve(async (req: Request) => {
 
     const payload: AssignTaskPayload = await req.json();
 
-    if (!payload.studentId || !payload.taskTitle || payload.taskBasePoints == null) {
-      throw new Error('Missing required fields: studentId, taskTitle, taskBasePoints.');
+    if (!payload.studentId) {
+      throw new Error('Missing required studentId.');
     }
 
     const userIsAdmin = assignerRole === 'admin';
@@ -75,33 +86,56 @@ Deno.serve(async (req: Request) => {
       throw new Error('Permission denied: User cannot assign tasks to this student.');
     }
 
-    // --- THIS IS THE FIX ---
-    let finalAttachmentPath: string | null = payload.taskAttachmentPath || null;
-    let uploadedFilePath: string | null = null;
-    if (payload.file) {
-      // Pass the assignerCompanyId to the helper
-      uploadedFilePath = await uploadAttachment(
-        supabaseAdminClient,
-        payload.file,
-        assignerCompanyId,
-        assignerId
-      );
-      if (!uploadedFilePath) {
-        throw new Error('File upload to storage failed');
-      }
-      finalAttachmentPath = uploadedFilePath;
-    }
-
-    const taskToInsert = {
+    const taskToInsert: any = {
       student_id: payload.studentId,
       assigned_by_id: assignerId,
       company_id: assignerCompanyId,
-      task_title: payload.taskTitle.trim(),
-      task_description: payload.taskDescription?.trim() || '',
-      task_base_points: payload.taskBasePoints,
-      task_link_url: payload.taskLinkUrl || null,
-      task_attachment_path: finalAttachmentPath,
     };
+
+    if (payload.taskLibraryId) {
+      // --- Assigning from Library ---
+      const { data: libraryTask, error: libError } = await supabaseAdminClient
+        .rpc('get_single_task_library_item', { p_task_id: payload.taskLibraryId })
+        .single();
+      
+      if (libError || !libraryTask) throw new Error('Task library item not found.');
+
+      taskToInsert.task_library_id = payload.taskLibraryId;
+      taskToInsert.task_title = libraryTask.title;
+      taskToInsert.task_description = libraryTask.description;
+      taskToInsert.task_base_points = libraryTask.base_tickets;
+      taskToInsert.task_links = libraryTask.urls;
+      taskToInsert.task_attachments = libraryTask.attachments;
+
+    } else if (payload.taskTitle) {
+      // --- Assigning an Ad-Hoc Task ---
+      if (payload.taskBasePoints == null || payload.taskBasePoints < 0) {
+        throw new Error('Ad-hoc tasks require a valid title and non-negative base points.');
+      }
+      
+      // Upload new files for the ad-hoc task
+      const newAttachments: AttachmentData[] = [];
+      if (payload.files && payload.files.length > 0) {
+        const uploadPromises = payload.files.map(file => uploadAttachment(supabaseAdminClient, file, assignerCompanyId, assignerId));
+        const results = await Promise.all(uploadPromises);
+        
+        if(results.some(r => r === null)) throw new Error("One or more file uploads failed.");
+
+        uploadedFilePaths = results as string[];
+        
+        payload.files.forEach((file, index) => {
+            newAttachments.push({ path: uploadedFilePaths[index], name: file.fileName });
+        });
+      }
+
+      taskToInsert.task_title = payload.taskTitle.trim();
+      taskToInsert.task_description = payload.taskDescription?.trim() ?? '';
+      taskToInsert.task_base_points = payload.taskBasePoints;
+      taskToInsert.task_links = payload.urls || [];
+      taskToInsert.task_attachments = newAttachments;
+    } else {
+      throw new Error('Payload must include either a taskLibraryId or ad-hoc task details.');
+    }
 
     const { data: createdTask, error: insertError } = await supabaseAdminClient
       .from('assigned_tasks')
@@ -110,30 +144,18 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (insertError) {
-      if (uploadedFilePath) {
-        await deleteAttachment(supabaseAdminClient, uploadedFilePath);
-      }
       throw new Error(`Failed to assign task: ${insertError.message}`);
     }
 
-    const responseTask = {
-      id: createdTask.id,
-      studentId: createdTask.student_id,
-      assignedById: createdTask.assigned_by_id,
-      assignedDate: createdTask.assigned_date,
-      taskTitle: createdTask.task_title,
-      taskDescription: createdTask.task_description,
-      taskBasePoints: createdTask.task_base_points,
-      isComplete: createdTask.is_complete,
-      taskLinkUrl: createdTask.task_link_url ?? null,
-      taskAttachmentPath: createdTask.task_attachment_path ?? null,
-    };
-
-    return new Response(JSON.stringify(responseTask), {
+    return new Response(JSON.stringify(createdTask), {
       status: 201,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+
   } catch (error) {
+    if (uploadedFilePaths.length > 0) {
+      await deleteAttachment(supabaseAdminClient, uploadedFilePaths);
+    }
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -4,7 +4,11 @@
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'announcement_type') THEN
-        CREATE TYPE public.announcement_type AS ENUM ('announcement', 'challenge', 'redemption_celebration');
+        CREATE TYPE public.announcement_type AS ENUM (
+            'announcement', 
+            'redemption_celebration', 
+            'streak_milestone'
+        );
     END IF;
 END$$;
 

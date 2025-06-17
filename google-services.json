@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "614901782345",
+    "project_id": "danmans-27e0b",
+    "storage_bucket": "danmans-27e0b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:614901782345:android:542cc6f4864f0c6a9fec98",
+        "android_client_info": {
+          "package_name": "com.danmans.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCnNWH4b6yE4YRC3rn9ODsLa01rhFoFQf0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

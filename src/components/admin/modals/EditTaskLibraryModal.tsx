@@ -1,6 +1,5 @@
 // src/components/admin/modals/EditTaskLibraryModal.tsx
 import React, { useState, useEffect } from 'react';
-
 import {
   Modal,
   View,
@@ -11,24 +10,31 @@ import {
   ActivityIndicator,
   Switch,
   TouchableOpacity,
+  StyleSheet,
 } from 'react-native';
-
 import { Picker } from '@react-native-picker/picker';
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
 import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-toast-message';
 
 import { fetchInstruments } from '../../../api/instruments';
 import { fetchJourneyLocations, JourneyLocation } from '../../../api/journey';
-import { updateTaskLibraryItem } from '../../../api/taskLibrary';
-import { handleViewAttachment } from '../../../lib/supabaseClient';
+import { updateTaskLibraryItem, UpdateTaskApiPayload } from '../../../api/taskLibrary';
+import { handleViewAttachment } from '../../../lib/supabaseClient'; // Make sure this is imported
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { EditTaskLibraryModalProps } from '../../../types/componentProps';
-import { Instrument, TaskLibraryItem } from '../../../types/dataTypes';
-import { getInstrumentNames } from '../../../utils/helpers';
+import { Instrument, TaskLibraryItem, Url, Attachment } from '../../../types/dataTypes';
+import { NativeFileObject } from '../../../utils/helpers';
+
+interface UrlInput extends Partial<Url> {
+  localId: string;
+}
+interface AttachmentInput extends Partial<Attachment> {
+  localId: string;
+  isNew: boolean;
+  nativeFile?: NativeFileObject;
+}
 
 const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
   visible,
@@ -38,35 +44,35 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [baseTickets, setBaseTickets] = useState<number | ''>('');
-  const [referenceUrl, setReferenceUrl] = useState('');
   const [selectedInstrumentIds, setSelectedInstrumentIds] = useState<string[]>([]);
   const [canSelfAssign, setCanSelfAssign] = useState(false);
   const [selectedJourneyLocationId, setSelectedJourneyLocationId] = useState<string | null>(null);
-  const [currentAttachmentPath, setCurrentAttachmentPath] = useState<string | undefined>(undefined);
 
-  type FileAction = 'keep' | 'replace' | 'remove';
-  const [fileAction, setFileAction] = useState<FileAction>('keep');
-  const [newPickedDocument, setNewPickedDocument] =
-    useState<DocumentPicker.DocumentPickerResult | null>(null);
-  const [fileError, setFileError] = useState<string | null>(null);
+  const [urls, setUrls] = useState<UrlInput[]>([]);
+  const [attachments, setAttachments] = useState<AttachmentInput[]>([]);
 
   const queryClient = useQueryClient();
 
-  const {
-    data: instruments = [],
-    isLoading: isLoadingInstruments,
-    isError: isErrorInstruments,
-  } = useQuery<Instrument[], Error>({
+  const { data: fullTask, isLoading: isLoadingTask } = useQuery<TaskLibraryItem, Error>({
+    queryKey: ['taskLibraryItem', taskToEdit?.id],
+    queryFn: async () => {
+      const allTasks = queryClient.getQueryData<TaskLibraryItem[]>(['task-library']);
+      const task = allTasks?.find(t => t.id === taskToEdit?.id);
+      if (!task) throw new Error('Task details not found in cache. Please close and reopen.');
+      return task;
+    },
+    enabled: !!taskToEdit && visible,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: instruments = [] } = useQuery<Instrument[], Error>({
     queryKey: ['instruments'],
     queryFn: fetchInstruments,
     staleTime: Infinity,
     enabled: visible,
   });
 
-  const { data: journeyLocations = [], isLoading: isLoadingJourney } = useQuery<
-    JourneyLocation[],
-    Error
-  >({
+  const { data: journeyLocations = [] } = useQuery<JourneyLocation[], Error>({
     queryKey: ['journeyLocations'],
     queryFn: fetchJourneyLocations,
     staleTime: 5 * 60 * 1000,
@@ -74,360 +80,176 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
   });
 
   const mutation = useMutation({
-    mutationFn: updateTaskLibraryItem,
+    mutationFn: (payload: UpdateTaskApiPayload) => updateTaskLibraryItem(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task-library'] });
-      Toast.show({
-        type: 'success',
-        text1: 'Success',
-        text2: 'Task library item updated.',
-        position: 'bottom',
-      });
+      queryClient.invalidateQueries({ queryKey: ['taskLibraryItem', taskToEdit?.id] });
+      Toast.show({ type: 'success', text1: 'Success', text2: 'Task updated.' });
       onClose();
     },
     onError: (error: Error) => {
-      Toast.show({
-        type: 'error',
-        text1: 'Update Failed',
-        text2: error.message,
-        position: 'bottom',
-      });
+      Toast.show({ type: 'error', text1: 'Update Failed', text2: error.message });
     },
   });
 
   useEffect(() => {
-    if (visible && taskToEdit) {
-      setTitle(taskToEdit.title);
-      setDescription(taskToEdit.description || '');
-      setBaseTickets(taskToEdit.baseTickets);
-      setReferenceUrl(taskToEdit.referenceUrl || '');
-      setSelectedInstrumentIds(taskToEdit.instrumentIds || []);
-      setCanSelfAssign(taskToEdit.canSelfAssign);
-      setSelectedJourneyLocationId(taskToEdit.journeyLocationId || null);
-      setCurrentAttachmentPath(taskToEdit.attachmentPath || undefined);
-      setFileAction('keep');
-      setNewPickedDocument(null);
-      setFileError(null);
+    if (visible && fullTask) {
+      setTitle(fullTask.title);
+      setDescription(fullTask.description || '');
+      setBaseTickets(fullTask.baseTickets);
+      setSelectedInstrumentIds(fullTask.instrumentIds || []);
+      setCanSelfAssign(fullTask.canSelfAssign);
+      setSelectedJourneyLocationId(fullTask.journeyLocationId || null);
+      setUrls(fullTask.urls.map(u => ({ ...u, localId: u.id })));
+      setAttachments(fullTask.attachments.map(a => ({ ...a, localId: a.id, isNew: false })));
       mutation.reset();
     }
-  }, [visible, taskToEdit]);
+  }, [visible, fullTask]);
 
-  useEffect(() => {
-    if (!canSelfAssign) setSelectedJourneyLocationId(null);
-  }, [canSelfAssign]);
+  const handleAddUrl = () => setUrls(p => [...p, { localId: Date.now().toString(), url: '', label: '' }]);
+  const handleUpdateUrl = (localId: string, field: 'url' | 'label', value: string) => {
+    setUrls(p => p.map(u => (u.localId === localId ? { ...u, [field]: value } : u)));
+  };
+  const handleRemoveUrl = (localId: string) => setUrls(p => p.filter(u => u.localId !== localId));
 
-  const pickDocument = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
-        copyToCacheDirectory: true,
-      });
-      if (!result.canceled) {
-        setNewPickedDocument(result);
-        setFileAction('replace');
-      }
-    } catch (error) {
-      setFileError('Failed to pick document.');
+  const handlePickFiles = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ type: '*/*', multiple: true });
+    if (!result.canceled) {
+      const newFiles: AttachmentInput[] = result.assets.map(asset => ({
+        localId: `${asset.name}-${asset.size}`,
+        name: asset.name,
+        isNew: true,
+        nativeFile: asset,
+        file_path: asset.uri,
+      }));
+      setAttachments(prev => [...prev, ...newFiles]);
     }
   };
-
-  const handleRemoveAttachment = () => {
-    setFileAction('remove');
-    setNewPickedDocument(null);
-  };
-  const toggleInstrumentSelection = (id: string) =>
-    setSelectedInstrumentIds(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
+  const handleRemoveAttachment = (localId: string) => setAttachments(p => p.filter(a => a.localId !== localId));
+  const toggleInstrumentSelection = (id: string) => setSelectedInstrumentIds(p => p.includes(id) ? p.filter(i => i !== id) : [...p, id]);
 
   const handleSave = () => {
-    if (!taskToEdit) return;
-    const trimmedTitle = title.trim();
-    const numericTickets =
-      typeof baseTickets === 'number' ? baseTickets : parseInt(String(baseTickets || -1), 10);
-    if (!trimmedTitle) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Task Title is required.' });
-      return;
-    }
-    if (isNaN(numericTickets) || numericTickets < 0) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Base Tickets must be a valid number.',
-      });
-      return;
-    }
-    if (canSelfAssign && !selectedJourneyLocationId) {
-      Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'A Journey Location is required for self-assignable tasks.',
-      });
-      return;
-    }
-
-    const updates: Partial<Omit<TaskLibraryItem, 'id' | 'createdById'>> = {};
-    let hasChanges = false;
-    if (trimmedTitle !== taskToEdit.title) {
-      updates.title = trimmedTitle;
-      hasChanges = true;
-    }
-    if (description.trim() !== (taskToEdit.description || '')) {
-      updates.description = description.trim();
-      hasChanges = true;
-    }
-    if (numericTickets !== taskToEdit.baseTickets) {
-      updates.baseTickets = numericTickets;
-      hasChanges = true;
-    }
-    if (referenceUrl.trim() !== (taskToEdit.referenceUrl || '')) {
-      updates.referenceUrl = referenceUrl.trim() === '' ? null : referenceUrl.trim();
-      hasChanges = true;
-    }
-    if (canSelfAssign !== taskToEdit.canSelfAssign) {
-      updates.canSelfAssign = canSelfAssign;
-      hasChanges = true;
-    }
-    if (selectedJourneyLocationId !== (taskToEdit.journeyLocationId || null)) {
-      updates.journeyLocationId = selectedJourneyLocationId;
-      hasChanges = true;
-    }
-    const initialInstrumentIds = (taskToEdit.instrumentIds || []).sort();
-    if (
-      JSON.stringify([...selectedInstrumentIds].sort()) !== JSON.stringify(initialInstrumentIds)
-    ) {
-      updates.instrumentIds = selectedInstrumentIds;
-      hasChanges = true;
-    }
-
-    let fileApiPayload: { file?: any; mimeType?: string; fileName?: string } = {};
-    if (fileAction === 'remove' && currentAttachmentPath) {
-      updates.attachmentPath = null;
-      hasChanges = true;
-    } else if (
-      fileAction === 'replace' &&
-      newPickedDocument &&
-      !newPickedDocument.canceled &&
-      newPickedDocument.assets
-    ) {
-      const asset = newPickedDocument.assets[0];
-      if (!asset.mimeType || !asset.name) {
-        Toast.show({ type: 'error', text1: 'File Error', text2: 'Selected file is missing info.' });
-        return;
-      }
-      fileApiPayload = { file: asset, mimeType: asset.mimeType, fileName: asset.name };
-      hasChanges = true;
-    }
-
-    if (!hasChanges) {
-      Toast.show({ type: 'info', text1: 'No Changes', text2: 'No information was modified.' });
-      onClose();
-      return;
-    }
-    mutation.mutate({ taskId: taskToEdit.id, updates, ...fileApiPayload });
+    if (!fullTask) return;
+    const initialAttachmentPaths = fullTask.attachments.map(a => a.file_path);
+    const finalAttachments = attachments.filter(a => !a.isNew);
+    const attachmentPathsToDelete = initialAttachmentPaths.filter(p => !finalAttachments.some(fa => fa.file_path === p));
+    const newFilesToUpload = attachments.filter(a => a.isNew);
+    const payload: UpdateTaskApiPayload = {
+      taskId: fullTask.id,
+      updates: {
+        title: title.trim(),
+        description: description.trim() || null,
+        baseTickets: Number(baseTickets),
+        canSelfAssign,
+        journeyLocationId: canSelfAssign ? selectedJourneyLocationId : null,
+        instrumentIds: selectedInstrumentIds,
+        urls: urls.map(({ id, url, label }) => ({ id: id!, url: (url || '').trim(), label: (label || '').trim() || null })),
+        attachments: finalAttachments.map(({ id, file_path, file_name }) => ({ id: id!, file_path: file_path!, file_name: file_name! })),
+        newFiles: newFilesToUpload.map(f => ({ _nativeFile: f.nativeFile!, fileName: f.file_name!, mimeType: f.nativeFile!.mimeType! })),
+        attachmentPathsToDelete,
+      },
+    };
+    mutation.mutate(payload);
   };
 
-  const isSaveDisabled =
-    mutation.isPending ||
-    isLoadingInstruments ||
-    !title.trim() ||
-    baseTickets === '' ||
-    baseTickets < 0 ||
-    (canSelfAssign && !selectedJourneyLocationId);
-  const currentFileNameDisplay =
-    fileAction === 'replace' &&
-    newPickedDocument &&
-    !newPickedDocument.canceled &&
-    newPickedDocument.assets
-      ? newPickedDocument.assets[0].name
-      : fileAction !== 'remove' && currentAttachmentPath
-        ? currentAttachmentPath.split('/').pop()
-        : 'None';
-
-  if (!visible) return null;
-  if (!taskToEdit) {
+  if (isLoadingTask) {
     return (
       <Modal visible={true} transparent={true}>
-        <View style={commonSharedStyles.centeredView}>
-          <ActivityIndicator />
-        </View>
+        <View style={commonSharedStyles.centeredView}><ActivityIndicator size="large" /></View>
       </Modal>
     );
   }
+  if (!taskToEdit || !fullTask) return null;
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
       <View style={commonSharedStyles.centeredView}>
         <View style={commonSharedStyles.modalView}>
           <Text style={commonSharedStyles.modalTitle}>Edit Library Task</Text>
-          <Text style={commonSharedStyles.modalSubTitle}>ID: {taskToEdit?.id}</Text>
           <ScrollView style={[commonSharedStyles.modalScrollView, { paddingHorizontal: 2 }]}>
             <Text style={commonSharedStyles.label}>Task Title:</Text>
-            <TextInput
-              style={commonSharedStyles.input}
-              value={title}
-              onChangeText={setTitle}
-              editable={!mutation.isPending}
-            />
+            <TextInput style={commonSharedStyles.input} value={title} onChangeText={setTitle} />
             <Text style={commonSharedStyles.label}>Base Tickets:</Text>
-            <TextInput
-              style={commonSharedStyles.input}
-              value={String(baseTickets)}
-              onChangeText={text =>
-                setBaseTickets(text === '' ? '' : (parseInt(text.replace(/[^0-9]/g, ''), 10) ?? 0))
-              }
-              keyboardType="numeric"
-              editable={!mutation.isPending}
-            />
+            <TextInput style={commonSharedStyles.input} value={String(baseTickets)} onChangeText={text => setBaseTickets(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)} keyboardType="numeric" />
             <Text style={commonSharedStyles.label}>Description:</Text>
-            <TextInput
-              style={commonSharedStyles.textArea}
-              value={description}
-              onChangeText={setDescription}
-              multiline={true}
-              numberOfLines={3}
-              editable={!mutation.isPending}
-            />
-            <Text style={commonSharedStyles.label}>Reference URL (Optional):</Text>
-            <TextInput
-              style={commonSharedStyles.input}
-              value={referenceUrl}
-              onChangeText={setReferenceUrl}
-              keyboardType="url"
-              autoCapitalize="none"
-              editable={!mutation.isPending}
-            />
-
-            <View
-              style={[
-                commonSharedStyles.baseRow,
-                commonSharedStyles.justifySpaceBetween,
-                commonSharedStyles.baseAlignCenter,
-                { marginBottom: 15 },
-              ]}
-            >
+            <TextInput style={commonSharedStyles.textArea} value={description} onChangeText={setDescription} multiline numberOfLines={3} />
+            
+            <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifySpaceBetween, commonSharedStyles.baseAlignCenter, { marginBottom: 15 }]}>
               <Text style={commonSharedStyles.label}>Allow Student Self-Assignment?</Text>
-              <Switch
-                trackColor={{ false: colors.secondary, true: colors.success }}
-                thumbColor={colors.backgroundPrimary}
-                onValueChange={setCanSelfAssign}
-                value={canSelfAssign}
-                disabled={mutation.isPending}
-              />
+              <Switch trackColor={{ false: colors.secondary, true: colors.success }} thumbColor={colors.backgroundPrimary} onValueChange={setCanSelfAssign} value={canSelfAssign} />
             </View>
 
             {canSelfAssign && (
               <View style={{ marginBottom: 15 }}>
                 <Text style={commonSharedStyles.label}>Journey Location (Required):</Text>
-                {isLoadingJourney ? (
-                  <ActivityIndicator />
-                ) : (
-                  <View style={commonSharedStyles.pickerContainer}>
-                    <Picker
-                      selectedValue={selectedJourneyLocationId}
-                      onValueChange={itemValue => setSelectedJourneyLocationId(itemValue)}
-                      enabled={!mutation.isPending}
-                    >
-                      <Picker.Item label="-- Select a Location --" value={null} />
-                      {journeyLocations.map(loc => (
-                        <Picker.Item key={loc.id} label={loc.name} value={loc.id} />
-                      ))}
-                    </Picker>
-                  </View>
-                )}
+                <View style={commonSharedStyles.pickerContainer}>
+                  <Picker selectedValue={selectedJourneyLocationId} onValueChange={itemValue => setSelectedJourneyLocationId(itemValue)}>
+                    <Picker.Item label="-- Select a Location --" value={null} />
+                    {journeyLocations.map(loc => <Picker.Item key={loc.id} label={loc.name} value={loc.id} />)}
+                  </Picker>
+                </View>
               </View>
             )}
 
-            <Text style={commonSharedStyles.label}>Instruments (Optional):</Text>
-            <View style={[commonSharedStyles.baseItem, { marginBottom: 15, padding: 10 }]}>
-              {isLoadingInstruments ? (
-                <ActivityIndicator color={colors.primary} />
-              ) : isErrorInstruments ? (
-                <Text style={commonSharedStyles.errorText}>Error loading instruments.</Text>
-              ) : instruments.length > 0 ? (
-                <View style={commonSharedStyles.baseRowCentered}>
-                  {instruments.map(inst => (
-                    <Button
-                      key={inst.id}
-                      title={inst.name}
-                      onPress={() => toggleInstrumentSelection(inst.id)}
-                      color={
-                        selectedInstrumentIds.includes(inst.id) ? colors.success : colors.secondary
-                      }
-                      disabled={mutation.isPending}
-                    />
-                  ))}
-                </View>
-              ) : (
-                <Text style={commonSharedStyles.baseEmptyText}>No instruments available.</Text>
-              )}
+            <View style={styles.listHeader}>
+              <Text style={commonSharedStyles.label}>Reference URLs</Text>
+              <Button title="+ Add URL" onPress={handleAddUrl} disabled={mutation.isPending} />
             </View>
-
-            <Text style={commonSharedStyles.label}>Attachment (Optional):</Text>
-            <View style={[commonSharedStyles.baseItem, { marginBottom: 15, padding: 10 }]}>
-              <Text style={{ marginBottom: 10 }}>Current: {currentFileNameDisplay}</Text>
-              <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
-                {currentAttachmentPath && fileAction !== 'remove' && (
-                  <Button
-                    title="View Current"
-                    onPress={() => handleViewAttachment(currentAttachmentPath)}
-                    disabled={mutation.isPending}
-                    color={colors.secondary}
-                  />
-                )}
-                <Button
-                  title={currentAttachmentPath || newPickedDocument ? 'Change File' : 'Attach File'}
-                  onPress={pickDocument}
-                  disabled={mutation.isPending}
-                  color={colors.info}
-                />
-                {(currentAttachmentPath || newPickedDocument) && fileAction !== 'remove' && (
-                  <Button
-                    title="Remove Attachment"
-                    onPress={handleRemoveAttachment}
-                    disabled={mutation.isPending}
-                    color={colors.warning}
-                  />
-                )}
+            {urls.map(urlItem => (
+              <View key={urlItem.localId} style={styles.urlItemContainer}>
+                <TextInput style={styles.urlInput} value={urlItem.url} onChangeText={text => handleUpdateUrl(urlItem.localId, 'url', text)} placeholder="https://example.com" />
+                <TextInput style={styles.labelInput} value={urlItem.label ?? ''} onChangeText={text => handleUpdateUrl(urlItem.localId, 'label', text)} placeholder="Optional Label" />
+                <Button title="Remove" onPress={() => handleRemoveUrl(urlItem.localId)} color={colors.danger} />
               </View>
-              {fileError && (
-                <Text style={[commonSharedStyles.errorText, { marginTop: 10 }]}>{fileError}</Text>
-              )}
+            ))}
+
+            <View style={styles.listHeader}>
+              <Text style={commonSharedStyles.label}>Attachments</Text>
+              <Button title="+ Attach Files" onPress={handlePickFiles} disabled={mutation.isPending} />
+            </View>
+            {attachments.map(att => (
+              <View key={att.localId} style={styles.fileItemContainer}>
+                <Text style={styles.fileName} numberOfLines={1}>{att.file_name}</Text>
+                <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
+                  {/* --- THE FIX IS HERE --- */}
+                  {!att.isNew && (
+                    <Button title="View" onPress={() => handleViewAttachment(att.file_path!)} color={colors.info} />
+                  )}
+                  <Button title="Remove" onPress={() => handleRemoveAttachment(att.localId)} color={colors.danger} />
+                </View>
+              </View>
+            ))}
+            
+            <Text style={[commonSharedStyles.label, {marginTop: 15}]}>Instruments (Optional):</Text>
+            <View style={[commonSharedStyles.baseItem, { marginBottom: 15, padding: 10 }]}>
+              <View style={commonSharedStyles.baseRowCentered}>
+                {instruments.map(inst => (
+                  <Button key={inst.id} title={inst.name} onPress={() => toggleInstrumentSelection(inst.id)} color={selectedInstrumentIds.includes(inst.id) ? colors.success : colors.secondary} disabled={mutation.isPending} />
+                ))}
+              </View>
             </View>
           </ScrollView>
-
-          {mutation.isPending && (
-            <View style={commonSharedStyles.baseRowCentered}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={commonSharedStyles.baseSecondaryText}>Saving Changes...</Text>
-            </View>
-          )}
-          {mutation.isError && (
-            <Text style={commonSharedStyles.errorText}>
-              Error:{' '}
-              {mutation.error instanceof Error ? mutation.error.message : 'Failed to save changes'}
-            </Text>
-          )}
+          
+          {mutation.isPending && <ActivityIndicator />}
           <View style={commonSharedStyles.full}>
-            <Button
-              title={mutation.isPending ? 'Saving...' : 'Save Changes'}
-              onPress={handleSave}
-              color={colors.primary}
-              disabled={isSaveDisabled}
-            />
+            <Button title="Save Changes" onPress={handleSave} disabled={mutation.isPending} />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
-              title="Cancel"
-              onPress={onClose}
-              color={colors.secondary}
-              disabled={mutation.isPending}
-            />
+            <Button title="Cancel" onPress={onClose} color={colors.secondary} disabled={mutation.isPending} />
           </View>
         </View>
       </View>
     </Modal>
   );
 };
+
+const styles = StyleSheet.create({
+  listHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 15, marginBottom: 5 },
+  urlItemContainer: { borderWidth: 1, borderColor: colors.borderSecondary, borderRadius: 5, padding: 8, marginBottom: 8, gap: 5 },
+  urlInput: { ...commonSharedStyles.input, marginBottom: 5 },
+  labelInput: { ...commonSharedStyles.input, marginBottom: 5, fontSize: 14, minHeight: 35 },
+  fileItemContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.backgroundGrey, borderRadius: 5, paddingHorizontal: 10, paddingVertical: 8, marginBottom: 5 },
+  fileName: { flex: 1, marginRight: 10, color: colors.textSecondary },
+});
 
 export default EditTaskLibraryModal;

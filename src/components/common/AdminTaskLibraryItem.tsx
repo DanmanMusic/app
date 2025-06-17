@@ -1,8 +1,6 @@
 // src/components/common/AdminTaskLibraryItem.tsx
 import React from 'react';
-
 import { Button, Text, View, StyleSheet, TouchableOpacity } from 'react-native';
-
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchInstruments } from '../../api/instruments';
@@ -48,30 +46,41 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
         <Text style={styles.detailText}>
           Instruments: <Text style={styles.detailValue}>{instrumentNames}</Text>
         </Text>
+        
+        {/* --- MODIFICATION START --- */}
 
-        {item.referenceUrl ? (
-          <TouchableOpacity onPress={() => handleOpenUrl(item.referenceUrl)}>
-            <Text style={styles.detailText}>
-              Reference: <Text style={commonSharedStyles.linkText}>{item.referenceUrl}</Text>
-            </Text>
-          </TouchableOpacity>
+        {/* Render URLs */}
+        {item.urls && item.urls.length > 0 ? (
+          item.urls.map(url => (
+            <TouchableOpacity key={url.id} onPress={() => handleOpenUrl(url.url)}>
+              <Text style={styles.detailText}>
+                URL ({url.label || 'Link'}): <Text style={commonSharedStyles.linkText}>{url.url}</Text>
+              </Text>
+            </TouchableOpacity>
+          ))
         ) : (
           <Text style={styles.detailText}>
-            Reference: <Text style={styles.detailValue}>N/A</Text>
+            Reference URLs: <Text style={styles.detailValue}>None</Text>
           </Text>
         )}
 
-        {item.attachmentPath ? (
-          <TouchableOpacity onPress={() => handleViewAttachment(item.attachmentPath)}>
-            <Text style={styles.detailText}>
-              Attachment: <Text style={commonSharedStyles.linkText}>View/Download</Text>
-            </Text>
-          </TouchableOpacity>
+        {/* Render Attachments */}
+        {item.attachments && item.attachments.length > 0 ? (
+          item.attachments.map(att => (
+            <TouchableOpacity key={att.id} onPress={() => handleViewAttachment(att.file_path)}>
+              <Text style={styles.detailText}>
+                Attachment: <Text style={commonSharedStyles.linkText}>{att.file_name}</Text>
+              </Text>
+            </TouchableOpacity>
+          ))
         ) : (
           <Text style={styles.detailText}>
-            Attachment: <Text style={styles.detailValue}>None</Text>
+            Attachments: <Text style={styles.detailValue}>None</Text>
           </Text>
         )}
+
+        {/* --- MODIFICATION END --- */}
+
       </View>
 
       <View
