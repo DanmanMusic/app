@@ -1,5 +1,6 @@
 // src/components/common/AssignTaskModal.tsx
 import React, { useState, useMemo, useEffect } from 'react';
+
 import {
   Modal,
   View,
@@ -12,7 +13,9 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-toast-message';
 
@@ -210,7 +213,8 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
     }
   }, [visible, preselectedStudentId]);
 
-  const handleAddAdHocUrl = () => setAdHocUrls(p => [...p, { id: Date.now().toString(), url: '', label: '' }]);
+  const handleAddAdHocUrl = () =>
+    setAdHocUrls(p => [...p, { id: Date.now().toString(), url: '', label: '' }]);
   const handleUpdateAdHocUrl = (id: string, field: 'url' | 'label', value: string) => {
     setAdHocUrls(p => p.map(u => (u.id === id ? { ...u, [field]: value } : u)));
   };
@@ -242,7 +246,11 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
   const handleAdHocSubmit = () => {
     const numericPoints = Number(adHocBasePoints);
     if (!adHocTitle.trim() || isNaN(numericPoints) || numericPoints < 0) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Title and valid points are required.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Title and valid points are required.',
+      });
       return;
     }
     setSelectedLibraryTask(null);
@@ -299,7 +307,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           <Text style={commonSharedStyles.modalStepTitle}>Step 1: Select Student</Text>
           <TextInput
             style={commonSharedStyles.searchInput}
-            placeholder={filterTeacherId ? 'Search Your Students...' : 'Search All Active Students...'}
+            placeholder={
+              filterTeacherId ? 'Search Your Students...' : 'Search All Active Students...'
+            }
             value={studentSearchTerm}
             onChangeText={setStudentSearchTerm}
             placeholderTextColor={colors.textLight}
@@ -309,7 +319,9 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           {isLoadingStudentsList ? (
             <ActivityIndicator color={colors.primary} />
           ) : isErrorStudentsList ? (
-            <Text style={commonSharedStyles.errorText}>Error loading students: {errorStudentsList?.message}</Text>
+            <Text style={commonSharedStyles.errorText}>
+              Error loading students: {errorStudentsList?.message}
+            </Text>
           ) : (
             <FlatList
               style={commonSharedStyles.modalScrollView}
@@ -322,7 +334,11 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                   </View>
                 </TouchableOpacity>
               )}
-              ListEmptyComponent={<Text style={commonSharedStyles.baseEmptyText}>{studentSearchTerm ? 'No students match search.' : 'No active students found.'}</Text>}
+              ListEmptyComponent={
+                <Text style={commonSharedStyles.baseEmptyText}>
+                  {studentSearchTerm ? 'No students match search.' : 'No active students found.'}
+                </Text>
+              }
             />
           )}
         </>
@@ -337,18 +353,38 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           </Text>
           <View style={[commonSharedStyles.containerToggle, { marginBottom: 15 }]}>
             <TouchableOpacity
-              style={[commonSharedStyles.toggleButton, !isAdHocMode && commonSharedStyles.toggleButtonActive]}
+              style={[
+                commonSharedStyles.toggleButton,
+                !isAdHocMode && commonSharedStyles.toggleButtonActive,
+              ]}
               onPress={() => setIsAdHocMode(false)}
               disabled={mutation.isPending}
             >
-              <Text style={[commonSharedStyles.toggleButtonText, !isAdHocMode && commonSharedStyles.toggleButtonTextActive]}>From Library</Text>
+              <Text
+                style={[
+                  commonSharedStyles.toggleButtonText,
+                  !isAdHocMode && commonSharedStyles.toggleButtonTextActive,
+                ]}
+              >
+                From Library
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[commonSharedStyles.toggleButton, isAdHocMode && commonSharedStyles.toggleButtonActive]}
+              style={[
+                commonSharedStyles.toggleButton,
+                isAdHocMode && commonSharedStyles.toggleButtonActive,
+              ]}
               onPress={() => setIsAdHocMode(true)}
               disabled={mutation.isPending}
             >
-              <Text style={[commonSharedStyles.toggleButtonText, isAdHocMode && commonSharedStyles.toggleButtonTextActive]}>Custom Task</Text>
+              <Text
+                style={[
+                  commonSharedStyles.toggleButtonText,
+                  isAdHocMode && commonSharedStyles.toggleButtonTextActive,
+                ]}
+              >
+                Custom Task
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -356,58 +392,147 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
             {isAdHocMode ? (
               <View>
                 <Text style={commonSharedStyles.label}>Custom Task Title:</Text>
-                <TextInput style={commonSharedStyles.input} value={adHocTitle} onChangeText={setAdHocTitle} placeholder="e.g., Help setup for recital" editable={!mutation.isPending} />
+                <TextInput
+                  style={commonSharedStyles.input}
+                  value={adHocTitle}
+                  onChangeText={setAdHocTitle}
+                  placeholder="e.g., Help setup for recital"
+                  editable={!mutation.isPending}
+                />
                 <Text style={commonSharedStyles.label}>Custom Task Description:</Text>
-                <TextInput style={commonSharedStyles.textArea} value={adHocDescription} onChangeText={setAdHocDescription} placeholder="Describe the task briefly" multiline editable={!mutation.isPending} />
+                <TextInput
+                  style={commonSharedStyles.textArea}
+                  value={adHocDescription}
+                  onChangeText={setAdHocDescription}
+                  placeholder="Describe the task briefly"
+                  multiline
+                  editable={!mutation.isPending}
+                />
                 <Text style={commonSharedStyles.label}>Base Points:</Text>
-                <TextInput style={commonSharedStyles.input} value={String(adHocBasePoints)} onChangeText={text => setAdHocBasePoints(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)} keyboardType="numeric" editable={!mutation.isPending} />
-                
+                <TextInput
+                  style={commonSharedStyles.input}
+                  value={String(adHocBasePoints)}
+                  onChangeText={text =>
+                    setAdHocBasePoints(
+                      text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0
+                    )
+                  }
+                  keyboardType="numeric"
+                  editable={!mutation.isPending}
+                />
+
                 <View style={styles.listHeader}>
                   <Text style={commonSharedStyles.label}>Reference URLs</Text>
-                  <Button title="+ Add URL" onPress={handleAddAdHocUrl} disabled={mutation.isPending} />
+                  <Button
+                    title="+ Add URL"
+                    onPress={handleAddAdHocUrl}
+                    disabled={mutation.isPending}
+                  />
                 </View>
                 {adHocUrls.map(urlItem => (
                   <View key={urlItem.id} style={styles.urlItemContainer}>
-                    <TextInput style={styles.urlInput} value={urlItem.url} onChangeText={text => handleUpdateAdHocUrl(urlItem.id, 'url', text)} placeholder="https://example.com" />
-                    <TextInput style={styles.labelInput} value={urlItem.label} onChangeText={text => handleUpdateAdHocUrl(urlItem.id, 'label', text)} placeholder="Optional Label" />
-                    <Button title="Remove" onPress={() => handleRemoveAdHocUrl(urlItem.id)} color={colors.danger} />
+                    <TextInput
+                      style={styles.urlInput}
+                      value={urlItem.url}
+                      onChangeText={text => handleUpdateAdHocUrl(urlItem.id, 'url', text)}
+                      placeholder="https://example.com"
+                    />
+                    <TextInput
+                      style={styles.labelInput}
+                      value={urlItem.label}
+                      onChangeText={text => handleUpdateAdHocUrl(urlItem.id, 'label', text)}
+                      placeholder="Optional Label"
+                    />
+                    <Button
+                      title="Remove"
+                      onPress={() => handleRemoveAdHocUrl(urlItem.id)}
+                      color={colors.danger}
+                    />
                   </View>
                 ))}
 
                 <View style={styles.listHeader}>
                   <Text style={commonSharedStyles.label}>Attachments</Text>
-                  <Button title="+ Attach Files" onPress={handlePickAdHocFiles} disabled={mutation.isPending} />
+                  <Button
+                    title="+ Attach Files"
+                    onPress={handlePickAdHocFiles}
+                    disabled={mutation.isPending}
+                  />
                 </View>
                 {adHocFiles.map(fileItem => (
                   <View key={fileItem.id} style={styles.fileItemContainer}>
-                    <Text style={styles.fileName} numberOfLines={1}>{fileItem.asset.name}</Text>
-                    <Button title="Remove" onPress={() => handleRemoveAdHocFile(fileItem.id)} color={colors.danger} />
+                    <Text style={styles.fileName} numberOfLines={1}>
+                      {fileItem.asset.name}
+                    </Text>
+                    <Button
+                      title="Remove"
+                      onPress={() => handleRemoveAdHocFile(fileItem.id)}
+                      color={colors.danger}
+                    />
                   </View>
                 ))}
-                
-                <View style={{ marginTop: 15 }} >
-                  <Button title="Use This Custom Task" onPress={handleAdHocSubmit} color={colors.primary} disabled={mutation.isPending || !adHocTitle.trim() || adHocBasePoints === '' || adHocBasePoints < 0} />
+
+                <View style={{ marginTop: 15 }}>
+                  <Button
+                    title="Use This Custom Task"
+                    onPress={handleAdHocSubmit}
+                    color={colors.primary}
+                    disabled={
+                      mutation.isPending ||
+                      !adHocTitle.trim() ||
+                      adHocBasePoints === '' ||
+                      adHocBasePoints < 0
+                    }
+                  />
                 </View>
               </View>
             ) : (
               <>
-                {(isLoadingLibrary || isLoadingSelectedStudent || isLoadingInstruments) && <ActivityIndicator />}
-                {isErrorLibrary && <Text style={commonSharedStyles.errorText}>Error loading task library: {errorLibrary?.message}</Text>}
-                {isErrorSelectedStudent && <Text style={commonSharedStyles.errorText}>Error loading student details: {errorSelectedStudent?.message}</Text>}
-                {!isLoadingLibrary && !isLoadingSelectedStudent && !isLoadingInstruments && !isErrorLibrary && !isErrorSelectedStudent && (
+                {(isLoadingLibrary || isLoadingSelectedStudent || isLoadingInstruments) && (
+                  <ActivityIndicator />
+                )}
+                {isErrorLibrary && (
+                  <Text style={commonSharedStyles.errorText}>
+                    Error loading task library: {errorLibrary?.message}
+                  </Text>
+                )}
+                {isErrorSelectedStudent && (
+                  <Text style={commonSharedStyles.errorText}>
+                    Error loading student details: {errorSelectedStudent?.message}
+                  </Text>
+                )}
+                {!isLoadingLibrary &&
+                  !isLoadingSelectedStudent &&
+                  !isLoadingInstruments &&
+                  !isErrorLibrary &&
+                  !isErrorSelectedStudent && (
                     <FlatList
                       data={filteredTaskLibraryForStudent}
                       keyExtractor={item => item.id}
                       renderItem={({ item }) => (
                         <TouchableOpacity onPress={() => handleLibraryTaskSelect(item)}>
                           <View style={commonSharedStyles.listItem}>
-                            <Text style={commonSharedStyles.itemTitle}>{item.title} ({item.baseTickets} pts)</Text>
-                            {item.instrumentIds && item.instrumentIds.length > 0 && <Text style={commonSharedStyles.baseLightText}>(Instruments: {getInstrumentNames(item.instrumentIds, instruments)})</Text>}
-                            <Text style={commonSharedStyles.baseSecondaryText}>{item.description || '(No description)'}</Text>
+                            <Text style={commonSharedStyles.itemTitle}>
+                              {item.title} ({item.baseTickets} pts)
+                            </Text>
+                            {item.instrumentIds && item.instrumentIds.length > 0 && (
+                              <Text style={commonSharedStyles.baseLightText}>
+                                (Instruments: {getInstrumentNames(item.instrumentIds, instruments)})
+                              </Text>
+                            )}
+                            <Text style={commonSharedStyles.baseSecondaryText}>
+                              {item.description || '(No description)'}
+                            </Text>
                           </View>
                         </TouchableOpacity>
                       )}
-                      ListEmptyComponent={<Text style={commonSharedStyles.baseEmptyText}>{taskLibrary.length === 0 ? 'Task library is empty.' : "No assignable tasks found for this student's instrument(s)."}</Text>}
+                      ListEmptyComponent={
+                        <Text style={commonSharedStyles.baseEmptyText}>
+                          {taskLibrary.length === 0
+                            ? 'Task library is empty.'
+                            : "No assignable tasks found for this student's instrument(s)."}
+                        </Text>
+                      }
                     />
                   )}
               </>
@@ -421,14 +546,27 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
       const taskTitle = isAdHocMode ? adHocTitle : selectedLibraryTask?.title;
       const taskPoints = isAdHocMode ? adHocBasePoints : selectedLibraryTask?.baseTickets;
       const taskUrls = isAdHocMode ? adHocUrls : selectedLibraryTask?.urls;
-      const taskAttachments = isAdHocMode ? adHocFiles.map(f => f.asset) : selectedLibraryTask?.attachments;
+      const taskAttachments = isAdHocMode
+        ? adHocFiles.map(f => f.asset)
+        : selectedLibraryTask?.attachments;
 
       return (
         <>
-          <Text style={commonSharedStyles.modalStepTitle}>Step {preselectedStudentId ? 2 : 3}: Confirm Assignment</Text>
-          <Text style={commonSharedStyles.confirmationText}>Assign task "{taskTitle || 'N/A'}" ({taskPoints ?? '?'} points) to "{selectedStudentName}"?</Text>
-          {taskUrls && taskUrls.length > 0 && <Text style={commonSharedStyles.baseLightText}>URLs: {taskUrls.length}</Text>}
-          {taskAttachments && taskAttachments.length > 0 && <Text style={commonSharedStyles.baseLightText}>Attachments: {taskAttachments.length}</Text>}
+          <Text style={commonSharedStyles.modalStepTitle}>
+            Step {preselectedStudentId ? 2 : 3}: Confirm Assignment
+          </Text>
+          <Text style={commonSharedStyles.confirmationText}>
+            Assign task "{taskTitle || 'N/A'}" ({taskPoints ?? '?'} points) to "
+            {selectedStudentName}"?
+          </Text>
+          {taskUrls && taskUrls.length > 0 && (
+            <Text style={commonSharedStyles.baseLightText}>URLs: {taskUrls.length}</Text>
+          )}
+          {taskAttachments && taskAttachments.length > 0 && (
+            <Text style={commonSharedStyles.baseLightText}>
+              Attachments: {taskAttachments.length}
+            </Text>
+          )}
         </>
       );
     }
@@ -447,11 +585,34 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
               <Text style={commonSharedStyles.baseSecondaryText}>Assigning Task...</Text>
             </View>
           )}
-          {mutation.isError && <Text style={[commonSharedStyles.errorText, { marginTop: 10 }]}>Error: {mutation.error.message}</Text>}
+          {mutation.isError && (
+            <Text style={[commonSharedStyles.errorText, { marginTop: 10 }]}>
+              Error: {mutation.error.message}
+            </Text>
+          )}
           <View style={commonSharedStyles.modalFooter}>
-            {step === 3 && <Button title={mutation.isPending ? 'Assigning...' : 'Confirm & Assign'} onPress={handleConfirm} color={colors.primary} disabled={mutation.isPending} />}
-            {((step > 1 && !preselectedStudentId) || step === 3) && <Button title="Back" onPress={goBack} color={colors.secondary} disabled={mutation.isPending} />}
-            <Button title="Cancel" onPress={onClose} color={colors.secondary} disabled={mutation.isPending} />
+            {step === 3 && (
+              <Button
+                title={mutation.isPending ? 'Assigning...' : 'Confirm & Assign'}
+                onPress={handleConfirm}
+                color={colors.primary}
+                disabled={mutation.isPending}
+              />
+            )}
+            {((step > 1 && !preselectedStudentId) || step === 3) && (
+              <Button
+                title="Back"
+                onPress={goBack}
+                color={colors.secondary}
+                disabled={mutation.isPending}
+              />
+            )}
+            <Button
+              title="Cancel"
+              onPress={onClose}
+              color={colors.secondary}
+              disabled={mutation.isPending}
+            />
           </View>
         </View>
       </View>
@@ -483,7 +644,7 @@ const styles = StyleSheet.create({
     ...commonSharedStyles.input,
     marginBottom: 5,
     fontSize: 14,
-    minHeight: 35
+    minHeight: 35,
   },
   fileItemContainer: {
     flexDirection: 'row',

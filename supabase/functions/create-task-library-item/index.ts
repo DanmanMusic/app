@@ -1,7 +1,8 @@
 // supabase/functions/create-task-library-item/index.ts
 import { createClient, SupabaseClient } from 'supabase-js';
-import { corsHeaders } from '../_shared/cors.ts';
+
 import { isActiveAdminOrTeacher } from '../_shared/authHelpers.ts';
+import { corsHeaders } from '../_shared/cors.ts';
 import { uploadAttachment, deleteAttachment, FileUploadData } from '../_shared/storageHelpers.ts';
 
 interface UrlData {

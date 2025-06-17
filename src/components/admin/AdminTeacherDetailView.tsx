@@ -1,11 +1,13 @@
 // src/components/admin/AdminTeacherDetailView.tsx
 import React, { useMemo, useState, useEffect } from 'react';
+
 import { View, Text, Button, ActivityIndicator, ScrollView, FlatList, Image } from 'react-native';
+
 import { useQuery } from '@tanstack/react-query';
 
-import { usePaginatedStudentsWithStats } from '../../hooks/usePaginatedStudentsWithStats';
 import { fetchInstruments } from '../../api/instruments'; // <<< THE FIX IS HERE
 import { fetchUserProfile } from '../../api/users';
+import { usePaginatedStudentsWithStats } from '../../hooks/usePaginatedStudentsWithStats';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminTeacherDetailViewProps } from '../../types/componentProps';

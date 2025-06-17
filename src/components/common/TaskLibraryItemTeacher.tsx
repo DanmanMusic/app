@@ -1,6 +1,8 @@
 // src/components/common/TaskLibraryItemTeacher.tsx
 import React from 'react';
+
 import { Text, View, StyleSheet, TouchableOpacity, Button } from 'react-native';
+
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchInstruments } from '../../api/instruments';
@@ -59,7 +61,8 @@ export const TaskLibraryItemTeacher: React.FC<TaskLibraryItemTeacherProps> = ({
             item.urls.map(url => (
               <TouchableOpacity key={url.id} onPress={() => handleOpenUrl(url.url)}>
                 <Text style={styles.detailText}>
-                  URL ({url.label || 'Link'}): <Text style={commonSharedStyles.linkText}>{url.url}</Text>
+                  URL ({url.label || 'Link'}):{' '}
+                  <Text style={commonSharedStyles.linkText}>{url.url}</Text>
                 </Text>
               </TouchableOpacity>
             ))
@@ -72,9 +75,9 @@ export const TaskLibraryItemTeacher: React.FC<TaskLibraryItemTeacherProps> = ({
           {/* Render Attachments */}
           {item.attachments && item.attachments.length > 0 ? (
             item.attachments.map(att => (
-              <TouchableOpacity key={att.id} onPress={() => handleViewAttachment(att.file_path)}>
+              <TouchableOpacity key={att.id} onPress={() => handleViewAttachment(att.path)}>
                 <Text style={styles.detailText}>
-                  Attachment: <Text style={commonSharedStyles.linkText}>{att.file_name}</Text>
+                  Attachment: <Text style={commonSharedStyles.linkText}>{att.name}</Text>
                 </Text>
               </TouchableOpacity>
             ))

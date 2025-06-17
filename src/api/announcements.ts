@@ -1,16 +1,19 @@
 // src/api/announcements.ts
 
 import { getSupabase } from '../lib/supabaseClient';
-
 import { Announcement, AnnouncementType } from '../types/dataTypes';
-
+import { Database } from '../types/database.types';
 import { getUserDisplayName } from '../utils/helpers';
 
-// Helper to map the raw DB row to our clean Announcement type
-const mapDbRowToAnnouncement = (item: any): Announcement => {
-  // Supabase returns the joined 'profiles' table as a single object if it exists
-  const relatedProfile = item.profiles;
+type AnnouncementWithProfile = Database['public']['Tables']['announcements']['Row'] & {
+  profiles: Pick<
+    Database['public']['Tables']['profiles']['Row'],
+    'first_name' | 'last_name' | 'nickname' | 'avatar_path'
+  > | null;
+};
 
+const mapDbRowToAnnouncement = (item: AnnouncementWithProfile): Announcement => {
+  const relatedProfile = item.profiles;
   return {
     id: item.id,
     type: item.type as AnnouncementType,
@@ -18,18 +21,10 @@ const mapDbRowToAnnouncement = (item: any): Announcement => {
     message: item.message,
     date: item.date,
     relatedStudentId: item.related_student_id ?? undefined,
-    // Safely get the display name and avatar path from the joined profile data
     relatedStudentName: relatedProfile ? getUserDisplayName(relatedProfile) : undefined,
     relatedStudentAvatarPath: relatedProfile ? relatedProfile.avatar_path : null,
   };
 };
-
-type AnnouncementQueryResult = (Database['public']['Tables']['announcements']['Row'] & {
-  profiles: Pick<
-    Database['public']['Tables']['profiles']['Row'],
-    'first_name' | 'last_name' | 'nickname' | 'avatar_path'
-  > | null;
-})[];
 
 export const fetchAnnouncements = async (): Promise<Announcement[]> => {
   const client = getSupabase();
@@ -39,10 +34,21 @@ export const fetchAnnouncements = async (): Promise<Announcement[]> => {
     data: { session },
   } = await client.auth.getSession();
 
-  const query = client
-    .from('announcements')
-    .select(session ? '*, profiles ( first_name, last_name, nickname, avatar_path )' : '*')
-    .order('date', { ascending: false });
+  let query;
+
+  if (session) {
+    // For authenticated users, fetch with profile data
+    query = client
+      .from('announcements')
+      .select('*, profiles ( first_name, last_name, nickname, avatar_path )')
+      .order('date', { ascending: false });
+  } else {
+    // For public users, fetch only the base announcement fields
+    query = client
+      .from('announcements')
+      .select('*, profiles ( first_name, last_name, nickname, avatar_path )')
+      .order('date', { ascending: false });
+  }
 
   const { data, error } = await query;
 
@@ -51,10 +57,11 @@ export const fetchAnnouncements = async (): Promise<Announcement[]> => {
     throw new Error(`Failed to fetch announcements: ${error.message}`);
   }
 
-  // Cast the data to our expected query result type AFTER the error check.
-  const typedData = data as AnnouncementQueryResult;
+  // Safely cast the data to the expected type *after* the error check.
+  const typedData = data as any as AnnouncementWithProfile[];
 
-  // Now, perform the filtering on the strongly-typed data.
+  // If there is no session, we are in the public view. Filter out any
+  // announcements that are not of the generic 'announcement' type to protect PII.
   const filteredData = session
     ? typedData
     : (typedData || []).filter(item => item.type === 'announcement');
@@ -66,6 +73,7 @@ export const fetchAnnouncements = async (): Promise<Announcement[]> => {
   return announcements;
 };
 
+// createAnnouncement is now aligned with the multi-tenant schema
 export const createAnnouncement = async (
   announcementData: Omit<
     Announcement,
@@ -81,13 +89,12 @@ export const createAnnouncement = async (
     throw new Error('Announcement title and message cannot be empty.');
   }
 
-  // --- THIS IS THE FIX ---
   const itemToInsert = {
     type: announcementData.type,
     title: trimmedTitle,
     message: trimmedMessage,
     related_student_id: announcementData.relatedStudentId ?? null,
-    company_id: announcementData.companyId, // <-- Include the company_id in the payload
+    company_id: announcementData.companyId,
   };
 
   const { data, error } = await client
@@ -97,16 +104,12 @@ export const createAnnouncement = async (
     .single();
 
   if (error || !data) {
-    // The error message you saw comes from here
     throw new Error(`Failed to create announcement: ${error?.message || 'No data returned'}`);
   }
 
-  // Now, re-fetch the newly created announcement with the profile join to get all data
   const { data: createdAnnouncementData, error: fetchError } = await client
     .from('announcements')
-    .select(
-      'id, type, title, message, date, related_student_id, profiles ( first_name, last_name, nickname, avatar_path )'
-    )
+    .select('*, profiles ( first_name, last_name, nickname, avatar_path )')
     .eq('id', data.id)
     .single();
 
@@ -115,10 +118,10 @@ export const createAnnouncement = async (
   }
 
   console.log(`[Supabase] Announcement created successfully (ID: ${createdAnnouncementData.id})`);
-  return mapDbRowToAnnouncement(createdAnnouncementData);
+  return mapDbRowToAnnouncement(createdAnnouncementData as any as AnnouncementWithProfile);
 };
 
-// MODIFIED: updateAnnouncement to re-fetch with profile data
+// updateAnnouncement is also aligned
 export const updateAnnouncement = async ({
   announcementId,
   updates,
@@ -171,7 +174,7 @@ export const updateAnnouncement = async ({
     .from('announcements')
     .update(updatePayload)
     .eq('id', announcementId)
-    .select('id') // Just confirm the update happened
+    .select('id')
     .single();
 
   if (error || !data) {
@@ -180,12 +183,9 @@ export const updateAnnouncement = async ({
     );
   }
 
-  // Re-fetch the updated announcement to get joined data
   const { data: updatedAnnouncementData, error: fetchError } = await client
     .from('announcements')
-    .select(
-      'id, type, title, message, date, related_student_id, profiles ( first_name, last_name, nickname, avatar_path )'
-    )
+    .select('*, profiles ( first_name, last_name, nickname, avatar_path )')
     .eq('id', data.id)
     .single();
 
@@ -194,7 +194,7 @@ export const updateAnnouncement = async ({
   }
 
   console.log(`[Supabase] Announcement ${announcementId} updated successfully.`);
-  return mapDbRowToAnnouncement(updatedAnnouncementData);
+  return mapDbRowToAnnouncement(updatedAnnouncementData as any as AnnouncementWithProfile);
 };
 
 // deleteAnnouncement is unchanged

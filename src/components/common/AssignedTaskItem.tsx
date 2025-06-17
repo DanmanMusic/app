@@ -34,31 +34,44 @@ export const AssignedTaskItem = ({
         commonSharedStyles.justifySpaceBetween,
       ]}
     >
-      <View style={[commonSharedStyles.baseColumn, commonSharedStyles.baseGap, { flex: 1, marginRight: 10 }]}>
+      <View
+        style={[
+          commonSharedStyles.baseColumn,
+          commonSharedStyles.baseGap,
+          { flex: 1, marginRight: 10 },
+        ]}
+      >
         <Text style={commonSharedStyles.itemTitle}>{task.taskTitle}</Text>
         {!!task.taskDescription && (
           <Text style={[commonSharedStyles.baseSecondaryText]}>{task.taskDescription}</Text>
         )}
-        
+
         {/* --- MODIFICATION START --- */}
         {task.task_links?.map((link, index) => (
           <TouchableOpacity key={`link-${index}`} onPress={() => handleOpenUrl(link.url)}>
             <Text style={commonSharedStyles.baseSecondaryText}>
-              {link.label || 'Reference'}: <Text style={commonSharedStyles.linkText}>{link.url}</Text>
+              {link.label || 'Reference'}:{' '}
+              <Text style={commonSharedStyles.linkText}>{link.url}</Text>
             </Text>
           </TouchableOpacity>
         ))}
         {task.task_attachments?.map((att, index) => (
-          <TouchableOpacity key={`att-${index}`} onPress={() => handleViewAttachment(att.file_path)}>
+          <TouchableOpacity key={`att-${index}`} onPress={() => handleViewAttachment(att.path)}>
             <Text style={commonSharedStyles.baseSecondaryText}>
-              Attachment: <Text style={commonSharedStyles.linkText}>{att.file_name}</Text>
+              Attachment: <Text style={commonSharedStyles.linkText}>{att.name}</Text>
             </Text>
           </TouchableOpacity>
         ))}
         {/* --- MODIFICATION END --- */}
 
         {(taskStatus === 'Assigned' || task.verificationStatus === 'pending') && (
-          <Text style={[commonSharedStyles.baseSecondaryText, commonSharedStyles.bold, { color: colors.secondary }]}>
+          <Text
+            style={[
+              commonSharedStyles.baseSecondaryText,
+              commonSharedStyles.bold,
+              { color: colors.secondary },
+            ]}
+          >
             Available: {task.taskBasePoints ?? 0} {task.taskBasePoints === 1 ? 'Ticket' : 'Tickets'}
           </Text>
         )}

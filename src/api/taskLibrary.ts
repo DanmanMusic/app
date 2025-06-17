@@ -1,12 +1,9 @@
 // src/api/taskLibrary.ts
 
 import { getSupabase } from '../lib/supabaseClient';
-import {
-  AssignedTask,
-  TaskLibraryItem,
-  Url,
-  Attachment,
-} from '../types/dataTypes';
+
+import { AssignedTask, TaskLibraryItem, Url, Attachment } from '../types/dataTypes';
+
 import { fileToBase64, NativeFileObject } from '../utils/helpers';
 
 // NEW: A type for the raw RPC result
@@ -24,9 +21,7 @@ interface TaskLibraryRpcResult {
 }
 
 // NEW: A mapper function to ensure clean data
-const mapRpcResultToTaskLibraryItem = (
-  item: TaskLibraryRpcResult
-): TaskLibraryItem => ({
+const mapRpcResultToTaskLibraryItem = (item: TaskLibraryRpcResult): TaskLibraryItem => ({
   id: item.id,
   title: item.title,
   description: item.description ?? null,
@@ -83,10 +78,9 @@ export const createTaskLibraryItem = async (
     files: filesForUpload,
   };
 
-  const { data: newTaskId, error } = await client.functions.invoke(
-    'create-task-library-item',
-    { body: payload }
-  );
+  const { data: newTaskId, error } = await client.functions.invoke('create-task-library-item', {
+    body: payload,
+  });
 
   if (error) throw new Error(`Failed to create task: ${error.message || 'EF error'}`);
 
@@ -100,7 +94,6 @@ export const createTaskLibraryItem = async (
 
   return mapRpcResultToTaskLibraryItem(refetchedData as TaskLibraryRpcResult);
 };
-
 
 // Types for the complex update operation
 export interface UpdateTaskApiPayload {
@@ -154,12 +147,13 @@ export const updateTaskLibraryItem = async ({
     .single();
 
   if (refetchError || !updatedData) {
-    throw new Error(`Update successful, but failed to refetch: ${refetchError?.message || 'Not found'}`);
+    throw new Error(
+      `Update successful, but failed to refetch: ${refetchError?.message || 'Not found'}`
+    );
   }
 
   return mapRpcResultToTaskLibraryItem(updatedData as TaskLibraryRpcResult);
 };
-
 
 // deleteTaskLibraryItem remains the same, as it just needs the ID
 export const deleteTaskLibraryItem = async (taskId: string): Promise<void> => {
@@ -171,7 +165,6 @@ export const deleteTaskLibraryItem = async (taskId: string): Promise<void> => {
   }
 };
 
-
 // Self-assign functions remain unchanged for now
 export interface SelfAssignableTask {
   id: string;
@@ -181,12 +174,16 @@ export interface SelfAssignableTask {
   journey_location_id: string;
   journey_location_name: string;
   urls: Url[];
-  attachments: Attachment[];  
+  attachments: Attachment[];
 }
 
-export const fetchSelfAssignableTasks = async (studentId: string): Promise<SelfAssignableTask[]> => {
+export const fetchSelfAssignableTasks = async (
+  studentId: string
+): Promise<SelfAssignableTask[]> => {
   const client = getSupabase();
-  const { data, error } = await client.rpc('get_self_assignable_tasks', { p_student_id: studentId });
+  const { data, error } = await client.rpc('get_self_assignable_tasks', {
+    p_student_id: studentId,
+  });
 
   if (error) {
     throw new Error(`Failed to fetch available tasks: ${error.message}`);
@@ -200,21 +197,24 @@ export const fetchSelfAssignableTasks = async (studentId: string): Promise<SelfA
   }));
 };
 
-export const selfAssignTask = async (taskLibraryId: string, studentId: string): Promise<AssignedTask> => {
-    const client = getSupabase();
-    console.log(`[API taskLibrary] Self-assigning task ${taskLibraryId} for student ${studentId}`);
+export const selfAssignTask = async (
+  taskLibraryId: string,
+  studentId: string
+): Promise<AssignedTask> => {
+  const client = getSupabase();
+  console.log(`[API taskLibrary] Self-assigning task ${taskLibraryId} for student ${studentId}`);
 
-    // MODIFIED: Payload now includes studentId
-    const payload = { taskLibraryId, studentId };
-    
-    const { data, error } = await client.functions.invoke('self-assign-task', { body: payload });
-    if (error) {
-      let detailedError = error.message;
-      try {
-        const parsed = JSON.parse(error.message);
-        if (parsed && parsed.error) detailedError = parsed.error;
-      } catch (e) {}
-      throw new Error(detailedError);
-    }
-    return data as AssignedTask;
-}
+  // MODIFIED: Payload now includes studentId
+  const payload = { taskLibraryId, studentId };
+
+  const { data, error } = await client.functions.invoke('self-assign-task', { body: payload });
+  if (error) {
+    let detailedError = error.message;
+    try {
+      const parsed = JSON.parse(error.message);
+      if (parsed && parsed.error) detailedError = parsed.error;
+    } catch (e) {}
+    throw new Error(detailedError);
+  }
+  return data as AssignedTask;
+};

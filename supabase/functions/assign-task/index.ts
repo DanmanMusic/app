@@ -1,8 +1,9 @@
 // supabase/functions/assign-task/index.ts
 
 import { createClient } from 'supabase-js';
-import { corsHeaders } from '../_shared/cors.ts';
+
 import { isTeacherLinked } from '../_shared/authHelpers.ts';
+import { corsHeaders } from '../_shared/cors.ts';
 import { uploadAttachment, deleteAttachment, FileUploadData } from '../_shared/storageHelpers.ts';
 
 // NEW: Interfaces for the new data structures
@@ -97,7 +98,7 @@ Deno.serve(async (req: Request) => {
       const { data: libraryTask, error: libError } = await supabaseAdminClient
         .rpc('get_single_task_library_item', { p_task_id: payload.taskLibraryId })
         .single();
-      
+
       if (libError || !libraryTask) throw new Error('Task library item not found.');
 
       taskToInsert.task_library_id = payload.taskLibraryId;
@@ -106,25 +107,26 @@ Deno.serve(async (req: Request) => {
       taskToInsert.task_base_points = libraryTask.base_tickets;
       taskToInsert.task_links = libraryTask.urls;
       taskToInsert.task_attachments = libraryTask.attachments;
-
     } else if (payload.taskTitle) {
       // --- Assigning an Ad-Hoc Task ---
       if (payload.taskBasePoints == null || payload.taskBasePoints < 0) {
         throw new Error('Ad-hoc tasks require a valid title and non-negative base points.');
       }
-      
+
       // Upload new files for the ad-hoc task
       const newAttachments: AttachmentData[] = [];
       if (payload.files && payload.files.length > 0) {
-        const uploadPromises = payload.files.map(file => uploadAttachment(supabaseAdminClient, file, assignerCompanyId, assignerId));
+        const uploadPromises = payload.files.map(file =>
+          uploadAttachment(supabaseAdminClient, file, assignerCompanyId, assignerId)
+        );
         const results = await Promise.all(uploadPromises);
-        
-        if(results.some(r => r === null)) throw new Error("One or more file uploads failed.");
+
+        if (results.some(r => r === null)) throw new Error('One or more file uploads failed.');
 
         uploadedFilePaths = results as string[];
-        
+
         payload.files.forEach((file, index) => {
-            newAttachments.push({ path: uploadedFilePaths[index], name: file.fileName });
+          newAttachments.push({ path: uploadedFilePaths[index], name: file.fileName });
         });
       }
 
@@ -151,7 +153,6 @@ Deno.serve(async (req: Request) => {
       status: 201,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-
   } catch (error) {
     if (uploadedFilePaths.length > 0) {
       await deleteAttachment(supabaseAdminClient, uploadedFilePaths);

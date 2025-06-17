@@ -1,6 +1,8 @@
 // src/components/student/CommunityStreaksWidget.tsx
 import React from 'react';
+
 import { View, Text, ActivityIndicator } from 'react-native';
+
 import { useQuery } from '@tanstack/react-query';
 
 import { getCompanyStreakStats } from '../../api/streaks';

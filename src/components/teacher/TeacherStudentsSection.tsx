@@ -1,9 +1,10 @@
 // src/components/teacher/TeacherStudentsSection.tsx
 import React from 'react';
+
 import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 
-import { usePaginatedStudentsWithStats } from '../../hooks/usePaginatedStudentsWithStats';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePaginatedStudentsWithStats } from '../../hooks/usePaginatedStudentsWithStats';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { TeacherStudentsSectionProps } from '../../types/componentProps';

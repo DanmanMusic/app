@@ -12,6 +12,7 @@ import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { UserRole, User, Instrument } from '../../../types/dataTypes';
 import { capitalizeFirstLetter, getUserDisplayName } from '../../../utils/helpers';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'student', 'parent'];
 
@@ -28,7 +29,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
 
   const [selectedInstrumentIds, setSelectedInstrumentIds] = useState<string[]>([]);
   const [selectedTeacherIds, setSelectedTeacherIds] = useState<string[]>([]);
-
+  const { appUser } = useAuth();
   const queryClient = useQueryClient();
   const isStudentRoleSelected = role === 'student';
 
@@ -117,6 +118,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
     const trimmedNickname = nickname.trim();
+    const adminCompanyId = appUser?.companyId; // Get the admin's company ID
 
     if (!trimmedFirstName || !trimmedLastName || !role) {
       Toast.show({
@@ -124,6 +126,16 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
         text1: 'Validation Error',
         text2: 'First Name, Last Name, and Role are required.',
         position: 'bottom',
+      });
+      return;
+    }
+
+    // --- THE FIX: Ensure companyId is available ---
+    if (!adminCompanyId) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Could not determine your company. Please re-login.',
       });
       return;
     }
@@ -136,7 +148,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
       firstName: trimmedFirstName,
       lastName: trimmedLastName,
       nickname: trimmedNickname || undefined,
-
+      companyId: adminCompanyId,
       instrumentIds: undefined,
       linkedTeacherIds: undefined,
     };

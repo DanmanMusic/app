@@ -1,10 +1,13 @@
 // src/hooks/usePaginatedStudentsWithStats.ts
 import { useState, useCallback, useEffect } from 'react';
+
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
-import { fetchStudentsWithStats, StudentWithStats } from '../api/users';
 import { useAuth } from '../contexts/AuthContext';
+
 import { UserStatus } from '../types/dataTypes';
+
+import { fetchStudentsWithStats, StudentWithStats } from '../api/users';
 
 const ITEMS_PER_PAGE = 20;
 

@@ -1,5 +1,6 @@
 // src/components/common/AssignedTaskDetailItem.tsx
 import React from 'react';
+
 import { View, Text, Button, TouchableOpacity } from 'react-native';
 
 import { handleOpenUrl, handleViewAttachment } from '../../lib/supabaseClient';
@@ -55,7 +56,13 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
         commonSharedStyles.justifySpaceBetween,
       ]}
     >
-      <View style={[commonSharedStyles.baseColumn, commonSharedStyles.baseGap, { flex: 1, marginRight: 10 }]}>
+      <View
+        style={[
+          commonSharedStyles.baseColumn,
+          commonSharedStyles.baseGap,
+          { flex: 1, marginRight: 10 },
+        ]}
+      >
         <Text style={commonSharedStyles.itemTitle}>{item.taskTitle}</Text>
         {!!item.taskDescription && (
           <Text style={commonSharedStyles.baseSecondaryText}>{item.taskDescription}</Text>
@@ -71,19 +78,20 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
         {item.task_links?.map((link, index) => (
           <TouchableOpacity key={`link-${index}`} onPress={() => handleOpenUrl(link.url)}>
             <Text style={commonSharedStyles.baseSecondaryText}>
-              {link.label || 'Reference'}: <Text style={commonSharedStyles.linkText}>{link.url}</Text>
+              {link.label || 'Reference'}:{' '}
+              <Text style={commonSharedStyles.linkText}>{link.url}</Text>
             </Text>
           </TouchableOpacity>
         ))}
         {item.task_attachments?.map((att, index) => (
-          <TouchableOpacity key={`att-${index}`} onPress={() => handleViewAttachment(att.file_path)}>
+          <TouchableOpacity key={`att-${index}`} onPress={() => handleViewAttachment(att.path)}>
             <Text style={commonSharedStyles.baseSecondaryText}>
-              Attachment: <Text style={commonSharedStyles.linkText}>{att.file_name}</Text>
+              Attachment: <Text style={commonSharedStyles.linkText}>{att.name}</Text>
             </Text>
           </TouchableOpacity>
         ))}
         {/* --- MODIFICATION END --- */}
-        
+
         {item.verificationStatus !== 'verified' && (
           <Text
             style={[

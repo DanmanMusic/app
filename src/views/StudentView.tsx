@@ -1,7 +1,10 @@
 // src/views/StudentView.tsx
 import React, { useState, useMemo } from 'react';
+
 import { View, Text, ScrollView, FlatList, Button, Image, ActivityIndicator } from 'react-native';
+
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
@@ -14,26 +17,32 @@ import { RewardItemStudent } from '../components/common/RewardItemStudent';
 import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
 import { SharedHeader } from '../components/common/SharedHeader';
 import { TicketHistoryItem } from '../components/common/TicketHistoryItem';
+import AvailableTasks from '../components/student/AvailableTasks';
 import CommunityGoalsWidget from '../components/student/CommunityGoalsWidget';
 import CommunityStreaksWidget from '../components/student/CommunityStreaksWidget'; // Import the new widget
 import GoalTracker from '../components/student/GoalTracker';
 import SetGoalModal from '../components/student/modals/SetGoalModal';
 import PracticeStreakTracker from '../components/student/PracticeStreakTracker';
+
 import { usePaginatedStudentHistory } from '../hooks/usePaginatedStudentHistory';
 import { usePaginatedStudentTasks } from '../hooks/usePaginatedStudentTasks';
+
 import { useAuth } from '../contexts/AuthContext';
+
 import { colors } from '../styles/colors';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
+
 import { StudentViewProps } from '../types/componentProps';
 import { Announcement, Instrument, RewardItem, User } from '../types/dataTypes';
+
 import { getInstrumentNames, getUserDisplayName } from '../utils/helpers';
+
 import { fetchAnnouncements } from '../api/announcements';
 import { updateAssignedTask } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
 import { fetchRewards } from '../api/rewards';
 import { fetchStudentBalance } from '../api/tickets';
 import { fetchTeachers, fetchUserProfile, updateStudentGoal } from '../api/users';
-import AvailableTasks from '../components/student/AvailableTasks';
 
 type StudentTab = 'dashboard' | 'tasks' | 'rewards' | 'announcements';
 
@@ -255,6 +264,8 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
       return !isVerified;
     });
   }, [paginatedTasks]);
+
+  console.log(filteredTasksForDisplay);
 
   const isLoadingCore = userLoading || instrumentsLoading;
 

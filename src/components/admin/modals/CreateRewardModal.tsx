@@ -1,6 +1,7 @@
 // File: src/components/admin/modals/CreateRewardModal.tsx
 
 import React, { useState, useEffect } from 'react';
+
 import {
   Modal,
   View,
@@ -14,15 +15,17 @@ import {
   Alert,
   Switch, // Import Switch
 } from 'react-native';
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import * as ImagePicker from 'expo-image-picker';
 import Toast from 'react-native-toast-message';
 
 import { createReward } from '../../../api/rewards';
+import { useAuth } from '../../../contexts/AuthContext';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { CreateRewardModalProps } from '../../../types/componentProps';
-import { useAuth } from '../../../contexts/AuthContext';
 
 const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');

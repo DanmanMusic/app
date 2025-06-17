@@ -1,13 +1,14 @@
 // supabase/functions/self-assign-task/index.ts
 
 import { createClient } from 'supabase-js';
-import { corsHeaders } from '../_shared/cors.ts';
+
 import { isParentOfStudent } from '../_shared/authHelpers.ts';
+import { corsHeaders } from '../_shared/cors.ts';
 
 interface SelfAssignPayload {
   taskLibraryId: string;
   // NEW: studentId is now an explicit part of the payload
-  studentId: string; 
+  studentId: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -56,13 +57,18 @@ Deno.serve(async (req: Request) => {
     // else if (callerRole === 'admin') { isAuthorized = true; }
 
     if (!isAuthorized) {
-        return new Response(JSON.stringify({ error: 'You are not authorized to assign this task for the selected student.' }), {
-            status: 403,
-            headers: corsHeaders,
-        });
+      return new Response(
+        JSON.stringify({
+          error: 'You are not authorized to assign this task for the selected student.',
+        }),
+        {
+          status: 403,
+          headers: corsHeaders,
+        }
+      );
     }
     // --- END NEW AUTHORIZATION LOGIC ---
-    
+
     // The rest of the validation and execution logic uses the validated `studentId`
     // (This part is unchanged from our last version)
     const { data: taskToAssign, error: fetchError } = await supabaseAdmin
@@ -72,13 +78,22 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (fetchError || !taskToAssign) {
-      return new Response(JSON.stringify({ error: 'Task from library not found.' }), { status: 404, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: 'Task from library not found.' }), {
+        status: 404,
+        headers: corsHeaders,
+      });
     }
     if (!taskToAssign.can_self_assign) {
-      return new Response(JSON.stringify({ error: 'This task is not self-assignable.' }), { status: 403, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: 'This task is not self-assignable.' }), {
+        status: 403,
+        headers: corsHeaders,
+      });
     }
     if (!taskToAssign.journey_location_id) {
-      return new Response(JSON.stringify({ error: 'Self-assignable tasks must belong to a Journey Location.' }), { status: 400, headers: corsHeaders });
+      return new Response(
+        JSON.stringify({ error: 'Self-assignable tasks must belong to a Journey Location.' }),
+        { status: 400, headers: corsHeaders }
+      );
     }
 
     const { count: activeCount } = await supabaseAdmin
@@ -89,7 +104,10 @@ Deno.serve(async (req: Request) => {
       .eq('task_library.journey_location_id', taskToAssign.journey_location_id);
 
     if (activeCount && activeCount > 0) {
-      return new Response(JSON.stringify({ error: 'You already have an active task from this Journey Location.' }), { status: 409, headers: corsHeaders });
+      return new Response(
+        JSON.stringify({ error: 'You already have an active task from this Journey Location.' }),
+        { status: 409, headers: corsHeaders }
+      );
     }
 
     if (taskToAssign.journey_locations?.can_reassign_tasks === false) {
@@ -100,14 +118,17 @@ Deno.serve(async (req: Request) => {
         .eq('task_library_id', taskLibraryId)
         .eq('verification_status', 'verified');
       if (completedCount && completedCount > 0) {
-        return new Response(JSON.stringify({ error: 'You have already completed this one-time task.' }), { status: 409, headers: corsHeaders });
+        return new Response(
+          JSON.stringify({ error: 'You have already completed this one-time task.' }),
+          { status: 409, headers: corsHeaders }
+        );
       }
     }
 
     const { data: fullLibraryTask, error: rpcError } = await supabaseAdmin
       .rpc('get_single_task_library_item', { p_task_id: taskLibraryId })
       .single();
-    
+
     if (rpcError || !fullLibraryTask) {
       throw new Error('Could not retrieve full task details for assignment.');
     }
@@ -118,7 +139,7 @@ Deno.serve(async (req: Request) => {
       company_id: companyId,
       task_library_id: taskLibraryId,
       task_title: fullLibraryTask.title,
-      task_description: fullLibraryTask.description ?? '', 
+      task_description: fullLibraryTask.description ?? '',
       task_base_points: fullLibraryTask.base_tickets,
       task_links: fullLibraryTask.urls,
       task_attachments: fullLibraryTask.attachments,

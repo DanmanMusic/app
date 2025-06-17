@@ -72,11 +72,11 @@ export async function deleteAttachment(
   try {
     const { error } = await supabase.storage.from(TASK_ATTACHMENT_BUCKET).remove(pathsToDelete);
     if (error) {
-        // Log the error but don't throw, as the function might be used for cleanup
-        // where a file might already be gone. The function's goal is to ensure
-        // the file *is not* in storage, so an error here isn't always critical.
-        console.error(`[Shared Delete] Failed to remove some paths:`, error.message);
-        return false; // Indicate that an error occurred
+      // Log the error but don't throw, as the function might be used for cleanup
+      // where a file might already be gone. The function's goal is to ensure
+      // the file *is not* in storage, so an error here isn't always critical.
+      console.error(`[Shared Delete] Failed to remove some paths:`, error.message);
+      return false; // Indicate that an error occurred
     }
     console.log(`[Shared Delete] Success for paths:`, pathsToDelete);
     return true;

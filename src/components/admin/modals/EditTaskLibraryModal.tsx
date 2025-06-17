@@ -1,5 +1,6 @@
 // src/components/admin/modals/EditTaskLibraryModal.tsx
 import React, { useState, useEffect } from 'react';
+
 import {
   Modal,
   View,
@@ -12,8 +13,11 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+
 import { Picker } from '@react-native-picker/picker';
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-toast-message';
 
@@ -106,7 +110,8 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     }
   }, [visible, fullTask]);
 
-  const handleAddUrl = () => setUrls(p => [...p, { localId: Date.now().toString(), url: '', label: '' }]);
+  const handleAddUrl = () =>
+    setUrls(p => [...p, { localId: Date.now().toString(), url: '', label: '' }]);
   const handleUpdateUrl = (localId: string, field: 'url' | 'label', value: string) => {
     setUrls(p => p.map(u => (u.localId === localId ? { ...u, [field]: value } : u)));
   };
@@ -125,14 +130,18 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
       setAttachments(prev => [...prev, ...newFiles]);
     }
   };
-  const handleRemoveAttachment = (localId: string) => setAttachments(p => p.filter(a => a.localId !== localId));
-  const toggleInstrumentSelection = (id: string) => setSelectedInstrumentIds(p => p.includes(id) ? p.filter(i => i !== id) : [...p, id]);
+  const handleRemoveAttachment = (localId: string) =>
+    setAttachments(p => p.filter(a => a.localId !== localId));
+  const toggleInstrumentSelection = (id: string) =>
+    setSelectedInstrumentIds(p => (p.includes(id) ? p.filter(i => i !== id) : [...p, id]));
 
   const handleSave = () => {
     if (!fullTask) return;
-    const initialAttachmentPaths = fullTask.attachments.map(a => a.file_path);
+    const initialAttachmentPaths = fullTask.attachments.map(a => a.path);
     const finalAttachments = attachments.filter(a => !a.isNew);
-    const attachmentPathsToDelete = initialAttachmentPaths.filter(p => !finalAttachments.some(fa => fa.file_path === p));
+    const attachmentPathsToDelete = initialAttachmentPaths.filter(
+      p => !finalAttachments.some(fa => fa.path === p)
+    );
     const newFilesToUpload = attachments.filter(a => a.isNew);
     const payload: UpdateTaskApiPayload = {
       taskId: fullTask.id,
@@ -143,9 +152,21 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
         canSelfAssign,
         journeyLocationId: canSelfAssign ? selectedJourneyLocationId : null,
         instrumentIds: selectedInstrumentIds,
-        urls: urls.map(({ id, url, label }) => ({ id: id!, url: (url || '').trim(), label: (label || '').trim() || null })),
-        attachments: finalAttachments.map(({ id, file_path, file_name }) => ({ id: id!, file_path: file_path!, file_name: file_name! })),
-        newFiles: newFilesToUpload.map(f => ({ _nativeFile: f.nativeFile!, fileName: f.file_name!, mimeType: f.nativeFile!.mimeType! })),
+        urls: urls.map(({ id, url, label }) => ({
+          id: id!,
+          url: (url || '').trim(),
+          label: (label || '').trim() || null,
+        })),
+        attachments: finalAttachments.map(({ id, path, name }) => ({
+          id: id!,
+          path: path!,
+          name: name!,
+        })),
+        newFiles: newFilesToUpload.map(f => ({
+          _nativeFile: f.nativeFile!,
+          fileName: f.name!,
+          mimeType: f.nativeFile!.mimeType!,
+        })),
         attachmentPathsToDelete,
       },
     };
@@ -155,7 +176,9 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
   if (isLoadingTask) {
     return (
       <Modal visible={true} transparent={true}>
-        <View style={commonSharedStyles.centeredView}><ActivityIndicator size="large" /></View>
+        <View style={commonSharedStyles.centeredView}>
+          <ActivityIndicator size="large" />
+        </View>
       </Modal>
     );
   }
@@ -170,22 +193,52 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
             <Text style={commonSharedStyles.label}>Task Title:</Text>
             <TextInput style={commonSharedStyles.input} value={title} onChangeText={setTitle} />
             <Text style={commonSharedStyles.label}>Base Tickets:</Text>
-            <TextInput style={commonSharedStyles.input} value={String(baseTickets)} onChangeText={text => setBaseTickets(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)} keyboardType="numeric" />
+            <TextInput
+              style={commonSharedStyles.input}
+              value={String(baseTickets)}
+              onChangeText={text =>
+                setBaseTickets(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)
+              }
+              keyboardType="numeric"
+            />
             <Text style={commonSharedStyles.label}>Description:</Text>
-            <TextInput style={commonSharedStyles.textArea} value={description} onChangeText={setDescription} multiline numberOfLines={3} />
-            
-            <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifySpaceBetween, commonSharedStyles.baseAlignCenter, { marginBottom: 15 }]}>
+            <TextInput
+              style={commonSharedStyles.textArea}
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={3}
+            />
+
+            <View
+              style={[
+                commonSharedStyles.baseRow,
+                commonSharedStyles.justifySpaceBetween,
+                commonSharedStyles.baseAlignCenter,
+                { marginBottom: 15 },
+              ]}
+            >
               <Text style={commonSharedStyles.label}>Allow Student Self-Assignment?</Text>
-              <Switch trackColor={{ false: colors.secondary, true: colors.success }} thumbColor={colors.backgroundPrimary} onValueChange={setCanSelfAssign} value={canSelfAssign} />
+              <Switch
+                trackColor={{ false: colors.secondary, true: colors.success }}
+                thumbColor={colors.backgroundPrimary}
+                onValueChange={setCanSelfAssign}
+                value={canSelfAssign}
+              />
             </View>
 
             {canSelfAssign && (
               <View style={{ marginBottom: 15 }}>
                 <Text style={commonSharedStyles.label}>Journey Location (Required):</Text>
                 <View style={commonSharedStyles.pickerContainer}>
-                  <Picker selectedValue={selectedJourneyLocationId} onValueChange={itemValue => setSelectedJourneyLocationId(itemValue)}>
+                  <Picker
+                    selectedValue={selectedJourneyLocationId}
+                    onValueChange={itemValue => setSelectedJourneyLocationId(itemValue)}
+                  >
                     <Picker.Item label="-- Select a Location --" value={null} />
-                    {journeyLocations.map(loc => <Picker.Item key={loc.id} label={loc.name} value={loc.id} />)}
+                    {journeyLocations.map(loc => (
+                      <Picker.Item key={loc.id} label={loc.name} value={loc.id} />
+                    ))}
                   </Picker>
                 </View>
               </View>
@@ -197,45 +250,88 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
             </View>
             {urls.map(urlItem => (
               <View key={urlItem.localId} style={styles.urlItemContainer}>
-                <TextInput style={styles.urlInput} value={urlItem.url} onChangeText={text => handleUpdateUrl(urlItem.localId, 'url', text)} placeholder="https://example.com" />
-                <TextInput style={styles.labelInput} value={urlItem.label ?? ''} onChangeText={text => handleUpdateUrl(urlItem.localId, 'label', text)} placeholder="Optional Label" />
-                <Button title="Remove" onPress={() => handleRemoveUrl(urlItem.localId)} color={colors.danger} />
+                <TextInput
+                  style={styles.urlInput}
+                  value={urlItem.url}
+                  onChangeText={text => handleUpdateUrl(urlItem.localId, 'url', text)}
+                  placeholder="https://example.com"
+                />
+                <TextInput
+                  style={styles.labelInput}
+                  value={urlItem.label ?? ''}
+                  onChangeText={text => handleUpdateUrl(urlItem.localId, 'label', text)}
+                  placeholder="Optional Label"
+                />
+                <Button
+                  title="Remove"
+                  onPress={() => handleRemoveUrl(urlItem.localId)}
+                  color={colors.danger}
+                />
               </View>
             ))}
 
             <View style={styles.listHeader}>
               <Text style={commonSharedStyles.label}>Attachments</Text>
-              <Button title="+ Attach Files" onPress={handlePickFiles} disabled={mutation.isPending} />
+              <Button
+                title="+ Attach Files"
+                onPress={handlePickFiles}
+                disabled={mutation.isPending}
+              />
             </View>
             {attachments.map(att => (
               <View key={att.localId} style={styles.fileItemContainer}>
-                <Text style={styles.fileName} numberOfLines={1}>{att.file_name}</Text>
+                <Text style={styles.fileName} numberOfLines={1}>
+                  {att.name}
+                </Text>
                 <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
                   {/* --- THE FIX IS HERE --- */}
                   {!att.isNew && (
-                    <Button title="View" onPress={() => handleViewAttachment(att.file_path!)} color={colors.info} />
+                    <Button
+                      title="View"
+                      onPress={() => handleViewAttachment(att.path!)}
+                      color={colors.info}
+                    />
                   )}
-                  <Button title="Remove" onPress={() => handleRemoveAttachment(att.localId)} color={colors.danger} />
+                  <Button
+                    title="Remove"
+                    onPress={() => handleRemoveAttachment(att.localId)}
+                    color={colors.danger}
+                  />
                 </View>
               </View>
             ))}
-            
-            <Text style={[commonSharedStyles.label, {marginTop: 15}]}>Instruments (Optional):</Text>
+
+            <Text style={[commonSharedStyles.label, { marginTop: 15 }]}>
+              Instruments (Optional):
+            </Text>
             <View style={[commonSharedStyles.baseItem, { marginBottom: 15, padding: 10 }]}>
               <View style={commonSharedStyles.baseRowCentered}>
                 {instruments.map(inst => (
-                  <Button key={inst.id} title={inst.name} onPress={() => toggleInstrumentSelection(inst.id)} color={selectedInstrumentIds.includes(inst.id) ? colors.success : colors.secondary} disabled={mutation.isPending} />
+                  <Button
+                    key={inst.id}
+                    title={inst.name}
+                    onPress={() => toggleInstrumentSelection(inst.id)}
+                    color={
+                      selectedInstrumentIds.includes(inst.id) ? colors.success : colors.secondary
+                    }
+                    disabled={mutation.isPending}
+                  />
                 ))}
               </View>
             </View>
           </ScrollView>
-          
+
           {mutation.isPending && <ActivityIndicator />}
           <View style={commonSharedStyles.full}>
             <Button title="Save Changes" onPress={handleSave} disabled={mutation.isPending} />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button title="Cancel" onPress={onClose} color={colors.secondary} disabled={mutation.isPending} />
+            <Button
+              title="Cancel"
+              onPress={onClose}
+              color={colors.secondary}
+              disabled={mutation.isPending}
+            />
           </View>
         </View>
       </View>
@@ -244,11 +340,33 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  listHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 15, marginBottom: 5 },
-  urlItemContainer: { borderWidth: 1, borderColor: colors.borderSecondary, borderRadius: 5, padding: 8, marginBottom: 8, gap: 5 },
+  listHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  urlItemContainer: {
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+    borderRadius: 5,
+    padding: 8,
+    marginBottom: 8,
+    gap: 5,
+  },
   urlInput: { ...commonSharedStyles.input, marginBottom: 5 },
   labelInput: { ...commonSharedStyles.input, marginBottom: 5, fontSize: 14, minHeight: 35 },
-  fileItemContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.backgroundGrey, borderRadius: 5, paddingHorizontal: 10, paddingVertical: 8, marginBottom: 5 },
+  fileItemContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundGrey,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 5,
+  },
   fileName: { flex: 1, marginRight: 10, color: colors.textSecondary },
 });
 

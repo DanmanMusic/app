@@ -1,6 +1,8 @@
 // src/components/common/AdminTaskLibraryItem.tsx
 import React from 'react';
+
 import { Button, Text, View, StyleSheet, TouchableOpacity } from 'react-native';
+
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchInstruments } from '../../api/instruments';
@@ -46,7 +48,7 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
         <Text style={styles.detailText}>
           Instruments: <Text style={styles.detailValue}>{instrumentNames}</Text>
         </Text>
-        
+
         {/* --- MODIFICATION START --- */}
 
         {/* Render URLs */}
@@ -54,7 +56,8 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
           item.urls.map(url => (
             <TouchableOpacity key={url.id} onPress={() => handleOpenUrl(url.url)}>
               <Text style={styles.detailText}>
-                URL ({url.label || 'Link'}): <Text style={commonSharedStyles.linkText}>{url.url}</Text>
+                URL ({url.label || 'Link'}):{' '}
+                <Text style={commonSharedStyles.linkText}>{url.url}</Text>
               </Text>
             </TouchableOpacity>
           ))
@@ -67,9 +70,9 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
         {/* Render Attachments */}
         {item.attachments && item.attachments.length > 0 ? (
           item.attachments.map(att => (
-            <TouchableOpacity key={att.id} onPress={() => handleViewAttachment(att.file_path)}>
+            <TouchableOpacity key={att.id} onPress={() => handleViewAttachment(att.path)}>
               <Text style={styles.detailText}>
-                Attachment: <Text style={commonSharedStyles.linkText}>{att.file_name}</Text>
+                Attachment: <Text style={commonSharedStyles.linkText}>{att.name}</Text>
               </Text>
             </TouchableOpacity>
           ))
@@ -80,7 +83,6 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
         )}
 
         {/* --- MODIFICATION END --- */}
-
       </View>
 
       <View

@@ -1,10 +1,12 @@
 // src/components/admin/AdminUsersSection.tsx
 import React from 'react';
+
 import { View, Text, Button, FlatList, TextInput, ActivityIndicator } from 'react-native';
 
-import { usePaginatedStudentsWithStats } from '../../hooks/usePaginatedStudentsWithStats'; // NEW
+import PaginationControls from './PaginationControls';
 import { usePaginatedAdmins } from '../../hooks/usePaginatedAdmins';
 import { usePaginatedParents } from '../../hooks/usePaginatedParents';
+import { usePaginatedStudentsWithStats } from '../../hooks/usePaginatedStudentsWithStats'; // NEW
 import { usePaginatedTeachers } from '../../hooks/usePaginatedTeachers';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
@@ -13,7 +15,6 @@ import { User, UserStatus } from '../../types/dataTypes';
 import { capitalizeFirstLetter } from '../../utils/helpers';
 import { AdminStudentItem } from '../common/AdminStudentItem';
 import { AdminUserItem } from '../common/AdminUserItem';
-import PaginationControls from './PaginationControls';
 
 export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   activeTab,

@@ -1,7 +1,9 @@
 // File: src/components/student/PracticeStreakTracker.tsx
 
 import React, { useState } from 'react';
+
 import { View, Text, ActivityIndicator, Button } from 'react-native';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import LogPracticeModal from './modals/LogPracticeModal';

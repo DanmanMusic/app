@@ -1,8 +1,9 @@
 // supabase/functions/update-task-library-item/index.ts
 
 import { createClient } from 'supabase-js';
-import { corsHeaders } from '../_shared/cors.ts';
+
 import { isActiveAdmin, isActiveTeacher } from '../_shared/authHelpers.ts';
+import { corsHeaders } from '../_shared/cors.ts';
 import { uploadAttachment, deleteAttachment, FileUploadData } from '../_shared/storageHelpers.ts';
 
 interface UrlData {
@@ -108,14 +109,14 @@ Deno.serve(async (req: Request) => {
 
     // Map existing attachments to the correct format.
     const existingAttachmentsForDb = updates.attachments.map(att => ({
-        path: att.file_path,
-        name: att.file_name,
+      path: att.file_path,
+      name: att.file_name,
     }));
 
     // Map newly uploaded attachments to the correct format.
     const newAttachmentsForDb = uploadedFilePaths.map((path, i) => ({
-        path: path,
-        name: updates.newFiles[i].fileName,
+      path: path,
+      name: updates.newFiles[i].fileName,
     }));
 
     // Combine them into the final array for the database.

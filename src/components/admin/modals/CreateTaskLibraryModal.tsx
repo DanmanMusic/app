@@ -1,5 +1,6 @@
 // src/components/admin/modals/CreateTaskLibraryModal.tsx
 import React, { useState, useEffect } from 'react';
+
 import {
   Modal,
   View,
@@ -12,8 +13,11 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+
 import { Picker } from '@react-native-picker/picker';
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-toast-message';
 
@@ -101,7 +105,8 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
     }
   }, [canSelfAssign]);
 
-  const handleAddUrl = () => setUrls(p => [...p, { id: Date.now().toString(), url: '', label: '' }]);
+  const handleAddUrl = () =>
+    setUrls(p => [...p, { id: Date.now().toString(), url: '', label: '' }]);
   const handleUpdateUrl = (id: string, field: 'url' | 'label', value: string) => {
     setUrls(p => p.map(u => (u.id === id ? { ...u, [field]: value } : u)));
   };
@@ -110,27 +115,43 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
   const handlePickFiles = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: '*/*', multiple: true });
     if (!result.canceled) {
-      const newFiles: FileInput[] = result.assets.map(asset => ({ id: `${asset.name}-${asset.size}`, asset }));
+      const newFiles: FileInput[] = result.assets.map(asset => ({
+        id: `${asset.name}-${asset.size}`,
+        asset,
+      }));
       setFiles(prev => [...prev, ...newFiles]);
     }
   };
   const handleRemoveFile = (id: string) => setFiles(p => p.filter(f => f.id !== id));
-  const toggleInstrumentSelection = (id: string) => setSelectedInstrumentIds(p => p.includes(id) ? p.filter(i => i !== id) : [...p, id]);
+  const toggleInstrumentSelection = (id: string) =>
+    setSelectedInstrumentIds(p => (p.includes(id) ? p.filter(i => i !== id) : [...p, id]));
 
   const handleCreate = () => {
     const trimmedTitle = title.trim();
     const numericTickets = Number(baseTickets);
     if (!trimmedTitle || isNaN(numericTickets) || numericTickets < 0) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Title and valid Base Tickets are required.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Title and valid Base Tickets are required.',
+      });
       return;
     }
     if (canSelfAssign && !selectedJourneyLocationId) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'A Journey Location is required for self-assignable tasks.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'A Journey Location is required for self-assignable tasks.',
+      });
       return;
     }
     for (const urlItem of urls) {
       if (!urlItem.url.trim()) {
-        Toast.show({ type: 'error', text1: 'Validation Error', text2: 'URL fields cannot be empty.' });
+        Toast.show({
+          type: 'error',
+          text1: 'Validation Error',
+          text2: 'URL fields cannot be empty.',
+        });
         return;
       }
     }
@@ -152,7 +173,13 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
     mutation.mutate(payload);
   };
 
-  const isCreateDisabled = mutation.isPending || isLoadingInstruments || !title.trim() || baseTickets === '' || baseTickets < 0 || (canSelfAssign && !selectedJourneyLocationId);
+  const isCreateDisabled =
+    mutation.isPending ||
+    isLoadingInstruments ||
+    !title.trim() ||
+    baseTickets === '' ||
+    baseTickets < 0 ||
+    (canSelfAssign && !selectedJourneyLocationId);
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
@@ -161,16 +188,52 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
           <Text style={commonSharedStyles.modalTitle}>Create New Library Task</Text>
           <ScrollView style={[commonSharedStyles.modalScrollView, { paddingHorizontal: 2 }]}>
             <Text style={commonSharedStyles.label}>Task Title:</Text>
-            <TextInput style={commonSharedStyles.input} value={title} onChangeText={setTitle} placeholder="e.g., Practice Scales" editable={!mutation.isPending} />
+            <TextInput
+              style={commonSharedStyles.input}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="e.g., Practice Scales"
+              editable={!mutation.isPending}
+            />
             <Text style={commonSharedStyles.label}>Base Tickets:</Text>
-            <TextInput style={commonSharedStyles.input} value={String(baseTickets)} onChangeText={text => setBaseTickets(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)} keyboardType="numeric" editable={!mutation.isPending} />
+            <TextInput
+              style={commonSharedStyles.input}
+              value={String(baseTickets)}
+              onChangeText={text =>
+                setBaseTickets(text === '' ? '' : parseInt(text.replace(/[^0-9]/g, ''), 10) || 0)
+              }
+              keyboardType="numeric"
+              editable={!mutation.isPending}
+            />
             <Text style={commonSharedStyles.label}>Description:</Text>
-            <TextInput style={commonSharedStyles.textArea} value={description} onChangeText={setDescription} placeholder="Describe the task requirements..." multiline={true} numberOfLines={3} editable={!mutation.isPending} />
-            
+            <TextInput
+              style={commonSharedStyles.textArea}
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Describe the task requirements..."
+              multiline={true}
+              numberOfLines={3}
+              editable={!mutation.isPending}
+            />
+
             {/* --- RESTORED LOGIC --- */}
-            <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifySpaceBetween, commonSharedStyles.baseAlignCenter, { marginBottom: 15 }]}>
+            <View
+              style={[
+                commonSharedStyles.baseRow,
+                commonSharedStyles.justifySpaceBetween,
+                commonSharedStyles.baseAlignCenter,
+                { marginBottom: 15 },
+              ]}
+            >
               <Text style={commonSharedStyles.label}>Allow Student Self-Assignment?</Text>
-              <Switch trackColor={{ false: colors.secondary, true: colors.success }} thumbColor={colors.backgroundPrimary} ios_backgroundColor="#3e3e3e" onValueChange={setCanSelfAssign} value={canSelfAssign} disabled={mutation.isPending} />
+              <Switch
+                trackColor={{ false: colors.secondary, true: colors.success }}
+                thumbColor={colors.backgroundPrimary}
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={setCanSelfAssign}
+                value={canSelfAssign}
+                disabled={mutation.isPending}
+              />
             </View>
             {canSelfAssign && (
               <View style={{ marginBottom: 15 }}>
@@ -179,46 +242,96 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
                   <ActivityIndicator />
                 ) : (
                   <View style={commonSharedStyles.pickerContainer}>
-                    <Picker selectedValue={selectedJourneyLocationId} onValueChange={itemValue => setSelectedJourneyLocationId(itemValue)} enabled={!mutation.isPending}>
+                    <Picker
+                      selectedValue={selectedJourneyLocationId}
+                      onValueChange={itemValue => setSelectedJourneyLocationId(itemValue)}
+                      enabled={!mutation.isPending}
+                    >
                       <Picker.Item label="-- Select a Location --" value={null} />
-                      {journeyLocations.map(loc => <Picker.Item key={loc.id} label={loc.name} value={loc.id} />)}
+                      {journeyLocations.map(loc => (
+                        <Picker.Item key={loc.id} label={loc.name} value={loc.id} />
+                      ))}
                     </Picker>
                   </View>
                 )}
               </View>
             )}
             {/* --- END RESTORED LOGIC --- */}
-            
+
             <View style={styles.listHeader}>
               <Text style={commonSharedStyles.label}>Reference URLs</Text>
               <Button title="+ Add URL" onPress={handleAddUrl} disabled={mutation.isPending} />
             </View>
             {urls.map(urlItem => (
               <View key={urlItem.id} style={styles.urlItemContainer}>
-                <TextInput style={styles.urlInput} value={urlItem.url} onChangeText={text => handleUpdateUrl(urlItem.id, 'url', text)} placeholder="https://example.com" keyboardType="url" autoCapitalize="none" />
-                <TextInput style={styles.labelInput} value={urlItem.label} onChangeText={text => handleUpdateUrl(urlItem.id, 'label', text)} placeholder="Optional Label (e.g., YouTube)" />
-                <Button title="Remove" onPress={() => handleRemoveUrl(urlItem.id)} color={colors.danger} />
+                <TextInput
+                  style={styles.urlInput}
+                  value={urlItem.url}
+                  onChangeText={text => handleUpdateUrl(urlItem.id, 'url', text)}
+                  placeholder="https://example.com"
+                  keyboardType="url"
+                  autoCapitalize="none"
+                />
+                <TextInput
+                  style={styles.labelInput}
+                  value={urlItem.label}
+                  onChangeText={text => handleUpdateUrl(urlItem.id, 'label', text)}
+                  placeholder="Optional Label (e.g., YouTube)"
+                />
+                <Button
+                  title="Remove"
+                  onPress={() => handleRemoveUrl(urlItem.id)}
+                  color={colors.danger}
+                />
               </View>
             ))}
 
             <View style={styles.listHeader}>
               <Text style={commonSharedStyles.label}>Attachments</Text>
-              <Button title="+ Attach Files" onPress={handlePickFiles} disabled={mutation.isPending} />
+              <Button
+                title="+ Attach Files"
+                onPress={handlePickFiles}
+                disabled={mutation.isPending}
+              />
             </View>
             {files.map(fileItem => (
               <View key={fileItem.id} style={styles.fileItemContainer}>
-                <Text style={styles.fileName} numberOfLines={1}>{fileItem.asset.name}</Text>
-                <Button title="Remove" onPress={() => handleRemoveFile(fileItem.id)} color={colors.danger} />
+                <Text style={styles.fileName} numberOfLines={1}>
+                  {fileItem.asset.name}
+                </Text>
+                <Button
+                  title="Remove"
+                  onPress={() => handleRemoveFile(fileItem.id)}
+                  color={colors.danger}
+                />
               </View>
             ))}
 
-            <Text style={[commonSharedStyles.label, {marginTop: 15}]}>Instruments (Optional):</Text>
+            <Text style={[commonSharedStyles.label, { marginTop: 15 }]}>
+              Instruments (Optional):
+            </Text>
             <View style={[commonSharedStyles.baseItem, { marginBottom: 15, padding: 10 }]}>
-              {isLoadingInstruments ? <ActivityIndicator color={colors.primary} /> : isErrorInstruments ? <Text style={commonSharedStyles.errorText}>Error loading instruments.</Text> : instruments.length > 0 ? (
+              {isLoadingInstruments ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : isErrorInstruments ? (
+                <Text style={commonSharedStyles.errorText}>Error loading instruments.</Text>
+              ) : instruments.length > 0 ? (
                 <View style={commonSharedStyles.baseRowCentered}>
-                  {instruments.map(inst => <Button key={inst.id} title={inst.name} onPress={() => toggleInstrumentSelection(inst.id)} color={selectedInstrumentIds.includes(inst.id) ? colors.success : colors.secondary} disabled={mutation.isPending} />)}
+                  {instruments.map(inst => (
+                    <Button
+                      key={inst.id}
+                      title={inst.name}
+                      onPress={() => toggleInstrumentSelection(inst.id)}
+                      color={
+                        selectedInstrumentIds.includes(inst.id) ? colors.success : colors.secondary
+                      }
+                      disabled={mutation.isPending}
+                    />
+                  ))}
                 </View>
-              ) : <Text style={commonSharedStyles.baseEmptyText}>No instruments available.</Text>}
+              ) : (
+                <Text style={commonSharedStyles.baseEmptyText}>No instruments available.</Text>
+              )}
             </View>
           </ScrollView>
 
@@ -228,13 +341,25 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
               <Text style={commonSharedStyles.baseSecondaryText}>Creating Task...</Text>
             </View>
           )}
-          {mutation.isError && <Text style={commonSharedStyles.errorText}>Error: {mutation.error.message}</Text>}
+          {mutation.isError && (
+            <Text style={commonSharedStyles.errorText}>Error: {mutation.error.message}</Text>
+          )}
 
           <View style={commonSharedStyles.full}>
-            <Button title={mutation.isPending ? 'Creating...' : 'Create Task'} onPress={handleCreate} color={colors.primary} disabled={isCreateDisabled} />
+            <Button
+              title={mutation.isPending ? 'Creating...' : 'Create Task'}
+              onPress={handleCreate}
+              color={colors.primary}
+              disabled={isCreateDisabled}
+            />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button title="Cancel" onPress={onClose} color={colors.secondary} disabled={mutation.isPending} />
+            <Button
+              title="Cancel"
+              onPress={onClose}
+              color={colors.secondary}
+              disabled={mutation.isPending}
+            />
           </View>
         </View>
       </View>
@@ -243,11 +368,33 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
 };
 
 const styles = StyleSheet.create({
-  listHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 15, marginBottom: 5 },
-  urlItemContainer: { borderWidth: 1, borderColor: colors.borderSecondary, borderRadius: 5, padding: 8, marginBottom: 8, gap: 5 },
+  listHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  urlItemContainer: {
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+    borderRadius: 5,
+    padding: 8,
+    marginBottom: 8,
+    gap: 5,
+  },
   urlInput: { ...commonSharedStyles.input, marginBottom: 5 },
   labelInput: { ...commonSharedStyles.input, marginBottom: 5, fontSize: 14, minHeight: 35 },
-  fileItemContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.backgroundGrey, borderRadius: 5, paddingHorizontal: 10, paddingVertical: 8, marginBottom: 5 },
+  fileItemContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundGrey,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 5,
+  },
   fileName: { flex: 1, marginRight: 10, color: colors.textSecondary },
 });
 

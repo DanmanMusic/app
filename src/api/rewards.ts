@@ -1,8 +1,11 @@
 // src/api/rewards.ts
 import { Platform } from 'react-native';
+
 import { decode } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system';
+
 import { getSupabase } from '../lib/supabaseClient';
+
 import { RewardItem } from '../types/dataTypes';
 
 const REWARD_ICONS_BUCKET = 'reward-icons';

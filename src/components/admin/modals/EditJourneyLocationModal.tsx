@@ -1,5 +1,6 @@
 // src/components/admin/modals/EditJourneyLocationModal.tsx
 import React, { useState, useEffect } from 'react';
+
 import {
   Modal,
   View,
@@ -10,7 +11,9 @@ import {
   ScrollView,
   Switch,
 } from 'react-native'; // Import Switch
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import Toast from 'react-native-toast-message';
 
 import { JourneyLocation, updateJourneyLocation } from '../../../api/journey';

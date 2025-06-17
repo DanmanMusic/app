@@ -1,6 +1,8 @@
 // src/components/student/CommunityGoalsWidget.tsx
 import React, { useMemo } from 'react';
+
 import { View, Text, ActivityIndicator, FlatList, Image } from 'react-native';
+
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchRewards } from '../../api/rewards';

@@ -301,7 +301,7 @@ export const fetchUserProfile = async (userId: string): Promise<User | null> => 
 };
 
 export const createUser = async (
-  userData: Omit<User, 'id' | 'status' | 'avatarPath' | 'companyId'>
+  userData: Omit<User, 'id' | 'status' | 'avatarPath'>
 ): Promise<User> => {
   const client = getSupabase();
   const { data, error } = await client.functions.invoke('create-user', { body: userData });

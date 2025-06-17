@@ -17,52 +17,6 @@ interface AssignedTasksListResponse {
   totalItems: number;
 }
 
-const mapDbRowToAssignedTaskWithNames = (row: any): AssignedTask => {
-  const getAssignerName = () => {
-    if (row.assigner_profile?.first_name || row.assigner_profile?.last_name) {
-      return getUserDisplayName(row.assigner_profile);
-    }
-    return row.assigned_by_id ? `ID: ${row.assigned_by_id}` : 'Unknown Assigner';
-  };
-
-  const getVerifierName = () => {
-    if (!row.verifier_profile) return undefined;
-    if (row.verifier_profile.first_name || row.verifier_profile.last_name) {
-      return getUserDisplayName(row.verifier_profile);
-    }
-    return row.verified_by_id ? `ID: ${row.verified_by_id}` : undefined;
-  };
-
-  const getStudentStatus = (): UserStatus | 'unknown' => {
-    if (row.student_profile?.status) {
-      const status = row.student_profile.status;
-      if (status === 'active' || status === 'inactive') {
-        return status as UserStatus;
-      }
-    }
-    return 'unknown';
-  };
-
-  return {
-    id: row.id,
-    studentId: row.student_id,
-    assignedById: row.assigned_by_id,
-    assignedDate: row.assigned_date,
-    taskTitle: row.task_title,
-    taskDescription: row.task_description,
-    taskBasePoints: row.task_base_points,
-    isComplete: row.is_complete,
-    completedDate: row.completed_date ?? undefined,
-    verificationStatus: (row.verification_status as TaskVerificationStatus) ?? undefined,
-    verifiedById: row.verified_by_id ?? undefined,
-    verifiedDate: row.verified_date ?? undefined,
-    actualPointsAwarded: row.actual_points_awarded ?? undefined,
-    assignerName: getAssignerName(),
-    verifierName: getVerifierName(),
-    studentStatus: getStudentStatus(),
-  };
-};
-
 const mapRpcRowToAssignedTask = (row: any): AssignedTask => {
   const getAssignerName = () => {
     if (row.assigner_first_name || row.assigner_last_name) {
@@ -94,6 +48,12 @@ const mapRpcRowToAssignedTask = (row: any): AssignedTask => {
     return 'unknown';
   };
 
+  const mappedAttachments = (row.task_attachments || []).map((att: any) => ({
+    id: att.id,
+    path: att.file_path, // Map from file_path
+    name: att.file_name, // Map from file_name
+  }));
+
   return {
     id: row.id,
     studentId: row.student_id,
@@ -108,8 +68,9 @@ const mapRpcRowToAssignedTask = (row: any): AssignedTask => {
     verifiedById: row.verified_by_id ?? undefined,
     verifiedDate: row.verified_date ?? undefined,
     actualPointsAwarded: row.actual_points_awarded ?? undefined,
-    taskLinkUrl: row.task_link_url ?? null,
-    taskAttachmentPath: row.task_attachment_path ?? null,
+
+    task_links: row.task_links || [],
+    task_attachments: mappedAttachments, // Use the mapped array
 
     assignerName: getAssignerName(),
     verifierName: getVerifierName(),
@@ -159,81 +120,60 @@ export const fetchAssignedTasks = async ({
   return { items: tasks, totalPages, currentPage: page, totalItems };
 };
 
+type AdHocTaskPayload = {
+  taskTitle: string;
+  taskDescription?: string;
+  taskBasePoints: number;
+  urls?: { url: string; label: string }[];
+  files?: { _nativeFile: NativeFileObject; fileName: string; mimeType: string }[];
+};
+
 export const createAssignedTask = async (
-  assignmentData: Omit<
-    AssignedTask,
-    | 'id'
-    | 'assignedById'
-    | 'assignedDate'
-    | 'isComplete'
-    | 'verificationStatus'
-    | 'completedDate'
-    | 'verifiedById'
-    | 'verifiedDate'
-    | 'actualPointsAwarded'
-    | 'assignerName'
-    | 'verifierName'
-    | 'studentStatus'
-  > & { file?: NativeFileObject | File; mimeType?: string; fileName?: string }
+  payload: { studentId: string } & ({ taskLibraryId: string } | AdHocTaskPayload)
 ): Promise<AssignedTask> => {
-  // This function remains unchanged as it calls an Edge Function
   const client = getSupabase();
-  const {
-    file,
-    mimeType: providedMimeType,
-    fileName: providedFileName,
-    ...restAssignmentData
-  } = assignmentData;
-  const payload: {
-    studentId: string;
-    taskTitle: string;
-    taskDescription: string;
-    taskBasePoints: number;
-    taskLinkUrl: string | null;
-    taskAttachmentPath?: string | null;
-    file?: { base64: string; mimeType: string; fileName: string };
-  } = {
-    studentId: restAssignmentData.studentId,
-    taskTitle: restAssignmentData.taskTitle,
-    taskDescription: restAssignmentData.taskDescription || '',
-    taskBasePoints: restAssignmentData.taskBasePoints,
-    taskLinkUrl: restAssignmentData.taskLinkUrl || null,
-    taskAttachmentPath: undefined,
-  };
-  if (
-    !payload.studentId ||
-    !payload.taskTitle ||
-    payload.taskBasePoints == null ||
-    payload.taskBasePoints < 0
-  ) {
-    throw new Error('Missing required fields for task assignment (studentId, title, basePoints).');
-  }
-  if (file) {
-    let finalMimeType = providedMimeType;
-    let finalFileName = providedFileName;
-    if (file && !finalMimeType && file instanceof File) finalMimeType = file.type;
-    else if (file && !finalMimeType && typeof file === 'object' && 'mimeType' in file)
-      finalMimeType = file.mimeType;
-    else if (file && !finalMimeType && typeof file === 'object' && 'type' in file)
-      finalMimeType = file.type;
-    if (file && !finalFileName && file instanceof File) finalFileName = file.name;
-    else if (file && !finalFileName && typeof file === 'object' && 'name' in file)
-      finalFileName = file.name;
-    if (file && !finalFileName) finalFileName = `upload.${finalMimeType?.split('/')[1] || 'bin'}`;
-    if (file && finalMimeType && finalFileName) {
-      try {
-        const base64 = await fileToBase64(file);
-        payload.file = { base64, mimeType: finalMimeType, fileName: finalFileName };
-      } catch (error: any) {
-        throw new Error(`Failed to process file: ${error.message}`);
-      }
-    }
-  } else if (restAssignmentData.taskAttachmentPath) {
-    payload.taskAttachmentPath = restAssignmentData.taskAttachmentPath;
+
+  // This is a much simpler and more direct way to handle the payload
+  let finalPayload: any;
+
+  if ('taskLibraryId' in payload) {
+    // Case 1: Assigning from the library
+    console.log(
+      `[API] Assigning task from library ${payload.taskLibraryId} to student ${payload.studentId}`
+    );
+    finalPayload = {
+      studentId: payload.studentId,
+      taskLibraryId: payload.taskLibraryId,
+    };
   } else {
-    payload.taskAttachmentPath = null;
+    // Case 2: Assigning an ad-hoc task
+    console.log(
+      `[API] Assigning ad-hoc task "${payload.taskTitle}" to student ${payload.studentId}`
+    );
+
+    // Process files into base64 for the Edge Function
+    const filesForUpload = await Promise.all(
+      (payload.files || []).map(async file => {
+        const base64 = await fileToBase64(file._nativeFile);
+        return { base64, mimeType: file.mimeType, fileName: file.fileName };
+      })
+    );
+
+    // Construct the payload directly from the incoming ad-hoc data
+    finalPayload = {
+      studentId: payload.studentId,
+      taskTitle: payload.taskTitle,
+      taskDescription: payload.taskDescription,
+      taskBasePoints: payload.taskBasePoints,
+      urls: payload.urls,
+      files: filesForUpload,
+    };
   }
-  const { data, error } = await client.functions.invoke('assign-task', { body: payload });
+
+  const { data, error } = await client.functions.invoke('assign-task', {
+    body: finalPayload,
+  });
+
   if (error) {
     let detailedError = error.message || 'Unknown function error';
     if (error.context?.message) {
@@ -241,10 +181,12 @@ export const createAssignedTask = async (
     }
     throw new Error(`Task assignment failed: ${detailedError}`);
   }
+
   if (!data || typeof data !== 'object' || !data.id) {
     throw new Error('Task assignment function returned invalid data format.');
   }
-  return data as AssignedTask;
+
+  return mapRpcRowToAssignedTask(data);
 };
 
 export const deleteAssignedTask = async (assignmentId: string): Promise<void> => {
