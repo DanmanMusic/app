@@ -28,7 +28,6 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
   onDelete,
   disabled,
 }) => {
-  console.log('item:', item);
   const assignerNameDisplay = item.assignerName || `ID: ${item.assignedById}`;
   const verifierNameDisplay =
     item.verifierName || (item.verifiedById ? `ID: ${item.verifiedById}` : 'Unknown');
