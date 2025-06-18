@@ -2,21 +2,12 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
-import { TicketTransaction } from '../types/dataTypes';
+import { PaginatedReturn, TicketTransaction } from '../types/dataTypes';
 
 import { fetchTicketHistory } from '../api/tickets';
 
-export interface UsePaginatedTicketHistoryReturn {
+export interface UsePaginatedTicketHistoryReturn extends PaginatedReturn {
   history: TicketTransaction[];
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  setPage: (page: number) => void;
-  isLoading: boolean;
-  isFetching: boolean;
-  isPlaceholderData: boolean;
-  isError: boolean;
-  error: Error | null;
 }
 
 const ITEMS_PER_PAGE = 25;

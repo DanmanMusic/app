@@ -2,21 +2,12 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
-import { User } from '../types/dataTypes';
+import { PaginatedReturn, User } from '../types/dataTypes';
 
 import { fetchAdmins } from '../api/users';
 
-interface UsePaginatedAdminsReturn {
+interface UsePaginatedAdminsReturn extends PaginatedReturn {
   admins: User[];
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  setPage: (page: number) => void;
-  isLoading: boolean;
-  isFetching: boolean;
-  isPlaceholderData: boolean;
-  isError: boolean;
-  error: Error | null;
 }
 
 const ITEMS_PER_PAGE = 20;

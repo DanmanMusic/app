@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
-import { AssignedTask, UserStatus } from '../types/dataTypes';
+import { AssignedTask, PaginatedReturn, UserStatus } from '../types/dataTypes';
 
 import {
   fetchAssignedTasks,
@@ -13,22 +13,12 @@ import {
 export type TaskAssignmentFilterStatus = 'all' | 'assigned' | 'pending' | 'completed';
 export type StudentTaskFilterStatus = UserStatus | 'all';
 
-export interface UsePaginatedAssignedTasksReturn {
+export interface UsePaginatedAssignedTasksReturn extends PaginatedReturn {
   tasks: AssignedTask[];
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  setPage: (page: number) => void;
   assignmentFilter: TaskAssignmentFilterStatus;
   setAssignmentFilter: (filter: TaskAssignmentFilterStatus) => void;
   studentStatusFilter: StudentTaskFilterStatus;
   setStudentStatusFilter: (filter: StudentTaskFilterStatus) => void;
-  isLoading: boolean;
-  isFetching: boolean;
-  isPlaceholderData: boolean;
-  isError: boolean;
-  error: Error | null;
-
   studentId?: string | null;
   setStudentId?: (id: string | null) => void;
 }

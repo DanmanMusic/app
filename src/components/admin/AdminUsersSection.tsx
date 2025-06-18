@@ -142,7 +142,7 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
         />
       );
     } else {
-      return <AdminUserItem user={item as User} onViewManage={onViewManageUser} />;
+      return <AdminUserItem user={item as User} onViewManage={onViewManageUser} studentCount={item.studentCount} />;
     }
   };
 

@@ -1,35 +1,36 @@
+// src/hooks/usePaginatedTeachers.ts
 import { useState, useCallback, useEffect } from 'react';
 
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
-import { User } from '../types/dataTypes';
+import { PaginatedReturn, TeacherWithStats } from '../types/dataTypes'; // Use the new type
+import { useAuth } from '../contexts/AuthContext';
+import { fetchTeachersWithStats } from '../api/users'; // Use the new fetcher
 
-import { fetchTeachers } from '../api/users';
-
-interface UsePaginatedTeachersReturn {
-  teachers: User[];
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  setPage: (page: number) => void;
-  isLoading: boolean;
-  isFetching: boolean;
-  isPlaceholderData: boolean;
-  isError: boolean;
-  error: Error | null;
+interface UsePaginatedTeachersReturn extends PaginatedReturn {
+  teachers: TeacherWithStats[]; 
 }
 
 const ITEMS_PER_PAGE = 20;
 
 export const usePaginatedTeachers = (): UsePaginatedTeachersReturn => {
   const queryClient = useQueryClient();
+  const { appUser } = useAuth();
+  const companyId = appUser?.companyId;
+
   const [currentPage, setCurrentPage] = useState(1);
 
-  const queryKey = ['teachers', { page: currentPage, limit: ITEMS_PER_PAGE }];
+  const queryKey = ['teachersWithStats', { companyId, page: currentPage, limit: ITEMS_PER_PAGE }];
 
   const queryResult = useQuery({
     queryKey: queryKey,
-    queryFn: () => fetchTeachers({ page: currentPage, limit: ITEMS_PER_PAGE }),
+    queryFn: () =>
+      fetchTeachersWithStats({ // Call the new function
+        companyId: companyId!,
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+      }),
+    enabled: !!companyId,
     placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -41,33 +42,29 @@ export const usePaginatedTeachers = (): UsePaginatedTeachersReturn => {
   const totalPages = data?.totalPages ?? 1;
   const totalItems = data?.totalItems ?? 0;
 
+  // Prefetching logic can remain the same, just update the key and function call
   useEffect(() => {
     const effectiveTotalPages = totalPages >= 1 ? totalPages : 1;
-
-    if (!isPlaceholderData && currentPage < effectiveTotalPages && !isFetching) {
-      const nextQueryKey = ['teachers', { page: currentPage + 1, limit: ITEMS_PER_PAGE }];
-      console.log(`[usePaginatedTeachers] Prefetching next page: ${currentPage + 1}`);
+    if (!isPlaceholderData && currentPage < effectiveTotalPages && !isFetching && companyId) {
+      const nextQueryKey = [
+        'teachersWithStats',
+        { companyId, page: currentPage + 1, limit: ITEMS_PER_PAGE },
+      ];
       queryClient.prefetchQuery({
         queryKey: nextQueryKey,
-        queryFn: () => fetchTeachers({ page: currentPage + 1, limit: ITEMS_PER_PAGE }),
+        queryFn: () =>
+          fetchTeachersWithStats({
+            companyId: companyId!,
+            page: currentPage + 1,
+            limit: ITEMS_PER_PAGE,
+          }),
         staleTime: 5 * 60 * 1000,
       });
     }
-
-    if (!isPlaceholderData && currentPage > 1 && !isFetching) {
-      const prevQueryKey = ['teachers', { page: currentPage - 1, limit: ITEMS_PER_PAGE }];
-      console.log(`[usePaginatedTeachers] Prefetching previous page: ${currentPage - 1}`);
-      queryClient.prefetchQuery({
-        queryKey: prevQueryKey,
-        queryFn: () => fetchTeachers({ page: currentPage - 1, limit: ITEMS_PER_PAGE }),
-        staleTime: 5 * 60 * 1000,
-      });
-    }
-  }, [currentPage, totalPages, isPlaceholderData, isFetching, queryClient]);
+  }, [currentPage, totalPages, isPlaceholderData, isFetching, queryClient, companyId]);
 
   const setPage = useCallback(
     (page: number) => {
-      console.log(`[usePaginatedTeachers] setPage called with: ${page}`);
       let targetPage = page;
       const effectiveTotalPages = totalPages >= 1 ? totalPages : 1;
       if (page < 1) {
@@ -76,10 +73,7 @@ export const usePaginatedTeachers = (): UsePaginatedTeachersReturn => {
         targetPage = effectiveTotalPages;
       }
       if (targetPage !== currentPage) {
-        console.log(`[usePaginatedTeachers] Setting current page to: ${targetPage}`);
         setCurrentPage(targetPage);
-      } else {
-        console.log(`[usePaginatedTeachers] Already on page ${targetPage}, not changing.`);
       }
     },
     [totalPages, currentPage]

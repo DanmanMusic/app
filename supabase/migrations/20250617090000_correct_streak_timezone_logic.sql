@@ -1,11 +1,9 @@
--- Migration: Makes the get_student_streak_details function timezone-aware.
--- This version explicitly DROPS the old function before creating the new one
--- to allow for the change in the return signature.
+-- Migration: Correct the timezone logic within the get_student_streak_details RPC.
 
--- First, drop the old function definition completely.
+-- First, drop the old function definition completely to ensure a clean update.
 DROP FUNCTION IF EXISTS public.get_student_streak_details(uuid);
 
--- Now, create the new, corrected version of the function.
+-- Now, create the new, fully timezone-aware version of the function.
 CREATE OR REPLACE FUNCTION public.get_student_streak_details(p_student_id uuid)
 RETURNS TABLE (
   has_logged_practice_today boolean,
@@ -18,8 +16,9 @@ SECURITY DEFINER
 AS $$
 DECLARE
   company_timezone TEXT;
-  v_has_logged_today BOOLEAN;
   v_last_log_date DATE;
+  v_company_today DATE;
+  v_company_yesterday DATE;
 BEGIN
   -- Get the company's timezone for the student
   SELECT c.timezone INTO company_timezone
@@ -32,15 +31,16 @@ BEGIN
     company_timezone := 'UTC';
   END IF;
 
-  -- First, get the most recent log date for the student
+  -- Define "today" and "yesterday" in the company's local timezone
+  v_company_today := (now() AT TIME ZONE company_timezone)::date;
+  v_company_yesterday := v_company_today - interval '1 day';
+
+  -- Get the most recent log date for the student
   SELECT max(pl.log_date) INTO v_last_log_date
   FROM public.practice_logs pl
   WHERE pl.student_id = p_student_id;
 
-  -- Determine if they have logged practice for the company's "today"
-  v_has_logged_today := v_last_log_date >= (now() AT TIME ZONE company_timezone)::date;
-
-  -- Now, perform the original streak calculation
+  -- Perform all date comparisons using the company's timezone dates
   RETURN QUERY
   WITH all_logs AS (
     SELECT
@@ -65,11 +65,12 @@ BEGIN
   ),
   final_data as (
     SELECT
-      (SELECT sl.streak_length FROM streak_lengths sl WHERE sl.last_day_of_streak >= (now() at time zone 'utc')::date - interval '1 day' ORDER BY sl.last_day_of_streak DESC LIMIT 1) AS current_s,
+      -- THIS IS THE FIX: Compare against the company's yesterday, not UTC's
+      (SELECT sl.streak_length FROM streak_lengths sl WHERE sl.last_day_of_streak >= v_company_yesterday ORDER BY sl.last_day_of_streak DESC LIMIT 1) AS current_s,
       (SELECT max(sl.streak_length) FROM streak_lengths sl) AS longest_s
   )
   SELECT
-    COALESCE(v_has_logged_today, false),
+    (v_last_log_date >= v_company_today), -- Correct boolean check
     COALESCE(fd.current_s, 0)::integer,
     COALESCE(fd.longest_s, 0)::integer,
     v_last_log_date

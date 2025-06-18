@@ -12,9 +12,11 @@ import { getUserDisplayName, getUserAvatarSource } from '../../utils/helpers';
 export const AdminUserItem = ({
   user,
   onViewManage,
+  studentCount,
 }: {
   user: User;
   onViewManage: (userId: string, role: UserRole) => void;
+  studentCount?: number;
 }) => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
@@ -77,6 +79,11 @@ export const AdminUserItem = ({
           >
             Status: {user.status}
           </Text>
+          {user.role === 'teacher' && studentCount !== undefined && (
+            <Text style={commonSharedStyles.baseSecondaryText}>
+              Linked Students: {studentCount}
+            </Text>
+          )}          
           {user.role === 'parent' && user.linkedStudentIds && (
             <Text style={commonSharedStyles.baseSecondaryText}>
               Linked Students: {user.linkedStudentIds.length}
@@ -85,7 +92,7 @@ export const AdminUserItem = ({
         </View>
       </View>
 
-      <View style={{ alignSelf: 'center' }}>
+      <View style={{ alignSelf: 'flex-start' }}>
         <Button
           title="View Details"
           onPress={() => onViewManage(user.id, user.role)}

@@ -1,13 +1,21 @@
 // src/hooks/usePaginatedStudentsWithStats.ts
 import { useState, useCallback, useEffect } from 'react';
 
-import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
 import { useAuth } from '../contexts/AuthContext';
 
-import { UserStatus } from '../types/dataTypes';
+import { PaginatedReturn, UserStatus } from '../types/dataTypes';
 
 import { fetchStudentsWithStats, StudentWithStats } from '../api/users';
+
+interface UsePaginatedStudentsWithStatsReturn extends PaginatedReturn {
+  students: StudentWithStats[];
+  currentFilter: UserStatus | 'all',
+  setFilter: (filter: UserStatus | 'all') => void;
+  setSearchTerm: (term: string) => void,
+  searchTerm: string,
+}
 
 const ITEMS_PER_PAGE = 20;
 
@@ -17,8 +25,7 @@ export const usePaginatedStudentsWithStats = ({
 }: {
   teacherId?: string;
   initialFilter?: UserStatus | 'all';
-}) => {
-  const queryClient = useQueryClient();
+}): UsePaginatedStudentsWithStatsReturn => {
   const { appUser } = useAuth();
   const companyId = appUser?.companyId;
 

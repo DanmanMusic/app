@@ -111,6 +111,10 @@ export interface User {
   companyId: string;
 }
 
+export interface TeacherWithStats extends User {
+  studentCount: number;
+}
+
 export interface SimplifiedStudent {
   id: string;
   name: string;
@@ -130,4 +134,16 @@ export interface CompanyStreakStats {
   total_active_streaks: number;
   streaks_over_7_days: number;
   milestone_earners_this_month: number;
+}
+
+export interface PaginatedReturn {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  setPage: (page: number) => void;
+  isLoading: boolean;
+  isFetching: boolean;
+  isPlaceholderData: boolean;
+  isError: boolean;
+  error: Error | null;
 }

@@ -7,7 +7,7 @@ import * as FileSystem from 'expo-file-system';
 
 import { getSupabase } from '../lib/supabaseClient';
 
-import { SimplifiedStudent, User, UserRole, UserStatus } from '../types/dataTypes';
+import { SimplifiedStudent, TeacherWithStats, User, UserRole, UserStatus } from '../types/dataTypes';
 
 import { getUserDisplayName, NativeFileObject } from '../utils/helpers';
 
@@ -522,6 +522,52 @@ export const fetchStudentsWithStats = async ({
     teacher_names: item.teacher_names || [],
     total_count: item.total_count,
   }));
+
+  const totalItems = data?.[0]?.total_count ?? 0;
+  const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
+
+  return { items, totalPages, currentPage: page, totalItems };
+};
+
+export const fetchTeachersWithStats = async ({
+  companyId,
+  page = 1,
+  limit = 20,
+}: {
+  companyId: string;
+  page?: number;
+  limit?: number;
+}) => {
+  const client = getSupabase();
+  const { data, error } = await client.rpc('get_teacher_list_with_stats', {
+    p_company_id: companyId,
+    p_page: page,
+    p_limit: limit,
+  });
+
+  if (error) {
+    console.error(`[API users] Error fetching teachers with stats:`, error.message);
+    throw new Error(`Failed to fetch teacher list: ${error.message}`);
+  }
+
+  // --- The Mapping Function ---
+  const mapRpcRowToTeacherWithStats = (row: any): TeacherWithStats => {
+    return {
+      // Map all the User properties from snake_case
+      id: row.id,
+      role: 'teacher', // We know the role from the RPC
+      firstName: row.first_name,
+      lastName: row.last_name,
+      nickname: row.nickname ?? undefined,
+      status: row.status as UserStatus,
+      avatarPath: row.avatar_path ?? null,
+      companyId: row.company_id,
+      // Add the new stat property
+      studentCount: row.student_count || 0,
+    };
+  };
+
+  const items: TeacherWithStats[] = (data || []).map(mapRpcRowToTeacherWithStats);
 
   const totalItems = data?.[0]?.total_count ?? 0;
   const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
