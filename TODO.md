@@ -71,8 +71,8 @@ This plan outlines the major features and architectural changes for Version 2.
   - [x] **Backend:** Create performant RPC (`get_student_list_with_stats`) to fetch student list with balance, goal, and streak info included. Consider using a Materialized View for performance.
   - [x] **UI:** Update `AdminStudentItem.tsx` and `TeacherStudentsSection.tsx` to display the new stats.
 - [ ] **Feature: Notifications Infrastructure:**
-  - [ ] **Client:** Implement `usePushNotifications` hook (or similar) to handle token registration on native platforms.
-  - [ ] **Backend:** Create the core `send-notification` Edge Function.
+  - [x] **Client:** Implement `usePushNotifications` hook (or similar) to handle token registration on native platforms.
+  - [x] **Backend:** Create the core `send-notification` Edge Function.
   - [ ] **Pilot Feature (Daily Summary):**
     - [ ] Create RPC functions to get daily summary data.
     - [ ] Set up `pg_cron` jobs to call the functions and trigger notifications via the Edge Function.

@@ -207,3 +207,30 @@ export const selfAssignTask = async (
   }
   return data as AssignedTask;
 };
+
+export const fetchSingleTaskLibraryItem = async (
+  taskId: string
+): Promise<TaskLibraryItem | null> => {
+  const client = getSupabase();
+  console.log(`[API taskLibrary] Fetching single task item via RPC: ${taskId}`);
+
+  const { data, error } = await client
+    .rpc('get_single_task_library_item', { p_task_id: taskId })
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      console.warn(`[API taskLibrary] Task with ID ${taskId} not found.`);
+      return null;
+    }
+    console.error(`[API taskLibrary] Error fetching single task item:`, error.message);
+    throw new Error(`Failed to fetch task details: ${error.message}`);
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  const typedData = data as TaskLibraryRpcResult;
+  return mapRpcResultToTaskLibraryItem(typedData);
+};

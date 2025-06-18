@@ -232,6 +232,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
   const handleCloseCreateTaskModal = () => setIsCreateTaskModalVisible(false);
 
   const handleInitiateEditTaskLib = (task: TaskLibraryItem) => {
+    console.log('edit task:', task);
     setTaskLibToEdit(task);
     setIsEditTaskLibModalVisible(true);
   };

@@ -265,8 +265,6 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     });
   }, [paginatedTasks]);
 
-  console.log(filteredTasksForDisplay);
-
   const isLoadingCore = userLoading || instrumentsLoading;
 
   if (isLoadingCore) {

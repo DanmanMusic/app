@@ -83,7 +83,7 @@ export const AdminUserItem = ({
             <Text style={commonSharedStyles.baseSecondaryText}>
               Linked Students: {studentCount}
             </Text>
-          )}          
+          )}
           {user.role === 'parent' && user.linkedStudentIds && (
             <Text style={commonSharedStyles.baseSecondaryText}>
               Linked Students: {user.linkedStudentIds.length}

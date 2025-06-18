@@ -7,7 +7,6 @@ import { corsHeaders } from '../_shared/cors.ts';
 
 interface SelfAssignPayload {
   taskLibraryId: string;
-  // NEW: studentId is now an explicit part of the payload
   studentId: string;
 }
 
@@ -135,7 +134,7 @@ Deno.serve(async (req: Request) => {
 
     const newAssignedTask = {
       student_id: studentId,
-      assigned_by_id: callerId, // The caller (parent or student) is the assigner
+      assigned_by_id: studentId,
       company_id: companyId,
       task_library_id: taskLibraryId,
       task_title: fullLibraryTask.title,

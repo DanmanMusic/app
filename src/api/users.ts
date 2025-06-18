@@ -7,7 +7,13 @@ import * as FileSystem from 'expo-file-system';
 
 import { getSupabase } from '../lib/supabaseClient';
 
-import { SimplifiedStudent, TeacherWithStats, User, UserRole, UserStatus } from '../types/dataTypes';
+import {
+  SimplifiedStudent,
+  TeacherWithStats,
+  User,
+  UserRole,
+  UserStatus,
+} from '../types/dataTypes';
 
 import { getUserDisplayName, NativeFileObject } from '../utils/helpers';
 

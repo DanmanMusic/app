@@ -15,7 +15,7 @@ const EXPO_API_URL = 'https://exp.host/--/api/v2/push/send';
 
 console.log('send-notification function initialized');
 
-Deno.serve(async (req) => {
+Deno.serve(async req => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -40,7 +40,13 @@ Deno.serve(async (req) => {
     payload = await req.json();
     logId = payload?.log_id ?? null;
 
-    if (!payload || !payload.tokens || payload.tokens.length === 0 || !payload.title || !payload.message) {
+    if (
+      !payload ||
+      !payload.tokens ||
+      payload.tokens.length === 0 ||
+      !payload.title ||
+      !payload.message
+    ) {
       throw new Error('Invalid payload: Missing tokens, title, or message.');
     }
 
@@ -55,7 +61,7 @@ Deno.serve(async (req) => {
     const response = await fetch(EXPO_API_URL, {
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Accept-encoding': 'gzip, deflate',
         'Content-Type': 'application/json',
       },
@@ -73,11 +79,10 @@ Deno.serve(async (req) => {
         })
         .eq('id', logId);
     }
-    
+
     return new Response(JSON.stringify({ success: true, details: responseData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-
   } catch (error) {
     console.error('Error in send-notification function:', error.message);
     if (logId) {

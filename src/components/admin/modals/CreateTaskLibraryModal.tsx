@@ -29,6 +29,7 @@ import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { CreateTaskLibraryModalProps } from '../../../types/componentProps';
 import { Instrument } from '../../../types/dataTypes';
 import { NativeFileObject } from '../../../utils/helpers';
+import { useAuth } from '../../../contexts/AuthContext';
 
 interface UrlInput {
   id: string;
@@ -41,6 +42,9 @@ interface FileInput {
 }
 
 const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible, onClose }) => {
+  const { currentUserRole } = useAuth();
+  const isAdmin = currentUserRole === 'admin';
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [baseTickets, setBaseTickets] = useState<number | ''>('');
@@ -70,7 +74,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
     queryKey: ['journeyLocations'],
     queryFn: fetchJourneyLocations,
     staleTime: 5 * 60 * 1000,
-    enabled: visible && canSelfAssign,
+    enabled: visible && isAdmin && canSelfAssign,
   });
 
   const mutation = useMutation({
@@ -96,8 +100,11 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
       setUrls([]);
       setFiles([]);
       mutation.reset();
+      if (!isAdmin) {
+        setCanSelfAssign(false);
+      }
     }
-  }, [visible]);
+  }, [visible, isAdmin]);
 
   useEffect(() => {
     if (!canSelfAssign) {
@@ -137,7 +144,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
       });
       return;
     }
-    if (canSelfAssign && !selectedJourneyLocationId) {
+    if (isAdmin && canSelfAssign && !selectedJourneyLocationId) {
       Toast.show({
         type: 'error',
         text1: 'Validation Error',
@@ -215,25 +222,26 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
               numberOfLines={3}
               editable={!mutation.isPending}
             />
-
-            <View
-              style={[
-                commonSharedStyles.baseRow,
-                commonSharedStyles.justifySpaceBetween,
-                commonSharedStyles.baseAlignCenter,
-                { marginBottom: 15 },
-              ]}
-            >
-              <Text style={commonSharedStyles.label}>Allow Student Self-Assignment?</Text>
-              <Switch
-                trackColor={{ false: colors.secondary, true: colors.success }}
-                thumbColor={colors.backgroundPrimary}
-                ios_backgroundColor="#3e3e3e"
-                onValueChange={setCanSelfAssign}
-                value={canSelfAssign}
-                disabled={mutation.isPending}
-              />
-            </View>
+            {isAdmin && (
+              <View
+                style={[
+                  commonSharedStyles.baseRow,
+                  commonSharedStyles.justifySpaceBetween,
+                  commonSharedStyles.baseAlignCenter,
+                  { marginBottom: 15 },
+                ]}
+              >
+                <Text style={commonSharedStyles.label}>Allow Student Self-Assignment?</Text>
+                <Switch
+                  trackColor={{ false: colors.secondary, true: colors.success }}
+                  thumbColor={colors.backgroundPrimary}
+                  ios_backgroundColor="#3e3e3e"
+                  onValueChange={setCanSelfAssign}
+                  value={canSelfAssign}
+                  disabled={mutation.isPending}
+                />
+              </View>
+            )}
             {canSelfAssign && (
               <View style={{ marginBottom: 15 }}>
                 <Text style={commonSharedStyles.label}>Journey Location (Required):</Text>

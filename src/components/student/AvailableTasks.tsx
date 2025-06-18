@@ -117,9 +117,12 @@ const AvailableTasks: React.FC<AvailableTasksProps> = ({ studentId }) => {
                     </TouchableOpacity>
                   ))}
                   {task.attachments?.map(att => (
-                    <TouchableOpacity key={att.id} onPress={() => handleViewAttachment(att.path)}>
+                    <TouchableOpacity
+                      key={att.id}
+                      onPress={() => handleViewAttachment(att.file_path)}
+                    >
                       <Text style={commonSharedStyles.baseSecondaryText}>
-                        Attachment: <Text style={commonSharedStyles.linkText}>{att.name}</Text>
+                        Attachment: <Text style={commonSharedStyles.linkText}>{att.file_name}</Text>
                       </Text>
                     </TouchableOpacity>
                   ))}

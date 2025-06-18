@@ -23,13 +23,18 @@ import Toast from 'react-native-toast-message';
 
 import { fetchInstruments } from '../../../api/instruments';
 import { fetchJourneyLocations, JourneyLocation } from '../../../api/journey';
-import { updateTaskLibraryItem, UpdateTaskApiPayload } from '../../../api/taskLibrary';
+import {
+  updateTaskLibraryItem,
+  UpdateTaskApiPayload,
+  fetchSingleTaskLibraryItem,
+} from '../../../api/taskLibrary';
 import { handleViewAttachment } from '../../../lib/supabaseClient';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { EditTaskLibraryModalProps } from '../../../types/componentProps';
 import { Instrument, TaskLibraryItem, Url, Attachment } from '../../../types/dataTypes';
 import { NativeFileObject } from '../../../utils/helpers';
+import { useAuth } from '../../../contexts/AuthContext';
 
 interface UrlInput extends Partial<Url> {
   localId: string;
@@ -45,6 +50,9 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
   taskToEdit,
   onClose,
 }) => {
+  const { currentUserRole } = useAuth();
+  const isAdmin = currentUserRole === 'admin';
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [baseTickets, setBaseTickets] = useState<number | ''>('');
@@ -57,16 +65,19 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
 
   const queryClient = useQueryClient();
 
-  const { data: fullTask, isLoading: isLoadingTask } = useQuery<TaskLibraryItem, Error>({
+  const { data: fullTask, isLoading: isLoadingTask } = useQuery<TaskLibraryItem | null, Error>({
     queryKey: ['taskLibraryItem', taskToEdit?.id],
-    queryFn: async () => {
-      const allTasks = queryClient.getQueryData<TaskLibraryItem[]>(['task-library']);
-      const task = allTasks?.find(t => t.id === taskToEdit?.id);
-      if (!task) throw new Error('Task details not found in cache. Please close and reopen.');
-      return task;
+    queryFn: () => {
+      if (!taskToEdit?.id) {
+        // This should not happen if `enabled` is correct, but it's a safe guard.
+        return Promise.resolve(null);
+      }
+      // Directly call the new API function. No more cache-digging.
+      return fetchSingleTaskLibraryItem(taskToEdit.id);
     },
     enabled: !!taskToEdit && visible,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 1 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: instruments = [] } = useQuery<Instrument[], Error>({
@@ -80,7 +91,7 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     queryKey: ['journeyLocations'],
     queryFn: fetchJourneyLocations,
     staleTime: 5 * 60 * 1000,
-    enabled: visible && canSelfAssign,
+    enabled: visible && isAdmin && canSelfAssign,
   });
 
   const mutation = useMutation({
@@ -137,10 +148,10 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
 
   const handleSave = () => {
     if (!fullTask) return;
-    const initialAttachmentPaths = fullTask.attachments.map(a => a.path);
+    const initialAttachmentPaths = fullTask.attachments.map(a => a.file_path);
     const finalAttachments = attachments.filter(a => !a.isNew);
     const attachmentPathsToDelete = initialAttachmentPaths.filter(
-      p => !finalAttachments.some(fa => fa.path === p)
+      p => !finalAttachments.some(fa => fa.file_path === p)
     );
     const newFilesToUpload = attachments.filter(a => a.isNew);
     const payload: UpdateTaskApiPayload = {
@@ -157,14 +168,14 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
           url: (url || '').trim(),
           label: (label || '').trim() || null,
         })),
-        attachments: finalAttachments.map(({ id, path, name }) => ({
+        attachments: finalAttachments.map(({ id, file_path, file_name }) => ({
           id: id!,
-          path: path!,
-          name: name!,
+          file_path: file_path!,
+          file_name: file_name!,
         })),
         newFiles: newFilesToUpload.map(f => ({
           _nativeFile: f.nativeFile!,
-          fileName: f.name!,
+          fileName: f.file_name!,
           mimeType: f.nativeFile!.mimeType!,
         })),
         attachmentPathsToDelete,
@@ -210,22 +221,24 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
               numberOfLines={3}
             />
 
-            <View
-              style={[
-                commonSharedStyles.baseRow,
-                commonSharedStyles.justifySpaceBetween,
-                commonSharedStyles.baseAlignCenter,
-                { marginBottom: 15 },
-              ]}
-            >
-              <Text style={commonSharedStyles.label}>Allow Student Self-Assignment?</Text>
-              <Switch
-                trackColor={{ false: colors.secondary, true: colors.success }}
-                thumbColor={colors.backgroundPrimary}
-                onValueChange={setCanSelfAssign}
-                value={canSelfAssign}
-              />
-            </View>
+            {isAdmin && (
+              <View
+                style={[
+                  commonSharedStyles.baseRow,
+                  commonSharedStyles.justifySpaceBetween,
+                  commonSharedStyles.baseAlignCenter,
+                  { marginBottom: 15 },
+                ]}
+              >
+                <Text style={commonSharedStyles.label}>Allow Student Self-Assignment?</Text>
+                <Switch
+                  trackColor={{ false: colors.secondary, true: colors.success }}
+                  thumbColor={colors.backgroundPrimary}
+                  onValueChange={setCanSelfAssign}
+                  value={canSelfAssign}
+                />
+              </View>
+            )}
 
             {canSelfAssign && (
               <View style={{ marginBottom: 15 }}>
@@ -281,13 +294,13 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
             {attachments.map(att => (
               <View key={att.localId} style={styles.fileItemContainer}>
                 <Text style={styles.fileName} numberOfLines={1}>
-                  {att.name}
+                  {att.file_name}
                 </Text>
                 <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
                   {!att.isNew && (
                     <Button
                       title="View"
-                      onPress={() => handleViewAttachment(att.path!)}
+                      onPress={() => handleViewAttachment(att.file_path!)}
                       color={colors.info}
                     />
                   )}

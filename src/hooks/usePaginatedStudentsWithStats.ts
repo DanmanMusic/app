@@ -11,10 +11,10 @@ import { fetchStudentsWithStats, StudentWithStats } from '../api/users';
 
 interface UsePaginatedStudentsWithStatsReturn extends PaginatedReturn {
   students: StudentWithStats[];
-  currentFilter: UserStatus | 'all',
+  currentFilter: UserStatus | 'all';
   setFilter: (filter: UserStatus | 'all') => void;
-  setSearchTerm: (term: string) => void,
-  searchTerm: string,
+  setSearchTerm: (term: string) => void;
+  searchTerm: string;
 }
 
 const ITEMS_PER_PAGE = 20;

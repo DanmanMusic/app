@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { fetchTeachersWithStats } from '../api/users'; // Use the new fetcher
 
 interface UsePaginatedTeachersReturn extends PaginatedReturn {
-  teachers: TeacherWithStats[]; 
+  teachers: TeacherWithStats[];
 }
 
 const ITEMS_PER_PAGE = 20;
@@ -25,7 +25,8 @@ export const usePaginatedTeachers = (): UsePaginatedTeachersReturn => {
   const queryResult = useQuery({
     queryKey: queryKey,
     queryFn: () =>
-      fetchTeachersWithStats({ // Call the new function
+      fetchTeachersWithStats({
+        // Call the new function
         companyId: companyId!,
         page: currentPage,
         limit: ITEMS_PER_PAGE,

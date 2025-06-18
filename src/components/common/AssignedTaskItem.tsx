@@ -55,9 +55,12 @@ export const AssignedTaskItem = ({
           </TouchableOpacity>
         ))}
         {task.task_attachments?.map((att, index) => (
-          <TouchableOpacity key={`att-${index}`} onPress={() => handleViewAttachment(att.path)}>
+          <TouchableOpacity
+            key={`att-${index}`}
+            onPress={() => handleViewAttachment(att.file_path)}
+          >
             <Text style={commonSharedStyles.baseSecondaryText}>
-              Attachment: <Text style={commonSharedStyles.linkText}>{att.name}</Text>
+              Attachment: <Text style={commonSharedStyles.linkText}>{att.file_name}</Text>
             </Text>
           </TouchableOpacity>
         ))}

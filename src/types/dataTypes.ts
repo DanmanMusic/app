@@ -59,8 +59,8 @@ export interface Url {
 
 export interface Attachment {
   id: string;
-  path: string;
-  name: string;
+  file_path: string;
+  file_name: string;
 }
 
 export interface TaskLibraryItem {

@@ -83,9 +83,12 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
           </TouchableOpacity>
         ))}
         {item.task_attachments?.map((att, index) => (
-          <TouchableOpacity key={`att-${index}`} onPress={() => handleViewAttachment(att.path)}>
+          <TouchableOpacity
+            key={`att-${index}`}
+            onPress={() => handleViewAttachment(att.file_path)}
+          >
             <Text style={commonSharedStyles.baseSecondaryText}>
-              Attachment: <Text style={commonSharedStyles.linkText}>{att.name}</Text>
+              Attachment: <Text style={commonSharedStyles.linkText}>{att.file_name}</Text>
             </Text>
           </TouchableOpacity>
         ))}
@@ -103,7 +106,8 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
         )}
         <Text style={commonSharedStyles.baseSecondaryText}>Status: {taskStatus}</Text>
         <Text style={commonSharedStyles.baseSecondaryText}>
-          Assigned: {timestampDisplay(item.assignedDate)} by {assignerNameDisplay}
+          Assigned: {timestampDisplay(item.assignedDate)}{' '}
+          {item.assignedById !== item.studentId ? `by ${assignerNameDisplay}` : `(Self Assigned)`}
         </Text>
         {item.completedDate && (
           <Text style={commonSharedStyles.baseSecondaryText}>

@@ -12,6 +12,7 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminTaskLibraryItemProps } from '../../types/componentProps';
 import { Instrument } from '../../types/dataTypes';
 import { getInstrumentNames } from '../../utils/helpers';
+import { fetchJourneyLocations, JourneyLocation } from '../../api/journey';
 
 export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
   item,
@@ -25,7 +26,19 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
     staleTime: Infinity,
   });
 
+  const { data: journeyLocations = [], isLoading: isLoadingJourney } = useQuery<
+    JourneyLocation[],
+    Error
+  >({
+    queryKey: ['journeyLocations'],
+    queryFn: fetchJourneyLocations,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const instrumentNames = getInstrumentNames(item.instrumentIds, allInstruments);
+  const journeyLocation = item.canSelfAssign
+    ? journeyLocations.find(j => j.id === item.journeyLocationId)
+    : undefined;
 
   return (
     <View
@@ -43,6 +56,12 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
           <Text style={commonSharedStyles.baseSecondaryText}>{item.description}</Text>
         ) : (
           <Text style={commonSharedStyles.baseEmptyText}>(No description)</Text>
+        )}
+
+        {item.canSelfAssign && !isLoadingJourney && journeyLocation !== undefined && (
+          <Text style={styles.detailText}>
+            Journey: <Text style={styles.detailValue}>{journeyLocation.name}</Text>
+          </Text>
         )}
 
         <Text style={styles.detailText}>
@@ -66,9 +85,9 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
 
         {item.attachments && item.attachments.length > 0 ? (
           item.attachments.map(att => (
-            <TouchableOpacity key={att.id} onPress={() => handleViewAttachment(att.path)}>
+            <TouchableOpacity key={att.id} onPress={() => handleViewAttachment(att.file_path)}>
               <Text style={styles.detailText}>
-                Attachment: <Text style={commonSharedStyles.linkText}>{att.name}</Text>
+                Attachment: <Text style={commonSharedStyles.linkText}>{att.file_name}</Text>
               </Text>
             </TouchableOpacity>
           ))
