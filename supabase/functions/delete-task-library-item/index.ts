@@ -4,7 +4,7 @@ import { createClient } from 'supabase-js';
 
 import { isActiveAdmin, isActiveTeacher } from '../_shared/authHelpers.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { deleteAttachment } from '../_shared/storageHelpers.ts';
+// The storageHelpers import is no longer needed as we don't handle files here.
 
 interface DeleteTaskPayload {
   taskId: string;
@@ -50,7 +50,6 @@ Deno.serve(async (req: Request) => {
       });
     const callerId = callerUser.id;
 
-    // NEW: Get the Caller's Company ID for authorization
     const { data: callerProfile, error: callerProfileError } = await supabaseAdmin
       .from('profiles')
       .select('company_id')
@@ -90,7 +89,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: currentTask, error: fetchError } = await supabaseAdmin
       .from('task_library')
-      .select('id, created_by_id, attachment_path, company_id') // MODIFIED: fetch company_id
+      .select('id, created_by_id, company_id') // MODIFIED: Select only necessary columns
       .eq('id', taskId)
       .single();
 
@@ -107,7 +106,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // NEW: The Core Multi-Tenancy Security Check
     if (currentTask.company_id !== callerCompanyId) {
       console.error(
         `Company mismatch! Caller ${callerId} from ${callerCompanyId} attempted to delete library item ${taskId} from ${currentTask.company_id}.`
@@ -123,7 +121,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const attachmentPathToDelete = currentTask.attachment_path;
     const isAdminCaller = await isActiveAdmin(supabaseAdmin, callerId);
     const isOwnerTeacher =
       currentTask.created_by_id === callerId && (await isActiveTeacher(supabaseAdmin, callerId));
@@ -135,30 +132,18 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    let isSafeToDeleteAttachment = false;
-    if (attachmentPathToDelete) {
-      const { count } = await supabaseAdmin
-        .from('assigned_tasks')
-        .select('*', { count: 'exact', head: true })
-        .eq('task_attachment_path', attachmentPathToDelete);
-      if (count === 0) isSafeToDeleteAttachment = true;
-    } else {
-      isSafeToDeleteAttachment = true;
-    }
+    // REMOVED: The entire block of logic for checking and deleting storage files has been removed.
 
     const { error: deleteDbError } = await supabaseAdmin
       .from('task_library')
       .delete()
       .eq('id', taskId);
+
     if (deleteDbError) {
       return new Response(JSON.stringify({ error: `DB delete failed: ${deleteDbError.message}` }), {
         status: 500,
         headers: { ...corsHeaders },
       });
-    }
-
-    if (attachmentPathToDelete && isSafeToDeleteAttachment) {
-      await deleteAttachment(supabaseAdmin, attachmentPathToDelete);
     }
 
     return new Response(JSON.stringify({ message: `Task ${taskId} deleted successfully.` }), {
@@ -173,5 +158,3 @@ Deno.serve(async (req: Request) => {
     });
   }
 });
-
-console.log('delete-task-library-item function initialized (v3 - multi-tenant aware).');
