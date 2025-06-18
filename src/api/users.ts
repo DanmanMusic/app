@@ -556,19 +556,18 @@ export const fetchTeachersWithStats = async ({
     throw new Error(`Failed to fetch teacher list: ${error.message}`);
   }
 
-  // --- The Mapping Function ---
   const mapRpcRowToTeacherWithStats = (row: any): TeacherWithStats => {
     return {
-      // Map all the User properties from snake_case
+
       id: row.id,
-      role: 'teacher', // We know the role from the RPC
+      role: 'teacher',
       firstName: row.first_name,
       lastName: row.last_name,
       nickname: row.nickname ?? undefined,
       status: row.status as UserStatus,
       avatarPath: row.avatar_path ?? null,
       companyId: row.company_id,
-      // Add the new stat property
+
       studentCount: row.student_count || 0,
     };
   };

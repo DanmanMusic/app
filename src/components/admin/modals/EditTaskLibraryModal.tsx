@@ -69,10 +69,10 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     queryKey: ['taskLibraryItem', taskToEdit?.id],
     queryFn: () => {
       if (!taskToEdit?.id) {
-        // This should not happen if `enabled` is correct, but it's a safe guard.
+
         return Promise.resolve(null);
       }
-      // Directly call the new API function. No more cache-digging.
+
       return fetchSingleTaskLibraryItem(taskToEdit.id);
     },
     enabled: !!taskToEdit && visible,

@@ -3,9 +3,9 @@ import { useState, useCallback, useEffect } from 'react';
 
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
-import { PaginatedReturn, TeacherWithStats } from '../types/dataTypes'; // Use the new type
+import { PaginatedReturn, TeacherWithStats } from '../types/dataTypes';
 import { useAuth } from '../contexts/AuthContext';
-import { fetchTeachersWithStats } from '../api/users'; // Use the new fetcher
+import { fetchTeachersWithStats } from '../api/users';
 
 interface UsePaginatedTeachersReturn extends PaginatedReturn {
   teachers: TeacherWithStats[];
@@ -26,7 +26,7 @@ export const usePaginatedTeachers = (): UsePaginatedTeachersReturn => {
     queryKey: queryKey,
     queryFn: () =>
       fetchTeachersWithStats({
-        // Call the new function
+
         companyId: companyId!,
         page: currentPage,
         limit: ITEMS_PER_PAGE,
@@ -43,7 +43,6 @@ export const usePaginatedTeachers = (): UsePaginatedTeachersReturn => {
   const totalPages = data?.totalPages ?? 1;
   const totalItems = data?.totalItems ?? 0;
 
-  // Prefetching logic can remain the same, just update the key and function call
   useEffect(() => {
     const effectiveTotalPages = totalPages >= 1 ? totalPages : 1;
     if (!isPlaceholderData && currentPage < effectiveTotalPages && !isFetching && companyId) {
