@@ -558,7 +558,6 @@ export const fetchTeachersWithStats = async ({
 
   const mapRpcRowToTeacherWithStats = (row: any): TeacherWithStats => {
     return {
-
       id: row.id,
       role: 'teacher',
       firstName: row.first_name,

@@ -26,7 +26,6 @@ export const usePaginatedTeachers = (): UsePaginatedTeachersReturn => {
     queryKey: queryKey,
     queryFn: () =>
       fetchTeachersWithStats({
-
         companyId: companyId!,
         page: currentPage,
         limit: ITEMS_PER_PAGE,

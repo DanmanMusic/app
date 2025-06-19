@@ -33,7 +33,6 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
   onInitiatePinGeneration,
   onInitiateDeleteTask,
 }) => {
-
   console.log('got here');
   const { currentUserId: loggedInUserId, currentUserRole } = useAuth();
 

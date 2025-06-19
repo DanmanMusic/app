@@ -52,7 +52,7 @@ Deno.serve(async (req: Request) => {
     } else if (callerRole === 'parent') {
       isAuthorized = await isParentOfStudent(supabaseAdmin, callerId, studentId);
     }
-    
+
     if (!isAuthorized) {
       return new Response(
         JSON.stringify({
@@ -64,7 +64,7 @@ Deno.serve(async (req: Request) => {
         }
       );
     }
-    
+
     const { data: taskToAssign, error: fetchError } = await supabaseAdmin
       .from('task_library')
       .select('*, journey_locations ( can_reassign_tasks )')

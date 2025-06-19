@@ -61,7 +61,7 @@ const mapRpcRowToAssignedTask = (row: any): AssignedTask => {
     verifiedById: row.verified_by_id ?? undefined,
     verifiedDate: row.verified_date ?? undefined,
     actualPointsAwarded: row.actual_points_awarded ?? undefined,
-    studentLinkedTeacherIds: row.student_linked_teacher_ids || [], // NEW LINE
+    studentLinkedTeacherIds: row.student_linked_teacher_ids || [],
 
     task_links: row.task_links || [],
     task_attachments: row.task_attachments || [],

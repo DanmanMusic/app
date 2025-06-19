@@ -122,12 +122,7 @@ export interface ManualTicketAdjustmentModalProps {
 }
 
 export type UserTab = 'students' | 'teachers' | 'parents' | 'admins';
-export type TeacherSection =
-  | 'dashboard'
-  | 'students'
-  | 'tasks'
-  | 'tasks-full'
-  | 'announcements'; // NEW: Added 'announcements'
+export type TeacherSection = 'dashboard' | 'students' | 'tasks' | 'tasks-full' | 'announcements';
 export type AdminSection =
   | 'dashboard'
   | 'tasks-full'

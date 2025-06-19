@@ -69,7 +69,6 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
     queryKey: ['taskLibraryItem', taskToEdit?.id],
     queryFn: () => {
       if (!taskToEdit?.id) {
-
         return Promise.resolve(null);
       }
 

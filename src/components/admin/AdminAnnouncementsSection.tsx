@@ -114,7 +114,12 @@ export const AdminAnnouncementsSection = () => {
           Announcements ({announcements.length})
         </Text>
       </View>
-      <View style={[commonSharedStyles.baseRow, { alignItems: 'flex-start', marginBottom: 10, gap: 10 }]}>
+      <View
+        style={[
+          commonSharedStyles.baseRow,
+          { alignItems: 'flex-start', marginBottom: 10, gap: 10 },
+        ]}
+      >
         <Button
           title="Create New Announcement"
           onPress={handleAddPress}

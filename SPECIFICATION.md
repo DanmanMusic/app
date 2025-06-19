@@ -65,9 +65,9 @@ The V2 system introduces several new engagement features, including **User Avata
 - **System Foundation:** The V2 backend includes the necessary tables (`push_tokens`) and a core Edge Function (`send-notification`) to support sending push notifications via Expo's services.
 - **Scheduled Notifications:** The V2 backend implements a robust, multi-tenant, and timezone-aware scheduled notification system using `pg_cron`. The system dispatches three distinct daily notifications:
 
--   **Admin Daily Briefing (9 AM Local Time):** A company-wide summary sent to all active Admins, detailing the previous day's completed tasks, redeemed rewards, and practice logs, as well as a count of currently pending task verifications.
--   **Teacher Daily Briefing (9 AM Local Time):** A personalized summary sent to each active Teacher, detailing the same metrics but scoped exclusively to their own linked students.
--   **Practice Streak Reminder (3 PM Local Time):** A personalized reminder sent to Students with an active streak who have not yet logged practice for the day. A consolidated version is sent to linked Parents, listing all their children who need a reminder.
+- **Admin Daily Briefing (9 AM Local Time):** A company-wide summary sent to all active Admins, detailing the previous day's completed tasks, redeemed rewards, and practice logs, as well as a count of currently pending task verifications.
+- **Teacher Daily Briefing (9 AM Local Time):** A personalized summary sent to each active Teacher, detailing the same metrics but scoped exclusively to their own linked students.
+- **Practice Streak Reminder (3 PM Local Time):** A personalized reminder sent to Students with an active streak who have not yet logged practice for the day. A consolidated version is sent to linked Parents, listing all their children who need a reminder.
 
 - **Event-Driven Notifications:** The system also includes triggers that send immediate push notifications for key events, such as when a student marks a task as complete (`task_needs_verification`) or when a task is verified by staff (`task_verified`).
 

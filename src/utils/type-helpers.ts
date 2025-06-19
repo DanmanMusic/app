@@ -5,9 +5,7 @@ type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}`
   : S;
 
 export type KeysToCamelCase<T> = {
-  [K in keyof T as SnakeToCamel<K & string>]: T[K] extends object
-    ? KeysToCamelCase<T[K]>
-    : T[K];
+  [K in keyof T as SnakeToCamel<K & string>]: T[K] extends object ? KeysToCamelCase<T[K]> : T[K];
 };
 
 export const toCamelCase = <T>(obj: any): T => {

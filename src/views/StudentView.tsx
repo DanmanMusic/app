@@ -595,7 +595,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                   color={colors.secondary}
                 />
               </View>
-              {(announcementsLoading || isRefetchingAnnouncements) ? (
+              {announcementsLoading || isRefetchingAnnouncements ? (
                 <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
               ) : announcementsError ? (
                 <Text style={[commonSharedStyles.errorText, commonSharedStyles.textCenter]}>

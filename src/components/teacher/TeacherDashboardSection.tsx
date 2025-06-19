@@ -107,7 +107,7 @@ export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = (
               title="Announcements"
               onPress={() => setViewingSection('announcements')}
               color={colors.secondary}
-            />            
+            />
           </View>
         ) : (
           <Text style={commonSharedStyles.baseEmptyText}>No students.</Text>

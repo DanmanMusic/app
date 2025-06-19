@@ -69,8 +69,12 @@ Deno.serve(async (req: Request) => {
       const isTeacherOwner = task.assigned_by_id === callerUser.id;
       const isSelfAssigned = task.assigned_by_id === task.student_id;
       // For self-assigned tasks, we MUST check if the teacher is linked to the student.
-      if (isTeacherOwner || (isSelfAssigned && await isTeacherLinked(supabaseAdminClient, callerUser.id, task.student_id))) {
-          isAuthorizedTeacher = true;
+      if (
+        isTeacherOwner ||
+        (isSelfAssigned &&
+          (await isTeacherLinked(supabaseAdminClient, callerUser.id, task.student_id)))
+      ) {
+        isAuthorizedTeacher = true;
       }
     }
 

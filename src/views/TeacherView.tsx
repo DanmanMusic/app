@@ -1,7 +1,7 @@
 // src/views/TeacherView.tsx
 import React, { useState } from 'react';
 
-import { View, Text, ScrollView, Button, ActivityIndicator, FlatList } from 'react-native'; // MODIFIED: Added FlatList
+import { View, Text, ScrollView, Button, ActivityIndicator, FlatList } from 'react-native';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -11,7 +11,7 @@ import Toast from 'react-native-toast-message';
 import CreateTaskLibraryModal from '../components/admin/modals/CreateTaskLibraryModal';
 import EditTaskLibraryModal from '../components/admin/modals/EditTaskLibraryModal';
 import AssignTaskModal from '../components/common/AssignTaskModal';
-import { AnnouncementListItem } from '../components/common/AnnouncementListItem'; // NEW IMPORT
+import { AnnouncementListItem } from '../components/common/AnnouncementListItem';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 import EditMyInfoModal from '../components/common/EditMyInfoModal';
 import EditUserModal from '../components/common/EditUserModal';
@@ -30,15 +30,9 @@ import { colors } from '../styles/colors';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 
 import { TeacherSection, TeacherViewProps } from '../types/componentProps';
-import {
-  Announcement, // NEW IMPORT
-  AssignedTask,
-  Instrument,
-  User,
-  TaskLibraryItem,
-} from '../types/dataTypes';
+import { Announcement, AssignedTask, Instrument, User, TaskLibraryItem } from '../types/dataTypes';
 
-import { fetchAnnouncements } from '../api/announcements'; // NEW IMPORT
+import { fetchAnnouncements } from '../api/announcements';
 import { deleteAssignedTask } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
 import { deleteTaskLibraryItem } from '../api/taskLibrary';
@@ -88,7 +82,6 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     staleTime: Infinity,
   });
 
-  // NEW: Announcement data fetching hook
   const {
     data: announcements = [],
     isLoading: announcementsLoading,
@@ -425,12 +418,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
         )}
         {viewingSection === 'announcements' && (
           <View style={commonSharedStyles.baseMargin}>
-            <View
-              style={[
-                commonSharedStyles.baseRow,
-                { justifyContent: 'center'},
-              ]}
-            >
+            <View style={[commonSharedStyles.baseRow, { justifyContent: 'center' }]}>
               <Text
                 style={[
                   commonSharedStyles.baseTitleText,
@@ -445,18 +433,17 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
               style={[
                 commonSharedStyles.baseRow,
                 commonSharedStyles.baseMarginTopBottom,
-                { justifyContent: 'flex-end'},
+                { justifyContent: 'flex-end' },
               ]}
-
             >
-                <Button
+              <Button
                 title={isRefetchingAnnouncements ? 'Refreshing...' : 'Refresh'}
                 onPress={() => refetchAnnouncements()}
                 disabled={isRefetchingAnnouncements}
                 color={colors.secondary}
               />
             </View>
-            {(announcementsLoading || isRefetchingAnnouncements) ? (
+            {announcementsLoading || isRefetchingAnnouncements ? (
               <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
             ) : announcementsError ? (
               <Text style={[commonSharedStyles.errorText, commonSharedStyles.textCenter]}>
