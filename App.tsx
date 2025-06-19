@@ -1,16 +1,18 @@
 // App.tsx
-import React, { useState } from 'react';
-
-import { StyleSheet, Text, View, Button, ActivityIndicator, ImageBackground } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, Button, ActivityIndicator, ImageBackground, Platform } from 'react-native'; // MODIFIED: Added Platform
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { StatusBar } from 'expo-status-bar';
+import * as Linking from 'expo-linking';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
+import LegalTextModal from './src/components/common/LegalTextModal';
 import LoginModal from './src/components/common/LoginModal';
 import TaskVerificationModal from './src/components/common/TaskVerificationModal';
+import { privacyPolicy, termsOfUse } from './src/constants/legalContent';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { colors } from './src/styles/colors';
 import { commonSharedStyles } from './src/styles/commonSharedStyles';
@@ -21,16 +23,43 @@ import { PublicView } from './src/views/PublicView';
 import { StudentView } from './src/views/StudentView';
 import { TeacherView } from './src/views/TeacherView';
 
-const lightWoodBackground = require('./assets/backgrounds/light_wood.png'); // Adjust path if needed
+const danmansInteriorBackground = require('./assets/backgrounds/public_background.webp');
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   const { isLoadingProfile, currentUserRole, error: authError, signOut } = useAuth();
 
+  console.log('currentUserRole:', currentUserRole);
+
   const [isVerificationModalVisible, setIsVerificationModalVisible] = useState(false);
   const [taskToVerify, setTaskToVerify] = useState<AssignedTask | null>(null);
   const [isLoginModalVisible, setIsLoginModalVisible] = useState(false);
+  const [legalModalContent, setLegalModalContent] = useState<{
+    title: string;
+    content: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') {
+      return;
+    }
+
+    const checkInitialUrl = async () => {
+      const initialUrl = await Linking.getInitialURL(); // Await the promise
+      if (initialUrl) {
+        const parsedUrl = Linking.parse(initialUrl); // Now this receives a string
+        const viewParam = parsedUrl.queryParams?.view as string;
+
+        if (viewParam === 'privacy' || viewParam === 'terms') {
+          setTimeout(() => {
+            handleOpenLegalModal(viewParam);
+          }, 500);
+        }
+      }
+    };
+    checkInitialUrl();
+  }, []);
 
   const handleInitiateVerificationModal = (task: AssignedTask) => {
     setTaskToVerify(task);
@@ -43,6 +72,15 @@ const AppContent = () => {
 
   const handleOpenLoginModal = () => setIsLoginModalVisible(true);
   const handleCloseLoginModal = () => setIsLoginModalVisible(false);
+
+  const handleOpenLegalModal = (type: 'privacy' | 'terms') => {
+    if (type === 'privacy') {
+      setLegalModalContent(privacyPolicy);
+    } else {
+      setLegalModalContent(termsOfUse);
+    }
+  };
+  const handleCloseLegalModal = () => setLegalModalContent(null);
 
   const renderMainView = () => {
     if (isLoadingProfile) {
@@ -67,7 +105,9 @@ const AppContent = () => {
 
     switch (currentUserRole) {
       case 'public':
-        return <PublicView onLoginPress={handleOpenLoginModal} />;
+        return (
+          <PublicView onLoginPress={handleOpenLoginModal} onLegalLinkPress={handleOpenLegalModal} />
+        );
       case 'student':
         return <StudentView />;
       case 'teacher':
@@ -91,20 +131,23 @@ const AppContent = () => {
   };
 
   return (
-    <ImageBackground source={lightWoodBackground} style={styles.backgroundImage} resizeMode="cover">
+    <ImageBackground source={danmansInteriorBackground} style={styles.backgroundImage} resizeMode="cover">
       <View style={styles.backgroundOverlay} />
-
       <View style={styles.container}>
         <StatusBar style="auto" />
-
         {renderMainView()}
-
         <TaskVerificationModal
           visible={isVerificationModalVisible}
           task={taskToVerify}
           onClose={handleCloseVerificationModal}
         />
         <LoginModal visible={isLoginModalVisible} onClose={handleCloseLoginModal} />
+        <LegalTextModal
+          visible={!!legalModalContent}
+          onClose={handleCloseLegalModal}
+          title={legalModalContent?.title || ''}
+          content={legalModalContent?.content || ''}
+        />
       </View>
     </ImageBackground>
   );
@@ -133,7 +176,7 @@ const styles = StyleSheet.create({
   },
   backgroundOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
     zIndex: 0,
   },
   container: {

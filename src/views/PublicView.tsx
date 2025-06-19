@@ -1,3 +1,4 @@
+// src/views/PublicView.tsx
 import React, { useState } from 'react';
 
 import { View, Text, FlatList, Button, ActivityIndicator } from 'react-native';
@@ -21,9 +22,10 @@ type PublicTab = 'welcome' | 'rewards' | 'announcements';
 
 interface PublicViewProps {
   onLoginPress: () => void;
+  onLegalLinkPress: (type: 'privacy' | 'terms') => void;
 }
 
-export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress }) => {
+export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress, onLegalLinkPress }) => {
   const [activeTab, setActiveTab] = useState<PublicTab>('welcome');
 
   const {
@@ -177,6 +179,10 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress }) => {
           Ready to track progress?
         </Text>
         <Button title="Login / Enter PIN" onPress={onLoginPress} color={colors.primary} />
+        <View style={[commonSharedStyles.baseRow, { gap: 20, marginTop: 20 }]}>
+          <Button title="Privacy Policy" onPress={() => onLegalLinkPress('privacy')} color={colors.textLight} />
+          <Button title="Terms of Use" onPress={() => onLegalLinkPress('terms')} color={colors.textLight} />
+        </View>
       </View>
     </SafeAreaView>
   );
