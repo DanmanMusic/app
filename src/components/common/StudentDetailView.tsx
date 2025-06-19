@@ -33,6 +33,8 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
   onInitiatePinGeneration,
   onInitiateDeleteTask,
 }) => {
+
+  console.log('got here');
   const { currentUserId: loggedInUserId, currentUserRole } = useAuth();
 
   const {
@@ -344,11 +346,16 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
               if (!item.isComplete || item.verificationStatus === 'pending') {
                 if (currentUserRole === 'admin') {
                   canDelete = true;
-                } else if (currentUserRole === 'teacher' && loggedInUserId === item.assignedById) {
-                  canDelete = true;
+                } else if (currentUserRole === 'teacher' && student) {
+                  const isTeacherOwner = loggedInUserId === item.assignedById;
+                  const isSelfAssigned = item.studentId === item.assignedById;
+                  const isLinkedToStudent = student.linkedTeacherIds?.includes(loggedInUserId!);
+
+                  if (isTeacherOwner || (isSelfAssigned && isLinkedToStudent)) {
+                    canDelete = true;
+                  }
                 }
               }
-
               return (
                 <AssignedTaskDetailItem
                   item={item}

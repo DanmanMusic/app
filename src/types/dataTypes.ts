@@ -32,6 +32,7 @@ export interface AssignedTask {
   assignerName?: string;
   verifierName?: string;
   studentStatus?: UserStatus | 'unknown';
+  studentLinkedTeacherIds?: string[];
   task_links: Url[];
   task_attachments: Attachment[];
 }

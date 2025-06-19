@@ -1,157 +1,98 @@
-// supabase/functions/delete-task-library-item/index.ts
+// supabase/functions/delete-assigned-task/index.ts
 
 import { createClient } from 'supabase-js';
 
-import { isActiveAdmin, isActiveTeacher } from '../_shared/authHelpers.ts';
+import { isTeacherLinked } from '../_shared/authHelpers.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-// The storageHelpers are no longer needed here
 
-interface DeleteTaskPayload {
-  taskId: string;
+interface DeleteAssignedTaskPayload {
+  assignmentId: string;
 }
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  if (!['POST', 'DELETE'].includes(req.method)) {
-    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+  if (req.method !== 'POST')
+    return new Response(JSON.stringify({ error: `Method ${req.method} Not Allowed` }), {
       status: 405,
-      headers: { ...corsHeaders },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  }
-
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  if (!supabaseUrl || !serviceRoleKey)
-    return new Response(JSON.stringify({ error: 'Server config error' }), {
-      status: 500,
-      headers: { ...corsHeaders },
-    });
-
-  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader)
-      return new Response(JSON.stringify({ error: 'Auth required' }), {
-        status: 401,
-        headers: { ...corsHeaders },
-      });
-    const token = authHeader.replace('Bearer ', '');
+    const supabaseAdminClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
     const {
       data: { user: callerUser },
-      error: userError,
-    } = await supabaseAdmin.auth.getUser(token);
-    if (userError || !callerUser)
-      return new Response(JSON.stringify({ error: 'Invalid token' }), {
-        status: 401,
-        headers: { ...corsHeaders },
-      });
-    const callerId = callerUser.id;
+    } = await supabaseAdminClient.auth.getUser(
+      req.headers.get('Authorization')!.replace('Bearer ', '')
+    );
+    if (!callerUser) throw new Error('Invalid Token');
 
-    const { data: callerProfile, error: callerProfileError } = await supabaseAdmin
+    const payload: DeleteAssignedTaskPayload = await req.json();
+    const { assignmentId } = payload;
+
+    if (!assignmentId) {
+      throw new Error('Missing assignmentId in request body.');
+    }
+
+    const { data: task, error: fetchError } = await supabaseAdminClient
+      .from('assigned_tasks')
+      .select('id, student_id, assigned_by_id, verification_status, company_id')
+      .eq('id', assignmentId)
+      .single();
+
+    if (fetchError) throw new Error('Assigned task not found.');
+
+    const { data: callerProfile } = await supabaseAdminClient
       .from('profiles')
-      .select('company_id')
-      .eq('id', callerId)
-      .single();
-    if (callerProfileError || !callerProfile) {
-      return new Response(JSON.stringify({ error: 'Could not verify caller profile.' }), {
-        status: 500,
-        headers: { ...corsHeaders },
-      });
-    }
-    const callerCompanyId = callerProfile.company_id;
-
-    let payload: DeleteTaskPayload;
-    try {
-      if (req.method === 'DELETE') {
-        const url = new URL(req.url);
-        const taskIdFromQuery = url.searchParams.get('taskId');
-        if (!taskIdFromQuery)
-          throw new Error('Missing taskId in query parameter for DELETE request');
-        payload = { taskId: taskIdFromQuery };
-      } else {
-        payload = await req.json();
-      }
-    } catch (e) {
-      return new Response(JSON.stringify({ error: `Invalid payload: ${e.message}` }), {
-        status: 400,
-        headers: { ...corsHeaders },
-      });
-    }
-    const { taskId } = payload;
-    if (!taskId)
-      return new Response(JSON.stringify({ error: 'Missing taskId' }), {
-        status: 400,
-        headers: { ...corsHeaders },
-      });
-
-    const { data: currentTask, error: fetchError } = await supabaseAdmin
-      .from('task_library')
-      .select('id, created_by_id, company_id')
-      .eq('id', taskId)
+      .select('company_id, role')
+      .eq('id', callerUser.id)
       .single();
 
-    if (fetchError || !currentTask) {
-      if (fetchError?.code === 'PGRST116') {
-        return new Response(
-          JSON.stringify({ message: `Task ${taskId} not found or already deleted.` }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+    if (!callerProfile) throw new Error('Could not verify caller profile');
+
+    if (task.company_id !== callerProfile.company_id) {
+      throw new Error('Permission denied: Cannot delete task from another company.');
+    }
+
+    const isVerified = ['verified', 'partial', 'incomplete'].includes(task.verification_status);
+    if (isVerified) {
+      throw new Error('Cannot delete a task that has already been verified.');
+    }
+
+    const isAdmin = callerProfile.role === 'admin';
+    let isAuthorizedTeacher = false;
+
+    if (callerProfile.role === 'teacher') {
+      const isTeacherOwner = task.assigned_by_id === callerUser.id;
+      const isSelfAssigned = task.assigned_by_id === task.student_id;
+      // For self-assigned tasks, we MUST check if the teacher is linked to the student.
+      if (isTeacherOwner || (isSelfAssigned && await isTeacherLinked(supabaseAdminClient, callerUser.id, task.student_id))) {
+          isAuthorizedTeacher = true;
       }
-      return new Response(JSON.stringify({ error: 'Task not found or fetch error' }), {
-        status: 404,
-        headers: { ...corsHeaders },
-      });
     }
 
-    if (currentTask.company_id !== callerCompanyId) {
-      console.error(
-        `Company mismatch! Caller ${callerId} from ${callerCompanyId} attempted to delete library item ${taskId} from ${currentTask.company_id}.`
-      );
-      return new Response(
-        JSON.stringify({
-          error: 'Permission denied: Cannot delete a library item from another company.',
-        }),
-        {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+    if (!isAdmin && !isAuthorizedTeacher) {
+      throw new Error('Permission denied: You are not authorized to delete this task.');
     }
 
-    const isAdminCaller = await isActiveAdmin(supabaseAdmin, callerId);
-    const isOwnerTeacher =
-      currentTask.created_by_id === callerId && (await isActiveTeacher(supabaseAdmin, callerId));
-
-    if (!isAdminCaller && !isOwnerTeacher) {
-      return new Response(JSON.stringify({ error: 'Permission denied to delete this task' }), {
-        status: 403,
-        headers: { ...corsHeaders },
-      });
-    }
-
-    const { error: deleteDbError } = await supabaseAdmin
-      .from('task_library')
+    const { error: deleteError } = await supabaseAdminClient
+      .from('assigned_tasks')
       .delete()
-      .eq('id', taskId);
-    if (deleteDbError) {
-      return new Response(JSON.stringify({ error: `DB delete failed: ${deleteDbError.message}` }), {
-        status: 500,
-        headers: { ...corsHeaders },
-      });
-    }
+      .eq('id', assignmentId);
 
-    return new Response(JSON.stringify({ message: `Task ${taskId} deleted successfully.` }), {
+    if (deleteError) throw deleteError;
+
+    return new Response(JSON.stringify({ message: 'Assigned task deleted successfully.' }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Unhandled Error in delete-task-library-item:', error.message);
-    return new Response(JSON.stringify({ error: error.message || 'Internal Server Error' }), {
-      status: 500,
-      headers: { ...corsHeaders },
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });

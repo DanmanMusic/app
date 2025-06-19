@@ -1,9 +1,9 @@
--- Migration: Upgrade the get_assigned_tasks_filtered RPC to use the new JSONB columns
+-- Migration: Upgrade the get_assigned_tasks_filtered RPC to include student's linked teachers
 
 -- First, drop the old function since we are changing its return signature
 DROP FUNCTION IF EXISTS public.get_assigned_tasks_filtered(integer, integer, text, text, uuid, uuid);
 
--- Create the new, corrected version of the function
+-- Create the new, more powerful version of the function
 CREATE OR REPLACE FUNCTION public.get_assigned_tasks_filtered(
     p_page integer DEFAULT 1,
     p_limit integer DEFAULT 15,
@@ -26,11 +26,10 @@ RETURNS TABLE (
     verified_by_id uuid,
     verified_date timestamptz,
     actual_points_awarded integer,
-    -- MODIFIED: REMOVED OLD COLUMNS, ADDED NEW JSONB COLUMNS
     task_links jsonb,
     task_attachments jsonb,
-    -- Joined data remains the same
     student_profile_status text,
+    student_linked_teacher_ids uuid[], -- NEW COLUMN
     assigner_first_name text,
     assigner_last_name text,
     assigner_nickname text,
@@ -78,10 +77,10 @@ BEGIN
         at.verified_by_id,
         at.verified_date,
         at.actual_points_awarded,
-        -- MODIFIED: Select the new JSONB columns
         at.task_links,
         at.task_attachments,
         p_student.status AS student_profile_status,
+        (SELECT array_agg(st.teacher_id) FROM public.student_teachers st WHERE st.student_id = at.student_id) AS student_linked_teacher_ids, -- NEW LINE
         p_assigner.first_name AS assigner_first_name,
         p_assigner.last_name AS assigner_last_name,
         p_assigner.nickname AS assigner_nickname,

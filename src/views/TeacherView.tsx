@@ -1,7 +1,7 @@
 // src/views/TeacherView.tsx
 import React, { useState } from 'react';
 
-import { View, Text, ScrollView, Button, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Button, ActivityIndicator, FlatList } from 'react-native'; // MODIFIED: Added FlatList
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -11,11 +11,11 @@ import Toast from 'react-native-toast-message';
 import CreateTaskLibraryModal from '../components/admin/modals/CreateTaskLibraryModal';
 import EditTaskLibraryModal from '../components/admin/modals/EditTaskLibraryModal';
 import AssignTaskModal from '../components/common/AssignTaskModal';
+import { AnnouncementListItem } from '../components/common/AnnouncementListItem'; // NEW IMPORT
 import ConfirmationModal from '../components/common/ConfirmationModal';
 import EditMyInfoModal from '../components/common/EditMyInfoModal';
 import EditUserModal from '../components/common/EditUserModal';
 import GeneratePinModal from '../components/common/GeneratePinModal';
-import NotificationManager from '../components/common/NotificationManager';
 import { PaginatedTasksList } from '../components/common/PaginatedTasksList';
 import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
 import { SharedHeader } from '../components/common/SharedHeader';
@@ -30,8 +30,15 @@ import { colors } from '../styles/colors';
 import { commonSharedStyles } from '../styles/commonSharedStyles';
 
 import { TeacherSection, TeacherViewProps } from '../types/componentProps';
-import { AssignedTask, Instrument, User, TaskLibraryItem } from '../types/dataTypes';
+import {
+  Announcement, // NEW IMPORT
+  AssignedTask,
+  Instrument,
+  User,
+  TaskLibraryItem,
+} from '../types/dataTypes';
 
+import { fetchAnnouncements } from '../api/announcements'; // NEW IMPORT
 import { deleteAssignedTask } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
 import { deleteTaskLibraryItem } from '../api/taskLibrary';
@@ -79,6 +86,20 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
     queryKey: ['instruments'],
     queryFn: fetchInstruments,
     staleTime: Infinity,
+  });
+
+  // NEW: Announcement data fetching hook
+  const {
+    data: announcements = [],
+    isLoading: announcementsLoading,
+    isError: announcementsError,
+    error: announcementsErrorMsg,
+    refetch: refetchAnnouncements,
+    isRefetching: isRefetchingAnnouncements,
+  } = useQuery<Announcement[], Error>({
+    queryKey: ['announcements'],
+    queryFn: fetchAnnouncements,
+    staleTime: 5 * 60 * 1000,
   });
 
   const {
@@ -400,6 +421,65 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
               onInitiateVerification={handleInternalInitiateVerification}
               onInitiateDelete={handleInitiateDeleteAssignedTask}
             />
+          </View>
+        )}
+        {viewingSection === 'announcements' && (
+          <View style={commonSharedStyles.baseMargin}>
+            <View
+              style={[
+                commonSharedStyles.baseRow,
+                { justifyContent: 'center'},
+              ]}
+            >
+              <Text
+                style={[
+                  commonSharedStyles.baseTitleText,
+                  commonSharedStyles.baseMarginTopBottom,
+                  commonSharedStyles.bold,
+                ]}
+              >
+                Announcements
+              </Text>
+            </View>
+            <View
+              style={[
+                commonSharedStyles.baseRow,
+                commonSharedStyles.baseMarginTopBottom,
+                { justifyContent: 'flex-end'},
+              ]}
+
+            >
+                <Button
+                title={isRefetchingAnnouncements ? 'Refreshing...' : 'Refresh'}
+                onPress={() => refetchAnnouncements()}
+                disabled={isRefetchingAnnouncements}
+                color={colors.secondary}
+              />
+            </View>
+            {(announcementsLoading || isRefetchingAnnouncements) ? (
+              <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+            ) : announcementsError ? (
+              <Text style={[commonSharedStyles.errorText, commonSharedStyles.textCenter]}>
+                Error loading announcements: {announcementsErrorMsg?.message}
+              </Text>
+            ) : (
+              <FlatList
+                data={announcements}
+                keyExtractor={item => `announcement-${item.id}`}
+                renderItem={({ item }) => (
+                  <View style={commonSharedStyles.baseItem}>
+                    <AnnouncementListItem item={item} />
+                  </View>
+                )}
+                scrollEnabled={false}
+                ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+                ListEmptyComponent={() => (
+                  <Text style={commonSharedStyles.baseEmptyText}>No announcements found.</Text>
+                )}
+                contentContainerStyle={{ paddingBottom: 5 }}
+                ListFooterComponent={<View style={{ height: 20 }} />}
+              />
+            )}
           </View>
         )}
         <View style={{ height: 40 }} />

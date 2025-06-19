@@ -22,7 +22,7 @@ The V2 system introduces several new engagement features, including **User Avata
 
 ### 2.3. User Avatars
 
-- **Functionality:** All users (**Admin, Teacher, Parent, Student**) can upload a personal avatar.
+- **Functionality:** All users with a direct profile view (**Admin, Teacher, Student**) can upload a personal avatar. The **Parent** role does not have this feature.
 - **Implementation:** Users can upload, replace, or remove their avatar via the "Edit My Info" or "Edit User" modals. Avatars are stored in a private `avatars` storage bucket, with RLS policies ensuring users can only manage their own files.
 
 ## 3. Authentication & Session Management
@@ -63,11 +63,16 @@ The V2 system introduces several new engagement features, including **User Avata
 ## 5. Notifications (Infrastructure)
 
 - **System Foundation:** The V2 backend includes the necessary tables (`push_tokens`) and a core Edge Function (`send-notification`) to support sending push notifications via Expo's services.
-- **Pilot Feature:** A daily `pg_cron` job is configured to send a "Community Heartbeat" summary notification to all users.
-- **Future Triggers:** This infrastructure will be used to implement event-driven notifications (e.g., "New Task Assigned," "Task Verified").
+- **Scheduled Notifications:** The V2 backend implements a robust, multi-tenant, and timezone-aware scheduled notification system using `pg_cron`. The system dispatches three distinct daily notifications:
+
+-   **Admin Daily Briefing (9 AM Local Time):** A company-wide summary sent to all active Admins, detailing the previous day's completed tasks, redeemed rewards, and practice logs, as well as a count of currently pending task verifications.
+-   **Teacher Daily Briefing (9 AM Local Time):** A personalized summary sent to each active Teacher, detailing the same metrics but scoped exclusively to their own linked students.
+-   **Practice Streak Reminder (3 PM Local Time):** A personalized reminder sent to Students with an active streak who have not yet logged practice for the day. A consolidated version is sent to linked Parents, listing all their children who need a reminder.
+
+- **Event-Driven Notifications:** The system also includes triggers that send immediate push notifications for key events, such as when a student marks a task as complete (`task_needs_verification`) or when a task is verified by staff (`task_verified`).
 
 ## 6. Pending Decisions (for V3 and beyond)
 
 - **Visual Music Journey:** The implementation of the visual poster map, with interactive, unlockable locations based on student progress, is deferred.
 - **Parent Reminders:** Specific parent-initiated reminder functionality is deferred.
-- **Detailed Notification Events:** The full suite of event-driven notifications (beyond the daily summary) will be implemented in a future version.
+- **Further Event-Driven Notifications:** While core event notifications for the task lifecycle (`task_needs_verification`, `task_verified`) are implemented, a wider suite of events (e.g., "New Reward Added," "Challenge Starting Soon") is deferred to a future version.

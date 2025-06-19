@@ -45,16 +45,14 @@ Deno.serve(async (req: Request) => {
     const callerRole = caller.app_metadata.role;
     const companyId = caller.app_metadata.company_id;
 
-    // --- NEW AUTHORIZATION LOGIC ---
+    // --- Authorization Logic ---
     let isAuthorized = false;
     if (callerRole === 'student' && callerId === studentId) {
       isAuthorized = true;
     } else if (callerRole === 'parent') {
       isAuthorized = await isParentOfStudent(supabaseAdmin, callerId, studentId);
     }
-    // Optional: could add admin override here if needed
-    // else if (callerRole === 'admin') { isAuthorized = true; }
-
+    
     if (!isAuthorized) {
       return new Response(
         JSON.stringify({
@@ -66,10 +64,7 @@ Deno.serve(async (req: Request) => {
         }
       );
     }
-    // --- END NEW AUTHORIZATION LOGIC ---
-
-    // The rest of the validation and execution logic uses the validated `studentId`
-    // (This part is unchanged from our last version)
+    
     const { data: taskToAssign, error: fetchError } = await supabaseAdmin
       .from('task_library')
       .select('*, journey_locations ( can_reassign_tasks )')

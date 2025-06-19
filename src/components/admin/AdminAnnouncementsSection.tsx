@@ -30,6 +30,8 @@ export const AdminAnnouncementsSection = () => {
     isLoading,
     isError,
     error,
+    refetch,
+    isRefetching,
   } = useQuery<Announcement[], Error>({
     queryKey: ['announcements'],
     queryFn: fetchAnnouncements,
@@ -109,18 +111,24 @@ export const AdminAnnouncementsSection = () => {
             commonSharedStyles.bold,
           ]}
         >
-          Announcements & Challenges ({announcements.length})
+          Announcements ({announcements.length})
         </Text>
       </View>
-      <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
+      <View style={[commonSharedStyles.baseRow, { alignItems: 'flex-start', marginBottom: 10, gap: 10 }]}>
         <Button
           title="Create New Announcement"
           onPress={handleAddPress}
           color={colors.primary}
-          disabled={isLoading || deleteMutation.isPending}
+          disabled={isLoading || deleteMutation.isPending || isRefetching}
+        />
+        <Button
+          title={isRefetching ? 'Refreshing...' : 'Refresh List'}
+          onPress={() => refetch()}
+          color={colors.secondary}
+          disabled={isLoading || isRefetching}
         />
       </View>
-      {isLoading && (
+      {(isLoading || isRefetching) && !isError && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
       )}
       {isError && !isLoading && (

@@ -138,21 +138,19 @@ export const PaginatedTasksList: React.FC<PaginatedTasksListProps> = ({
           keyExtractor={item => `task-list-${item.id}`}
           renderItem={({ item }) => {
             const studentNameDisplay = studentNameLookup[item.studentId] || `ID: ${item.studentId}`;
-
-            const taskIsNotVerified = !(
-              item.verificationStatus === 'verified' ||
-              item.verificationStatus === 'partial' ||
-              item.verificationStatus === 'incomplete'
-            );
             let canDelete = false;
-            if (viewingRole === 'admin' && taskIsNotVerified) {
-              canDelete = true;
-            } else if (
-              viewingRole === 'teacher' &&
-              item.assignedById === authUserId &&
-              taskIsNotVerified
-            ) {
-              canDelete = true;
+
+            if (!item.isComplete || item.verificationStatus === 'pending') {
+              if (viewingRole === 'admin') {
+                canDelete = true;
+              } else if (viewingRole === 'teacher') {
+                const isTeacherOwner = authUserId === item.assignedById;
+                const isSelfAssigned = item.studentId === item.assignedById;
+                const isLinkedToStudent = item.studentLinkedTeacherIds?.includes(authUserId!);
+                if (isTeacherOwner || (isSelfAssigned && isLinkedToStudent)) {
+                  canDelete = true;
+                }
+              }
             }
 
             return (

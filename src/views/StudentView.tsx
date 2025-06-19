@@ -96,6 +96,8 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
     isLoading: announcementsLoading,
     isError: announcementsError,
     error: announcementsErrorMsg,
+    refetch: refetchAnnouncements,
+    isRefetching: isRefetchingAnnouncements,
   } = useQuery<Announcement[], Error>({
     queryKey: ['announcements'],
     queryFn: fetchAnnouncements,
@@ -579,7 +581,21 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
 
           {activeTab === 'announcements' && (
             <>
-              {announcementsLoading ? (
+              <View
+                style={[
+                  commonSharedStyles.baseRow,
+                  { justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+                ]}
+              >
+                <Text style={commonSharedStyles.baseTitleText}>Announcements</Text>
+                <Button
+                  title={isRefetchingAnnouncements ? 'Refreshing...' : 'Refresh'}
+                  onPress={() => refetchAnnouncements()}
+                  disabled={isRefetchingAnnouncements}
+                  color={colors.secondary}
+                />
+              </View>
+              {(announcementsLoading || isRefetchingAnnouncements) ? (
                 <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
               ) : announcementsError ? (
                 <Text style={[commonSharedStyles.errorText, commonSharedStyles.textCenter]}>

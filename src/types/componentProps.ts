@@ -1,3 +1,4 @@
+// src/types/componentProps.ts
 import {
   Announcement,
   AssignedTask,
@@ -121,7 +122,12 @@ export interface ManualTicketAdjustmentModalProps {
 }
 
 export type UserTab = 'students' | 'teachers' | 'parents' | 'admins';
-export type TeacherSection = 'dashboard' | 'students' | 'tasks' | 'tasks-full';
+export type TeacherSection =
+  | 'dashboard'
+  | 'students'
+  | 'tasks'
+  | 'tasks-full'
+  | 'announcements'; // NEW: Added 'announcements'
 export type AdminSection =
   | 'dashboard'
   | 'tasks-full'

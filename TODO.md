@@ -62,7 +62,7 @@ This plan outlines the major features and architectural changes for Version 2.
   - [x] **UI:** Update `SetGoalModal` to display "X others are saving for this!" text.
   - [x] **UI:** Create `CommunityGoalsWidget.tsx` to show trending goals on the student dashboard.
   - [x] **UI:** Create `CommunityStreaksWidget.tsx` to show active streak stats on the student dashboard.
-  - [ ] **UI:** Update `AnnouncementListItem.tsx` to properly display `streak_milestone` and `redemption_celebration` types with student avatar and name.
+  - [x] **UI:** Update `AnnouncementListItem.tsx` to properly display `streak_milestone` and `redemption_celebration` types with student avatar and name.
 - [x] **Feature: Self-Assignable Tasks (Student Side):**
   - [x] **UI:** Add "Available Tasks" or "Journey" section to `StudentView`.
   - [x] **UI:** Display a list of self-assignable tasks, categorized by Journey Location.
@@ -73,9 +73,9 @@ This plan outlines the major features and architectural changes for Version 2.
 - [ ] **Feature: Notifications Infrastructure:**
   - [x] **Client:** Implement `usePushNotifications` hook (or similar) to handle token registration on native platforms.
   - [x] **Backend:** Create the core `send-notification` Edge Function.
-  - [ ] **Pilot Feature (Daily Summary):**
-    - [ ] Create RPC functions to get daily summary data.
-    - [ ] Set up `pg_cron` jobs to call the functions and trigger notifications via the Edge Function.
+  - [x] **Pilot Feature (Daily Summary):**
+    - [x] Create RPC functions to get daily summary data.
+    - [x] Set up `pg_cron` jobs to call the functions and trigger notifications via the Edge Function.
 
 ### Phase 7: Final Polish & Testing
 
