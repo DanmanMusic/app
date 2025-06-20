@@ -1,7 +1,7 @@
 // src/components/student/modals/SetGoalModal.tsx
 import React, { useMemo } from 'react';
 
-import { Modal, View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, FlatList, ActivityIndicator } from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -13,6 +13,8 @@ import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { SetGoalModalProps } from '../../../types/componentProps';
 import { RewardItem } from '../../../types/dataTypes';
 import { RewardGoalItem } from '../../common/RewardGoalItem';
+import { CustomButton } from '../../common/CustomButton';
+import { XCircleIcon } from 'react-native-heroicons/solid';
 
 export const SetGoalModal: React.FC<SetGoalModalProps> = ({
   visible,
@@ -118,9 +120,18 @@ export const SetGoalModal: React.FC<SetGoalModalProps> = ({
 
           <View style={commonSharedStyles.modalFooter}>
             {currentGoalId && (
-              <Button title="Clear Current Goal" onPress={handleClearGoal} color={colors.warning} />
+              <CustomButton
+                title="Clear Current Goal"
+                onPress={handleClearGoal}
+                color={colors.warning}
+              />
             )}
-            <Button title="Cancel" onPress={onClose} color={colors.secondary} />
+            <CustomButton
+              title="Cancel"
+              onPress={onClose}
+              color={colors.secondary}
+              leftIcon={<XCircleIcon color={colors.textWhite} size={18} />}
+            />
           </View>
         </View>
       </View>

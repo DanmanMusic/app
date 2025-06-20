@@ -1,7 +1,7 @@
 // src/components/admin/modals/ManualTicketAdjustmentModal.tsx
 import React, { useState, useEffect } from 'react';
 
-import { Modal, View, Text, Button, TextInput, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, TextInput, ActivityIndicator } from 'react-native';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -11,6 +11,8 @@ import { fetchStudentBalance, adjustTickets } from '../../../api/tickets';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { ManualTicketAdjustmentModalProps } from '../../../types/componentProps';
+import { CustomButton } from '../../common/CustomButton';
+import { XCircleIcon } from 'react-native-heroicons/solid';
 
 export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalProps> = ({
   visible,
@@ -153,13 +155,13 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
               { justifyContent: 'space-around', marginBottom: 15 },
             ]}
           >
-            <Button
+            <CustomButton
               title="Add Tickets"
               onPress={() => setIsSubtracting(false)}
               color={!isSubtracting ? colors.primary : colors.secondary}
               disabled={mutation.isPending || balanceLoading || balanceError}
             />
-            <Button
+            <CustomButton
               title="Subtract Tickets"
               onPress={() => setIsSubtracting(true)}
               color={isSubtracting ? colors.warning : colors.secondary}
@@ -211,7 +213,7 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
           )}
 
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={confirmButtonText}
               onPress={handleAdjust}
               color={isSubtracting ? colors.warning : colors.success}
@@ -219,11 +221,12 @@ export const ManualTicketAdjustmentModal: React.FC<ManualTicketAdjustmentModalPr
             />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={mutation.isPending}
+              leftIcon={<XCircleIcon color={colors.textWhite} size={18} />}
             />
           </View>
         </View>

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 
-import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 
 import { useQuery, useQueries, UseQueryResult } from '@tanstack/react-query';
 
@@ -24,6 +24,8 @@ import { getUserDisplayName } from '../utils/helpers';
 import { fetchUserProfile } from '../api/users';
 
 import { StudentView } from './StudentView';
+import { CustomButton } from '../components/common/CustomButton';
+import { ArrowLeftIcon } from 'react-native-heroicons/solid';
 
 export const ParentView = () => {
   const { currentUserId: parentUserId } = useAuth();
@@ -149,10 +151,11 @@ export const ParentView = () => {
             <View style={commonSharedStyles.baseCentered}>
               <ActivityIndicator size="large" color={colors.primary} />
               <Text>Loading Student Details...</Text>
-              <Button
-                title="← Students"
+              <CustomButton
+                title="Students"
                 onPress={() => setViewingStudentId(null)}
                 color={colors.primary}
+                leftIcon={<ArrowLeftIcon color={colors.textWhite} size={18} />}
               />
             </View>
           </SafeAreaView>
@@ -168,10 +171,11 @@ export const ParentView = () => {
         <SafeAreaView style={commonSharedStyles.flex1}>
           <View style={commonSharedStyles.flex1}>
             <Text style={commonSharedStyles.errorText}>Error: {specificErrorMsg}</Text>
-            <Button
-              title="← Students"
+            <CustomButton
+              title="Students"
               onPress={() => setViewingStudentId(null)}
               color={colors.primary}
+              leftIcon={<ArrowLeftIcon color={colors.textWhite} size={18} />}
             />
           </View>
         </SafeAreaView>
@@ -196,7 +200,11 @@ export const ParentView = () => {
         <View style={[commonSharedStyles.baseMarginTopBottom, commonSharedStyles.baseMargin]}>
           {hasMultipleStudents && (
             <View style={commonSharedStyles.baseRow}>
-              <Button title="← Students" onPress={() => setViewingStudentId(null)} />
+              <CustomButton
+                title="Students"
+                onPress={() => setViewingStudentId(null)}
+                leftIcon={<ArrowLeftIcon color={colors.textWhite} size={18} />}
+              />
             </View>
           )}
           <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>

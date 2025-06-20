@@ -24,6 +24,8 @@ import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { EditInstrumentModalProps } from '../../../types/componentProps';
 import { Instrument } from '../../../types/dataTypes';
 import { getInstrumentIconSource } from '../../../utils/helpers';
+import { CustomButton } from '../../common/CustomButton';
+import { ShieldCheckIcon, XCircleIcon } from 'react-native-heroicons/solid';
 
 const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
   visible,
@@ -210,7 +212,7 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
             ) : (
               <Text style={{ color: colors.textLight, fontStyle: 'italic' }}>No icon set</Text>
             )}
-            <Button
+            <CustomButton
               title={imageUri ? 'Change Icon' : 'Choose Icon'}
               onPress={pickImage}
               disabled={mutation.isPending}
@@ -232,19 +234,31 @@ const EditInstrumentModal: React.FC<EditInstrumentModalProps> = ({
           )}
 
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
               color={colors.primary}
               disabled={mutation.isPending || !name.trim()}
+              leftIcon={
+                <ShieldCheckIcon
+                  color={mutation.isPending ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={mutation.isPending}
+              leftIcon={
+                <XCircleIcon
+                  color={mutation.isPending ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
         </View>

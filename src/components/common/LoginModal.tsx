@@ -6,7 +6,6 @@ import {
   Modal,
   View,
   Text,
-  Button,
   TextInput,
   ActivityIndicator,
   TouchableOpacity,
@@ -18,6 +17,8 @@ import Toast from 'react-native-toast-message';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { CustomButton } from './CustomButton';
+import { XCircleIcon } from 'react-native-heroicons/solid';
 
 interface LoginModalProps {
   visible: boolean;
@@ -163,7 +164,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
                 editable={!isLoading}
               />
               <View style={commonSharedStyles.full}>
-                <Button
+                <CustomButton
                   title={isLoading ? 'Logging In...' : 'Login with Email'}
                   onPress={handleEmailLogin}
                   color={colors.primary}
@@ -188,7 +189,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
                 secureTextEntry={true}
               />
               <View style={commonSharedStyles.full}>
-                <Button
+                <CustomButton
                   title={isLoading ? 'Verifying...' : 'Login with PIN'}
                   onPress={handlePinLogin}
                   color={colors.primary}
@@ -209,11 +210,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
           )}
 
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={isLoading}
+              leftIcon={<XCircleIcon color={colors.textWhite} size={18} />}
             />
           </View>
         </View>

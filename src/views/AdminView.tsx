@@ -1,7 +1,7 @@
 // src/views/AdminView.tsx
 import React, { useState } from 'react';
 
-import { View, Text, ScrollView, Button, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -30,7 +30,6 @@ import DeactivateOrDeleteUserModal from '../components/common/DeactivateOrDelete
 import EditMyInfoModal from '../components/common/EditMyInfoModal';
 import EditUserModal from '../components/common/EditUserModal';
 import GeneratePinModal from '../components/common/GeneratePinModal';
-import NotificationManager from '../components/common/NotificationManager';
 import { PaginatedTasksList } from '../components/common/PaginatedTasksList';
 import SetEmailPasswordModal from '../components/common/SetEmailPasswordModal';
 import { SharedHeader } from '../components/common/SharedHeader';
@@ -54,6 +53,15 @@ import {
 import { fetchInstruments } from '../api/instruments';
 import { deleteTaskLibraryItem } from '../api/taskLibrary';
 import { fetchUserProfile } from '../api/users';
+import { CustomButton } from '../components/common/CustomButton';
+import {
+  ArrowLeftIcon,
+  GlobeAltIcon,
+  MusicalNoteIcon,
+  PaperAirplaneIcon,
+  SpeakerWaveIcon,
+  TrophyIcon,
+} from 'react-native-heroicons/solid';
 
 export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId: adminUserId } = useAuth();
@@ -369,7 +377,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
             <Text style={commonSharedStyles.errorText}>
               Failed to load details for user ID: {viewingUserId}. User might have been deleted.
             </Text>
-            <Button
+            <CustomButton
               title="Back to List"
               onPress={handleBackFromDetailView}
               color={colors.primary}
@@ -459,34 +467,38 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
                   commonSharedStyles.baseGap,
                 ]}
               >
-                <Button
+                <CustomButton
                   title="Announcements"
                   onPress={() => {
                     setViewingSection('announcements');
                     setAdminTaskInitialFilters(null);
                   }}
                   color={colors.primary}
+                  leftIcon={<SpeakerWaveIcon color={colors.textWhite} size={18} />}
                 />
-                <Button
+                <CustomButton
                   title="Instruments"
                   onPress={() => {
                     setViewingSection('instruments');
                     setAdminTaskInitialFilters(null);
                   }}
                   color={colors.primary}
+                  leftIcon={<MusicalNoteIcon color={colors.textWhite} size={18} />}
                 />
-                <Button
+                <CustomButton
                   title="Rewards"
                   onPress={() => {
                     setViewingSection('rewards');
                     setAdminTaskInitialFilters(null);
                   }}
                   color={colors.primary}
+                  leftIcon={<TrophyIcon color={colors.textWhite} size={18} />}
                 />
-                <Button
+                <CustomButton
                   title="Journey"
                   onPress={() => setViewingSection('journey')}
                   color={colors.primary}
+                  leftIcon={<PaperAirplaneIcon color={colors.textWhite} size={18} />}
                 />
               </View>
             </View>
@@ -574,7 +586,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
       {!viewingUserId ? (
         <ScrollView style={commonSharedStyles.flex1}>
           <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseMargin]}>
-            <Button
+            <CustomButton
               title="Dashboard"
               onPress={() => {
                 setViewingSection('dashboard');
@@ -582,6 +594,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
               }}
               color={colors.primary}
               disabled={viewingSection === 'dashboard'}
+              leftIcon={
+                <GlobeAltIcon
+                  color={viewingSection === 'dashboard' ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
           {renderMainContent()}
@@ -590,7 +608,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ onInitiateVerificationModa
         <>
           {showBackButton && (
             <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseMargin]}>
-              <Button title="← Back" onPress={handleBackFromDetailView} color={colors.primary} />
+              <CustomButton
+                title="Back"
+                onPress={handleBackFromDetailView}
+                color={colors.primary}
+                leftIcon={<ArrowLeftIcon color={colors.textWhite} size={18} />}
+              />
             </View>
           )}
           <View style={commonSharedStyles.flex1}>{renderMainContent()}</View>

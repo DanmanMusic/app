@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 
-import { View, Text, Button, ActivityIndicator, Platform } from 'react-native';
+import { Platform } from 'react-native';
 
 import * as Notifications from 'expo-notifications';
 import Toast from 'react-native-toast-message';
@@ -10,6 +10,8 @@ import Toast from 'react-native-toast-message';
 import { useAuth } from '../../contexts/AuthContext';
 import { registerForPushNotificationsAsync, savePushToken } from '../../lib/notifications';
 import { colors } from '../../styles/colors';
+import { CustomButton } from './CustomButton';
+import { PlusIcon } from 'react-native-heroicons/solid';
 
 const NotificationManager = () => {
   const { appUser } = useAuth();
@@ -61,11 +63,12 @@ const NotificationManager = () => {
 
   if (permissionStatus === 'undetermined') {
     return (
-      <Button
-        title={isLoading ? 'Loading...' : '+ Notifications'}
+      <CustomButton
+        title={isLoading ? 'Loading...' : 'Notifications'}
         onPress={handleEnableNotifications}
         color={colors.info}
         disabled={isLoading}
+        leftIcon={<PlusIcon color={colors.textWhite} size={18} />}
       />
     );
   }

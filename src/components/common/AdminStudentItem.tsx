@@ -1,14 +1,16 @@
 // src/components/common/AdminStudentItem.tsx
 import React, { useState, useEffect } from 'react';
 
-import { Button, Text, View, Image, ActivityIndicator } from 'react-native';
+import { Text, View, Image, ActivityIndicator } from 'react-native';
 
 import { StudentWithStats } from '../../api/users';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { Instrument, UserRole } from '../../types/dataTypes';
-import { getInstrumentNames, getUserAvatarSource, getUserDisplayName } from '../../utils/helpers';
+import { getUserAvatarSource, getUserDisplayName } from '../../utils/helpers';
+import { CustomButton } from './CustomButton';
+import { InboxArrowDownIcon, MagnifyingGlassIcon } from 'react-native-heroicons/solid';
 
 export const AdminStudentItem = ({
   student,
@@ -99,16 +101,18 @@ export const AdminStudentItem = ({
       </View>
 
       <View style={[commonSharedStyles.baseRow, { gap: 5, alignSelf: 'flex-start' }]}>
-        <Button
+        <CustomButton
           title="View Details"
           onPress={() => onViewManage(student.id, 'student')}
           color={colors.primary}
+          leftIcon={<MagnifyingGlassIcon color={colors.textWhite} size={18} />}
         />
         {isActive && (
-          <Button
+          <CustomButton
             title="Assign Task"
             onPress={() => onInitiateAssignTask(student.id)}
             color={colors.primary}
+            leftIcon={<InboxArrowDownIcon color={colors.textWhite} size={18} />}
           />
         )}
       </View>

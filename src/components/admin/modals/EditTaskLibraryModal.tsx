@@ -5,12 +5,10 @@ import {
   Modal,
   View,
   Text,
-  Button,
   TextInput,
   ScrollView,
   ActivityIndicator,
   Switch,
-  TouchableOpacity,
   StyleSheet,
 } from 'react-native';
 
@@ -35,6 +33,8 @@ import { EditTaskLibraryModalProps } from '../../../types/componentProps';
 import { Instrument, TaskLibraryItem, Url, Attachment } from '../../../types/dataTypes';
 import { NativeFileObject } from '../../../utils/helpers';
 import { useAuth } from '../../../contexts/AuthContext';
+import { CustomButton } from '../../common/CustomButton';
+import { TrashIcon, XCircleIcon } from 'react-native-heroicons/solid';
 
 interface UrlInput extends Partial<Url> {
   localId: string;
@@ -258,7 +258,11 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
 
             <View style={styles.listHeader}>
               <Text style={commonSharedStyles.label}>Reference URLs</Text>
-              <Button title="+ Add URL" onPress={handleAddUrl} disabled={mutation.isPending} />
+              <CustomButton
+                title="+ Add URL"
+                onPress={handleAddUrl}
+                disabled={mutation.isPending}
+              />
             </View>
             {urls.map(urlItem => (
               <View key={urlItem.localId} style={styles.urlItemContainer}>
@@ -274,17 +278,18 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
                   onChangeText={text => handleUpdateUrl(urlItem.localId, 'label', text)}
                   placeholder="Optional Label"
                 />
-                <Button
+                <CustomButton
                   title="Remove"
                   onPress={() => handleRemoveUrl(urlItem.localId)}
                   color={colors.danger}
+                  leftIcon={<TrashIcon color={colors.textWhite} size={18} />}
                 />
               </View>
             ))}
 
             <View style={styles.listHeader}>
               <Text style={commonSharedStyles.label}>Attachments</Text>
-              <Button
+              <CustomButton
                 title="+ Attach Files"
                 onPress={handlePickFiles}
                 disabled={mutation.isPending}
@@ -297,16 +302,17 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
                 </Text>
                 <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
                   {!att.isNew && (
-                    <Button
+                    <CustomButton
                       title="View"
                       onPress={() => handleViewAttachment(att.file_path!)}
                       color={colors.info}
                     />
                   )}
-                  <Button
+                  <CustomButton
                     title="Remove"
                     onPress={() => handleRemoveAttachment(att.localId)}
                     color={colors.danger}
+                    leftIcon={<TrashIcon color={colors.textWhite} size={18} />}
                   />
                 </View>
               </View>
@@ -318,7 +324,7 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
             <View style={[commonSharedStyles.baseItem, { marginBottom: 15, padding: 10 }]}>
               <View style={commonSharedStyles.baseRowCentered}>
                 {instruments.map(inst => (
-                  <Button
+                  <CustomButton
                     key={inst.id}
                     title={inst.name}
                     onPress={() => toggleInstrumentSelection(inst.id)}
@@ -334,14 +340,15 @@ const EditTaskLibraryModal: React.FC<EditTaskLibraryModalProps> = ({
 
           {mutation.isPending && <ActivityIndicator />}
           <View style={commonSharedStyles.full}>
-            <Button title="Save Changes" onPress={handleSave} disabled={mutation.isPending} />
+            <CustomButton title="Save Changes" onPress={handleSave} disabled={mutation.isPending} />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={mutation.isPending}
+              leftIcon={<XCircleIcon color={colors.textWhite} size={18} />}
             />
           </View>
         </View>

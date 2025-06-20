@@ -1,10 +1,12 @@
 import React from 'react';
 
-import { Modal, View, Text, Button } from 'react-native';
+import { Modal, View, Text } from 'react-native';
 
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { ConfirmationModalProps } from '../../types/componentProps';
+import { CustomButton } from './CustomButton';
+import { XCircleIcon } from 'react-native-heroicons/solid';
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   visible,
@@ -24,13 +26,18 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           <Text style={commonSharedStyles.modalMessage}>{message}</Text>
 
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={confirmText}
               onPress={onConfirm}
               color={colors.danger}
               disabled={confirmDisabled}
             />
-            <Button title={cancelText} onPress={onCancel} color={colors.secondary} />
+            <CustomButton
+              title={cancelText}
+              onPress={onCancel}
+              color={colors.secondary}
+              leftIcon={<XCircleIcon color={colors.textWhite} size={18} />}
+            />
           </View>
         </View>
       </View>

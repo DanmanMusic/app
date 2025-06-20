@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import { Modal, View, Text, Button, TextInput, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, TextInput, ActivityIndicator } from 'react-native';
 
 import { useMutation } from '@tanstack/react-query';
 
@@ -11,6 +11,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { getUserDisplayName } from '../../utils/helpers';
+import { CustomButton } from './CustomButton';
+import { InformationCircleIcon, XCircleIcon } from 'react-native-heroicons/solid';
 
 interface SetEmailPasswordModalProps {
   visible: boolean;
@@ -168,19 +170,31 @@ export const SetEmailPasswordModal: React.FC<SetEmailPasswordModalProps> = ({
           )}
 
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={mutation.isPending ? 'Saving...' : 'Save Credentials'}
               onPress={handleSave}
               color={colors.primary}
               disabled={isSaveDisabled}
+              leftIcon={
+                <InformationCircleIcon
+                  color={isSaveDisabled ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={mutation.isPending}
+              leftIcon={
+                <XCircleIcon
+                  color={mutation.isPending ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
         </View>

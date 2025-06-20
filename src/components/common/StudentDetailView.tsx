@@ -1,7 +1,7 @@
 // src/components/common/StudentDetailView.tsx
 import React, { useMemo } from 'react';
 
-import { View, Text, ScrollView, Button, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, FlatList, ActivityIndicator } from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -21,6 +21,14 @@ import { StudentDetailViewProps } from '../../types/componentProps';
 import { AssignedTask, Instrument, User } from '../../types/dataTypes';
 import { getInstrumentNames, getUserDisplayName } from '../../utils/helpers';
 import PaginationControls from '../admin/PaginationControls';
+import { CustomButton } from './CustomButton';
+import {
+  AdjustmentsHorizontalIcon,
+  InboxArrowDownIcon,
+  QrCodeIcon,
+  RocketLaunchIcon,
+  WrenchScrewdriverIcon,
+} from 'react-native-heroicons/solid';
 
 export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
   viewingStudentId,
@@ -293,34 +301,68 @@ export const StudentDetailView: React.FC<StudentDetailViewProps> = ({
           ]}
         >
           {onInitiateTicketAdjustment && (
-            <Button
+            <CustomButton
               title="Adjust Tickets"
               onPress={handleAdjustmentClick}
               color={colors.primary}
               disabled={!isStudentActive || balanceLoading}
+              leftIcon={
+                <AdjustmentsHorizontalIcon
+                  color={
+                    !isStudentActive || balanceLoading ? colors.disabledText : colors.textWhite
+                  }
+                  size={18}
+                />
+              }
             />
           )}
           {onInitiateRedemption && (
-            <Button
+            <CustomButton
               title="Redeem Reward"
               onPress={handleRedemptionClick}
               disabled={!isStudentActive || balance <= 0 || balanceLoading}
               color={colors.success}
+              leftIcon={
+                <RocketLaunchIcon
+                  color={
+                    !isStudentActive || balance <= 0 || balanceLoading
+                      ? colors.disabledText
+                      : colors.textWhite
+                  }
+                  size={18}
+                />
+              }
             />
           )}
           {isStudentActive && (
-            <Button title="Assign Task" onPress={handleAssignTaskClick} color={colors.primary} />
+            <CustomButton
+              title="Assign Task"
+              onPress={handleAssignTaskClick}
+              color={colors.primary}
+              leftIcon={<InboxArrowDownIcon color={colors.textWhite} size={18} />}
+            />
           )}
-          <Button title="Edit Info" onPress={handleEditClick} color={colors.warning} />
+          <CustomButton title="Edit Info" onPress={handleEditClick} color={colors.warning} />
           {onInitiateStatusUser && (
-            <Button title="Manage Status" onPress={handleStatusClick} color={colors.secondary} />
+            <CustomButton
+              title="Manage Status"
+              onPress={handleStatusClick}
+              color={colors.secondary}
+              leftIcon={<WrenchScrewdriverIcon color={colors.textWhite} size={18} />}
+            />
           )}
           {showPinButton && (
-            <Button
+            <CustomButton
               title="Login (PIN)"
               onPress={handlePinGenerationClick}
               color={colors.info}
               disabled={!isStudentActive}
+              leftIcon={
+                <QrCodeIcon
+                  color={!isStudentActive ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           )}
           {isLoadingStudentAuth && (

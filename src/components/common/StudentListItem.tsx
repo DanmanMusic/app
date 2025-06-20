@@ -1,9 +1,11 @@
-import { Button, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { Instrument, SimplifiedStudent } from '../../types/dataTypes';
 import { getInstrumentNames } from '../../utils/helpers';
+import { CustomButton } from './CustomButton';
+import { InboxArrowDownIcon } from 'react-native-heroicons/solid';
 
 export const StudentListItem = ({
   student,
@@ -42,16 +44,17 @@ export const StudentListItem = ({
       </Text>
     </View>
     <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
-      <Button
+      <CustomButton
         title="View Profile"
         onPress={() => onViewProfile(student.id)}
         color={colors.primary}
       />
       {student.isActive && (
-        <Button
+        <CustomButton
           title="Assign Task"
           onPress={() => onAssignTask(student.id)}
           color={colors.primary}
+          leftIcon={<InboxArrowDownIcon color={colors.textWhite} size={18} />}
         />
       )}
     </View>

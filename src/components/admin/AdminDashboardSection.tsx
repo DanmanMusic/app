@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { View, Text, Button, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -8,6 +8,13 @@ import { fetchUserCounts, fetchPendingTaskCount, UserCounts, TaskStats } from '.
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminDashboardSectionProps, UserTab } from '../../types/componentProps';
+import { CustomButton } from '../common/CustomButton';
+import {
+  ListBulletIcon,
+  MagnifyingGlassIcon,
+  PlusIcon,
+  QueueListIcon,
+} from 'react-native-heroicons/solid';
 
 export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
   onViewVerifications,
@@ -95,29 +102,34 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
                     commonSharedStyles.baseMarginTopBottom,
                   ]}
                 >
-                  <Button title="+ User" onPress={onInitiateCreateUser} color={colors.warning} />
-                  <Button
+                  <CustomButton
+                    title="User"
+                    onPress={onInitiateCreateUser}
+                    color={colors.warning}
+                    leftIcon={<PlusIcon color={colors.textWhite} size={18} />}
+                  />
+                  <CustomButton
                     title={studentButtonTitle}
                     onPress={() => {
                       handleUserSelection('students');
                     }}
                     color={colors.primary}
                   />
-                  <Button
+                  <CustomButton
                     title={teacherButtonTitle}
                     onPress={() => {
                       handleUserSelection('teachers');
                     }}
                     color={colors.primary}
                   />
-                  <Button
+                  <CustomButton
                     title={parentButtonTitle}
                     onPress={() => {
                       handleUserSelection('parents');
                     }}
                     color={colors.primary}
                   />
-                  <Button
+                  <CustomButton
                     title={adminButtonTitle}
                     onPress={() => {
                       handleUserSelection('admins');
@@ -151,22 +163,30 @@ export const AdminDashboardSection: React.FC<AdminDashboardSectionProps> = ({
                 ]}
               >
                 {!isErrorTaskStats && pendingVerificationsCount > 0 && (
-                  <Button
+                  <CustomButton
                     title={`View Pending Verifications (${isErrorTaskStats ? '!' : pendingVerificationsCount})`}
                     onPress={() => onViewVerifications(true)}
                     color={colors.warning}
                     disabled={isErrorTaskStats}
+                    leftIcon={
+                      <MagnifyingGlassIcon
+                        color={isErrorTaskStats ? colors.disabledText : colors.textWhite}
+                        size={18}
+                      />
+                    }
                   />
                 )}
-                <Button
+                <CustomButton
                   title="Tasks"
                   onPress={() => setViewingSection('tasks')}
                   color={colors.primary}
+                  leftIcon={<QueueListIcon color={colors.textWhite} size={18} />}
                 />
-                <Button
+                <CustomButton
                   title="History"
                   onPress={() => setViewingSection('history')}
                   color={colors.primary}
+                  leftIcon={<ListBulletIcon color={colors.textWhite} size={18} />}
                 />
               </View>
             </View>

@@ -1,7 +1,7 @@
 // src/components/common/TaskVerificationModal.tsx
 import React, { useState, useEffect } from 'react';
 
-import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, ActivityIndicator } from 'react-native';
 
 import Slider from '@react-native-community/slider';
 
@@ -17,6 +17,8 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { TaskVerificationModalProps } from '../../types/componentProps';
 import { User } from '../../types/dataTypes';
 import { getUserDisplayName, timestampDisplay } from '../../utils/helpers';
+import { CustomButton } from './CustomButton';
+import { ArrowLeftIcon, CheckIcon, XCircleIcon } from 'react-native-heroicons/solid';
 
 export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
   visible,
@@ -207,19 +209,19 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             )}
 
             <View style={commonSharedStyles.full}>
-              <Button
+              <CustomButton
                 title="Verified"
                 onPress={() => handleStatusSelect('verified')}
                 color={colors.primary}
                 disabled={isLoadingStudent || verifyMutation.isPending}
               />
-              <Button
+              <CustomButton
                 title="Partial"
                 onPress={() => handleStatusSelect('partial')}
                 color={colors.warning}
                 disabled={isLoadingStudent || verifyMutation.isPending}
               />
-              <Button
+              <CustomButton
                 title="Incomplete"
                 onPress={() => handleStatusSelect('incomplete')}
                 color={colors.danger}
@@ -227,11 +229,12 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               />
             </View>
             <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-              <Button
+              <CustomButton
                 title="Cancel"
                 onPress={onClose}
                 color={colors.secondary}
                 disabled={verifyMutation.isPending}
+                leftIcon={<XCircleIcon color={colors.textWhite} size={18} />}
               />
             </View>
           </View>
@@ -315,25 +318,43 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
             )}
 
             <View style={commonSharedStyles.full}>
-              <Button
+              <CustomButton
                 title={verifyMutation.isPending ? 'Processing...' : 'Confirm Verification'}
                 onPress={handleConfirmTickets}
                 color={colors.primary}
                 disabled={isConfirmDisabled}
+                leftIcon={
+                  <CheckIcon
+                    color={isConfirmDisabled ? colors.disabledText : colors.textWhite}
+                    size={18}
+                  />
+                }
               />
-              <Button
+              <CustomButton
                 title="Back to Status"
                 onPress={() => setCurrentStep(1)}
                 color={colors.secondary}
                 disabled={verifyMutation.isPending}
+                leftIcon={
+                  <ArrowLeftIcon
+                    color={verifyMutation.isPending ? colors.disabledText : colors.textWhite}
+                    size={18}
+                  />
+                }
               />
             </View>
             <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-              <Button
+              <CustomButton
                 title="Cancel Verification"
                 onPress={onClose}
                 color={colors.secondary}
                 disabled={verifyMutation.isPending}
+                leftIcon={
+                  <XCircleIcon
+                    color={verifyMutation.isPending ? colors.disabledText : colors.textWhite}
+                    size={18}
+                  />
+                }
               />
             </View>
           </View>
@@ -364,7 +385,12 @@ export const TaskVerificationModal: React.FC<TaskVerificationModalProps> = ({
               </Text>
             </Text>
             <View style={commonSharedStyles.full}>
-              <Button title="Done" onPress={onClose} color={colors.primary} />
+              <CustomButton
+                title="Done"
+                onPress={onClose}
+                color={colors.primary}
+                leftIcon={<CheckIcon color={colors.textWhite} size={18} />}
+              />
             </View>
           </View>
         </View>

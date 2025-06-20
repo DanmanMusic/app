@@ -1,7 +1,9 @@
 import React from 'react';
-import { Modal, View, Text, Button, ScrollView, StyleSheet } from 'react-native';
+import { Modal, View, Text, ScrollView, StyleSheet } from 'react-native';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { colors } from '../../styles/colors';
+import { CustomButton } from './CustomButton';
+import { XCircleIcon } from 'react-native-heroicons/solid';
 
 interface LegalTextModalProps {
   visible: boolean;
@@ -25,7 +27,12 @@ export const LegalTextModal: React.FC<LegalTextModalProps> = ({
             <Text style={styles.contentText}>{content}</Text>
           </ScrollView>
           <View style={[commonSharedStyles.full, { marginTop: 15 }]}>
-            <Button title="Close" onPress={onClose} color={colors.primary} />
+            <CustomButton
+              title="Close"
+              onPress={onClose}
+              color={colors.primary}
+              leftIcon={<XCircleIcon color={colors.textWhite} size={18} />}
+            />
           </View>
         </View>
       </View>

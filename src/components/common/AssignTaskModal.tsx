@@ -5,7 +5,6 @@ import {
   Modal,
   View,
   Text,
-  Button,
   FlatList,
   TouchableOpacity,
   TextInput,
@@ -35,6 +34,8 @@ import {
   Instrument,
 } from '../../types/dataTypes';
 import { getInstrumentNames, getUserDisplayName, NativeFileObject } from '../../utils/helpers';
+import { CustomButton } from './CustomButton';
+import { ArrowLeftIcon, TrashIcon, XCircleIcon } from 'react-native-heroicons/solid';
 
 interface UrlInput {
   id: string;
@@ -419,7 +420,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
 
                 <View style={styles.listHeader}>
                   <Text style={commonSharedStyles.label}>Reference URLs</Text>
-                  <Button
+                  <CustomButton
                     title="+ Add URL"
                     onPress={handleAddAdHocUrl}
                     disabled={mutation.isPending}
@@ -439,17 +440,18 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                       onChangeText={text => handleUpdateAdHocUrl(urlItem.id, 'label', text)}
                       placeholder="Optional Label"
                     />
-                    <Button
+                    <CustomButton
                       title="Remove"
                       onPress={() => handleRemoveAdHocUrl(urlItem.id)}
                       color={colors.danger}
+                      leftIcon={<TrashIcon color={colors.textWhite} size={18} />}
                     />
                   </View>
                 ))}
 
                 <View style={styles.listHeader}>
                   <Text style={commonSharedStyles.label}>Attachments</Text>
-                  <Button
+                  <CustomButton
                     title="+ Attach Files"
                     onPress={handlePickAdHocFiles}
                     disabled={mutation.isPending}
@@ -460,16 +462,17 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
                     <Text style={styles.fileName} numberOfLines={1}>
                       {fileItem.asset.name}
                     </Text>
-                    <Button
+                    <CustomButton
                       title="Remove"
                       onPress={() => handleRemoveAdHocFile(fileItem.id)}
                       color={colors.danger}
+                      leftIcon={<TrashIcon color={colors.textWhite} size={18} />}
                     />
                   </View>
                 ))}
 
                 <View style={{ marginTop: 15 }}>
-                  <Button
+                  <CustomButton
                     title="Use This Custom Task"
                     onPress={handleAdHocSubmit}
                     color={colors.primary}
@@ -588,7 +591,7 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
           )}
           <View style={commonSharedStyles.modalFooter}>
             {step === 3 && (
-              <Button
+              <CustomButton
                 title={mutation.isPending ? 'Assigning...' : 'Confirm & Assign'}
                 onPress={handleConfirm}
                 color={colors.primary}
@@ -596,18 +599,30 @@ export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
               />
             )}
             {((step > 1 && !preselectedStudentId) || step === 3) && (
-              <Button
+              <CustomButton
                 title="Back"
                 onPress={goBack}
                 color={colors.secondary}
                 disabled={mutation.isPending}
+                leftIcon={
+                  <ArrowLeftIcon
+                    color={mutation.isPending ? colors.disabledText : colors.textWhite}
+                    size={18}
+                  />
+                }
               />
             )}
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={mutation.isPending}
+              leftIcon={
+                <XCircleIcon
+                  color={mutation.isPending ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
         </View>

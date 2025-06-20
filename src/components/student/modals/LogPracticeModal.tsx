@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, ActivityIndicator } from 'react-native';
 
 import { UseMutationResult } from '@tanstack/react-query';
 
@@ -10,6 +10,8 @@ import Toast from 'react-native-toast-message';
 
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import { CustomButton } from '../../common/CustomButton';
+import { XCircleIcon } from 'react-native-heroicons/solid';
 
 interface LogPracticeModalProps {
   isVisible: boolean;
@@ -80,17 +82,18 @@ const LogPracticeModal: React.FC<LogPracticeModalProps> = ({
           )}
 
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={logPracticeMutation.isPending ? 'Logging...' : 'Yes, I Practiced!'}
               onPress={handleConfirm}
               color={colors.success}
               disabled={logPracticeMutation.isPending}
             />
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={logPracticeMutation.isPending}
+              leftIcon={<XCircleIcon color={colors.textWhite} size={18} />}
             />
           </View>
         </View>

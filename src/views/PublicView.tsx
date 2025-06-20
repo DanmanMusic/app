@@ -1,7 +1,7 @@
 // src/views/PublicView.tsx
 import React, { useState } from 'react';
 
-import { View, Text, FlatList, Button, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -17,6 +17,16 @@ import { Announcement, RewardItem } from '../types/dataTypes';
 
 import { fetchAnnouncements } from '../api/announcements';
 import { fetchRewards } from '../api/rewards';
+import { CustomButton } from '../components/common/CustomButton';
+
+import {
+  ArrowLeftEndOnRectangleIcon,
+  DocumentCheckIcon,
+  DocumentMagnifyingGlassIcon,
+  MusicalNoteIcon,
+  SpeakerWaveIcon,
+  TrophyIcon,
+} from 'react-native-heroicons/solid';
 
 type PublicTab = 'welcome' | 'rewards' | 'announcements';
 
@@ -80,20 +90,23 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress, onLegalLin
             commonSharedStyles.baseMarginTopBottom,
           ]}
         >
-          <Button
+          <CustomButton
             title="Welcome"
             onPress={() => setActiveTab('welcome')}
             color={activeTab === 'welcome' ? colors.primary : colors.secondary}
+            leftIcon={<MusicalNoteIcon color={colors.textWhite} size={18} />}
           />
-          <Button
+          <CustomButton
             title="Announcements"
             onPress={() => setActiveTab('announcements')}
             color={activeTab === 'announcements' ? colors.primary : colors.secondary}
+            leftIcon={<SpeakerWaveIcon color={colors.textWhite} size={18} />}
           />
-          <Button
+          <CustomButton
             title="Rewards Catalog"
             onPress={() => setActiveTab('rewards')}
             color={activeTab === 'rewards' ? colors.primary : colors.secondary}
+            leftIcon={<TrophyIcon color={colors.textWhite} size={18} />}
           />
         </View>
       </View>
@@ -125,7 +138,6 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress, onLegalLin
                 data={rewardsCatalog}
                 keyExtractor={item => `reward-${item.id}`}
                 renderItem={({ item }) => <RewardItemPublic item={item} />}
-                ItemSeparatorComponent={() => <View style={commonSharedStyles.separator} />}
                 ListEmptyComponent={() => (
                   <Text style={commonSharedStyles.baseEmptyText}>
                     No rewards currently available.
@@ -153,7 +165,6 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress, onLegalLin
                     <AnnouncementListItem item={item} />
                   </View>
                 )}
-                ItemSeparatorComponent={() => <View style={commonSharedStyles.separator} />}
                 ListEmptyComponent={() => (
                   <Text style={commonSharedStyles.baseEmptyText}>No announcements found.</Text>
                 )}
@@ -178,10 +189,25 @@ export const PublicView: React.FC<PublicViewProps> = ({ onLoginPress, onLegalLin
         >
           Ready to track progress?
         </Text>
-        <Button title="Login / Enter PIN" onPress={onLoginPress} color={colors.primary} />
+        <CustomButton
+          title="Login / Enter PIN"
+          onPress={onLoginPress}
+          color={colors.primary}
+          leftIcon={<ArrowLeftEndOnRectangleIcon color={colors.textWhite} size={18} />}
+        />
         <View style={[commonSharedStyles.baseRow, { gap: 20, marginTop: 20 }]}>
-          <Button title="Privacy Policy" onPress={() => onLegalLinkPress('privacy')} color={colors.textLight} />
-          <Button title="Terms of Use" onPress={() => onLegalLinkPress('terms')} color={colors.textLight} />
+          <CustomButton
+            title="Privacy Policy"
+            onPress={() => onLegalLinkPress('privacy')}
+            color={colors.textLight}
+            leftIcon={<DocumentMagnifyingGlassIcon color={colors.textWhite} size={18} />}
+          />
+          <CustomButton
+            title="Terms of Use"
+            onPress={() => onLegalLinkPress('terms')}
+            color={colors.textLight}
+            leftIcon={<DocumentCheckIcon color={colors.textWhite} size={18} />}
+          />
         </View>
       </View>
     </SafeAreaView>

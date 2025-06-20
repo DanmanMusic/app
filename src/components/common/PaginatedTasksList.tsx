@@ -1,7 +1,7 @@
 // src/components/common/PaginatedTasksList.tsx
 import React, { useMemo } from 'react';
 
-import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -15,6 +15,7 @@ import { PaginatedTasksListProps } from '../../types/componentProps';
 import { User } from '../../types/dataTypes';
 import { getUserDisplayName } from '../../utils/helpers';
 import PaginationControls from '../admin/PaginationControls';
+import { CustomButton } from './CustomButton';
 
 export const PaginatedTasksList: React.FC<PaginatedTasksListProps> = ({
   viewingRole,
@@ -76,22 +77,22 @@ export const PaginatedTasksList: React.FC<PaginatedTasksListProps> = ({
       <View style={commonSharedStyles.filterSection}>
         <View style={commonSharedStyles.baseRowCentered}>
           <Text style={commonSharedStyles.filterLabel}>Task Status:</Text>
-          <Button
+          <CustomButton
             title="All"
             onPress={() => setAssignmentFilter('all')}
             color={assignmentFilter === 'all' ? colors.primary : colors.secondary}
           />
-          <Button
+          <CustomButton
             title="Assigned"
             onPress={() => setAssignmentFilter('assigned')}
             color={assignmentFilter === 'assigned' ? colors.primary : colors.secondary}
           />
-          <Button
+          <CustomButton
             title="Pending"
             onPress={() => setAssignmentFilter('pending')}
             color={assignmentFilter === 'pending' ? colors.warning : colors.secondary}
           />
-          <Button
+          <CustomButton
             title="Completed"
             onPress={() => setAssignmentFilter('completed')}
             color={assignmentFilter === 'completed' ? colors.success : colors.secondary}
@@ -100,17 +101,17 @@ export const PaginatedTasksList: React.FC<PaginatedTasksListProps> = ({
         {viewingRole === 'admin' && (
           <View style={commonSharedStyles.baseRowCentered}>
             <Text style={commonSharedStyles.filterLabel}>Student Status:</Text>
-            <Button
+            <CustomButton
               title="Active"
               onPress={() => setStudentStatusFilter('active')}
               color={studentStatusFilter === 'active' ? colors.success : colors.secondary}
             />
-            <Button
+            <CustomButton
               title="Inactive"
               onPress={() => setStudentStatusFilter('inactive')}
               color={studentStatusFilter === 'inactive' ? colors.warning : colors.secondary}
             />
-            <Button
+            <CustomButton
               title="All"
               onPress={() => setStudentStatusFilter('all')}
               color={studentStatusFilter === 'all' ? colors.info : colors.secondary}

@@ -5,7 +5,6 @@ import {
   Modal,
   View,
   Text,
-  Button,
   FlatList,
   TouchableOpacity,
   Image,
@@ -22,6 +21,8 @@ import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { RedeemRewardModalProps } from '../../../types/componentProps';
 import { RewardItem } from '../../../types/dataTypes';
+import { CustomButton } from '../../common/CustomButton';
+import { XCircleIcon } from 'react-native-heroicons/solid';
 
 export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
   visible,
@@ -280,17 +281,18 @@ export const RedeemRewardModal: React.FC<RedeemRewardModalProps> = ({
           )}
 
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={redeemMutation.isPending ? 'Redeeming...' : `Redeem Selected`}
               onPress={handleConfirmRedemption}
               disabled={isConfirmDisabled}
               color={colors.success}
             />
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={redeemMutation.isPending}
+              leftIcon={<XCircleIcon color={colors.textWhite} size={18} />}
             />
           </View>
         </View>

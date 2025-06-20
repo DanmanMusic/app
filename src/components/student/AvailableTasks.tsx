@@ -1,7 +1,7 @@
 // src/components/student/AvailableTasks.tsx
 import React, { useMemo } from 'react';
 
-import { View, Text, Button, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -15,6 +15,8 @@ import {
 import { handleOpenUrl, handleViewAttachment } from '../../lib/supabaseClient';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { CustomButton } from '../common/CustomButton';
+import { InboxArrowDownIcon } from 'react-native-heroicons/solid';
 
 interface AvailableTasksProps {
   studentId: string;
@@ -128,11 +130,12 @@ const AvailableTasks: React.FC<AvailableTasksProps> = ({ studentId }) => {
                   ))}
                 </View>
                 <View>
-                  <Button
+                  <CustomButton
                     title={assignMutation.isPending ? 'Assigning...' : 'Assign to Me'}
                     onPress={() => assignMutation.mutate({ taskLibraryId: task.id, studentId })}
                     disabled={assignMutation.isPending}
                     color={colors.success}
+                    leftIcon={<InboxArrowDownIcon color={colors.textWhite} size={18} />}
                   />
                 </View>
               </View>

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -10,6 +10,8 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminTasksSectionProps } from '../../types/componentProps';
 import { TaskLibraryItem } from '../../types/dataTypes';
 import { AdminTaskLibraryItem } from '../common/AdminTaskLibraryItem';
+import { CustomButton } from '../common/CustomButton';
+import { InboxArrowDownIcon, MagnifyingGlassIcon, PlusIcon } from 'react-native-heroicons/solid';
 
 export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
   onInitiateAssignTask,
@@ -50,27 +52,42 @@ export const AdminTasksSection: React.FC<AdminTasksSectionProps> = ({
           </Text>
         </View>
         <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
-          <Button
+          <CustomButton
             title="Assign Task to Student"
             onPress={onInitiateAssignTask}
             color={colors.primary}
             disabled={deleteTaskMutationPending}
+            leftIcon={
+              <InboxArrowDownIcon
+                color={deleteTaskMutationPending ? colors.disabledText : colors.textWhite}
+                size={18}
+              />
+            }
           />
-          <Button
+          <CustomButton
             title="View All Assigned Tasks"
             onPress={() => onViewVerifications(false)}
             color={colors.primary}
+            leftIcon={<MagnifyingGlassIcon color={colors.textWhite} size={18} />}
           />
         </View>
         <Text style={[commonSharedStyles.baseSubTitleText, commonSharedStyles.baseMarginTopBottom]}>
           Task Library ({taskLibrary.length})
         </Text>
         <View style={[commonSharedStyles.baseRow]}>
-          <Button
+          <CustomButton
             title="Create New Task Library Item"
             onPress={onInitiateCreateTask}
             disabled={deleteTaskMutationPending || isLoading}
             color={colors.success}
+            leftIcon={
+              <PlusIcon
+                color={
+                  deleteTaskMutationPending || isLoading ? colors.disabledText : colors.textWhite
+                }
+                size={18}
+              />
+            }
           />
         </View>
         {isLoading && (

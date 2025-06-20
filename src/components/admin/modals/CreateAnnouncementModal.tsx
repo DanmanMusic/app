@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 
-import { Modal, View, Text, Button, TextInput, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, TextInput, ActivityIndicator } from 'react-native';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -14,6 +14,8 @@ import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { CreateAnnouncementModalProps } from '../../../types/componentProps';
 import { Announcement } from '../../../types/dataTypes';
+import { CustomButton } from '../../common/CustomButton';
+import { XCircleIcon } from 'react-native-heroicons/solid';
 
 const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visible, onClose }) => {
   const [title, setTitle] = useState('');
@@ -140,7 +142,7 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
           )}
 
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={mutation.isPending ? 'Creating...' : 'Create Announcement'}
               onPress={handleCreate}
               color={colors.primary}
@@ -148,11 +150,12 @@ const CreateAnnouncementModal: React.FC<CreateAnnouncementModalProps> = ({ visib
             />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={mutation.isPending}
+              leftIcon={<XCircleIcon color={colors.textWhite} size={18} />}
             />
           </View>
         </View>

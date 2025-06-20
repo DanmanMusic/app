@@ -5,7 +5,6 @@ import {
   Modal,
   View,
   Text,
-  Button,
   TextInput,
   ActivityIndicator,
   Image,
@@ -23,6 +22,8 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { CreateInstrumentModalProps } from '../../../types/componentProps';
+import { CustomButton } from '../../common/CustomButton';
+import { XCircleIcon } from 'react-native-heroicons/solid';
 
 const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');
@@ -153,7 +154,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             ) : (
               <Text style={{ color: colors.textLight, fontStyle: 'italic' }}>No icon selected</Text>
             )}
-            <Button
+            <CustomButton
               title={imageUri ? 'Change Icon' : 'Choose Icon'}
               onPress={pickImage}
               disabled={mutation.isPending}
@@ -176,7 +177,7 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             </Text>
           )}
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={mutation.isPending ? 'Creating...' : 'Create Instrument'}
               onPress={handleCreate}
               color={colors.primary}
@@ -184,11 +185,12 @@ const CreateInstrumentModal: React.FC<CreateInstrumentModalProps> = ({ visible, 
             />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={mutation.isPending}
+              leftIcon={<XCircleIcon color={colors.textWhite} size={18} />}
             />
           </View>
         </View>

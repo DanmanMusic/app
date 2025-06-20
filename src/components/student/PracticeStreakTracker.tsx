@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-import { View, Text, ActivityIndicator, Button } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -10,6 +10,8 @@ import LogPracticeModal from './modals/LogPracticeModal';
 import { getStudentStreakDetails, logPracticeForToday } from '../../api/streaks';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
+import { CustomButton } from '../common/CustomButton';
+import { CheckIcon } from 'react-native-heroicons/solid';
 
 interface PracticeStreakTrackerProps {
   studentId: string;
@@ -96,11 +98,17 @@ const PracticeStreakTracker: React.FC<PracticeStreakTrackerProps> = ({ studentId
             </Text>
           </View>
           <View style={[commonSharedStyles.baseRow, commonSharedStyles.justifyCenter]}>
-            <Button
+            <CustomButton
               title={has_logged_practice_today ? 'Practice Logged For Today!' : buttonText}
               onPress={handlePress}
               disabled={has_logged_practice_today}
               color={has_logged_practice_today ? colors.secondary : colors.success}
+              leftIcon={
+                <CheckIcon
+                  color={has_logged_practice_today ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
         </View>

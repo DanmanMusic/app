@@ -1,7 +1,7 @@
 // src/components/common/TeacherTaskLibraryItem.tsx
 import React from 'react';
 
-import { Text, View, StyleSheet, TouchableOpacity, Button } from 'react-native';
+import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -13,6 +13,8 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { TaskLibraryItem, Instrument } from '../../types/dataTypes';
 import { getInstrumentNames } from '../../utils/helpers';
 import { fetchJourneyLocations, JourneyLocation } from '../../api/journey';
+import { CustomButton } from '../common/CustomButton';
+import { PencilSquareIcon, TrashIcon } from 'react-native-heroicons/solid';
 
 interface TeacherTaskLibraryItemProps {
   item: TaskLibraryItem;
@@ -112,17 +114,19 @@ export const TeacherTaskLibraryItem: React.FC<TeacherTaskLibraryItemProps> = ({
               styles.actionsContainer,
             ]}
           >
-            <Button
+            <CustomButton
               title="Edit"
               onPress={() => onEdit(item)}
               disabled={disabled}
               color={colors.warning}
+              leftIcon={<PencilSquareIcon color={colors.textWhite} size={18} />}
             />
-            <Button
+            <CustomButton
               title="Delete"
               onPress={() => onDelete(item)}
               disabled={disabled}
               color={colors.danger}
+              leftIcon={<TrashIcon color={colors.textWhite} size={18} />}
             />
           </View>
         )}

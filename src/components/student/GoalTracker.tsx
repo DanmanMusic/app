@@ -2,11 +2,13 @@
 
 import React, { useMemo } from 'react';
 
-import { View, Text, Button, Image, ActivityIndicator } from 'react-native';
+import { View, Text, Image, ActivityIndicator } from 'react-native';
 
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { RewardItem } from '../../types/dataTypes';
+import { CustomButton } from '../common/CustomButton';
+import { RocketLaunchIcon } from 'react-native-heroicons/solid';
 
 interface GoalTrackerProps {
   balance: number;
@@ -61,7 +63,12 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({
             </Text>
           </View>
           <View>
-            <Button title="Change Goal" onPress={onSetGoalPress} color={colors.primary} />
+            <CustomButton
+              title="Change Goal"
+              onPress={onSetGoalPress}
+              color={colors.primary}
+              leftIcon={<RocketLaunchIcon color={colors.textWhite} size={18} />}
+            />
           </View>
         </View>
         <Text style={[commonSharedStyles.baseSecondaryText, { marginVertical: 5 }]}>
@@ -93,7 +100,12 @@ const GoalTracker: React.FC<GoalTrackerProps> = ({
       ]}
     >
       <Text style={commonSharedStyles.baseSubTitleText}>No goal set yet.</Text>
-      <Button title="Set a Goal" onPress={onSetGoalPress} color={colors.primary} />
+      <CustomButton
+        title="Set a Goal"
+        onPress={onSetGoalPress}
+        color={colors.primary}
+        leftIcon={<RocketLaunchIcon color={colors.textWhite} size={18} />}
+      />
     </View>
   );
 };

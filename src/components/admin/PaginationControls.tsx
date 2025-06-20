@@ -1,10 +1,12 @@
 import React from 'react';
 
-import { View, Text, Button } from 'react-native';
+import { View, Text } from 'react-native';
 
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { PaginationControlsProps } from '../../types/componentProps';
+import { CustomButton } from '../common/CustomButton';
+import { ArrowLeftIcon, ArrowRightIcon } from 'react-native-heroicons/solid';
 
 const PaginationControls: React.FC<PaginationControlsProps> = ({
   currentPage,
@@ -29,20 +31,32 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
 
   return (
     <View style={commonSharedStyles.paginationContainer}>
-      <Button
+      <CustomButton
         title="Previous"
         onPress={handlePrevious}
         disabled={currentPage <= 1}
         color={colors.primary}
+        leftIcon={
+          <ArrowLeftIcon
+            color={currentPage >= totalPages ? colors.disabledText : colors.textWhite}
+            size={18}
+          />
+        }
       />
       <Text style={commonSharedStyles.pageInfo}>
         Page {currentPage} of {totalPages}
       </Text>
-      <Button
+      <CustomButton
         title="Next"
         onPress={handleNext}
         disabled={currentPage >= totalPages}
         color={colors.primary}
+        leftIcon={
+          <ArrowRightIcon
+            color={currentPage >= totalPages ? colors.disabledText : colors.textWhite}
+            size={18}
+          />
+        }
       />
     </View>
   );

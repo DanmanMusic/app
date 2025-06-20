@@ -1,7 +1,7 @@
 // src/components/admin/AdminUsersSection.tsx
 import React from 'react';
 
-import { View, Text, Button, FlatList, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TextInput, ActivityIndicator } from 'react-native';
 
 import PaginationControls from './PaginationControls';
 import { usePaginatedAdmins } from '../../hooks/usePaginatedAdmins';
@@ -15,6 +15,7 @@ import { User, UserStatus } from '../../types/dataTypes';
 import { capitalizeFirstLetter } from '../../utils/helpers';
 import { AdminStudentItem } from '../common/AdminStudentItem';
 import { AdminUserItem } from '../common/AdminUserItem';
+import { CustomButton } from '../common/CustomButton';
 
 export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
   activeTab,
@@ -197,17 +198,17 @@ export const AdminUsersSection: React.FC<AdminUsersSectionProps> = ({
             >
               Show:
             </Text>
-            <Button
+            <CustomButton
               title="Active"
               onPress={() => handleFilterChange('active')}
               color={studentFilterState === 'active' ? colors.success : colors.secondary}
             />
-            <Button
+            <CustomButton
               title="Inactive"
               onPress={() => handleFilterChange('inactive')}
               color={studentFilterState === 'inactive' ? colors.warning : colors.secondary}
             />
-            <Button
+            <CustomButton
               title="All"
               onPress={() => handleFilterChange('all')}
               color={studentFilterState === 'all' ? colors.info : colors.secondary}

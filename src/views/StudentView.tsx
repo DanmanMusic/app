@@ -1,7 +1,7 @@
 // src/views/StudentView.tsx
 import React, { useState, useMemo } from 'react';
 
-import { View, Text, ScrollView, FlatList, Button, Image, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, FlatList, ActivityIndicator } from 'react-native';
 
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 
@@ -43,6 +43,13 @@ import { fetchInstruments } from '../api/instruments';
 import { fetchRewards } from '../api/rewards';
 import { fetchStudentBalance } from '../api/tickets';
 import { fetchTeachers, fetchUserProfile, updateStudentGoal } from '../api/users';
+import { CustomButton } from '../components/common/CustomButton';
+import {
+  GlobeAltIcon,
+  ListBulletIcon,
+  SpeakerWaveIcon,
+  TrophyIcon,
+} from 'react-native-heroicons/solid';
 
 type StudentTab = 'dashboard' | 'tasks' | 'rewards' | 'announcements';
 
@@ -383,20 +390,41 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
             commonSharedStyles.justifyCenter,
           ]}
         >
-          <Button
+          <CustomButton
             title="Dashboard"
             onPress={() => setActiveTab('dashboard')}
-            color={activeTab === 'dashboard' ? colors.primary : colors.secondary}
+            color={colors.primary}
+            disabled={activeTab === 'dashboard'}
+            leftIcon={
+              <GlobeAltIcon
+                color={activeTab === 'dashboard' ? colors.disabledText : colors.textWhite}
+                size={18}
+              />
+            }
           />
-          <Button
+          <CustomButton
             title="Rewards"
             onPress={() => setActiveTab('rewards')}
-            color={activeTab === 'rewards' ? colors.primary : colors.secondary}
+            color={colors.primary}
+            disabled={activeTab === 'rewards'}
+            leftIcon={
+              <TrophyIcon
+                color={activeTab === 'rewards' ? colors.disabledText : colors.textWhite}
+                size={18}
+              />
+            }
           />
-          <Button
+          <CustomButton
             title="Announcements"
             onPress={() => setActiveTab('announcements')}
-            color={activeTab === 'announcements' ? colors.primary : colors.secondary}
+            color={colors.primary}
+            disabled={activeTab === 'announcements'}
+            leftIcon={
+              <SpeakerWaveIcon
+                color={activeTab === 'announcements' ? colors.disabledText : colors.textWhite}
+                size={18}
+              />
+            }
           />
         </View>
 
@@ -441,10 +469,11 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                 </Text>
                 {filteredTasksForDisplay.length > 0 ? (
                   <View style={commonSharedStyles.baseRow}>
-                    <Button
+                    <CustomButton
                       title="View My Tasks"
                       onPress={() => setActiveTab('tasks')}
                       color={colors.success}
+                      leftIcon={<ListBulletIcon color={colors.textWhite} size={18} />}
                     />
                   </View>
                 ) : (
@@ -588,7 +617,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ studentIdToView }) => 
                 ]}
               >
                 <Text style={commonSharedStyles.baseTitleText}>Announcements</Text>
-                <Button
+                <CustomButton
                   title={isRefetchingAnnouncements ? 'Refreshing...' : 'Refresh'}
                   onPress={() => refetchAnnouncements()}
                   disabled={isRefetchingAnnouncements}

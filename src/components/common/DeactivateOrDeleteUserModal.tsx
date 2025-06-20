@@ -1,7 +1,7 @@
 // src/components/common/DeactivateOrDeleteUserModal.tsx
 import React, { useState, useEffect } from 'react';
 
-import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, ActivityIndicator } from 'react-native';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -13,6 +13,13 @@ import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { DeactivateOrDeleteUserModalProps } from '../../types/componentProps';
 import { getUserDisplayName } from '../../utils/helpers';
+import { CustomButton } from './CustomButton';
+import {
+  PauseCircleIcon,
+  PlayCircleIcon,
+  UserMinusIcon,
+  XCircleIcon,
+} from 'react-native-heroicons/solid';
 
 export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalProps> = ({
   visible,
@@ -190,17 +197,36 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
             )}
 
             <View style={commonSharedStyles.full}>
-              <Button
+              <CustomButton
                 title={toggleButtonText}
                 onPress={handleToggle}
                 color={toggleActionColor}
                 disabled={isActionPending}
+                leftIcon={
+                  isCurrentlyActive ? (
+                    <PauseCircleIcon
+                      color={isActionPending ? colors.disabledText : colors.textWhite}
+                      size={18}
+                    />
+                  ) : (
+                    <PlayCircleIcon
+                      color={isActionPending ? colors.disabledText : colors.textWhite}
+                      size={18}
+                    />
+                  )
+                }
               />
-              <Button
+              <CustomButton
                 title="Permanently Delete"
                 onPress={handleDeletePress}
                 color={colors.danger}
                 disabled={isDeleteDisabled}
+                leftIcon={
+                  <UserMinusIcon
+                    color={isDeleteDisabled ? colors.disabledText : colors.textWhite}
+                    size={18}
+                  />
+                }
               />
             </View>
 
@@ -214,11 +240,17 @@ export const DeactivateOrDeleteUserModal: React.FC<DeactivateOrDeleteUserModalPr
             )}
 
             <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-              <Button
+              <CustomButton
                 title="Close"
                 onPress={onClose}
                 color={colors.secondary}
                 disabled={isActionPending}
+                leftIcon={
+                  <XCircleIcon
+                    color={isActionPending ? colors.disabledText : colors.textWhite}
+                    size={18}
+                  />
+                }
               />
             </View>
           </View>

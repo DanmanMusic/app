@@ -1,7 +1,7 @@
 // src/components/admin/AdminParentDetailView.tsx
 import React, { useMemo, useState } from 'react';
 
-import { View, Text, Button, ActivityIndicator, FlatList, ScrollView } from 'react-native';
+import { View, Text, ActivityIndicator, FlatList, ScrollView } from 'react-native';
 
 import { useQuery, useQueries, useQueryClient, useMutation } from '@tanstack/react-query';
 
@@ -15,6 +15,8 @@ import { AdminParentDetailViewProps } from '../../types/componentProps';
 import { User } from '../../types/dataTypes';
 import { getUserDisplayName, getUserAvatarSource } from '../../utils/helpers';
 import ConfirmationModal from '../common/ConfirmationModal';
+import { CustomButton } from '../common/CustomButton';
+import { QrCodeIcon, UserMinusIcon, WrenchScrewdriverIcon } from 'react-native-heroicons/solid';
 
 export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
   viewingUserId,
@@ -228,15 +230,26 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
             commonSharedStyles.baseMarginTopBottom,
           ]}
         >
-          <Button title="Edit Info" onPress={handleEdit} color={colors.warning} />
-          <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
-          <Button title="Link Student" onPress={handleLinkStudent} color={colors.success} />
+          <CustomButton title="Edit Info" onPress={handleEdit} color={colors.warning} />
+          <CustomButton
+            title="Manage Status"
+            onPress={handleStatus}
+            color={colors.secondary}
+            leftIcon={<WrenchScrewdriverIcon color={colors.textWhite} size={18} />}
+          />
+          <CustomButton title="Link Student" onPress={handleLinkStudent} color={colors.success} />
           {showPinButton && (
-            <Button
+            <CustomButton
               title="Login (PIN)"
               onPress={handlePinGenerationClick}
               color={colors.info}
               disabled={!isParentActive}
+              leftIcon={
+                <QrCodeIcon
+                  color={!isParentActive ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           )}
         </View>
@@ -273,16 +286,22 @@ export const AdminParentDetailView: React.FC<AdminParentDetailViewProps> = ({
                   </Text>
                 </Text>
                 <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
-                  <Button
+                  <CustomButton
                     title="View Profile"
                     onPress={() => onViewStudentProfile(studentItem.id)}
                     color={colors.primary}
                   />
-                  <Button
+                  <CustomButton
                     title="Unlink Student"
                     onPress={() => handleInitiateUnlink(studentItem)}
                     color={colors.danger}
                     disabled={unlinkMutation.isPending}
+                    leftIcon={
+                      <UserMinusIcon
+                        color={unlinkMutation.isPending ? colors.disabledText : colors.textWhite}
+                        size={18}
+                      />
+                    }
                   />
                 </View>
               </View>

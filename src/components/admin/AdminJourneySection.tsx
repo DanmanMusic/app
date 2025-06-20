@@ -1,7 +1,7 @@
 // src/components/admin/AdminJourneySection.tsx
 import React, { useState } from 'react';
 
-import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -13,6 +13,8 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import ConfirmationModal from '../common/ConfirmationModal';
 import CreateJourneyLocationModal from './modals/CreateJourneyLocationModal';
 import EditJourneyLocationModal from './modals/EditJourneyLocationModal';
+import { CustomButton } from '../common/CustomButton';
+import { PencilSquareIcon, TrashIcon } from 'react-native-heroicons/solid';
 
 export const AdminJourneySection = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -84,7 +86,7 @@ export const AdminJourneySection = () => {
         </Text>
       </View>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
-        <Button title="Create New Location" onPress={handleAddPress} color={colors.primary} />
+        <CustomButton title="Create New Location" onPress={handleAddPress} color={colors.primary} />
       </View>
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
@@ -125,17 +127,19 @@ export const AdminJourneySection = () => {
                 </Text>
               </View>
               <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
-                <Button
+                <CustomButton
                   title="Edit"
                   onPress={() => handleEditPress(item)}
                   disabled={deleteMutation.isPending}
                   color={colors.warning}
+                  leftIcon={<PencilSquareIcon color={colors.textWhite} size={18} />}
                 />
-                <Button
+                <CustomButton
                   title="Delete"
                   onPress={() => handleDeletePress(item)}
                   disabled={deleteMutation.isPending}
                   color={colors.danger}
+                  leftIcon={<TrashIcon color={colors.textWhite} size={18} />}
                 />
               </View>
             </View>

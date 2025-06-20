@@ -1,7 +1,7 @@
 // src/components/admin/AdminTeacherDetailView.tsx
 import React, { useMemo, useState, useEffect } from 'react';
 
-import { View, Text, Button, ActivityIndicator, ScrollView, FlatList, Image } from 'react-native';
+import { View, Text, ActivityIndicator, ScrollView, FlatList, Image } from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -14,6 +14,8 @@ import { AdminTeacherDetailViewProps } from '../../types/componentProps';
 import { User, Instrument } from '../../types/dataTypes';
 import { getUserDisplayName, getUserAvatarSource } from '../../utils/helpers';
 import { AdminStudentItem } from '../common/AdminStudentItem';
+import { CustomButton } from '../common/CustomButton';
+import { QrCodeIcon, WrenchScrewdriverIcon } from 'react-native-heroicons/solid';
 
 export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
   viewingUserId,
@@ -163,14 +165,25 @@ export const AdminTeacherDetailView: React.FC<AdminTeacherDetailViewProps> = ({
           commonSharedStyles.baseGap,
         ]}
       >
-        <Button title="Edit Info" onPress={handleEdit} color={colors.warning} />
-        <Button title="Manage Status" onPress={handleStatus} color={colors.secondary} />
+        <CustomButton title="Edit Info" onPress={handleEdit} color={colors.warning} />
+        <CustomButton
+          title="Manage Status"
+          onPress={handleStatus}
+          color={colors.secondary}
+          leftIcon={<WrenchScrewdriverIcon color={colors.textWhite} size={18} />}
+        />
         {onInitiatePinGeneration && (
-          <Button
+          <CustomButton
             title="Login (PIN)"
             onPress={handlePinGenerationClick}
             color={colors.info}
             disabled={!isTeacherActive}
+            leftIcon={
+              <QrCodeIcon
+                color={!isTeacherActive ? colors.disabledText : colors.textWhite}
+                size={18}
+              />
+            }
           />
         )}
       </View>

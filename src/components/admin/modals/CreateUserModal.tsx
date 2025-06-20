@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import { Modal, View, Text, Button, TextInput, ScrollView, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -13,6 +13,8 @@ import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { UserRole, User, Instrument } from '../../../types/dataTypes';
 import { capitalizeFirstLetter, getUserDisplayName } from '../../../utils/helpers';
 import { useAuth } from '../../../contexts/AuthContext';
+import { CustomButton } from '../../common/CustomButton';
+import { UserPlusIcon, XCircleIcon } from 'react-native-heroicons/solid';
 
 const CREATABLE_ROLES: UserRole[] = ['admin', 'teacher', 'student', 'parent'];
 
@@ -208,7 +210,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
             <Text style={commonSharedStyles.label}>Role:</Text>
             <View style={[commonSharedStyles.baseRowCentered, { marginBottom: 15 }]}>
               {CREATABLE_ROLES.map(r => (
-                <Button
+                <CustomButton
                   key={r}
                   title={capitalizeFirstLetter(r)}
                   onPress={() => setRole(r)}
@@ -232,7 +234,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
                   <View style={commonSharedStyles.baseRowCentered}>
                     {instruments.length > 0 ? (
                       instruments.map(inst => (
-                        <Button
+                        <CustomButton
                           key={inst.id}
                           title={inst.name}
                           onPress={() => toggleInstrumentSelection(inst.id)}
@@ -263,7 +265,7 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
                   <View style={commonSharedStyles.baseRowCentered}>
                     {activeTeachers.length > 0 ? (
                       activeTeachers.map(teacher => (
-                        <Button
+                        <CustomButton
                           key={teacher.id}
                           title={getUserDisplayName(teacher)}
                           onPress={() => toggleTeacherSelection(teacher.id)}
@@ -300,19 +302,31 @@ export const CreateUserModal: React.FC<InternalCreateUserModalProps> = ({ visibl
           )}
 
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={mutation.isPending ? 'Creating...' : 'Create User'}
               onPress={handleCreatePress}
               color={colors.primary}
               disabled={isCreateDisabled}
+              leftIcon={
+                <UserPlusIcon
+                  color={isCreateDisabled ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={mutation.isPending}
+              leftIcon={
+                <XCircleIcon
+                  color={mutation.isPending ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
         </View>

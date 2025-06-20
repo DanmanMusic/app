@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { View, Text, FlatList, ActivityIndicator, Button } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -12,6 +12,8 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { TeacherDashboardSectionProps } from '../../types/componentProps';
 import { SimplifiedStudent } from '../../types/dataTypes';
 import { AssignedTaskDetailItem } from '../common/AssignedTaskDetailItem';
+import { CustomButton } from '../common/CustomButton';
+import { SpeakerWaveIcon } from 'react-native-heroicons/solid';
 
 export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = ({
   onInitiateVerificationModal,
@@ -93,20 +95,21 @@ export const TeacherDashboardSection: React.FC<TeacherDashboardSectionProps> = (
               commonSharedStyles.baseMarginTopBottom,
             ]}
           >
-            <Button
+            <CustomButton
               title={`My Students: (${allStudentsSimple.length})`}
               onPress={() => setViewingSection('students')}
               color={colors.warning}
             />
-            <Button
+            <CustomButton
               title="Tasks"
               onPress={() => setViewingSection('tasks')}
               color={colors.primary}
             />
-            <Button
+            <CustomButton
               title="Announcements"
               onPress={() => setViewingSection('announcements')}
               color={colors.secondary}
+              leftIcon={<SpeakerWaveIcon color={colors.textWhite} size={18} />}
             />
           </View>
         ) : (

@@ -5,7 +5,6 @@ import {
   Modal,
   View,
   Text,
-  Button,
   TextInput,
   FlatList,
   TouchableOpacity,
@@ -20,6 +19,8 @@ import { fetchStudents, linkStudentToParent } from '../../../api/users';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { SimplifiedStudent } from '../../../types/dataTypes';
+import { CustomButton } from '../../common/CustomButton';
+import { XCircleIcon } from 'react-native-heroicons/solid';
 
 interface LinkStudentToParentModalProps {
   visible: boolean;
@@ -207,7 +208,7 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
           )}
 
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={linkMutation.isPending ? 'Linking...' : 'Link Selected Student'}
               onPress={handleConfirmLink}
               color={colors.primary}
@@ -215,11 +216,12 @@ export const LinkStudentToParentModal: React.FC<LinkStudentToParentModalProps> =
             />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={linkMutation.isPending}
+              leftIcon={<XCircleIcon color={colors.textWhite} size={18} />}
             />
           </View>
         </View>

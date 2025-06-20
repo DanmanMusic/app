@@ -1,6 +1,14 @@
 // App.tsx
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Button, ActivityIndicator, ImageBackground, Platform } from 'react-native'; // MODIFIED: Added Platform
+import {
+  StyleSheet,
+  Text,
+  View,
+  Button,
+  ActivityIndicator,
+  ImageBackground,
+  Platform,
+} from 'react-native'; // MODIFIED: Added Platform
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -131,7 +139,11 @@ const AppContent = () => {
   };
 
   return (
-    <ImageBackground source={danmansInteriorBackground} style={styles.backgroundImage} resizeMode="cover">
+    <ImageBackground
+      source={danmansInteriorBackground}
+      style={styles.backgroundImage}
+      resizeMode="cover"
+    >
       <View style={styles.backgroundOverlay} />
       <View style={styles.container}>
         <StatusBar style="auto" />

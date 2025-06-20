@@ -1,7 +1,7 @@
 // src/components/teacher/TeacherTasksSection.tsx
 import React from 'react';
 
-import { View, Text, FlatList, Button, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -11,6 +11,8 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { TeacherTasksSectionProps } from '../../types/componentProps';
 import { TaskLibraryItem } from '../../types/dataTypes';
 import { TeacherTaskLibraryItem } from './TeacherTaskLibraryItem';
+import { CustomButton } from '../common/CustomButton';
+import { InboxArrowDownIcon, MagnifyingGlassIcon, PlusIcon } from 'react-native-heroicons/solid';
 
 export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
   onInitiateAssignTaskGeneral,
@@ -51,18 +53,29 @@ export const TeacherTasksSection: React.FC<TeacherTasksSectionProps> = ({
           { marginBottom: 20, alignItems: 'flex-start' },
         ]}
       >
-        <Button title="Assign Task" onPress={onInitiateAssignTaskGeneral} color={colors.primary} />
-        <Button title="View All Assigned Tasks" onPress={onViewAllTasks} color={colors.primary} />
+        <CustomButton
+          title="Assign Task"
+          onPress={onInitiateAssignTaskGeneral}
+          color={colors.primary}
+          leftIcon={<InboxArrowDownIcon color={colors.textWhite} size={18} />}
+        />
+        <CustomButton
+          title="View All Assigned Tasks"
+          onPress={onViewAllTasks}
+          color={colors.primary}
+          leftIcon={<MagnifyingGlassIcon color={colors.textWhite} size={18} />}
+        />
       </View>
 
       <Text style={[commonSharedStyles.baseSubTitleText, commonSharedStyles.baseMarginTopBottom]}>
         Task Library ({taskLibrary.length})
       </Text>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
-        <Button
+        <CustomButton
           title="Create New Library Task"
           onPress={onInitiateCreateTask}
           color={colors.success}
+          leftIcon={<PlusIcon color={colors.textWhite} size={18} />}
         />
       </View>
 

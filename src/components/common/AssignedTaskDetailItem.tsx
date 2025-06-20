@@ -1,13 +1,15 @@
 // src/components/common/AssignedTaskDetailItem.tsx
 import React from 'react';
 
-import { View, Text, Button, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 
 import { handleOpenUrl, handleViewAttachment } from '../../lib/supabaseClient';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AssignedTask } from '../../types/dataTypes';
 import { timestampDisplay } from '../../utils/helpers';
+import { CustomButton } from './CustomButton';
+import { CheckIcon, TrashIcon } from 'react-native-heroicons/solid';
 
 interface AssignedTaskDetailItemProps {
   item: AssignedTask;
@@ -130,19 +132,25 @@ export const AssignedTaskDetailItem: React.FC<AssignedTaskDetailItemProps> = ({
       </View>
       <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
         {allowVerify && (
-          <Button
+          <CustomButton
             title="Verify"
             onPress={() => onInitiateVerification!(item)}
             color={colors.primary}
             disabled={disabled}
+            leftIcon={
+              <CheckIcon color={disabled ? colors.disabledText : colors.textWhite} size={18} />
+            }
           />
         )}
         {allowDelete && (
-          <Button
+          <CustomButton
             title="Remove"
             onPress={() => onDelete!(item)}
             color={colors.danger}
             disabled={disabled}
+            leftIcon={
+              <TrashIcon color={disabled ? colors.disabledText : colors.textWhite} size={18} />
+            }
           />
         )}
       </View>

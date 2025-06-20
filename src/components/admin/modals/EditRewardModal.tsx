@@ -6,7 +6,6 @@ import {
   Modal,
   View,
   Text,
-  Button,
   TextInput,
   ScrollView,
   ActivityIndicator,
@@ -26,6 +25,8 @@ import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { EditRewardModalProps } from '../../../types/componentProps';
 import { RewardItem } from '../../../types/dataTypes';
+import { CustomButton } from '../../common/CustomButton';
+import { ShieldCheckIcon, XCircleIcon } from 'react-native-heroicons/solid';
 
 const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit, onClose }) => {
   const [name, setName] = useState('');
@@ -230,14 +231,14 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
                 <Text style={{ color: colors.textLight, fontStyle: 'italic' }}>No image set</Text>
               )}
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <Button
+                <CustomButton
                   title={initialImageUrl || imageUri ? 'Change Image' : 'Choose Image'}
                   onPress={pickImage}
                   disabled={mutation.isPending}
                   color={colors.info}
                 />
                 {(initialImageUrl || imageUri) && (
-                  <Button
+                  <CustomButton
                     title="Remove Image"
                     onPress={handleRemoveImage}
                     disabled={mutation.isPending}
@@ -290,19 +291,31 @@ const EditRewardModal: React.FC<EditRewardModalProps> = ({ visible, rewardToEdit
             </Text>
           )}
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
               color={colors.primary}
               disabled={isSaveDisabled}
+              leftIcon={
+                <ShieldCheckIcon
+                  color={isSaveDisabled ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={mutation.isPending}
+              leftIcon={
+                <XCircleIcon
+                  color={mutation.isPending ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
         </View>

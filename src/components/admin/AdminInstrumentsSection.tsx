@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -14,6 +14,8 @@ import CreateInstrumentModal from './modals/CreateInstrumentModal';
 import EditInstrumentModal from './modals/EditInstrumentModal';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminInstrumentItem } from '../common/AdminInstrumentItem';
+import { CustomButton } from '../common/CustomButton';
+import { PlusIcon } from 'react-native-heroicons/solid';
 
 export const AdminInstrumentsSection = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -109,7 +111,12 @@ export const AdminInstrumentsSection = () => {
         </Text>
       </View>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
-        <Button title="Add New Instrument" onPress={handleAddPress} color={colors.primary} />
+        <CustomButton
+          title="Add New Instrument"
+          onPress={handleAddPress}
+          color={colors.primary}
+          leftIcon={<PlusIcon color={colors.textWhite} size={18} />}
+        />
       </View>
       {isLoading && (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />

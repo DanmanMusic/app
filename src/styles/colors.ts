@@ -8,11 +8,15 @@ export const colors = {
   info: '#17a2b8',
   gold: '#A0830E',
 
+  disabled: '#cccccc',
+
   textPrimary: '#333',
   textSecondary: '#555',
   textLight: '#666',
   textVeryLight: '#888',
   textWhite: '#fff',
+
+  disabledText: '#a9a9a9',
 
   backgroundPrimary: '#fff',
   backgroundSecondary: '#f8f8f8',

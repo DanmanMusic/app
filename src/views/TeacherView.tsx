@@ -1,7 +1,7 @@
 // src/views/TeacherView.tsx
 import React, { useState } from 'react';
 
-import { View, Text, ScrollView, Button, ActivityIndicator, FlatList } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, FlatList } from 'react-native';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -37,6 +37,8 @@ import { deleteAssignedTask } from '../api/assignedTasks';
 import { fetchInstruments } from '../api/instruments';
 import { deleteTaskLibraryItem } from '../api/taskLibrary';
 import { fetchUserProfile } from '../api/users';
+import { CustomButton } from '../components/common/CustomButton';
+import { GlobeAltIcon } from 'react-native-heroicons/solid';
 
 export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerificationModal }) => {
   const { currentUserId: teacherId } = useAuth();
@@ -333,7 +335,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
               Error loading student details:{' '}
               {studentDetailErrorMsg?.message || 'Student not found or error occurred.'}
             </Text>
-            <Button
+            <CustomButton
               title="Back to My Students"
               onPress={handleBackFromProfile}
               color={colors.primary}
@@ -344,7 +346,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
       return (
         <>
           <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseMargin]}>
-            <Button title="← Back" onPress={handleBackFromProfile} color={colors.primary} />
+            <CustomButton title="← Back" onPress={handleBackFromProfile} color={colors.primary} />
           </View>
           <StudentDetailView
             viewingStudentId={viewingStudentId}
@@ -367,11 +369,17 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
             commonSharedStyles.baseGap,
           ]}
         >
-          <Button
+          <CustomButton
             title="Dashboard"
             onPress={() => setViewingSection('dashboard')}
             color={colors.primary}
             disabled={viewingSection === 'dashboard'}
+            leftIcon={
+              <GlobeAltIcon
+                color={viewingSection === 'dashboard' ? colors.disabledText : colors.textWhite}
+                size={18}
+              />
+            }
           />
         </View>
 
@@ -436,7 +444,7 @@ export const TeacherView: React.FC<TeacherViewProps> = ({ onInitiateVerification
                 { justifyContent: 'flex-end' },
               ]}
             >
-              <Button
+              <CustomButton
                 title={isRefetchingAnnouncements ? 'Refreshing...' : 'Refresh'}
                 onPress={() => refetchAnnouncements()}
                 disabled={isRefetchingAnnouncements}

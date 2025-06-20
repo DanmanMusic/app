@@ -1,8 +1,10 @@
-import { Button, Image, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { RewardItem } from '../../types/dataTypes';
+import { CustomButton } from './CustomButton';
+import { TrashIcon } from 'react-native-heroicons/solid';
 
 export const AdminRewardItem = ({
   item,
@@ -37,17 +39,18 @@ export const AdminRewardItem = ({
       </View>
     </View>
     <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
-      <Button
+      <CustomButton
         title="Edit"
         onPress={() => onEdit(item)}
         disabled={disabled}
         color={colors.primary}
       />
-      <Button
+      <CustomButton
         title="Delete"
         onPress={() => onDelete(item)}
         color={colors.danger}
         disabled={disabled}
+        leftIcon={<TrashIcon color={colors.textWhite} size={18} />}
       />
     </View>
   </View>

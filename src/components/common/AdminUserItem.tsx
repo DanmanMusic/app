@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 
-import { Button, Text, View, Image, ActivityIndicator } from 'react-native';
+import { Text, View, Image, ActivityIndicator } from 'react-native';
 
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { User, UserRole } from '../../types/dataTypes';
 import { getUserDisplayName, getUserAvatarSource } from '../../utils/helpers';
+import { CustomButton } from './CustomButton';
+import { MagnifyingGlassIcon } from 'react-native-heroicons/solid';
 
 export const AdminUserItem = ({
   user,
@@ -93,10 +95,11 @@ export const AdminUserItem = ({
       </View>
 
       <View style={{ alignSelf: 'flex-start' }}>
-        <Button
+        <CustomButton
           title="View Details"
           onPress={() => onViewManage(user.id, user.role)}
           color={colors.primary}
+          leftIcon={<MagnifyingGlassIcon color={colors.textWhite} size={18} />}
         />
       </View>
     </View>

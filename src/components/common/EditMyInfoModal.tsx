@@ -6,7 +6,6 @@ import {
   Modal,
   View,
   Text,
-  Button,
   TextInput,
   ScrollView,
   ActivityIndicator,
@@ -27,6 +26,8 @@ import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { User } from '../../types/dataTypes';
 import { getUserAvatarSource, getUserDisplayName, NativeFileObject } from '../../utils/helpers';
+import { CustomButton } from './CustomButton';
+import { CameraIcon, ShieldCheckIcon, XCircleIcon } from 'react-native-heroicons/solid';
 
 interface EditMyInfoModalProps {
   visible: boolean;
@@ -354,18 +355,30 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
                         </View>
                       )}
                       <View style={{ flexDirection: 'row', gap: 10 }}>
-                        <Button
+                        <CustomButton
                           title="Choose Image"
                           onPress={pickImage}
                           disabled={isOverallLoading}
                           color={colors.info}
+                          leftIcon={
+                            <CameraIcon
+                              color={isOverallLoading ? colors.disabledText : colors.textWhite}
+                              size={18}
+                            />
+                          }
                         />
                         {avatarPreview && (
-                          <Button
+                          <CustomButton
                             title="Remove Image"
                             onPress={removeImage}
                             disabled={isOverallLoading}
                             color={colors.warning}
+                            leftIcon={
+                              <XCircleIcon
+                                color={isOverallLoading ? colors.disabledText : colors.textWhite}
+                                size={18}
+                              />
+                            }
                           />
                         )}
                       </View>
@@ -402,11 +415,21 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
                 )}
 
                 <View style={{ marginTop: 15 }}>
-                  <Button
+                  <CustomButton
                     title={profileUpdateMutation.isPending ? 'Saving...' : 'Save Profile Changes'}
                     onPress={handleProfileSave}
                     color={colors.primary}
                     disabled={isOverallLoading || !firstName.trim() || !lastName.trim()}
+                    leftIcon={
+                      <ShieldCheckIcon
+                        color={
+                          isOverallLoading || !firstName.trim() || !lastName.trim()
+                            ? colors.disabledText
+                            : colors.textWhite
+                        }
+                        size={18}
+                      />
+                    }
                   />
                 </View>
               </View>
@@ -457,7 +480,7 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
                   </Text>
                 )}
                 <View style={{ marginTop: 15 }}>
-                  <Button
+                  <CustomButton
                     title={credentialsUpdateMutation.isPending ? 'Saving...' : 'Save Login Changes'}
                     onPress={handleCredentialsSave}
                     color={colors.primary}
@@ -466,17 +489,35 @@ export const EditMyInfoModal: React.FC<EditMyInfoModalProps> = ({ visible, onClo
                       (!newEmail.trim() && !newPassword) ||
                       (newPassword.length > 0 && newPassword !== confirmPassword)
                     }
+                    leftIcon={
+                      <ShieldCheckIcon
+                        color={
+                          isOverallLoading ||
+                          (!newEmail.trim() && !newPassword) ||
+                          (newPassword.length > 0 && newPassword !== confirmPassword)
+                            ? colors.disabledText
+                            : colors.textWhite
+                        }
+                        size={18}
+                      />
+                    }
                   />
                 </View>
               </View>
             )}
           </ScrollView>
           <View style={commonSharedStyles.modalFooter}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={isOverallLoading}
+              leftIcon={
+                <XCircleIcon
+                  color={isOverallLoading ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
         </View>

@@ -6,7 +6,6 @@ import {
   Modal,
   View,
   Text,
-  Button,
   TextInput,
   ScrollView,
   ActivityIndicator,
@@ -26,6 +25,8 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { CreateRewardModalProps } from '../../../types/componentProps';
+import { CustomButton } from '../../common/CustomButton';
+import { XCircleIcon } from 'react-native-heroicons/solid';
 
 const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');
@@ -187,7 +188,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
                   No image selected
                 </Text>
               )}
-              <Button
+              <CustomButton
                 title={imageUri ? 'Change Image' : 'Choose Image'}
                 onPress={pickImage}
                 disabled={mutation.isPending}
@@ -239,7 +240,7 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
             </Text>
           )}
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={mutation.isPending ? 'Creating...' : 'Create Reward'}
               onPress={handleCreate}
               color={colors.primary}
@@ -247,11 +248,12 @@ const CreateRewardModal: React.FC<CreateRewardModalProps> = ({ visible, onClose 
             />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={mutation.isPending}
+              leftIcon={<XCircleIcon color={colors.textWhite} size={18} />}
             />
           </View>
         </View>

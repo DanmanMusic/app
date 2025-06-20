@@ -5,12 +5,10 @@ import {
   Modal,
   View,
   Text,
-  Button,
   TextInput,
   ScrollView,
   ActivityIndicator,
   Switch,
-  TouchableOpacity,
   StyleSheet,
 } from 'react-native';
 
@@ -30,6 +28,8 @@ import { CreateTaskLibraryModalProps } from '../../../types/componentProps';
 import { Instrument } from '../../../types/dataTypes';
 import { NativeFileObject } from '../../../utils/helpers';
 import { useAuth } from '../../../contexts/AuthContext';
+import { CustomButton } from '../../common/CustomButton';
+import { TrashIcon, XCircleIcon } from 'react-native-heroicons/solid';
 
 interface UrlInput {
   id: string;
@@ -266,7 +266,11 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
 
             <View style={styles.listHeader}>
               <Text style={commonSharedStyles.label}>Reference URLs</Text>
-              <Button title="+ Add URL" onPress={handleAddUrl} disabled={mutation.isPending} />
+              <CustomButton
+                title="+ Add URL"
+                onPress={handleAddUrl}
+                disabled={mutation.isPending}
+              />
             </View>
             {urls.map(urlItem => (
               <View key={urlItem.id} style={styles.urlItemContainer}>
@@ -284,17 +288,18 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
                   onChangeText={text => handleUpdateUrl(urlItem.id, 'label', text)}
                   placeholder="Optional Label (e.g., YouTube)"
                 />
-                <Button
+                <CustomButton
                   title="Remove"
                   onPress={() => handleRemoveUrl(urlItem.id)}
                   color={colors.danger}
+                  leftIcon={<TrashIcon color={colors.textWhite} size={18} />}
                 />
               </View>
             ))}
 
             <View style={styles.listHeader}>
               <Text style={commonSharedStyles.label}>Attachments</Text>
-              <Button
+              <CustomButton
                 title="+ Attach Files"
                 onPress={handlePickFiles}
                 disabled={mutation.isPending}
@@ -305,10 +310,11 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
                 <Text style={styles.fileName} numberOfLines={1}>
                   {fileItem.asset.name}
                 </Text>
-                <Button
+                <CustomButton
                   title="Remove"
                   onPress={() => handleRemoveFile(fileItem.id)}
                   color={colors.danger}
+                  leftIcon={<TrashIcon color={colors.textWhite} size={18} />}
                 />
               </View>
             ))}
@@ -324,7 +330,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
               ) : instruments.length > 0 ? (
                 <View style={commonSharedStyles.baseRowCentered}>
                   {instruments.map(inst => (
-                    <Button
+                    <CustomButton
                       key={inst.id}
                       title={inst.name}
                       onPress={() => toggleInstrumentSelection(inst.id)}
@@ -352,7 +358,7 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
           )}
 
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={mutation.isPending ? 'Creating...' : 'Create Task'}
               onPress={handleCreate}
               color={colors.primary}
@@ -360,11 +366,12 @@ const CreateTaskLibraryModal: React.FC<CreateTaskLibraryModalProps> = ({ visible
             />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={mutation.isPending}
+              leftIcon={<XCircleIcon color={colors.textWhite} size={18} />}
             />
           </View>
         </View>

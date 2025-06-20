@@ -6,7 +6,6 @@ import {
   Modal,
   View,
   Text,
-  Button,
   TextInput,
   ScrollView,
   ActivityIndicator,
@@ -28,6 +27,8 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { EditUserModalProps } from '../../types/componentProps';
 import { User, Instrument } from '../../types/dataTypes';
 import { getUserDisplayName, getUserAvatarSource, NativeFileObject } from '../../utils/helpers';
+import { CustomButton } from './CustomButton';
+import { ShieldCheckIcon, XCircleIcon } from 'react-native-heroicons/solid';
 
 export const EditUserModal: React.FC<EditUserModalProps> = ({
   visible,
@@ -305,14 +306,14 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                     </View>
                   )}
                   <View style={{ flexDirection: 'row', gap: 10 }}>
-                    <Button
+                    <CustomButton
                       title="Choose Image"
                       onPress={pickImage}
                       disabled={profileUpdateMutation.isPending}
                       color={colors.info}
                     />
                     {avatarPreview && (
-                      <Button
+                      <CustomButton
                         title="Remove Image"
                         onPress={removeImage}
                         disabled={profileUpdateMutation.isPending}
@@ -357,7 +358,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                   ) : (
                     <View style={commonSharedStyles.baseRowCentered}>
                       {instruments.map(inst => (
-                        <Button
+                        <CustomButton
                           key={inst.id}
                           title={inst.name}
                           onPress={() => toggleInstrumentSelection(inst.id)}
@@ -387,7 +388,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                   ) : (
                     <View style={commonSharedStyles.baseRowCentered}>
                       {activeTeachers.map(teacher => (
-                        <Button
+                        <CustomButton
                           key={teacher.id}
                           title={getUserDisplayName(teacher)}
                           onPress={() => toggleTeacherSelection(teacher.id)}
@@ -418,19 +419,31 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             </Text>
           )}
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={profileUpdateMutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSaveChanges}
               color={colors.primary}
               disabled={isSaveDisabled}
+              leftIcon={
+                <ShieldCheckIcon
+                  color={isSaveDisabled ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={profileUpdateMutation.isPending}
+              leftIcon={
+                <XCircleIcon
+                  color={profileUpdateMutation.isPending ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
         </View>

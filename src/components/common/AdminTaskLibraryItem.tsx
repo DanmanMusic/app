@@ -1,7 +1,7 @@
 // src/components/common/AdminTaskLibraryItem.tsx
 import React from 'react';
 
-import { Button, Text, View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -13,6 +13,8 @@ import { AdminTaskLibraryItemProps } from '../../types/componentProps';
 import { Instrument } from '../../types/dataTypes';
 import { getInstrumentNames } from '../../utils/helpers';
 import { fetchJourneyLocations, JourneyLocation } from '../../api/journey';
+import { CustomButton } from './CustomButton';
+import { PencilSquareIcon, TrashIcon } from 'react-native-heroicons/solid';
 
 export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
   item,
@@ -101,12 +103,18 @@ export const AdminTaskLibraryItem: React.FC<AdminTaskLibraryItemProps> = ({
       <View
         style={[commonSharedStyles.baseColumn, commonSharedStyles.baseGap, styles.actionsContainer]}
       >
-        <Button title="Edit" onPress={() => onEdit(item)} disabled={disabled} />
-        <Button
+        <CustomButton
+          title="Edit"
+          onPress={() => onEdit(item)}
+          disabled={disabled}
+          leftIcon={<PencilSquareIcon color={colors.textWhite} size={18} />}
+        />
+        <CustomButton
           title="Delete"
           onPress={() => onDelete(item)}
           color={colors.danger}
           disabled={disabled}
+          leftIcon={<TrashIcon color={colors.textWhite} size={18} />}
         />
       </View>
     </View>

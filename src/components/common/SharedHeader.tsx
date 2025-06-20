@@ -1,7 +1,7 @@
 // src/components/common/SharedHeader.tsx
 import React, { useState, useMemo } from 'react';
 
-import { View, Text, Button } from 'react-native';
+import { View, Text } from 'react-native';
 
 import ConfirmationModal from './ConfirmationModal';
 import NotificationManager from './NotificationManager';
@@ -9,6 +9,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { capitalizeFirstLetter } from '../../utils/helpers';
+import { CustomButton } from './CustomButton';
+import {
+  ArrowLeftStartOnRectangleIcon,
+  IdentificationIcon,
+  InformationCircleIcon,
+} from 'react-native-heroicons/solid';
 
 interface SharedHeaderProps {
   onSetLoginPress: () => void;
@@ -64,9 +70,26 @@ export const SharedHeader: React.FC<SharedHeaderProps> = ({ onSetLoginPress, onE
       </Text>
       <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
         <NotificationManager />
-        <Button title="Edit Info" onPress={onEditInfoPress} color={colors.warning} />
-        {canSetLogin && <Button title="Set Login" onPress={onSetLoginPress} color={colors.info} />}
-        <Button title="Logout" onPress={handleLogoutPress} color={colors.danger} />
+        <CustomButton
+          title="Edit Info"
+          onPress={onEditInfoPress}
+          color={colors.warning}
+          leftIcon={<IdentificationIcon color={colors.textWhite} size={18} />}
+        />
+        {canSetLogin && (
+          <CustomButton
+            title="Set Login"
+            onPress={onSetLoginPress}
+            color={colors.info}
+            leftIcon={<InformationCircleIcon color={colors.textWhite} size={18} />}
+          />
+        )}
+        <CustomButton
+          title="Logout"
+          onPress={handleLogoutPress}
+          color={colors.danger}
+          leftIcon={<ArrowLeftStartOnRectangleIcon color={colors.textWhite} size={18} />}
+        />
       </View>
       <ConfirmationModal
         visible={isConfirmLogoutVisible}

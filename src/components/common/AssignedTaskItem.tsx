@@ -6,6 +6,8 @@ import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AssignedTask } from '../../types/dataTypes';
 import { timestampDisplay } from '../../utils/helpers';
+import { CustomButton } from './CustomButton';
+import { CheckCircleIcon, CheckIcon } from 'react-native-heroicons/solid';
 
 export const AssignedTaskItem = ({
   task,
@@ -98,14 +100,22 @@ export const AssignedTaskItem = ({
       </View>
       <View>
         {showMarkCompleteButton && (
-          <Button
+          <CustomButton
             title={isLoading ? 'Marking...' : 'Mark Complete'}
             onPress={() => onMarkComplete(task.id)}
             color={colors.primary}
             disabled={isLoading}
+            leftIcon={<CheckCircleIcon color={colors.textWhite} size={18} />}
           />
         )}
-        {!task.isComplete && !canMark && <Button title="Mark Complete" disabled={true} />}
+        {!task.isComplete && !canMark && (
+          <CustomButton
+            title="Mark Complete"
+            onPress={() => {}}
+            disabled={true}
+            leftIcon={<CheckIcon color={colors.textWhite} size={18} />}
+          />
+        )}
       </View>
     </View>
   );

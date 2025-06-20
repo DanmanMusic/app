@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -14,6 +14,8 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { RewardItem } from '../../types/dataTypes';
 import { AdminRewardItem } from '../common/AdminRewardItem';
 import ConfirmationModal from '../common/ConfirmationModal';
+import { CustomButton } from '../common/CustomButton';
+import { PlusIcon } from 'react-native-heroicons/solid';
 
 export const AdminRewardsSection = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -113,11 +115,17 @@ export const AdminRewardsSection = () => {
         </Text>
       </View>
       <View style={{ alignItems: 'flex-start', marginBottom: 10 }}>
-        <Button
+        <CustomButton
           title="Add New Reward"
           onPress={handleAddPress}
           color={colors.primary}
           disabled={deleteMutation.isPending}
+          leftIcon={
+            <PlusIcon
+              color={deleteMutation.isPending ? colors.disabledText : colors.textWhite}
+              size={18}
+            />
+          }
         />
       </View>
       {isLoading && (

@@ -1,16 +1,7 @@
 // src/components/admin/modals/EditJourneyLocationModal.tsx
 import React, { useState, useEffect } from 'react';
 
-import {
-  Modal,
-  View,
-  Text,
-  Button,
-  TextInput,
-  ActivityIndicator,
-  ScrollView,
-  Switch,
-} from 'react-native';
+import { Modal, View, Text, TextInput, ActivityIndicator, ScrollView, Switch } from 'react-native';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -19,6 +10,8 @@ import Toast from 'react-native-toast-message';
 import { JourneyLocation, updateJourneyLocation } from '../../../api/journey';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import { CustomButton } from '../../common/CustomButton';
+import { ShieldCheckIcon, XCircleIcon } from 'react-native-heroicons/solid';
 
 interface EditJourneyLocationModalProps {
   visible: boolean;
@@ -167,19 +160,31 @@ const EditJourneyLocationModal: React.FC<EditJourneyLocationModalProps> = ({
           )}
 
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
               color={colors.primary}
               disabled={isSaveDisabled}
+              leftIcon={
+                <ShieldCheckIcon
+                  color={isSaveDisabled ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={mutation.isPending}
+              leftIcon={
+                <XCircleIcon
+                  color={mutation.isPending ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
         </View>

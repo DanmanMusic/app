@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 
-import { View, Text, Button, ActivityIndicator, ScrollView, Image } from 'react-native';
+import { View, Text, ActivityIndicator, ScrollView, Image } from 'react-native';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -13,6 +13,8 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { AdminAdminDetailViewProps } from '../../types/componentProps';
 import { User } from '../../types/dataTypes';
 import { getUserDisplayName, getUserAvatarSource } from '../../utils/helpers';
+import { CustomButton } from '../common/CustomButton';
+import { QrCodeIcon, WrenchScrewdriverIcon } from 'react-native-heroicons/solid';
 
 export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
   viewingUserId,
@@ -176,18 +178,30 @@ export const AdminAdminDetailView: React.FC<AdminAdminDetailViewProps> = ({
           commonSharedStyles.baseMarginTopBottom,
         ]}
       >
-        <Button
+        <CustomButton
           title="Manage Status"
           onPress={handleStatus}
           color={colors.secondary}
           disabled={adminProfile.id === currentUserId}
+          leftIcon={
+            <WrenchScrewdriverIcon
+              color={adminProfile.id === currentUserId ? colors.disabledText : colors.textWhite}
+              size={18}
+            />
+          }
         />
         {onInitiatePinGeneration && needsPinLogin && (
-          <Button
-            title="Generate Login PIN"
+          <CustomButton
+            title="Login (PIN)"
             onPress={handlePinGenerationClick}
             color={colors.info}
             disabled={!isAdminActive}
+            leftIcon={
+              <QrCodeIcon
+                color={!isAdminActive ? colors.disabledText : colors.textWhite}
+                size={18}
+              />
+            }
           />
         )}
       </View>

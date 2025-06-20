@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 
-import { Modal, View, Text, Button, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, ActivityIndicator } from 'react-native';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -15,6 +15,8 @@ import { colors } from '../../styles/colors';
 import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { User, UserRole } from '../../types/dataTypes';
 import { capitalizeFirstLetter, getUserDisplayName } from '../../utils/helpers';
+import { CustomButton } from './CustomButton';
+import { XCircleIcon } from 'react-native-heroicons/solid';
 
 interface GeneratePinModalProps {
   visible: boolean;
@@ -120,7 +122,7 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
                   <Text style={commonSharedStyles.infoText}>
                     This user has one or more active PIN sessions.
                   </Text>
-                  <Button
+                  <CustomButton
                     title="Force Logout All Devices"
                     onPress={() => setIsConfirmLogoutVisible(true)}
                     color={colors.danger}
@@ -148,7 +150,7 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
                   </View>
                 ) : (
                   <View style={{ alignItems: 'center' }}>
-                    <Button
+                    <CustomButton
                       title={`Generate PIN for ${capitalizeFirstLetter(user.role)} Login`}
                       onPress={() => handleGeneratePin(user.role)}
                       disabled={isActionPending}
@@ -160,11 +162,17 @@ export const GeneratePinModal: React.FC<GeneratePinModalProps> = ({ visible, use
             )}
 
             <View style={[commonSharedStyles.full, { marginTop: 20 }]}>
-              <Button
+              <CustomButton
                 title="Close"
                 onPress={onClose}
                 color={colors.secondary}
                 disabled={isActionPending}
+                leftIcon={
+                  <XCircleIcon
+                    color={isActionPending ? colors.disabledText : colors.textWhite}
+                    size={18}
+                  />
+                }
               />
             </View>
           </View>

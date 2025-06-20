@@ -1,7 +1,7 @@
 // src/components/admin/AdminAnnouncementsSection.tsx
 import React, { useState } from 'react';
 
-import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -15,6 +15,8 @@ import { commonSharedStyles } from '../../styles/commonSharedStyles';
 import { Announcement } from '../../types/dataTypes';
 import { AnnouncementListItem } from '../common/AnnouncementListItem';
 import ConfirmationModal from '../common/ConfirmationModal';
+import { CustomButton } from '../common/CustomButton';
+import { PencilSquareIcon, TrashIcon } from 'react-native-heroicons/solid';
 
 export const AdminAnnouncementsSection = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -120,13 +122,13 @@ export const AdminAnnouncementsSection = () => {
           { alignItems: 'flex-start', marginBottom: 10, gap: 10 },
         ]}
       >
-        <Button
+        <CustomButton
           title="Create New Announcement"
           onPress={handleAddPress}
           color={colors.primary}
           disabled={isLoading || deleteMutation.isPending || isRefetching}
         />
-        <Button
+        <CustomButton
           title={isRefetching ? 'Refreshing...' : 'Refresh List'}
           onPress={() => refetch()}
           color={colors.secondary}
@@ -155,17 +157,19 @@ export const AdminAnnouncementsSection = () => {
             >
               <AnnouncementListItem item={item} />
               <View style={[commonSharedStyles.baseRow, commonSharedStyles.baseGap]}>
-                <Button
+                <CustomButton
                   title="Edit"
                   onPress={() => handleEditPress(item)}
                   color={colors.primary}
                   disabled={deleteMutation.isPending}
+                  leftIcon={<PencilSquareIcon color={colors.textWhite} size={18} />}
                 />
-                <Button
+                <CustomButton
                   title="Delete"
                   onPress={() => handleDeletePress(item)}
                   color={colors.danger}
                   disabled={deleteMutation.isPending}
+                  leftIcon={<TrashIcon color={colors.textWhite} size={18} />}
                 />
               </View>
             </View>

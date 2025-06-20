@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 
-import { Modal, View, Text, Button, TextInput, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, TextInput, ActivityIndicator } from 'react-native';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -14,6 +14,8 @@ import { commonSharedStyles } from '../../../styles/commonSharedStyles';
 import { EditAnnouncementModalProps } from '../../../types/componentProps';
 import { Announcement } from '../../../types/dataTypes';
 import { capitalizeFirstLetter } from '../../../utils/helpers';
+import { CustomButton } from '../../common/CustomButton';
+import { ShieldCheckIcon, XCircleIcon } from 'react-native-heroicons/solid';
 
 const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
   visible,
@@ -163,19 +165,31 @@ const EditAnnouncementModal: React.FC<EditAnnouncementModalProps> = ({
           )}
 
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={mutation.isPending ? 'Saving...' : 'Save Changes'}
               onPress={handleSave}
               color={colors.primary}
               disabled={isSaveDisabled}
+              leftIcon={
+                <ShieldCheckIcon
+                  color={isSaveDisabled ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={mutation.isPending}
+              leftIcon={
+                <XCircleIcon
+                  color={mutation.isPending ? colors.disabledText : colors.textWhite}
+                  size={18}
+                />
+              }
             />
           </View>
         </View>

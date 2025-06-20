@@ -1,16 +1,7 @@
 // src/components/admin/modals/CreateJourneyLocationModal.tsx
 import React, { useState, useEffect, useMemo } from 'react';
 
-import {
-  Modal,
-  View,
-  Text,
-  Button,
-  TextInput,
-  ActivityIndicator,
-  ScrollView,
-  Switch,
-} from 'react-native';
+import { Modal, View, Text, TextInput, ActivityIndicator, ScrollView, Switch } from 'react-native';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -20,6 +11,8 @@ import { createJourneyLocation } from '../../../api/journey';
 import { useAuth } from '../../../contexts/AuthContext';
 import { colors } from '../../../styles/colors';
 import { commonSharedStyles } from '../../../styles/commonSharedStyles';
+import { CustomButton } from '../../common/CustomButton';
+import { XCircleIcon } from 'react-native-heroicons/solid';
 
 interface CreateJourneyLocationModalProps {
   visible: boolean;
@@ -157,7 +150,7 @@ const CreateJourneyLocationModal: React.FC<CreateJourneyLocationModalProps> = ({
           )}
 
           <View style={commonSharedStyles.full}>
-            <Button
+            <CustomButton
               title={mutation.isPending ? 'Creating...' : 'Create Location'}
               onPress={handleCreate}
               color={colors.primary}
@@ -165,11 +158,12 @@ const CreateJourneyLocationModal: React.FC<CreateJourneyLocationModalProps> = ({
             />
           </View>
           <View style={[commonSharedStyles.full, { marginTop: 10 }]}>
-            <Button
+            <CustomButton
               title="Cancel"
               onPress={onClose}
               color={colors.secondary}
               disabled={mutation.isPending}
+              leftIcon={<XCircleIcon color={colors.textWhite} size={18} />}
             />
           </View>
         </View>
