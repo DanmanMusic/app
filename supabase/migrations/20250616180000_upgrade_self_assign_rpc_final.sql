@@ -33,7 +33,7 @@ BEGIN
     tl.base_tickets,
     tl.journey_location_id,
     jl.name,
-    -- NEW: Aggregate URLs and Attachments into JSON arrays
+    -- Aggregate URLs and Attachments into JSON arrays
     COALESCE(
       (SELECT jsonb_agg(jsonb_build_object('id', tu.id, 'url', tu.url, 'label', tu.label))
        FROM public.task_library_urls tu
@@ -54,6 +54,9 @@ BEGIN
     tl.company_id = v_company_id
     AND tl.can_self_assign = true
     AND tl.journey_location_id NOT IN (
+      -- This subquery finds all journey locations where the student has an "in-flight" task.
+      -- An in-flight task is one that is either not yet marked complete by the student,
+      -- OR one that has been marked complete but is still pending verification by staff.
       SELECT
         t_lib.journey_location_id
       FROM
@@ -62,7 +65,8 @@ BEGIN
         public.task_library AS t_lib ON a_t.task_library_id = t_lib.id
       WHERE
         a_t.student_id = p_student_id
-        AND a_t.is_complete = false
+        -- THIS IS THE FIX: The location is locked if the task is incomplete OR pending verification.
+        AND (a_t.is_complete = false OR a_t.verification_status = 'pending')
         AND t_lib.journey_location_id IS NOT NULL
     )
     AND NOT (
