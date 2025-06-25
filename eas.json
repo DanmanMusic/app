@@ -2,10 +2,12 @@
   "build": {
     "development": {
       "developmentClient": true,
+      "channel": "preview",
       "distribution": "internal"
     },
     "preview": {
       "distribution": "internal",
+      "channel": "preview",
       "android": {
         "buildType": "apk"
       }      

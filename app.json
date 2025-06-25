@@ -43,6 +43,12 @@
         "projectId": "2d6fbb30-ca9a-483e-8fa5-e41e8f901d79"
       }
     },
-    "owner": "danman2020"
+    "owner": "danman2020",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/2d6fbb30-ca9a-483e-8fa5-e41e8f901d79"
+    }
   }
 }

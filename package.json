@@ -12,7 +12,7 @@
         "listUnknownPackages": false
       }
     }
-  },  
+  },
   "scripts": {
     "types": "npx supabase gen types typescript --project-id jwpdlxevbppqilhgapeg > src/types/database.types.ts",
     "start": "expo start  --tunnel",
@@ -23,7 +23,7 @@
     "format": "prettier --write .",
     "eas-android-dev": "eas build --profile development --platform android",
     "eas-android-preview": "eas build --profile preview --platform android",
-    "eas-android-prod": "eas build --profile production --platform android",    
+    "eas-android-prod": "eas build --profile production --platform android",
     "eas-ios-dev": "eas build --profile development --platform ios"
   },
   "dependencies": {
@@ -51,7 +51,8 @@
     "react-native-safe-area-context": "5.4.0",
     "react-native-svg": "15.11.2",
     "react-native-toast-message": "^2.3.0",
-    "react-native-web": "^0.20.0"
+    "react-native-web": "^0.20.0",
+    "expo-updates": "~0.28.15"
   },
   "devDependencies": {
     "@babel/core": "^7.27.4",
