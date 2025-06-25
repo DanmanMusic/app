@@ -25,7 +25,7 @@ type CustomButtonProps = {
   /** If true, shows a loading spinner instead of text/icon. */
   isLoading?: boolean;
   /** An optional icon component to display on the left. */
-  leftIcon?: React.ReactNode; // This is the new prop!
+  leftIcon?: React.ReactNode;
   /** Optional custom styles for the button container */
   style?: ViewStyle;
   /** Optional custom styles for the text */
@@ -52,14 +52,14 @@ export const CustomButton = ({
       onPress={onPress}
       disabled={isButtonDisabled}
       style={[
-        styles.container, // Base styles first
+        styles.container,
         { backgroundColor },
-        style, // Custom overrides last
+        style,
       ]}
       activeOpacity={0.7}
     >
       {isLoading ? (
-        // If loading, show only the spinner
+
         <ActivityIndicator size="small" color={textColor} />
       ) : (
         <>
@@ -73,11 +73,11 @@ export const CustomButton = ({
 
 const styles = StyleSheet.create({
   container: {
-    // These styles are key for layout with an icon!
-    flexDirection: 'row', // Arrange icon and text horizontally
-    alignItems: 'center', // Align them vertically in the center
-    justifyContent: 'center', // Center the content horizontally
-    gap: 8, // Adds a nice space between the icon and text
+
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
 
     paddingVertical: 12,
     paddingHorizontal: 20,

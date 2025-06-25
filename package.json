@@ -21,8 +21,10 @@
     "web": "expo start --web -c",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "format": "prettier --write .",
-    "eas-android": "eas build --profile development --platform android",
-    "eas-ios": "eas build --profile development --platform ios"
+    "eas-android-dev": "eas build --profile development --platform android",
+    "eas-android-preview": "eas build --profile preview --platform android",
+    "eas-android-prod": "eas build --profile production --platform android",    
+    "eas-ios-dev": "eas build --profile development --platform ios"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",

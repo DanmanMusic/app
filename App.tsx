@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   ImageBackground,
   Platform,
-} from 'react-native'; // MODIFIED: Added Platform
+} from 'react-native';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
