@@ -3,7 +3,7 @@
 set -e # Exit immediately if a command exits with a non-zero status.
 
 # --- Configuration ---
-OUTPUT_DIR="contexts"
+OUTPUT_DIR="ai"
 SCRIPT_NAME=$(basename "$0")
 # --- MODIFIED LINE HERE ---
 # Added .expo to the exclusion list for the tree command
